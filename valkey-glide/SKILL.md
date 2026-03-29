@@ -48,14 +48,28 @@ Browse by topic below. Each link leads to a focused reference with code examples
 
 ## Language Clients
 
+For language-specific API details, code examples, and migration guides, use the dedicated per-language skills:
+
+| Language | Skill | Key Content |
+|----------|-------|-------------|
+| Python | **valkey-glide-python** | Async/sync API, GlideClient, migration from redis-py |
+| Java | **valkey-glide-java** | CompletableFuture, builders, Jedis/Lettuce migration, Spring |
+| Node.js | **valkey-glide-nodejs** | Promise API, TypeScript, ioredis migration |
+| Go | **valkey-glide-go** | Synchronous API, CGO, Result[T], go-redis migration |
+| PHP | **valkey-glide-php** | FFI extension, PIE/Composer/PECL install |
+| C# | **valkey-glide-csharp** | Async/await, .NET 8.0+, StackExchange.Redis migration |
+| Ruby | **valkey-glide-ruby** | In development |
+
+Detailed per-language reference files are also available here:
+
 | Topic | Reference |
 |-------|-----------|
-| Python: GlideClient, GlideClusterClient, async/sync, asyncio config | [python](reference/clients/python.md) |
-| Java: GlideClient, GlideClusterClient, CompletableFuture, JNI bridge | [java](reference/clients/java.md) |
-| Node.js: GlideClient, GlideClusterClient, Promise API, TypeScript, napi-rs | [nodejs](reference/clients/nodejs.md) |
-| Go: GlideClient, GlideClusterClient, synchronous API, CGO, Result[T] | [go](reference/clients/go.md) |
-| PHP: GlideClient, GlideClusterClient, synchronous, FFI extension | [php](reference/clients/php.md) |
-| C#: GlideClient, GlideClusterClient, async/await, .NET 8.0+ | [csharp](reference/clients/csharp.md) |
+| Python API reference | [python](reference/clients/python.md) |
+| Java API reference | [java](reference/clients/java.md) |
+| Node.js API reference | [nodejs](reference/clients/nodejs.md) |
+| Go API reference | [go](reference/clients/go.md) |
+| PHP API reference | [php](reference/clients/php.md) |
+| C# API reference | [csharp](reference/clients/csharp.md) |
 
 
 ## Features
@@ -79,14 +93,16 @@ Browse by topic below. Each link leads to a focused reference with code examples
 
 ## Migration
 
+For migration guides, use the per-language skills above or the detailed reference files:
+
 | Topic | Reference |
 |-------|-----------|
-| From redis-py: Python migration, async-first, bytes handling, ExpirySet | [from-redis-py](reference/migration/from-redis-py.md) |
-| From ioredis: Node.js migration, object returns, Batch API differences | [from-ioredis](reference/migration/from-ioredis.md) |
-| From Jedis: Java migration, CompletableFuture, builder config, compat | [from-jedis](reference/migration/from-jedis.md) |
-| From go-redis: Go migration, Result[T] types, CGO requirement | [from-go-redis](reference/migration/from-go-redis.md) |
-| From Lettuce: Java migration, reactive to async, Spring Data Valkey | [from-lettuce](reference/migration/from-lettuce.md) |
-| From StackExchange.Redis: C# migration, async/await, .NET preview | [from-stackexchange](reference/migration/from-stackexchange.md) |
+| From redis-py (Python) | [from-redis-py](reference/migration/from-redis-py.md) or **valkey-glide-python** |
+| From ioredis (Node.js) | [from-ioredis](reference/migration/from-ioredis.md) or **valkey-glide-nodejs** |
+| From Jedis (Java) | [from-jedis](reference/migration/from-jedis.md) or **valkey-glide-java** |
+| From go-redis (Go) | [from-go-redis](reference/migration/from-go-redis.md) or **valkey-glide-go** |
+| From Lettuce (Java) | [from-lettuce](reference/migration/from-lettuce.md) or **valkey-glide-java** |
+| From StackExchange.Redis (C#) | [from-stackexchange](reference/migration/from-stackexchange.md) or **valkey-glide-csharp** |
 
 
 ## Best Practices
