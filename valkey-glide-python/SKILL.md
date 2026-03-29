@@ -236,7 +236,7 @@ All error classes are in `glide_shared.exceptions`:
 | `TimeoutError` | Request exceeded `request_timeout` |
 | `ConnectionError` | Connection lost (client auto-reconnects) |
 | `ExecAbortError` | Transaction aborted (WATCH key changed) |
-| `ConfigurationError` | Invalid client configuration |
+| `ConfigurationError` | Invalid client configuration (subclass of RequestError) |
 | `ClosingError` | Client closed, no longer usable |
 
 ```python
@@ -541,14 +541,14 @@ No drop-in replacement or compatibility layer exists for Python.
 
 ```python
 # Add entries
-entry_id = await client.xadd("mystream", {"sensor": "temp", "value": "23.5"})
+entry_id = await client.xadd("mystream", [("sensor", "temp"), ("value", "23.5")])
 
 # Add with trimming
-from glide import TrimByMaxLen
+from glide import StreamAddOptions, TrimByMaxLen
 entry_id = await client.xadd(
     "mystream",
-    {"data": "value"},
-    options=TrimByMaxLen(exact=False, threshold=1000),
+    [("data", "value")],
+    options=StreamAddOptions(trim=TrimByMaxLen(exact=False, threshold=1000)),
 )
 
 # Read from streams (entries after the given ID)
@@ -565,9 +565,10 @@ entries = await client.xread(
 ### Range Queries
 
 ```python
-entries = await client.xrange("mystream", start="-", end="+")
-entries = await client.xrange("mystream", start="-", end="+", count=100)
-entries = await client.xrevrange("mystream", end="+", start="-")
+from glide import MinId, MaxId
+entries = await client.xrange("mystream", MinId(), MaxId())
+entries = await client.xrange("mystream", MinId(), MaxId(), 100)
+entries = await client.xrevrange("mystream", MaxId(), MinId())
 length = await client.xlen("mystream")
 ```
 
@@ -575,13 +576,15 @@ length = await client.xlen("mystream")
 
 ```python
 # Create group (MKSTREAM creates stream if needed)
-await client.xgroup_create("mystream", "mygroup", "0", mkstream=True)
+from glide import StreamGroupOptions
+await client.xgroup_create("mystream", "mygroup", "0",
+    StreamGroupOptions(make_stream=True))
 
 # Read as consumer
 from glide import StreamReadGroupOptions
 messages = await client.xreadgroup(
-    "mygroup", "consumer1", {"mystream": ">"},
-    options=StreamReadGroupOptions(count=10, block_ms=5000),
+    {"mystream": ">"}, "mygroup", "consumer1",
+    StreamReadGroupOptions(count=10, block_ms=5000),
 )
 
 # Acknowledge processed entries
@@ -712,8 +715,8 @@ subscriber = await GlideClient.create(config)
 publisher = await GlideClient.create(config)
 
 # Dynamic subscribe (GLIDE 2.3+)
-await subscriber.subscribe(["news", "events"])
-await subscriber.psubscribe(["user:*"])
+await subscriber.subscribe({"news", "events"})
+await subscriber.psubscribe({"user:*"})
 
 # Receive messages
 msg = await subscriber.get_pubsub_message()
@@ -723,10 +726,10 @@ print(f"Channel: {msg.channel}, Message: {msg.message}")
 msg = subscriber.try_get_pubsub_message()
 
 # Unsubscribe
-await subscriber.unsubscribe(["news"])
+await subscriber.unsubscribe({"news"})
 
 # Publish
-await publisher.publish("events", "Hello subscribers!")
+await publisher.publish("Hello subscribers!", "events")
 ```
 
 Always use a dedicated client for subscriptions - it enters subscriber mode where regular commands are unavailable.

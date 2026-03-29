@@ -149,7 +149,7 @@ GlideClientConfiguration config = GlideClientConfiguration.builder()
 GlideClusterClientConfiguration config = GlideClusterClientConfiguration.builder()
     .address(NodeAddress.builder().host("node1.example.com").port(6379).build())
     .readFrom(ReadFrom.AZ_AFFINITY)
-    .clientAz("us-east-1a")
+    .clientAZ("us-east-1a")
     .build();
 ```
 
@@ -204,10 +204,10 @@ Formula: `factor * (exponentBase ^ N)` with optional `jitterPercent` as a percen
 |-------|----------|
 | `PRIMARY` | All reads to primary (default) |
 | `PREFER_REPLICA` | Round-robin replicas, fallback to primary |
-| `AZ_AFFINITY` | Prefer same-AZ replicas (requires `clientAz`) |
+| `AZ_AFFINITY` | Prefer same-AZ replicas (requires `clientAZ`) |
 | `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | Same-AZ replicas, then primary, then remote |
 
-AZ Affinity requires Valkey 8.0+ and `clientAz` must be set.
+AZ Affinity requires Valkey 8.0+ and `clientAZ` must be set.
 
 ---
 
@@ -351,7 +351,7 @@ batch.get("k1");
 Object[] result = client.exec(batch, false).get();
 ```
 
-The second parameter to `run()` is `raiseOnError` - when true, throws on the first error; when false, returns errors inline in the result array.
+The second parameter to `exec()` is `raiseOnError` - when true, throws on the first error; when false, returns errors inline in the result array.
 
 ---
 
@@ -509,7 +509,7 @@ String entryId = client.xadd("mystream",
 String entryId2 = client.xadd("mystream",
     Map.of("data", "value"),
     StreamAddOptions.builder()
-        .trim(new MaxLen(false, 1000L))
+        .trim(new StreamTrimOptions.MaxLen(false, 1000L))
         .build()
 ).get();
 
@@ -527,12 +527,18 @@ entries = client.xread(
 ### Range Queries
 
 ```java
+import glide.api.models.commands.stream.StreamRange;
+import glide.api.models.commands.stream.StreamRange.InfRangeBound;
+
 // Forward range
-Map<String, String[][]> range = client.xrange("mystream", "-", "+").get();
-range = client.xrange("mystream", "-", "+", 100L).get();
+Map<String, String[][]> range = client.xrange("mystream",
+    InfRangeBound.MIN, InfRangeBound.MAX).get();
+range = client.xrange("mystream",
+    InfRangeBound.MIN, InfRangeBound.MAX, 100L).get();
 
 // Reverse range
-range = client.xrevrange("mystream", "+", "-").get();
+range = client.xrevrange("mystream",
+    InfRangeBound.MAX, InfRangeBound.MIN).get();
 
 // Stream length
 long length = client.xlen("mystream").get();
@@ -546,8 +552,8 @@ client.xgroupCreate("mystream", "mygroup", "0").get();
 
 // Read as consumer
 Map<String, Map<String, String[][]>> messages =
-    client.xreadgroup("mygroup", "consumer1",
-        Map.of("mystream", ">")).get();
+    client.xreadgroup(Map.of("mystream", ">"),
+        "mygroup", "consumer1").get();
 
 // Acknowledge
 long ackCount = client.xack("mystream", "mygroup",
@@ -659,15 +665,17 @@ GlideClientConfiguration config = GlideClientConfiguration.builder()
 ## PubSub Patterns
 
 ```java
+import java.util.Set;
+
 // Separate subscriber and publisher clients
 GlideClient subscriber = GlideClient.createClient(config).get();
 GlideClient publisher = GlideClient.createClient(config).get();
 
-// Subscribe
-subscriber.subscribe(new String[]{"news", "events"}).get();
+// Subscribe (lazy - returns immediately without waiting for confirmation)
+subscriber.subscribeLazy(Set.of("news", "events")).get();
 
-// Publish
-publisher.publish("events", "Hello subscribers!").get();
+// Publish (message first, channel second)
+publisher.publish("Hello subscribers!", "events").get();
 ```
 
 Always use a dedicated client for subscriptions.
@@ -704,7 +712,7 @@ try {
 GlideClusterClientConfiguration config = GlideClusterClientConfiguration.builder()
     .address(NodeAddress.builder().host("node1.example.com").port(6379).build())
     .readFrom(ReadFrom.AZ_AFFINITY)
-    .clientAz("us-east-1a")
+    .clientAZ("us-east-1a")
     .build();
 ```
 

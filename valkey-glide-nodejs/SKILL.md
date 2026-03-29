@@ -174,7 +174,7 @@ const client = await GlideClusterClient.createClient({
         username: "myIamUser",
         iamAuthentication: {
             clusterName: "my-cluster",
-            service: ServiceType.ElastiCache, // or ServiceType.MemoryDB
+            service: ServiceType.Elasticache, // or ServiceType.MemoryDB
             region: "us-east-1",
         },
     },
@@ -346,7 +346,7 @@ const tx = new Batch(true)
     .set("key", "value")
     .incr("counter")
     .get("key");
-const result = await client.exec(tx);
+const result = await client.exec(tx, true);
 // ["OK", 1, "value"]
 ```
 
@@ -357,7 +357,7 @@ const batch = new Batch(false)
     .set("k1", "v1")
     .set("k2", "v2")
     .get("k1");
-const result = await client.exec(batch);
+const result = await client.exec(batch, false);
 ```
 
 For cluster mode, use `ClusterBatch`.
@@ -507,13 +507,13 @@ No drop-in compatibility layer exists for Node.js.
 
 ```typescript
 // Add entries
-const entryId = await client.xadd("mystream", {
-    sensor: "temp", value: "23.5",
-});
+const entryId = await client.xadd("mystream", [
+    ["sensor", "temp"], ["value", "23.5"],
+]);
 
 // Add with trimming
 const entryId2 = await client.xadd("mystream",
-    { data: "value" },
+    [["data", "value"]],
     { trim: { method: "maxlen", threshold: 1000, exact: false } },
 );
 
@@ -622,8 +622,10 @@ const caCert = readFileSync("/path/to/ca.pem");
 const client = await GlideClient.createClient({
     addresses: [{ host: "valkey.example.com", port: 6380 }],
     useTLS: true,
-    tlsAdvancedConfiguration: {
-        rootCertificates: caCert,
+    advancedConfiguration: {
+        tlsAdvancedConfiguration: {
+            rootCertificates: caCert,
+        },
     },
 });
 ```
@@ -634,7 +636,9 @@ const client = await GlideClient.createClient({
 const client = await GlideClient.createClient({
     addresses: [{ host: "valkey.example.com", port: 6380 }],
     useTLS: true,
-    tlsAdvancedConfiguration: { insecure: true },
+    advancedConfiguration: {
+        tlsAdvancedConfiguration: { insecure: true },
+    },
 });
 ```
 
@@ -645,8 +649,10 @@ const client = await GlideClient.createClient({
     addresses: [{ host: "valkey.example.com", port: 6380 }],
     useTLS: true,
     credentials: { username: "myuser", password: "mypass" },
-    tlsAdvancedConfiguration: {
-        rootCertificates: caCert,
+    advancedConfiguration: {
+        tlsAdvancedConfiguration: {
+            rootCertificates: caCert,
+        },
     },
 });
 ```
@@ -665,13 +671,13 @@ const publisher = await GlideClient.createClient({
 });
 
 // Dynamic subscribe (GLIDE 2.3+)
-await subscriber.subscribe(["news", "events"]);
+subscriber.subscribeLazy(["news", "events"]);
 
 // Publish
-await publisher.publish("events", "Hello subscribers!");
+await publisher.publish("Hello subscribers!", "events");
 
 // Unsubscribe
-await subscriber.unsubscribe(["news"]);
+subscriber.unsubscribeLazy(["news"]);
 ```
 
 Always use a dedicated client for subscriptions - it enters subscriber mode where regular commands are unavailable.

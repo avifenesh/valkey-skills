@@ -285,11 +285,14 @@ The `Exec` method returns `([]any, error)`. The `raiseOnError` parameter control
 ## Streams
 
 ```go
-import "github.com/valkey-io/valkey-glide/go/v2/options"
+import (
+    "github.com/valkey-io/valkey-glide/go/v2/models"
+    "github.com/valkey-io/valkey-glide/go/v2/options"
+)
 
 // Add entry
-entryId, err := client.XAdd(ctx, "mystream", map[string]string{
-    "sensor": "temp", "value": "23.5",
+entryId, err := client.XAdd(ctx, "mystream", []models.FieldValue{
+    {Field: "sensor", Value: "temp"}, {Field: "value", Value: "23.5"},
 })
 
 // Read entries
@@ -360,7 +363,7 @@ CGO type mapping mismatches (`size_t` to `long/long long`) currently prevent Win
 | `Password` | `WithCredentials(&config.ServerCredentials{Password: "..."})` |
 | `Username` | `WithCredentials(&config.ServerCredentials{Username: "...", Password: "..."})` |
 | `DB` | `WithDatabaseId(0)` |
-| `DialTimeout` | `WithRequestTimeout(ms)` |
+| `DialTimeout` | `WithRequestTimeout(time.Duration)` |
 | `ReadTimeout` | Part of `WithRequestTimeout` |
 | `TLSConfig` | `WithUseTLS(true)` |
 | `PoolSize` | Not needed - single multiplexed connection |

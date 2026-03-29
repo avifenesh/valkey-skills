@@ -89,7 +89,7 @@ using static Valkey.Glide.ConnectionConfiguration;
 
 var config = new StandaloneClientConfigurationBuilder()
     .WithAddress("localhost", 6379)
-    .WithTLS(true)
+    .WithTls(true)
     .WithCredentials("myuser", "mypass")
     .WithRequestTimeout(5000)
     .WithDatabaseId(0)
@@ -260,7 +260,7 @@ catch (OperationCanceledException)
 | Configuration | Connection string or `ConfigurationOptions` | `StandaloneClientConfigurationBuilder` |
 | Fire-and-forget | `CommandFlags.FireAndForget` | Not supported - all commands return results |
 | Keys/values | `RedisKey` / `RedisValue` types | Strings |
-| Transactions | `ITransaction` with conditions | `Batch` API (when available) |
+| Transactions | `ITransaction` with conditions | Not yet available |
 
 Both libraries use multiplexed connections and async/await - the programming model is similar.
 
@@ -342,11 +342,11 @@ RedisValue val = await db.HashGetAsync("hash", "f1");
 
 **GLIDE:**
 ```csharp
-await client.HSet("hash", new Dictionary<string, string> {
+await client.HSetAsync("hash", new Dictionary<string, string> {
     { "f1", "v1" },
     { "f2", "v2" },
 });
-var val = await client.HGet("hash", "f1");
+var val = await client.HGetAsync("hash", "f1");
 ```
 
 ### Other Data Types
@@ -355,10 +355,10 @@ The pattern is consistent - `RedisValue[]`/`RedisKey[]` become `string[]`, and t
 
 ```csharp
 // StackExchange.Redis                               // GLIDE
-db.ListLeftPushAsync("l", new RedisValue[]{"a"})     client.LPush("l", new string[]{"a"})
-db.SetAddAsync("s", new RedisValue[]{"a"})           client.SAdd("s", new string[]{"a"})
-db.KeyDeleteAsync(new RedisKey[]{"k1","k2"})         client.Del(new string[]{"k1","k2"})
-db.SortedSetAddAsync("z", new SortedSetEntry[]{      client.ZAdd("z", new Dictionary<string,double>{
+db.ListLeftPushAsync("l", new RedisValue[]{"a"})     await client.LPushAsync("l", new string[]{"a"})
+db.SetAddAsync("s", new RedisValue[]{"a"})           await client.SAddAsync("s", new string[]{"a"})
+db.KeyDeleteAsync(new RedisKey[]{"k1","k2"})         await client.DelAsync(new string[]{"k1","k2"})
+db.SortedSetAddAsync("z", new SortedSetEntry[]{      await client.ZAddAsync("z", new Dictionary<string,double>{
     new("alice", 1.0)})                                  {"alice", 1.0}})
 ```
 

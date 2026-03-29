@@ -134,7 +134,7 @@ client = Valkey.new(
 
 ## Command Coverage
 
-The Ruby client implements commands across 20 modules:
+The Ruby client implements commands across 20 modules. Coverage based on published module list. Verify against current source for implementation status.
 
 | Module | Commands |
 |--------|----------|
@@ -232,6 +232,8 @@ ack_count = client.xack("mystream", "mygroup", "1234567890123-0")
 
 ## OpenTelemetry
 
+OTel integration is documented from source but should be verified for the current development stage.
+
 Built-in tracing support:
 
 ```ruby
@@ -256,6 +258,8 @@ client.get("key")
 ---
 
 ## Client Statistics
+
+Note: `client.statistics` availability should be verified against current source - may be aspirational.
 
 ```ruby
 client = Valkey.new
