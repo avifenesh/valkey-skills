@@ -122,7 +122,7 @@ async def recover_stuck_messages(redis, queue_name: str, timeout_secs: int = 300
 
 ## Stream-Based Queue (XADD/XREADGROUP)
 
-Streams with consumer groups provide the most robust queue implementation: at-least-once delivery, automatic redelivery, consumer load balancing, and message history.
+Streams with consumer groups provide the most robust queue implementation: at-least-once delivery, pending message tracking with explicit claim/recovery (XCLAIM/XAUTOCLAIM), consumer load balancing, and message history.
 
 ### Setup
 

@@ -1,6 +1,6 @@
 # Stream Commands
 
-Use when you need an append-only log with consumer groups - event sourcing, reliable messaging, activity feeds, change data capture, or task distribution across multiple consumers. Streams provide at-least-once delivery, automatic redelivery, and load balancing.
+Use when you need an append-only log with consumer groups - event sourcing, reliable messaging, activity feeds, change data capture, or task distribution across multiple consumers. Streams provide at-least-once delivery, pending message tracking with explicit recovery (XCLAIM/XAUTOCLAIM), and consumer load balancing.
 
 ---
 
