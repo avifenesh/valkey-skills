@@ -77,26 +77,17 @@ Queries jemalloc's `experimental.utilization.batch_query` to get the slab
 stats for the pointer's allocation: number of free slots, total slots, and
 slab size. Then calls `makeDefragDecision()`:
 
-**Note:** The pseudocode below is a simplification. The actual comparison in
-`allocator_defrag.c` uses weighted slab utilization:
-`1000 * nalloced * curr_nonfull_slabs > (1000 + 125) * allocated_nonfull`.
+The decision follows these rules:
 
-```c
-static inline int makeDefragDecision(jeBinInfo *bin_info,
-                                     jemallocBinUsageData *bin_usage,
-                                     unsigned long nalloced) {
-    // Don't defrag full slabs or bins with only 1 nonfull slab
-    if (bin_info->nregs == nalloced || bin_usage->curr_nonfull_slabs < 2)
-        return 0;
-    // Defrag if slab is less than 1/8 full (12.5%)
-    if (1000 * nalloced < bin_info->nregs * 125)
-        return 1;
-    // Defrag if slab utilization < average * 1.125
-    if (utilization > average_threshold)
-        return 0;
-    return 1;
-}
-```
+- Full slab (`nalloced == nregs`) -> no defrag needed
+- Fewer than 2 nonfull slabs -> no defrag needed
+- Less than 1/8 full (`1000 * nalloced < nregs * 125`) -> yes, defrag
+
+Otherwise, the decision uses a weighted average across nonfull slabs:
+
+    1000 * nalloced * curr_nonfull_slabs > (1000 + 125) * allocated_nonfull
+
+This checks whether a bin's allocation density is below 87.5% of the average across nonfull slabs (the 125/1000 = 12.5% threshold).
 
 ### Defrag-Aware Allocation
 

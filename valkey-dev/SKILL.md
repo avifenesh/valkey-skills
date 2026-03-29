@@ -11,6 +11,16 @@ argument-hint: "[topic]"
 
 Browse by subsystem below or ask about a specific topic. Each link leads to a focused reference doc with struct definitions, function signatures, and implementation details verified against the actual C source.
 
+## Routing
+
+- Building/compiling -> Build & Test
+- Crash/hang investigation -> Architecture (event-loop), Threading, Monitoring (debug)
+- Data type behavior -> Data Structures, Config (encoding-transitions)
+- Performance work -> Threading, Memory, Monitoring (latency)
+- New command implementation -> Architecture (command-dispatch), Modules
+- Test writing -> Build & Test (tcl-tests, unit-tests)
+- Security/auth -> Security (acl, tls)
+- Replication/HA -> Replication, Cluster, Sentinel
 
 ## Quick Start
 

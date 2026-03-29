@@ -205,6 +205,14 @@ Reviewers look for:
 - Documentation needs identified
 - PR size - prefer small, focused changes
 
+## Common Mistakes
+
+- Forgetting DCO sign-off: use `git rebase --signoff HEAD~N` to fix
+- Wrong clang-format version: CI uses clang-format-18 specifically, other versions may produce different output
+- Targeting wrong branch: PRs should target `unstable`, not `main`
+- Missing `make distclean` between build mode changes (e.g., switching MALLOC or SANITIZER)
+- Large PRs: split refactoring from functional changes to ease backporting
+
 ## See Also
 
 - [Building Valkey](../build/building.md) - build prerequisites, make targets, and compiler options

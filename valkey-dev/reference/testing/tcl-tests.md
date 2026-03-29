@@ -4,6 +4,14 @@ Use when you need to run, understand, or write integration tests for Valkey. The
 
 ---
 
+## Quick Reference
+
+    ./runtest --verbose                           # Run all integration tests
+    ./runtest --single tests/unit/expire          # Run one test file
+    ./runtest --single tests/unit/expire --only "volatile*"  # Run matching tests
+    ./runtest --verbose --tags "-slow"            # Skip slow tests
+    ./runtest-moduleapi --verbose                 # Run module API tests
+
 ## Running Tests
 
 ### Entry Points

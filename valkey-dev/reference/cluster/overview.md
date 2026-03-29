@@ -246,12 +246,12 @@ The decision logic:
 
 ## See Also
 
-- [Cluster Failover](failover.md) - How PFAIL/FAIL detection leads to replica election and promotion when a primary becomes unreachable
-- [Slot Migration](slot-migration.md) - How slots are moved between nodes during resharding, both traditional key-by-key and atomic (Valkey 9.0+) approaches
-- [Sentinel Mode](../sentinel/sentinel-mode.md) - An alternative HA approach for non-cluster deployments, using external monitoring processes instead of the integrated cluster gossip protocol
-- [Replication Overview](../replication/overview.md) - The PSYNC protocol and replication backlog that underpin data synchronization between primaries and replicas within each shard
-- [Event Loop](../architecture/event-loop.md) - The cluster bus listener registers file events on the ae event loop. `clusterBeforeSleep()` runs in the `beforeSleep` hook for deferred cluster actions, and `clusterCron()` runs as part of `serverCron` for periodic gossip, PFAIL detection, and migration checks.
-- [Networking Layer](../architecture/networking.md) - Cluster bus connections use the same `connection *` abstraction and event-driven I/O model as client connections, dispatched through the `ConnectionType` vtable
-- [Command Dispatch](../architecture/command-dispatch.md) - Step 6 of `processCommand()` checks cluster slot ownership via `getNodeByQuery()` and sends MOVED/ASK redirects before command execution
-- [kvstore](../valkey-specific/kvstore.md) - In cluster mode, each `serverDb` uses a kvstore with 16,384 hashtables (one per slot), enabling per-slot operations like `CLUSTER GETKEYSINSLOT` and efficient slot migration
-- [Hashtable](../data-structures/hashtable.md) - The backing structure for per-slot keyspaces within kvstore; note that cluster slot assignment uses CRC16 hashing while the hashtable internally uses SipHash
+- [Cluster Failover](failover.md) - PFAIL/FAIL detection and replica election
+- [Slot Migration](slot-migration.md) - Resharding via MIGRATE and atomic migration (9.0+)
+- [Sentinel Mode](../sentinel/sentinel-mode.md) - Alternative HA for non-cluster deployments
+- [Replication Overview](../replication/overview.md) - PSYNC and replication backlog for intra-shard sync
+- [Event Loop](../architecture/event-loop.md) - Cluster bus uses ae file events; clusterCron runs in serverCron
+- [Networking Layer](../architecture/networking.md) - Cluster bus uses the same connection abstraction as clients
+- [Command Dispatch](../architecture/command-dispatch.md) - processCommand checks slot ownership before execution
+- [kvstore](../valkey-specific/kvstore.md) - Per-slot hashtable organization in cluster mode
+- [Hashtable](../data-structures/hashtable.md) - Backing structure for per-slot keyspaces

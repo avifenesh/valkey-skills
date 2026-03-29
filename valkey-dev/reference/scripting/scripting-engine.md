@@ -269,6 +269,25 @@ To add a new language engine as a Valkey module:
 
 The engine's name appears in shebang lines: `#!engine_name` for EVAL scripts and `#!engine_name name=libname` for function libraries.
 
+Minimal skeleton:
+
+```c
+int MyEngine_OnLoad(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int argc) {
+    ValkeyModule_Init(ctx, "myengine", 1, VALKEYMODULE_APIVER_1);
+
+    ValkeyModuleScriptingEngineCtx *engine = ValkeyModule_CreateScriptingEngine(
+        ctx,
+        "MYENG",           /* engine name */
+        my_compile_code,   /* compileFn */
+        my_call_function,  /* callFn */
+        my_get_used_mem,   /* getUsedMemFn */
+        my_get_mem_overhead, /* getEngineMemOverheadFn */
+        my_free_function   /* freeFn */
+    );
+    return VALKEYMODULE_OK;
+}
+```
+
 ## Engine Iterator
 
 ```c

@@ -259,10 +259,10 @@ The replica reads until it finds the EOF marker, knowing the transfer is complet
 
 ## See Also
 
-- [Replication Overview](../replication/overview.md) - RDB is used for full resync: the primary generates an RDB snapshot and sends it to replicas via BGSAVE or diskless transfer
-- [Dual-Channel Replication](../replication/dual-channel.md) - RDB transfer happens over a dedicated RDB channel, separate from the replication stream
-- [AOF Persistence](aof.md) - The `aof-use-rdb-preamble` option writes an RDB snapshot as the AOF BASE file during AOF rewrite
-- [Data Structure Encoding](../data-structures/encoding-transitions.md) - RDB object types (e.g., `RDB_TYPE_HASH_LISTPACK` vs `RDB_TYPE_HASH_2`) correspond to the in-memory encoding of each data type. The encoding determines the serialization format used by `rdbSaveObject()` and `rdbLoadObject()`.
-- [Hashtable](../data-structures/hashtable.md) - Hashtable-encoded Hashes, Sets, and Sorted Sets are serialized by iterating all entries via the hashtable API
-- [Listpack](../data-structures/listpack.md) - Listpack-encoded objects are serialized as raw byte blobs (`rdbSaveRawString` of the listpack bytes)
-- [Architecture Event Loop](../architecture/event-loop.md) - BGSAVE forks from the main process; `checkChildrenDone()` in `serverCron` monitors child completion via the event loop timer
+- [Replication Overview](../replication/overview.md) - RDB used for full resync
+- [Dual-Channel Replication](../replication/dual-channel.md) - RDB transfer over dedicated channel
+- [AOF Persistence](aof.md) - aof-use-rdb-preamble writes RDB as AOF BASE file
+- [Data Structure Encoding](../data-structures/encoding-transitions.md) - RDB types correspond to in-memory encodings
+- [Hashtable](../data-structures/hashtable.md) - Hashtable-encoded types serialized via hashtable API
+- [Listpack](../data-structures/listpack.md) - Listpack-encoded objects serialized as raw byte blobs
+- [Architecture Event Loop](../architecture/event-loop.md) - BGSAVE fork monitored by serverCron

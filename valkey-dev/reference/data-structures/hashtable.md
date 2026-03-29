@@ -240,9 +240,9 @@ uint64_t hashtableGenCaseHashFunction(const char *buf, size_t len);
 
 ## See Also
 
-- [../valkey-specific/kvstore.md](../valkey-specific/kvstore.md) - Multi-index wrapper that manages an array of hashtables for the keyspace and cluster slots
-- [dict.md](dict.md) - The legacy chained hash table that this replaced in Valkey 8.1
-- [encoding-transitions.md](encoding-transitions.md) - When Valkey transitions from listpack to hashtable encoding
-- [../valkey-specific/object-lifecycle.md](../valkey-specific/object-lifecycle.md) - The `robj` entries stored in the hashtable
-- [../cluster/overview.md](../cluster/overview.md) - Cluster hash slots use CRC16 (`crc16(key) & 0x3FFF`) to map keys to one of 16,384 slots. The hashtable itself uses SipHash internally, but the slot assignment is a separate CRC16-based mapping.
-- [../persistence/rdb.md](../persistence/rdb.md) - RDB serializes hashtable-encoded Hashes, Sets, and Sorted Sets by iterating all entries via the hashtable API
+- [../valkey-specific/kvstore.md](../valkey-specific/kvstore.md) - Multi-index wrapper managing arrays of hashtables
+- [dict.md](dict.md) - Legacy chained hash table replaced in Valkey 8.1
+- [encoding-transitions.md](encoding-transitions.md) - When listpack transitions to hashtable encoding
+- [../valkey-specific/object-lifecycle.md](../valkey-specific/object-lifecycle.md) - The robj entries stored in the hashtable
+- [../cluster/overview.md](../cluster/overview.md) - Cluster slots use CRC16; hashtable uses SipHash internally
+- [../persistence/rdb.md](../persistence/rdb.md) - RDB serializes hashtable-encoded types via the hashtable API
