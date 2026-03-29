@@ -1,11 +1,15 @@
 ---
 name: valkey-dev
-description: "Use when contributing to the Valkey server codebase, understanding internals, building from source, writing tests, navigating the C code, writing modules, or reviewing PRs in the valkey-io/valkey repository."
+description: "Use when contributing to the Valkey server codebase, understanding Valkey architecture or internals, building from source, writing tests, navigating the C code, writing modules, reviewing PRs in valkey-io/valkey, debugging Valkey, or working with Valkey cluster, replication, or data structures."
+version: 1.0.0
+argument-hint: "[topic]"
 ---
 
 # Valkey Contributor Reference
 
 58 source-verified reference docs covering every major subsystem of the Valkey server.
+
+Browse by subsystem below or ask about a specific topic. Each link leads to a focused reference doc with struct definitions, function signatures, and implementation details verified against the actual C source.
 
 
 ## Quick Start
@@ -171,7 +175,7 @@ description: "Use when contributing to the Valkey server codebase, understanding
 | Rust module SDK, valkey-module crate, C-vs-Rust comparison | [rust-sdk](reference/modules/rust-sdk.md) |
 
 
-## Valkey-Specific Innovations
+## Valkey-Specific Subsystems
 
 | Topic | Reference |
 |-------|-----------|
@@ -179,7 +183,7 @@ description: "Use when contributing to the Valkey server codebase, understanding
 | robj with embedded key/expire, encoding management | [object-lifecycle](reference/valkey-specific/object-lifecycle.md) |
 | Pluggable connection type framework (TCP/TLS/Unix/RDMA) | [transport-layer](reference/valkey-specific/transport-layer.md) |
 | RDMA transport protocol, Linux-only, page-aligned buffers | [rdma](reference/valkey-specific/rdma.md) |
-| Volatile set - adaptive expiry-aware set with SIMD probe | [vector-sets](reference/valkey-specific/vector-sets.md) |
+| Volatile set (vset) - adaptive expiry-aware set with SIMD probe | [vset](reference/valkey-specific/vset.md) |
 
 
 ## Build & Test

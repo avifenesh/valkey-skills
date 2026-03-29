@@ -221,4 +221,4 @@ The tree is memory-sparse compared to a traditional trie because compressed node
 ## See Also
 
 - [listpack.md](listpack.md) - Stored as values in the rax for Stream entries
-- [../valkey-specific/vector-sets.md](../valkey-specific/vector-sets.md) - The vset uses a rax for time-bucket organization at scale
+- [../valkey-specific/vset.md](../valkey-specific/vset.md) - The vset uses a rax for time-bucket organization at scale
