@@ -377,6 +377,49 @@ No manual SHA management. GLIDE caches the script automatically.
 
 ---
 
+## Server Modules (JSON and Vector Search)
+
+Requires JSON and Search modules loaded on the Valkey server. Use `GlideJson` for JSON document operations and `GlideFt` for search/vector indexing. Both use `customCommand` internally and work with standalone and cluster clients.
+
+### JSON - Store and Retrieve Documents
+
+```typescript
+import { GlideJson } from "@valkey/valkey-glide";
+
+// Store a JSON document
+await GlideJson.set(client, "user:1", "$", JSON.stringify({
+    name: "Alice", age: 30, tags: ["admin"],
+}));
+
+// Read a nested value (JSONPath returns a JSON array string)
+const name = await GlideJson.get(client, "user:1", { path: "$.name" });
+// '["Alice"]'
+
+// Increment a numeric field
+await GlideJson.numincrby(client, "user:1", "$.age", 1);
+
+// Append to an array
+await GlideJson.arrappend(client, "user:1", "$.tags", ['"developer"']);
+```
+
+### Vector Search - Create Index and Search
+
+```typescript
+import { GlideFt } from "@valkey/valkey-glide";
+
+// Create an index on HASH keys with text and tag fields
+await GlideFt.create(client, "article_idx", [
+    { type: "TEXT", name: "title" },
+    { type: "TAG", name: "category" },
+], { dataType: "HASH", prefixes: ["article:"] });
+
+// Search by tag filter
+const results = await GlideFt.search(client, "article_idx", "@category:{tech}");
+// results[0] = total count, results[1] = document records
+```
+
+---
+
 ## Migration from ioredis
 
 ### Key Differences

@@ -16,6 +16,7 @@ Browse by subsystem below or ask about a specific topic. Each link leads to a fo
 - Building/compiling -> Build & Test
 - Crash/hang investigation -> Architecture (event-loop), Threading, Monitoring (debug)
 - Data type behavior -> Data Structures, Config (encoding-transitions)
+- Eviction/maxmemory/LRU/LFU -> Memory (eviction)
 - Performance work -> Threading, Memory, Monitoring (latency)
 - New command implementation -> Architecture (command-dispatch), Modules
 - Test writing -> Build & Test (tcl-tests, unit-tests)
@@ -113,6 +114,7 @@ Browse by subsystem below or ask about a specific topic. Each link leads to a fo
 | zmalloc wrapper, jemalloc integration, memory tracking | [zmalloc](reference/memory/zmalloc.md) |
 | Background deletion (UNLINK), async free via BIO | [lazy-free](reference/memory/lazy-free.md) |
 | Active defragmentation in 500us cycles, slab analysis | [defragmentation](reference/memory/defragmentation.md) |
+| Eviction policies, LRU/LFU approximation, maxmemory enforcement | [eviction](reference/memory/eviction.md) |
 
 
 ## Threading

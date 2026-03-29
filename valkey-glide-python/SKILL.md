@@ -394,6 +394,49 @@ GLIDE automatically resubscribes on reconnection. Use a dedicated client for sub
 
 ---
 
+## Server Modules (JSON and Vector Search)
+
+Requires JSON and Search modules loaded on the Valkey server. Import `glide_json` for JSON document operations and `ft` for search/vector indexing. Both use `customCommand` internally and work with standalone and cluster clients.
+
+### JSON - Store and Retrieve Documents
+
+```python
+from glide import glide_json
+
+# Store a JSON document
+await glide_json.set(client, "user:1", "$", '{"name":"Alice","age":30,"tags":["admin"]}')
+
+# Read a nested value (JSONPath returns an array)
+name = await glide_json.get(client, "user:1", "$.name")  # b'["Alice"]'
+
+# Increment a numeric field
+await glide_json.numincrby(client, "user:1", "$.age", 1)
+
+# Append to an array
+await glide_json.arrappend(client, "user:1", "$.tags", ['"developer"'])
+```
+
+### Vector Search - Create Index and Search
+
+```python
+from glide import (
+    ft, FtCreateOptions, DataType, TextField, TagField,
+    VectorField, VectorAlgorithm, VectorFieldAttributesHnsw,
+    DistanceMetricType, VectorType,
+)
+
+# Create an index on HASH keys with text and tag fields
+schema = [TextField("title"), TagField("category")]
+options = FtCreateOptions(DataType.HASH, prefixes=["article:"])
+await ft.create(client, "article_idx", schema, options)
+
+# Search by tag filter
+results = await ft.search(client, "article_idx", "@category:{tech}")
+# results: [total_count, [{"key": ..., "fields": {...}}, ...]]
+```
+
+---
+
 ## Migration from redis-py
 
 ### Key Differences

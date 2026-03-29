@@ -375,6 +375,48 @@ Spring Data Valkey provides GLIDE as a first-class driver.
 
 ---
 
+## Server Modules (JSON and Vector Search)
+
+Requires JSON and Search modules loaded on the Valkey server. Use `Json` for JSON document operations and `FT` for search/vector indexing. Both use `customCommand` internally and work with standalone and cluster clients.
+
+### JSON - Store and Retrieve Documents
+
+```java
+import glide.api.commands.servermodules.Json;
+
+// Store a JSON document
+Json.set(client, "user:1", "$", "{\"name\":\"Alice\",\"age\":30}").get();
+
+// Read a nested value (JSONPath returns a JSON array string)
+String name = Json.get(client, "user:1", new String[]{"$.name"}).get();
+// "[\"Alice\"]"
+
+// Increment a numeric field
+Json.numincrby(client, "user:1", "$.age", 1).get();
+```
+
+### Vector Search - Create Index and Search
+
+```java
+import glide.api.commands.servermodules.FT;
+import glide.api.models.commands.FT.FTCreateOptions;
+import glide.api.models.commands.FT.FTCreateOptions.*;
+
+// Create an index on HASH keys with text and tag fields
+FieldInfo[] schema = new FieldInfo[] {
+    new FieldInfo("title", new TextField()),
+    new FieldInfo("category", new TagField()),
+};
+FT.create(client, "article_idx", schema, FTCreateOptions.builder()
+    .dataType(DataType.HASH).prefixes(new String[]{"article:"}).build()).get();
+
+// Search by tag filter
+Object[] results = FT.search(client, "article_idx", "@category:{tech}").get();
+// results[0] = total count, results[1..] = document key/value pairs
+```
+
+---
+
 ## Migration from Jedis
 
 ### Key Differences
