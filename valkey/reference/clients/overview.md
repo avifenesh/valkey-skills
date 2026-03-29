@@ -24,7 +24,7 @@ GLIDE (General Language Independent Driver for the Enterprise) is the official V
 - **Auto-pipelining**: Commands are automatically batched, reducing round-trips without explicit pipeline management
 - **Single connection per node**: Multiplexed design eliminates connection pool sizing decisions
 - **Rust core**: One implementation shared across all languages, reducing per-language bugs
-- **First-class Valkey support**: Immediate support for new Valkey commands (SET IFEQ, DELIFEQ, hash field TTL)
+- **First-class Valkey support**: Immediate support for new Valkey commands ([SET IFEQ, DELIFEQ](../valkey-features/conditional-ops.md), [hash field TTL](../valkey-features/hash-field-ttl.md))
 - **Cluster-aware**: Automatic topology discovery, redirect handling, and reconnection
 
 ### Installation
@@ -159,7 +159,7 @@ Traditional clients use one connection per concurrent operation. You need to con
 
 - **Pool size**: Start with `(CPU cores * 2)` connections
 - **Idle timeout**: Set to reclaim unused connections
-- **Separate pools for pub/sub**: Subscriber connections are monopolized and cannot serve other commands
+- **Separate pools for pub/sub**: Subscriber connections are monopolized and cannot serve other commands (see [Pub/Sub Commands](../commands/pubsub.md))
 
 ```javascript
 // ioredis example
@@ -243,7 +243,29 @@ Valkey 8.1+ offloads TLS handshakes to I/O threads, minimizing TLS overhead on m
 
 ## See Also
 
-- [Compatibility and Migration](../overview/compatibility.md) - migration from Redis clients
-- [Security: Auth and ACL](../security/auth-and-acl.md) - authentication setup
+**Best Practices**:
+- [Performance Best Practices](../best-practices/performance.md) - connection pooling and pipelining guidance
+- [Cluster Best Practices](../best-practices/cluster.md) - cluster-aware client behavior, redirects, and replica reads
+- [High Availability Best Practices](../best-practices/high-availability.md) - Sentinel-aware client configuration and retry strategies
+- [Key Best Practices](../best-practices/keys.md) - CLUSTER KEYSLOT for verifying key design
+- [Memory Best Practices](../best-practices/memory.md) - client-side caching to reduce server memory pressure
+- [Persistence Best Practices](../best-practices/persistence.md) - reconnection behavior after server restart
+
+**Patterns**:
+- [Caching Patterns](../patterns/caching.md) - client-side caching with CLIENT TRACKING
+- [Queue Patterns](../patterns/queues.md) - dedicated connections for blocking queue consumers
+- [Pub/Sub Patterns](../patterns/pubsub-patterns.md) - dedicated subscriber connections and PubSub state restoration
+- [Lock Patterns](../patterns/locks.md) - Redlock library implementations across languages
+- [Session Patterns](../patterns/sessions.md) - connection patterns for session middleware
+
+**Security**:
+- [Security: Auth and ACL](../security/auth-and-acl.md) - authentication and TLS setup
+
+**Valkey Features**:
 - [Performance Summary](../valkey-features/performance-summary.md) - auto-pipelining and I/O threading benefits
-- [Performance Best Practices](../best-practices/performance.md) - connection pooling and pipelining
+- [Conditional Operations](../valkey-features/conditional-ops.md) - SET IFEQ, DELIFEQ command support
+- [Hash Field TTL](../valkey-features/hash-field-ttl.md) - HSETEX, HEXPIRE, HGETEX command support
+- [Compatibility and Migration](../overview/compatibility.md) - migration from Redis clients
+
+**Anti-Patterns**:
+- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - one-connection-per-request, missing pipelining, and other client pitfalls

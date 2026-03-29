@@ -13,15 +13,15 @@ Use when reviewing application code for common Valkey mistakes, or as a checklis
 | `HGETALL` on huge hashes | Returns all fields at once. Hashes with thousands of fields cause latency spikes and high bandwidth usage. | Use `HMGET` for specific fields, or `HSCAN` to iterate in batches. |
 | `SMEMBERS` on huge sets | Same issue as HGETALL - returns the entire set in one response, blocking the server. | Use `SSCAN` with cursor iteration. |
 | No `maxmemory` set | Valkey grows unbounded until the OS OOM-kills the process. All data is lost. | Set `maxmemory` to ~75% of available RAM. Leave headroom for fork overhead and fragmentation. |
-| No authentication | Anyone who can reach the port can read, write, and delete all data. | Set `requirepass` or configure ACL users. See [auth and ACL](../security/auth-and-acl.md). |
-| One connection per request | TCP connection setup is expensive (especially with TLS). Exhausts server connection limits under load. | Use connection pools (traditional clients) or GLIDE's multiplexed connections. |
+| No authentication | Anyone who can reach the port can read, write, and delete all data. | Set `requirepass` or configure ACL users. See [Auth and ACL](../security/auth-and-acl.md). |
+| One connection per request | TCP connection setup is expensive (especially with TLS). Exhausts server connection limits under load. | Use connection pools (traditional clients) or GLIDE's multiplexed connections. See [Clients Overview](../clients/overview.md). |
 | `FLUSHALL` accessible | An application bug or compromised credential can wipe all data instantly. | Rename or disable the command via `rename-command` or ACL restrictions. |
 | Short cryptic key names | Saves negligible memory (keys are small relative to values) but makes debugging and operations painful. | Use readable colon-delimited names: `user:1000:profile`, `cache:api:products:page:1`. |
-| Single hot key for counters | In cluster mode, all operations on one key go to one shard. Creates a bottleneck under high write rates. | Shard the key: `counter:{0}`, `counter:{1}`, ..., `counter:{N}`. Sum across shards when reading. |
+| Single hot key for counters | In cluster mode, all operations on one key go to one shard. Creates a bottleneck under high write rates. | Shard the key: `counter:{0}`, `counter:{1}`, ..., `counter:{N}`. Sum across shards when reading. See [Counter Patterns](../patterns/counters.md). |
 | Storing values > 1 MB | Large values cause network and memory pressure. Slow reads, high bandwidth, increased fragmentation. | Compress values before storing. For truly large objects, use object storage (S3, GCS) and store only the reference in Valkey. |
 | Multiple databases in production (pre-9.0) | Databases share everything (memory, CPU, connections). No isolation. `FLUSHDB` on the wrong database is catastrophic. | Use separate instances for workload isolation. In Valkey 9.0+ cluster mode, numbered databases are available but still share resources. |
-| Missing TTL on cache entries | Keys without TTL live forever. Memory fills up with stale data until eviction kicks in (if configured) or OOM. | Always set TTL at write time: `SET key value EX 3600`. Use `allkeys-lru` eviction as a safety net. |
-| Sequential commands without pipelining | Each command incurs a full network round-trip. N commands = N round-trips. | Use pipelining to batch commands. Up to 10x throughput improvement. GLIDE auto-pipelines by default. |
+| Missing TTL on cache entries | Keys without TTL live forever. Memory fills up with stale data until eviction kicks in (if configured) or OOM. | Always set TTL at write time: `SET key value EX 3600`. Use `allkeys-lru` eviction as a safety net. See [Caching Patterns](../patterns/caching.md). |
+| Sequential commands without pipelining | Each command incurs a full network round-trip. N commands = N round-trips. | Use pipelining to batch commands. Up to 10x throughput improvement. GLIDE auto-pipelines by default. See [Clients Overview](../clients/overview.md). |
 | Using `WATCH` + `MULTI` for complex logic | Cannot use intermediate results inside a transaction. Frequent retries under contention waste resources. | Use Lua scripts or Functions for read-then-write atomic operations. |
 | Pub/Sub for durable messaging | Pub/sub is fire-and-forget. Messages are lost if no subscriber is listening when the message is published. | Use Streams with consumer groups for at-least-once delivery and durable messaging. |
 | Unbounded list/stream growth | Lists and streams without size limits grow indefinitely, consuming all available memory. | Use `LTRIM` to cap lists. Use `XTRIM` with `MAXLEN` or `MINID` to cap streams. |
@@ -107,14 +107,14 @@ Never use `KEYS` in production. Period. Use `SCAN` with a cursor. Accept that SC
 
 ### "Should I use Pub/Sub or Streams?"
 
-- **Pub/Sub**: Real-time notifications where message loss is acceptable (typing indicators, presence updates)
-- **Streams**: Any case where messages must not be lost (task queues, event sourcing, audit logs)
+- **Pub/Sub**: Real-time notifications where message loss is acceptable (typing indicators, presence updates) - see [Pub/Sub Commands](../commands/pubsub.md) and [Pub/Sub Patterns](../patterns/pubsub-patterns.md)
+- **Streams**: Any case where messages must not be lost (task queues, event sourcing, audit logs) - see [Stream Commands](../commands/streams.md) and [Queue Patterns](../patterns/queues.md)
 
 ### "Should I use MULTI/EXEC or Lua?"
 
-- **MULTI/EXEC**: Batching independent writes atomically (no read-then-write logic needed)
-- **Lua / Functions**: Atomic read-then-write, conditional logic, compare-and-swap
-- **SET IFEQ / DELIFEQ**: Simple compare-and-swap or conditional delete (Valkey 8.1+/9.0+, no Lua needed)
+- **MULTI/EXEC**: Batching independent writes atomically (no read-then-write logic needed) - see [Transaction Commands](../commands/transactions.md)
+- **Lua / Functions**: Atomic read-then-write, conditional logic, compare-and-swap - see [Scripting and Functions](../commands/scripting.md)
+- **SET IFEQ / DELIFEQ**: Simple compare-and-swap or conditional delete (Valkey 8.1+/9.0+, no Lua needed) - see [Conditional Operations](../valkey-features/conditional-ops.md)
 
 ### "How big should my keys/values be?"
 
@@ -126,9 +126,36 @@ Never use `KEYS` in production. Period. Use `SCAN` with a cursor. Accept that SC
 
 ## See Also
 
-- [Security: Auth and ACL](../security/auth-and-acl.md) - authentication and permission patterns
+**Best Practices**:
 - [Performance Best Practices](../best-practices/performance.md) - SCAN vs KEYS, UNLINK vs DEL, pipelining
-- [Memory Best Practices](../best-practices/memory.md) - maxmemory, TTL strategies, encoding thresholds
+- [Memory Best Practices](../best-practices/memory.md) - `maxmemory`, TTL strategies, encoding thresholds
 - [Key Best Practices](../best-practices/keys.md) - key naming, big key mitigation
+- [Cluster Best Practices](../best-practices/cluster.md) - hash tags, hot key sharding, and multi-key operations
+- [High Availability Best Practices](../best-practices/high-availability.md) - retry strategies, idempotency for non-retryable commands
+- [Persistence Best Practices](../best-practices/persistence.md) - durability gaps and crash recovery
+
+**Patterns**:
+- [Caching Patterns](../patterns/caching.md) - TTL strategies and cache invalidation
+- [Counter Patterns](../patterns/counters.md) - sharded counters for hot key mitigation
+- [Lock Patterns](../patterns/locks.md) - lock without TTL and DEL without value check solutions
+- [Queue Patterns](../patterns/queues.md) - stream-based queues as alternative to pub/sub for durable messaging
+- [Pub/Sub Patterns](../patterns/pubsub-patterns.md) - when to use pub/sub vs streams
+- [Session Patterns](../patterns/sessions.md) - session TTL patterns for memory management
+- [Rate Limiting Patterns](../patterns/rate-limiting.md) - rate limit key TTL strategies
+- [Leaderboard Patterns](../patterns/leaderboards.md) - sorted set sizing and pagination
+- [Search and Autocomplete Patterns](../patterns/search-autocomplete.md) - SINTER vs SSCAN for large set operations
+
+**Security**:
+- [Security: Auth and ACL](../security/auth-and-acl.md) - authentication and permission patterns
+
+**Clients**:
+- [Clients Overview](../clients/overview.md) - GLIDE auto-pipelining, connection pooling, and multiplexed connections
+
+**Valkey Features**:
 - [Performance Summary](../valkey-features/performance-summary.md) - pipelining and I/O threading benefits
-- [Clients Overview](../clients/overview.md) - GLIDE auto-pipelining vs manual pipeline management
+- [Conditional Operations](../valkey-features/conditional-ops.md) - SET IFEQ and DELIFEQ as alternatives to Lua
+
+**Commands**:
+- [Scripting and Functions](../commands/scripting.md) - Lua scripts and server-side Functions
+- [Transaction Commands](../commands/transactions.md) - MULTI/EXEC and WATCH
+- [Stream Commands](../commands/streams.md) - durable messaging alternative to Pub/Sub

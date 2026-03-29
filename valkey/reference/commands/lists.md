@@ -362,5 +362,11 @@ LPOP stack    -- "item2" (last in, first out)
 ## See Also
 
 - [Queue Patterns](../patterns/queues.md) - task queues using LPUSH/BRPOP and LMOVE
+- [Stream Commands](streams.md) - durable messaging alternative when at-least-once delivery is required
+- [Counter Patterns](../patterns/counters.md) - bounded event logs with LPUSH/LTRIM
+- [Session Patterns](../patterns/sessions.md) - activity feeds stored as capped lists
+- [Performance Summary](../valkey-features/performance-summary.md) - iterator prefetch speeds up SCAN-family commands (8.1+)
 - [Performance Best Practices](../best-practices/performance.md) - pipelining for batch list operations
+- [Key Best Practices](../best-practices/keys.md) - key naming conventions for queues and logs
+- [Memory Best Practices](../best-practices/memory.md) - list encoding thresholds (listpack vs quicklist)
 - [Anti-Patterns](../anti-patterns/quick-reference.md) - unbounded list growth, blocking commands on shared connections

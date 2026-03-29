@@ -282,5 +282,14 @@ SSUBSCRIBE {user:1000}:presence
 - [Queue Patterns](queues.md) - stream-based queues for reliable message processing
 - [Session Patterns](sessions.md) - keyspace notifications for session expiration handling
 - [Caching Patterns](caching.md) - client-side caching with server-assisted invalidation
+- [Counter Patterns](counters.md) - keyspace notifications on counter changes
+- [Key Best Practices](../best-practices/keys.md) - channel naming conventions
+- [Cluster Best Practices](../best-practices/cluster.md) - sharded pub/sub routing and hash slot considerations
+- [Performance Best Practices](../best-practices/performance.md) - subscriber memory and buffer limits
+- [High Availability Best Practices](../best-practices/high-availability.md) - reconnection and resubscription during failover
+- [Memory Best Practices](../best-practices/memory.md) - subscriber output buffer memory impact
+- [Security: Auth and ACL](../security/auth-and-acl.md) - channel-level ACL restrictions for pub/sub
+- [Clients Overview](../clients/overview.md) - dedicated subscriber connections and PubSub state restoration
+- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - pub/sub for durable messaging, blocking commands on shared connections
 - valkey-ops [configuration/pubsub](../../valkey-ops/reference/configuration/pubsub.md) - buffer limits, sharded pub/sub config, pattern performance
 - valkey-ops [performance/client-caching](../../valkey-ops/reference/performance/client-caching.md) - CLIENT TRACKING configuration

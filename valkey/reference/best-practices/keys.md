@@ -244,8 +244,39 @@ MEMORY DOCTOR
 
 ## See Also
 
+**Best Practices**:
 - [Memory Best Practices](memory.md) - encoding thresholds and memory-efficient data modeling
 - [Performance Best Practices](performance.md) - SCAN vs KEYS, UNLINK vs DEL
+- [Cluster Best Practices](cluster.md) - hash tags for multi-key commands, CLUSTERSCAN
 - [Persistence Best Practices](persistence.md) - how key design affects backup and recovery
+- [High Availability Best Practices](high-availability.md) - retry strategies, failover impact on keys
+
+**Commands**:
+- [Hash Commands](../commands/hashes.md) - HSET, HMGET, HSCAN for hash-based key patterns
+- [Server Commands](../commands/server.md) - SCAN, OBJECT, MEMORY USAGE, INFO keyspace
+
+**Patterns**:
+- [Caching Patterns](../patterns/caching.md) - client-side caching for hot key mitigation
+- [Counter Patterns](../patterns/counters.md) - sharded counters to avoid hot key bottlenecks
+- [Rate Limiting Patterns](../patterns/rate-limiting.md) - key naming for rate limit windows
+- [Session Patterns](../patterns/sessions.md) - session key naming conventions
+- [Lock Patterns](../patterns/locks.md) - lock key naming and TTL strategies
+- [Queue Patterns](../patterns/queues.md) - queue key naming conventions
+- [Leaderboard Patterns](../patterns/leaderboards.md) - time-bucketed leaderboard key naming
+- [Pub/Sub Patterns](../patterns/pubsub-patterns.md) - channel naming conventions
+
+**Security**:
+- [Security: Auth and ACL](../security/auth-and-acl.md) - ACL key patterns for namespace-based access control
+
+**Clients**:
+- [Clients Overview](../clients/overview.md) - client-side key slot verification with CLUSTER KEYSLOT
+
+**Valkey Features**:
+- [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL instead of per-key expiration
+
+**Anti-Patterns**:
+- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - key-related anti-patterns at a glance
+
+**Ops**:
 - valkey-ops [performance/memory](../../valkey-ops/reference/performance/memory.md) - hash bucketing, memory diagnostics
 - valkey-ops [configuration/encoding](../../valkey-ops/reference/configuration/encoding.md) - encoding threshold tuning

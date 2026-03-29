@@ -27,7 +27,7 @@ Valkey 9.0 adds per-field TTL. Each hash field can have its own expiration time,
 | `HEXPIRETIME key FIELDS n field [field ...]` | Get absolute expiration time per field |
 | `HPEXPIRETIME key FIELDS n field [field ...]` | Get absolute expiration time (ms) per field |
 | `HPERSIST key FIELDS n field [field ...]` | Remove TTL from fields (make persistent) |
-| `HSETEX key [EX s \| PX ms] FIELDS n field value [field value ...]` | Set fields with TTL in one command |
+| `HSETEX key [NX \| XX] [FNX \| FXX] [EX s \| PX ms \| EXAT t \| PXAT t \| KEEPTTL] FIELDS n field value [field value ...]` | Set fields with TTL and optional conditions in one command |
 | `HGETEX key [EX s \| PX ms \| EXAT t \| PXAT t \| PERSIST] FIELDS n field [field ...]` | Get fields and set/refresh/remove TTL |
 
 The `FIELDS n` argument specifies the count of field names that follow.
@@ -167,9 +167,15 @@ Fields without TTL incur no additional overhead - the cost only applies to field
 
 ## See Also
 
-- [Hash Commands](../commands/hashes.md) - HEXPIRE, HSETEX, HGETEX, HGETDEL command details
-- [Session Patterns](../patterns/sessions.md) - per-field TTL for session tokens
-- [Memory Best Practices](../best-practices/memory.md) - hash field expiration memory overhead
+- [What is Valkey](../overview/what-is-valkey.md) - overview and Valkey-only feature list
+- [Compatibility and Migration](../overview/compatibility.md) - migrating from Redis to Valkey
 - [Conditional Operations](conditional-ops.md) - SET IFEQ and DELIFEQ
 - [Cluster Enhancements](cluster-enhancements.md) - numbered databases in cluster mode
+- [Polygon Geospatial Queries](geospatial.md) - GEOSEARCH BYPOLYGON (also 9.0)
+- [Performance Summary](performance-summary.md) - version-by-version throughput and latency gains
+- [Hash Commands](../commands/hashes.md) - HEXPIRE, HSETEX, HGETEX, HGETDEL command details
+- [String Commands](../commands/strings.md) - GETEX for key-level read-and-refresh TTL (analogous to HGETEX)
+- [Session Patterns](../patterns/sessions.md) - per-field TTL for session tokens
+- [Caching Patterns](../patterns/caching.md) - per-field freshness for cached API responses
+- [Memory Best Practices](../best-practices/memory.md) - hash field expiration memory overhead
 - For expiration internals: see valkey-dev `reference/config/expiry.md`

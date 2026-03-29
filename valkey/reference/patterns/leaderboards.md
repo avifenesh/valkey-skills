@@ -265,8 +265,17 @@ ZUNIONSTORE leaderboard:weekly:combined 7 \
 
 ## See Also
 
-- [Sorted Set Commands](../commands/sorted-sets.md) - ZADD, ZINCRBY, ZREVRANGE, ZREVRANK command reference
+- [Sorted Set Commands](../commands/sorted-sets.md) - ZADD, ZINCRBY, ZREVRANGE, ZREVRANK, ZUNIONSTORE
 - [Performance Summary](../valkey-features/performance-summary.md) - ZRANK 45% faster in Valkey 8.1+
-- [Key Best Practices](../best-practices/keys.md) - key naming for leaderboard keys
+- [Search and Autocomplete Patterns](search-autocomplete.md) - scored search results with sorted sets
+- [Counter Patterns](counters.md) - sharded counters for high-throughput score updates
+- [Caching Patterns](caching.md) - cache-aside for leaderboard snapshots
+- [Key Best Practices](../best-practices/keys.md) - key naming and TTL for time-bucketed leaderboards
 - [Performance Best Practices](../best-practices/performance.md) - pipelining bulk score updates
 - [Memory Best Practices](../best-practices/memory.md) - sorted set encoding thresholds
+- [Cluster Best Practices](../best-practices/cluster.md) - single-shard sorted set limits and sharding strategies
+- [High Availability Best Practices](../best-practices/high-availability.md) - replica reads for leaderboard dashboards
+- [Persistence Best Practices](../best-practices/persistence.md) - durability for leaderboard data
+- [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions for leaderboard key namespaces
+- [Clients Overview](../clients/overview.md) - auto-pipelining for bulk score updates
+- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - SORT on large collections, big key issues

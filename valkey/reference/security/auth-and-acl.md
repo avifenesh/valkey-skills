@@ -144,7 +144,7 @@ When requesting an ACL user, specify:
 | `@dangerous` | Potentially destructive commands (FLUSHALL, KEYS, DEBUG) |
 | `@scripting` | Lua scripting and Functions |
 
-View all categories at runtime: `ACL CAT`
+View all categories at runtime: `ACL CAT` (see [Server Commands](../commands/server.md) for ACL introspection)
 
 ---
 
@@ -232,14 +232,42 @@ r = redis.Redis(
 | Do not embed credentials in code | Use environment variables or secrets management |
 | Rotate passwords regularly | Coordinate with ops for password rotation |
 | Do not use the default user in production | Create a named ACL user for each application |
-| Avoid `@admin` and `@dangerous` | Your application should not need FLUSHALL, KEYS, or CONFIG |
-| Separate pub/sub connections | Subscriber connections are monopolized - use separate auth if needed |
+| Avoid `@admin` and `@dangerous` | Your application should not need FLUSHALL, KEYS, or CONFIG (see [Anti-Patterns](../anti-patterns/quick-reference.md)) |
+| Separate pub/sub connections | Subscriber connections are monopolized - use separate auth if needed (see [Pub/Sub Commands](../commands/pubsub.md)) |
 
 ---
 
 ## See Also
 
-- [Anti-Patterns](../anti-patterns/quick-reference.md) - security anti-patterns (no auth, FLUSHALL accessible)
-- [Clients Overview](../clients/overview.md) - TLS configuration per client library
+**Best Practices**:
+- [Performance Best Practices](../best-practices/performance.md) - TLS I/O threading and connection handling
+- [High Availability Best Practices](../best-practices/high-availability.md) - separate Sentinel auth from Valkey auth
+- [Cluster Best Practices](../best-practices/cluster.md) - ACL consistency across cluster nodes
+- [Key Best Practices](../best-practices/keys.md) - ACL key patterns for namespace-based access control
+- [Persistence Best Practices](../best-practices/persistence.md) - authentication required after restart from persistence
+- [Memory Best Practices](../best-practices/memory.md) - ACL-restricted namespaces to limit memory blast radius
+
+**Patterns**:
+- [Session Patterns](../patterns/sessions.md) - session storage with per-user ACL isolation
+- [Lock Patterns](../patterns/locks.md) - ACL restrictions for lock key namespaces
+- [Queue Patterns](../patterns/queues.md) - ACL permissions for queue workers
+- [Caching Patterns](../patterns/caching.md) - ACL restrictions for cache key namespaces
+- [Pub/Sub Patterns](../patterns/pubsub-patterns.md) - channel-level ACL restrictions for pub/sub
+- [Rate Limiting Patterns](../patterns/rate-limiting.md) - ACL restrictions for rate limit key namespaces
+
+**Commands**:
+- [Server Commands](../commands/server.md) - ACL LIST, ACL CAT, and runtime introspection
+- [Pub/Sub Commands](../commands/pubsub.md) - channel-level ACL restrictions and dedicated connections
+
+**Valkey Features**:
 - [Cluster Enhancements](../valkey-features/cluster-enhancements.md) - numbered databases and ACL database restrictions
-- For operational ACL and TLS setup: see valkey-ops `reference/security/acl.md` and `reference/security/tls.md`
+
+**Clients**:
+- [Clients Overview](../clients/overview.md) - TLS configuration per client library
+
+**Anti-Patterns**:
+- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - security anti-patterns (no auth, FLUSHALL accessible)
+
+**Ops**:
+- valkey-ops [security/acl](../../valkey-ops/reference/security/acl.md) - ACL operational setup
+- valkey-ops [security/tls](../../valkey-ops/reference/security/tls.md) - TLS operational setup

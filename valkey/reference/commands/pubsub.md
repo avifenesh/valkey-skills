@@ -286,6 +286,10 @@ PSUBSCRIBE chat:room:*
 ## See Also
 
 - [Pub/Sub Patterns](../patterns/pubsub-patterns.md) - fan-out messaging, sharded pub/sub, keyspace notifications
-- [Stream Commands](streams.md) - durable messaging alternative to pub/sub
+- [Stream Commands](streams.md) - durable messaging alternative to pub/sub with consumer groups
+- [Caching Patterns](../patterns/caching.md) - cache invalidation via pub/sub channels
+- [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - field expiration events published via keyspace notifications
 - [Cluster Enhancements](../valkey-features/cluster-enhancements.md) - sharded pub/sub in cluster mode
+- [Performance Best Practices](../best-practices/performance.md) - dedicated connections for subscribers
+- [Cluster Best Practices](../best-practices/cluster.md) - sharded pub/sub for cluster-efficient messaging
 - [Anti-Patterns](../anti-patterns/quick-reference.md) - pub/sub for durable messaging is an anti-pattern

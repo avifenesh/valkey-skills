@@ -51,6 +51,25 @@ SPOP lottery          -- "charlie" (random)
 SPOP lottery 2        -- 1) "diana" 2) "alice" (random)
 ```
 
+### SMOVE
+
+```
+SMOVE source destination member
+```
+
+Atomically moves `member` from the `source` set to the `destination` set. Returns 1 if the member was moved, 0 if the member was not in `source`. If `destination` does not exist, it is created. Since 1.0.0.
+
+**Complexity**: O(1)
+
+```
+SADD myset "a" "b" "c"
+SADD otherset "d"
+SMOVE myset otherset "b"    -- 1
+SMEMBERS myset              -- "a", "c"
+SMEMBERS otherset           -- "b", "d"
+SMOVE myset otherset "x"   -- 0 (not in source)
+```
+
 ---
 
 ## Membership
@@ -336,6 +355,12 @@ SADD processed:events event_id
 
 ## See Also
 
+- [Sorted Set Commands](sorted-sets.md) - when members need scores or ordering
+- [Specialized Data Types](specialized.md) - HyperLogLog for approximate unique counting, bitmaps for boolean flags
+- [Counter Patterns](../patterns/counters.md) - unique counting with SADD
+- [Performance Summary](../valkey-features/performance-summary.md) - SSCAN iterator prefetch (3.5x faster in 8.1+)
+- [Performance Best Practices](../best-practices/performance.md) - pipelining for bulk set operations, SSCAN vs SMEMBERS
 - [Memory Best Practices](../best-practices/memory.md) - set encoding thresholds (listpack, intset, hashtable)
 - [Key Best Practices](../best-practices/keys.md) - key naming for set-based tracking
+- [Cluster Best Practices](../best-practices/cluster.md) - hash tags for multi-key set operations (SINTER, SUNION)
 - [Anti-Patterns](../anti-patterns/quick-reference.md) - SMEMBERS on huge sets

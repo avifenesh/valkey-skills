@@ -350,7 +350,7 @@ ZINTERCARD numkeys key [key ...] [LIMIT limit]
 
 Returns the cardinality of the intersection without storing it. LIMIT stops counting early. Available since 7.0.
 
-**Complexity**: O(N*M)
+**Complexity**: O(N*K) where N is the size of the smallest set and K is the number of sets
 
 ```
 ZINTERCARD 2 quiz1 quiz2           -- 2
@@ -370,6 +370,102 @@ Stores a range of members from `source` into `destination`. Returns the number o
 ```
 ZRANGESTORE top3 leaderboard 0 2 REV
 -- 3
+```
+
+---
+
+## Range Removal
+
+### ZREMRANGEBYSCORE
+
+```
+ZREMRANGEBYSCORE key min max
+```
+
+Removes all members with scores between `min` and `max` (inclusive). Supports `(` for exclusive bounds and `-inf`/`+inf` for unbounded.
+
+**Complexity**: O(log N + M) where M is the number of elements removed
+
+```
+ZREMRANGEBYSCORE leaderboard 0 100    -- removes members with scores 0-100
+ZREMRANGEBYSCORE leaderboard -inf (50 -- removes members with scores below 50
+```
+
+### ZREMRANGEBYRANK
+
+```
+ZREMRANGEBYRANK key start stop
+```
+
+Removes all members with rank between `start` and `stop` (inclusive, zero-based). Negative indexes count from the end.
+
+**Complexity**: O(log N + M)
+
+```
+ZREMRANGEBYRANK leaderboard 0 1    -- removes the 2 lowest-scored members
+```
+
+### ZREMRANGEBYLEX
+
+```
+ZREMRANGEBYLEX key min max
+```
+
+Removes all members in the lexicographic range. All members must have the same score. Uses `[` for inclusive and `(` for exclusive bounds, `-` and `+` for min/max.
+
+**Complexity**: O(log N + M)
+
+```
+ZREMRANGEBYLEX names "[a" "[c"    -- removes members from "a" through "c"
+```
+
+---
+
+## Non-Store Set Operations (since 6.2.0)
+
+### ZDIFF
+
+```
+ZDIFF numkeys key [key ...] [WITHSCORES]
+```
+
+Returns members in the first sorted set that are not in any subsequent set. Like ZDIFFSTORE but returns the result directly without storing it.
+
+**Complexity**: O(L + (N-K) * log N) where L is the total elements across all sets
+
+```
+ZDIFF 2 quiz1 quiz2 WITHSCORES
+-- Members in quiz1 but not in quiz2, with their scores
+```
+
+### ZUNION
+
+```
+ZUNION numkeys key [key ...] [WEIGHTS weight ...] [AGGREGATE SUM | MIN | MAX] [WITHSCORES]
+```
+
+Returns the union of multiple sorted sets. Like ZUNIONSTORE but returns the result directly without storing it.
+
+**Complexity**: O(N*log N) where N is the total elements across all sets
+
+```
+ZUNION 2 quiz1 quiz2 WITHSCORES
+-- All members from both sets with aggregated scores
+```
+
+### ZINTER
+
+```
+ZINTER numkeys key [key ...] [WEIGHTS weight ...] [AGGREGATE SUM | MIN | MAX] [WITHSCORES]
+```
+
+Returns the intersection of multiple sorted sets. Like ZINTERSTORE but returns the result directly without storing it.
+
+**Complexity**: O(N*K*log N) where N is the smallest set
+
+```
+ZINTER 2 quiz1 quiz2 WITHSCORES
+-- Members present in both sets with aggregated scores
 ```
 
 ---
@@ -422,7 +518,7 @@ ZRANDMEMBER leaderboard 2 WITHSCORES
 ### ZSCAN
 
 ```
-ZSCAN key cursor [MATCH pattern] [COUNT hint]
+ZSCAN key cursor [MATCH pattern] [COUNT hint] [NOSCORES]
 ```
 
 Incrementally iterates over members and scores. Returns cursor and member-score pairs.
@@ -441,7 +537,7 @@ ZSCAN leaderboard 0 MATCH "player:*" COUNT 100
 ```
 ZADD leaderboard 1500 "player:alice"
 ZINCRBY leaderboard 100 "player:alice"
-ZREVRANGE leaderboard 0 9 WITHSCORES      -- top 10 (via ZRANGE ... REV)
+ZRANGE leaderboard 0 9 REV WITHSCORES     -- top 10
 ZREVRANK leaderboard "player:alice"        -- player's rank
 ```
 
@@ -474,8 +570,14 @@ ZCARD requests:user:42
 
 ## See Also
 
+- [Set Commands](sets.md) - when members do not need scores or ordering
+- [Specialized Data Types](specialized.md) - geospatial indexes are stored as sorted sets internally
 - [Leaderboard Patterns](../patterns/leaderboards.md) - real-time ranking with sorted sets
 - [Rate Limiting Patterns](../patterns/rate-limiting.md) - sliding window log using sorted sets
 - [Queue Patterns](../patterns/queues.md) - priority queues with ZPOPMIN
-- [Memory Best Practices](../best-practices/memory.md) - sorted set encoding thresholds
+- [Counter Patterns](../patterns/counters.md) - time-series counting with sorted sets
+- [Polygon Geospatial Queries](../valkey-features/geospatial.md) - GEOSEARCH BYPOLYGON on geo sorted sets (Valkey 9.0+)
 - [Performance Summary](../valkey-features/performance-summary.md) - ZRANK optimization (45% faster in 8.1+)
+- [Cluster Best Practices](../best-practices/cluster.md) - hash tags for multi-key sorted set operations (ZUNIONSTORE, ZINTERSTORE)
+- [Memory Best Practices](../best-practices/memory.md) - sorted set encoding thresholds
+- [Key Best Practices](../best-practices/keys.md) - key naming for leaderboards and indexes

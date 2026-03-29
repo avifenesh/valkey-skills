@@ -75,7 +75,7 @@ Some improvements need operator-side configuration to take full effect. Coordina
 
 ### I/O threading
 
-Default is 2 threads (main + 1 I/O). For high-throughput workloads:
+Default is 1 (main thread only, no separate I/O threads). For high-throughput workloads:
 
 ```
 io-threads 4        # Main + 3 I/O threads (good starting point)
@@ -129,10 +129,18 @@ Use `CLIENT TRACKING` to cache frequently-read keys locally. The server sends in
 
 ## See Also
 
-- [What is Valkey](../overview/what-is-valkey.md) - overview and version history
+- [What is Valkey](../overview/what-is-valkey.md) - overview, version history, and feature comparison
+- [Compatibility and Migration](../overview/compatibility.md) - migrating from Redis to Valkey
+- [Cluster Enhancements](cluster-enhancements.md) - atomic slot migration and numbered databases in 9.0
+- [Hash Field Expiration](hash-field-ttl.md) - per-field TTL memory overhead context
+- [Conditional Operations](conditional-ops.md) - SET IFEQ and DELIFEQ
+- [Polygon Geospatial Queries](geospatial.md) - GEOSEARCH BYPOLYGON in 9.0
 - [Performance Best Practices](../best-practices/performance.md) - pipelining, connection pooling, SCAN vs KEYS
 - [Clients Overview](../clients/overview.md) - GLIDE's built-in auto-pipelining
-- [Sorted Set Commands](../commands/sorted-sets.md) - ZRANK optimization context
-- [Specialized Data Types](../commands/specialized.md) - BITCOUNT and PFMERGE SIMD context
+- [String Commands](../commands/strings.md) - SET/GET operations benefit from pipeline prefetch and zero-copy
+- [Hash Commands](../commands/hashes.md) - HGETALL and HSCAN benefit from iterator prefetch (3.5x faster)
+- [Sorted Set Commands](../commands/sorted-sets.md) - ZRANK optimization (45% faster in 8.1+)
+- [Specialized Data Types](../commands/specialized.md) - BITCOUNT and PFMERGE SIMD optimizations
+- [Server Commands](../commands/server.md) - SCAN iterator prefetch and COMMANDLOG for performance diagnosis
 - For I/O thread configuration: see valkey-ops `reference/performance/io-threads.md`
 - For memory tuning: see valkey-ops `reference/performance/memory.md`

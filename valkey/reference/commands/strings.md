@@ -263,7 +263,7 @@ Returns the substring between positions `start` and `end` (inclusive, zero-based
 ```
 SET message "Hello, World!"
 GETRANGE message 0 4       -- "Hello"
-GETRANGE message -6 -1     -- "orld!"
+GETRANGE message -6 -1     -- "World!"
 ```
 
 ### SETRANGE
@@ -361,10 +361,14 @@ SET config:feature-flags new_value IFEQ old
 
 ## See Also
 
+- [Hash Commands](hashes.md) - alternative modeling with multiple fields in a single key
 - [Caching Patterns](../patterns/caching.md) - cache-aside with SET/GET and TTL
 - [Lock Patterns](../patterns/locks.md) - distributed locks using SET NX PX
 - [Rate Limiting Patterns](../patterns/rate-limiting.md) - INCR-based rate limiters
+- [Counter Patterns](../patterns/counters.md) - atomic counting with INCR/INCRBY
 - [Session Patterns](../patterns/sessions.md) - session storage with string values
 - [Conditional Operations](../valkey-features/conditional-ops.md) - SET IFEQ and DELIFEQ details
 - [Key Best Practices](../best-practices/keys.md) - key naming conventions
 - [Memory Best Practices](../best-practices/memory.md) - string encoding rules (int, embstr, raw)
+- [Performance Best Practices](../best-practices/performance.md) - pipelining for bulk GET/SET operations
+- [Anti-Patterns](../anti-patterns/quick-reference.md) - storing large serialized objects without compression

@@ -51,7 +51,7 @@ SCRIPT LOAD "return server.call('get',KEYS[1])"
 EVALSHA "e0e1f9fabfc9d4800c877a703b823ac0578ff831" 1 mykey
 ```
 
-### EVALRO / EVALSHA_RO
+### EVAL_RO / EVALSHA_RO
 
 ```
 EVAL_RO script numkeys key [key ...] arg [arg ...]
@@ -95,6 +95,16 @@ SCRIPT EXISTS "e0e1f9fabfc9d4800c877a703b823ac0578ff831" "0000000000000000000000
 -- 1) 1
 -- 2) 0
 ```
+
+### SCRIPT KILL
+
+```
+SCRIPT KILL
+```
+
+Aborts the currently running read-only Lua script. Returns an error if the running script has already performed write operations - in that case, use `SHUTDOWN NOSAVE` as a last resort.
+
+**Complexity**: O(1)
 
 ### SCRIPT FLUSH
 
@@ -192,6 +202,16 @@ payload = FUNCTION DUMP
 -- On target server
 FUNCTION RESTORE payload REPLACE
 ```
+
+### FUNCTION KILL
+
+```
+FUNCTION KILL
+```
+
+Aborts the currently running read-only function. Returns an error if the running function has already performed write operations.
+
+**Complexity**: O(1)
 
 ### FUNCTION STATS
 
@@ -330,4 +350,6 @@ end)
 - [Conditional Operations](../valkey-features/conditional-ops.md) - SET IFEQ and DELIFEQ replace common Lua patterns
 - [Lock Patterns](../patterns/locks.md) - safe lock release with Lua or DELIFEQ
 - [Rate Limiting Patterns](../patterns/rate-limiting.md) - token bucket Lua script
+- [Cluster Best Practices](../best-practices/cluster.md) - hash tags for co-locating keys in scripts
+- [Performance Best Practices](../best-practices/performance.md) - EVALSHA to avoid script retransmission
 - [Anti-Patterns](../anti-patterns/quick-reference.md) - Lua scripts with unbounded loops

@@ -101,9 +101,8 @@ Long-running tasks may need to extend the lock before it expires. Only the lock 
 **Valkey 8.1+ (SET IFEQ)**:
 ```
 # Extend TTL only if we still hold the lock
-SET lock:resource <my_random_value> XX PX 30000 IFEQ <my_random_value>
-# XX = only if key exists
-# IFEQ = only if current value matches
+SET lock:resource <my_random_value> IFEQ <my_random_value> PX 30000
+# IFEQ = only if key exists AND current value matches
 ```
 
 **Pre-8.1 (Lua script)**:
@@ -128,7 +127,7 @@ function withLock(redis, resource, fn, ttlMs = 30000) {
     // Renew at 2/3 of TTL
     const renewInterval = setInterval(async () => {
       const renewed = await redis.set(
-        `lock:${resource}`, value, 'XX', 'PX', ttlMs, 'IFEQ', value
+        `lock:${resource}`, value, 'IFEQ', value, 'PX', ttlMs
       );
       if (!renewed) clearInterval(renewInterval);
     }, ttlMs * 2 / 3);
@@ -278,6 +277,15 @@ async function acquireWithRetry(redis, resource, maxRetries = 5) {
 - [String Commands](../commands/strings.md) - SET NX PX for lock acquisition
 - [Conditional Operations](../valkey-features/conditional-ops.md) - DELIFEQ for safe lock release, SET IFEQ for lock extension
 - [Scripting and Functions](../commands/scripting.md) - Lua-based lock release (pre-9.0)
+- [Counter Patterns](counters.md) - INCR for fencing tokens, idempotency keys as lock alternatives
 - [Rate Limiting Patterns](rate-limiting.md) - related concurrency control patterns
 - [Queue Patterns](queues.md) - reliable processing with acknowledgment (alternative to locking)
+- [Caching Patterns](caching.md) - lock-based cache stampede prevention
+- [Session Patterns](sessions.md) - session rotation requiring atomic operations
 - [Performance Best Practices](../best-practices/performance.md) - pipelining and connection pooling
+- [High Availability Best Practices](../best-practices/high-availability.md) - replication safety concerns for Redlock
+- [Key Best Practices](../best-practices/keys.md) - key naming and TTL strategies for lock keys
+- [Persistence Best Practices](../best-practices/persistence.md) - lock safety during crash recovery with AOF
+- [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions for lock key namespaces
+- [Clients Overview](../clients/overview.md) - connection patterns for lock acquisition and Redlock libraries
+- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - lock without TTL, DEL without value check

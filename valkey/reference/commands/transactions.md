@@ -246,5 +246,6 @@ EXEC
 - [Scripting and Functions](scripting.md) - Lua scripts for read-then-write atomic operations
 - [Conditional Operations](../valkey-features/conditional-ops.md) - SET IFEQ replaces WATCH+MULTI for simple CAS
 - [Lock Patterns](../patterns/locks.md) - optimistic locking with WATCH
+- [Cluster Best Practices](../best-practices/cluster.md) - hash tags for co-locating keys in transactions
 - [Performance Best Practices](../best-practices/performance.md) - pipelining MULTI/EXEC for network efficiency
 - [Anti-Patterns](../anti-patterns/quick-reference.md) - WATCH+MULTI for complex logic

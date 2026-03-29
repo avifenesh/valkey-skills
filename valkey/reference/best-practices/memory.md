@@ -24,7 +24,7 @@ Valkey uses compact internal encodings (listpack, intset) for small collections.
 
 ```
 OBJECT ENCODING mykey
-# Returns: listpack, hashtable, skiplist, intset, quicklist, embstr, int, raw
+# Returns: listpack, hashtable, skiplist, intset, quicklist, embstr, int, raw, stream
 
 MEMORY USAGE mykey
 # Returns: bytes used by the key (including overhead)
@@ -77,11 +77,11 @@ For millions of simple key-value pairs, group them into hash buckets to stay und
 # Instead of millions of top-level keys:
 SET media:1234 <user_id>
 
-# Bucket by ID range (bucket = id / 1000, field = id % 1000):
-HSET mediabucket:1 234 <user_id>
+# Bucket by ID range (bucket = id / 100, field = id % 100):
+HSET mediabucket:12 34 <user_id>
 ```
 
-This keeps each hash under ~1000 fields, well within the listpack threshold. Real-world result: Instagram Engineering reduced memory from 21 GB to 5 GB for 300M key-value pairs using this pattern - a 4x reduction.
+This keeps each hash under ~100 fields, well within the listpack threshold (512). Real-world result: Instagram Engineering reduced memory from 21 GB to 5 GB for 300M key-value pairs using this pattern - a 4x reduction.
 
 ### Encoding Threshold Guidance
 
@@ -92,7 +92,9 @@ Stay under the compact encoding thresholds to avoid memory bloat:
 | `hash-max-listpack-entries` | 512 | Max fields before hash converts to hashtable |
 | `hash-max-listpack-value` | 64 | Max field/value size (bytes) before conversion |
 | `zset-max-listpack-entries` | 128 | Max members before sorted set converts |
+| `zset-max-listpack-value` | 64 | Max member/score size (bytes) before sorted set converts |
 | `set-max-listpack-entries` | 128 | Max members before set converts |
+| `set-max-listpack-value` | 64 | Max member size (bytes) before set converts |
 | `set-max-intset-entries` | 512 | Max integer members before intset converts |
 
 **Gotcha**: Conversion is one-way and permanent for that key. Once a collection exceeds a threshold and converts to the full encoding, it stays there even if you remove elements to go back under the threshold. The only way to get compact encoding back is to delete and recreate the key.
@@ -106,10 +108,10 @@ Strings have implicit encoding rules (not configurable):
 | Condition | Encoding | Memory |
 |-----------|----------|--------|
 | Integer value fitting a `long` | `int` | 8 bytes |
-| String <= 44 bytes | `embstr` | Single allocation (object + data together) |
-| String > 44 bytes | `raw` | Two allocations (pointer + data separately) |
+| String <= 52 bytes | `embstr` | Single allocation (object + data together) |
+| String > 52 bytes | `raw` | Two allocations (pointer + data separately) |
 
-**Practical tip**: Keep string values under 44 bytes when possible to use the `embstr` encoding, which avoids an extra allocation and pointer dereference.
+**Practical tip**: Keep string values under 52 bytes when possible to use the `embstr` encoding, which avoids an extra allocation and pointer dereference.
 
 ---
 
@@ -240,8 +242,38 @@ data = json.loads(zlib.decompress(raw))
 
 ## See Also
 
+**Best Practices**:
 - [Performance Best Practices](performance.md) - UNLINK vs DEL, pipelining, connection pooling
-- [Key Best Practices](keys.md) - key naming for memory efficiency
+- [Key Best Practices](keys.md) - key naming for memory efficiency, big key avoidance
+- [Persistence Best Practices](persistence.md) - copy-on-write memory overhead during snapshots
+- [Cluster Best Practices](cluster.md) - memory distribution across shards
+- [High Availability Best Practices](high-availability.md) - eviction and memory pressure during failover
+
+**Commands**:
+- [Hash Commands](../commands/hashes.md) - HSET, HMGET, hash bucketing for compact encoding
+- [Specialized Data Types](../commands/specialized.md) - HyperLogLog (12 KB cardinality), bitmaps (compact boolean flags)
+- [Server Commands](../commands/server.md) - MEMORY USAGE, MEMORY DOCTOR, INFO memory
+
+**Valkey Features**:
+- [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL to avoid splitting hashes for expiration
+
+**Patterns**:
+- [Caching Patterns](../patterns/caching.md) - eviction policies for cache workloads, TTL patterns
+- [Counter Patterns](../patterns/counters.md) - HyperLogLog and bitmaps for compact counting
+- [Session Patterns](../patterns/sessions.md) - hash encoding thresholds for session data
+- [Leaderboard Patterns](../patterns/leaderboards.md) - sorted set memory for large leaderboards
+- [Search and Autocomplete Patterns](../patterns/search-autocomplete.md) - inverted index memory with sets and sorted sets
+
+**Security**:
+- [Security: Auth and ACL](../security/auth-and-acl.md) - ACL-restricted namespaces limit memory blast radius
+
+**Clients**:
+- [Clients Overview](../clients/overview.md) - client-side caching to reduce server memory pressure
+
+**Anti-Patterns**:
+- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - no `maxmemory`, missing TTL, values over 1 MB, and more
+
+**Ops**:
 - valkey-ops [configuration/encoding](../../valkey-ops/reference/configuration/encoding.md) - encoding threshold configuration reference
-- valkey-ops [performance/memory](../../valkey-ops/reference/performance/memory.md) - maxmemory config, fragmentation, hash bucketing details
+- valkey-ops [performance/memory](../../valkey-ops/reference/performance/memory.md) - `maxmemory` config, fragmentation, hash bucketing details
 - valkey-ops [configuration/eviction](../../valkey-ops/reference/configuration/eviction.md) - eviction policy selection and LFU tuning

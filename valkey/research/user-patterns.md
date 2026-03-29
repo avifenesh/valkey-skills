@@ -975,7 +975,7 @@ For pure caching, persistence can be disabled entirely.
 | Valkey Memory Optimization | valkey-io/valkey-doc topics/memory-optimization.md | Memory efficiency patterns |
 | Valkey Persistence | valkey-io/valkey-doc topics/persistence.md | RDB and AOF strategies |
 | Valkey Sentinel | https://valkey.io/topics/sentinel/ | High availability |
-| SET command | valkey-io/valkey-doc commands/set.md | IFEQ, IFGT options |
+| SET command | valkey-io/valkey-doc commands/set.md | IFEQ option |
 | DELIFEQ command | valkey-io/valkey-doc commands/delifeq.md | Conditional delete |
 | HEXPIRE command | valkey-io/valkey-doc commands/hexpire.md | Hash field expiration |
 | HSETEX command | valkey-io/valkey-doc commands/hsetex.md | Set + expire hash fields |

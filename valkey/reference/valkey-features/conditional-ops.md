@@ -11,7 +11,7 @@ Atomically update a key's value only if the current value matches an expected va
 ### Syntax
 
 ```
-SET key new_value IFEQ expected_value [EX seconds | PX milliseconds] [GET]
+SET key new_value IFEQ expected_value [EX seconds | PX milliseconds | EXAT unix-time-seconds | PXAT unix-time-milliseconds | KEEPTTL] [GET]
 ```
 
 ### Behavior
@@ -160,8 +160,15 @@ Benefits of native commands: lower latency (no Lua VM), simpler code, no script 
 
 ## See Also
 
+- [What is Valkey](../overview/what-is-valkey.md) - overview and Valkey-only feature list
+- [Compatibility and Migration](../overview/compatibility.md) - migrating from Redis to Valkey
+- [Hash Field Expiration](hash-field-ttl.md) - per-field TTL on hash entries
+- [Cluster Enhancements](cluster-enhancements.md) - numbered databases and atomic slot migration
+- [Polygon Geospatial Queries](geospatial.md) - GEOSEARCH BYPOLYGON
+- [Performance Summary](performance-summary.md) - version-by-version throughput and latency gains
 - [String Commands](../commands/strings.md) - SET command with IFEQ option
+- [Hash Commands](../commands/hashes.md) - HSETEX FNX/FXX for conditional hash field writes
+- [Transaction Commands](../commands/transactions.md) - WATCH/MULTI/EXEC optimistic locking replaced by IFEQ for simple CAS
 - [Lock Patterns](../patterns/locks.md) - distributed locks using SET NX and DELIFEQ
 - [Scripting and Functions](../commands/scripting.md) - Lua scripts replaced by IFEQ/DELIFEQ
-- [Hash Field Expiration](hash-field-ttl.md) - another Valkey-specific feature for granular key management
 - [Anti-Patterns](../anti-patterns/quick-reference.md) - distributed lock anti-patterns

@@ -341,7 +341,16 @@ BZPOPMIN queue:priority 30
 - [List Commands](../commands/lists.md) - LPUSH, BRPOP, LMOVE for list-based queues
 - [Stream Commands](../commands/streams.md) - XADD, XREADGROUP, XACK for stream queues
 - [Sorted Set Commands](../commands/sorted-sets.md) - ZADD, ZPOPMIN for priority queues
-- [Pub/Sub Patterns](pubsub-patterns.md) - when you need fan-out instead of point-to-point
+- [Pub/Sub Patterns](pubsub-patterns.md) - fan-out messaging (alternative to point-to-point queues)
 - [Lock Patterns](locks.md) - coordinating access to shared resources
+- [Counter Patterns](counters.md) - idempotency keys for deduplicating queue messages
+- [Rate Limiting Patterns](rate-limiting.md) - throttling message processing rate
 - [Performance Best Practices](../best-practices/performance.md) - pipelining for batch operations
+- [Memory Best Practices](../best-practices/memory.md) - stream trimming and list memory usage
 - [Key Best Practices](../best-practices/keys.md) - key naming for queue keys
+- [High Availability Best Practices](../best-practices/high-availability.md) - queue message safety during failover
+- [Persistence Best Practices](../best-practices/persistence.md) - AOF durability for queue messages
+- [Cluster Best Practices](../best-practices/cluster.md) - hash tags for queue keys in cluster mode
+- [Security: Auth and ACL](../security/auth-and-acl.md) - ACL permissions for queue workers
+- [Clients Overview](../clients/overview.md) - dedicated connections for blocking queue consumers
+- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - unbounded list/stream growth, blocking commands on shared connections

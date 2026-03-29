@@ -144,6 +144,11 @@ GEOADD key longitude latitude member [longitude latitude member ...]
 
 ## See Also
 
-- [Specialized Data Types](../commands/specialized.md) - GEOADD, GEOSEARCH, GEODIST command reference
-- [Performance Summary](performance-summary.md) - version-by-version improvements
-- [Cluster Enhancements](cluster-enhancements.md) - other 9.0 features
+- [What is Valkey](../overview/what-is-valkey.md) - overview and Valkey-only feature list
+- [Compatibility and Migration](../overview/compatibility.md) - migrating from Redis to Valkey
+- [Cluster Enhancements](cluster-enhancements.md) - numbered databases and atomic slot migration in 9.0
+- [Hash Field Expiration](hash-field-ttl.md) - per-field TTL on hash entries (also 9.0)
+- [Conditional Operations](conditional-ops.md) - SET IFEQ and DELIFEQ
+- [Performance Summary](performance-summary.md) - version-by-version throughput and latency gains
+- [Specialized Data Types](../commands/specialized.md) - GEOADD, GEOSEARCH, GEODIST, GEOSEARCHSTORE command reference
+- [Sorted Set Commands](../commands/sorted-sets.md) - geospatial indexes are stored as sorted sets internally

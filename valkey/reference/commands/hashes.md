@@ -234,7 +234,7 @@ HRANDFIELD user:1000 2 WITHVALUES     -- 1) "name" 2) "Alice" 3) "role" 4) "admi
 ### HSCAN
 
 ```
-HSCAN key cursor [MATCH pattern] [COUNT hint]
+HSCAN key cursor [MATCH pattern] [COUNT hint] [NOVALUES]
 ```
 
 Incrementally iterates over fields in the hash. Returns a cursor and a batch of field-value pairs. Continue calling with the returned cursor until it returns 0.
@@ -452,8 +452,12 @@ HMGET article:42 views likes
 
 ## See Also
 
+- [String Commands](strings.md) - alternative modeling with separate keys per field
 - [Session Patterns](../patterns/sessions.md) - session storage using hashes with per-field TTL
+- [Counter Patterns](../patterns/counters.md) - HINCRBY-based object counters
 - [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL details (Valkey 9.0+)
+- [Conditional Operations](../valkey-features/conditional-ops.md) - HSETEX FNX/FXX for conditional field writes
 - [Memory Best Practices](../best-practices/memory.md) - hash encoding thresholds and bucketing
 - [Key Best Practices](../best-practices/keys.md) - key naming for hash keys
 - [Performance Best Practices](../best-practices/performance.md) - HSCAN vs HGETALL for large hashes
+- [Anti-Patterns](../anti-patterns/quick-reference.md) - HGETALL on large hashes, plain HSET stripping field TTLs

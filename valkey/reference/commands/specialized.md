@@ -1,6 +1,6 @@
 # Specialized Data Types
 
-Use HyperLogLog for approximate unique counting, bitmaps for compact boolean flags, and geospatial indexes for location-based queries. These types are built on top of Valkey's core string and sorted set types, providing specialized operations.
+Use when you need approximate unique counting (HyperLogLog), compact boolean flags (bitmaps), or location-based queries (geospatial indexes). These types are built on top of Valkey's core string and sorted set types, providing specialized operations.
 
 ---
 
@@ -389,6 +389,12 @@ BITFIELD counters GET u16 #42      -- read counter 42
 
 ## See Also
 
+- [String Commands](strings.md) - bitmaps are stored as strings, SETBIT/GETBIT operate on string values
+- [Sorted Set Commands](sorted-sets.md) - geospatial indexes are stored as sorted sets internally
+- [Set Commands](sets.md) - exact unique counting alternative to HyperLogLog (higher memory, zero error)
+- [Counter Patterns](../patterns/counters.md) - counting strategies comparison (exact vs approximate)
 - [Geospatial Polygon Queries](../valkey-features/geospatial.md) - BYPOLYGON support (Valkey 9.0+)
+- [Key Best Practices](../best-practices/keys.md) - key naming for bitmaps and HyperLogLog aggregates
 - [Memory Best Practices](../best-practices/memory.md) - bitmaps for boolean flags, HyperLogLog for unique counting
 - [Performance Summary](../valkey-features/performance-summary.md) - BITCOUNT and PFMERGE SIMD optimizations
+- [Anti-Patterns](../anti-patterns/quick-reference.md) - sparse bitmaps with high offset gaps waste memory

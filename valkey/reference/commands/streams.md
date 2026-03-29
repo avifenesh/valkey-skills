@@ -83,7 +83,7 @@ XRANGE key start end [COUNT count]
 
 Returns entries with IDs between `start` and `end` (inclusive). Use `-` for the minimum ID and `+` for the maximum. Returns entries in ID order.
 
-**Complexity**: O(log N + M) where M is the number of entries returned
+**Complexity**: O(N) where N is the number of elements returned
 
 ```
 -- All entries
@@ -107,7 +107,7 @@ XREVRANGE key end start [COUNT count]
 
 Same as XRANGE but returns entries in reverse ID order. Note the arguments are reversed (end, start).
 
-**Complexity**: O(log N + M)
+**Complexity**: O(N) where N is the number of elements returned
 
 ```
 -- Last 5 entries, newest first
@@ -188,6 +188,21 @@ XGROUP DELCONSUMER key group consumer
 ```
 
 Removes a consumer from a group. Returns the number of pending entries that the consumer had (these entries become unowned).
+
+### XGROUP CREATECONSUMER
+
+```
+XGROUP CREATECONSUMER key group consumer
+```
+
+Explicitly creates a consumer in the consumer group without requiring it to execute XREADGROUP first. Returns 1 if the consumer was created, 0 if it already existed. Available since 6.2.0.
+
+**Complexity**: O(1)
+
+```
+XGROUP CREATECONSUMER events:orders workers consumer1
+-- 1
+```
 
 ### XGROUP SETID
 
@@ -276,7 +291,7 @@ XPENDING events:orders workers IDLE 60000 - + 10
 ### XCLAIM
 
 ```
-XCLAIM key group consumer min-idle-time id [id ...] [IDLE ms] [TIME ms] [RETRYCOUNT n] [FORCE] [JUSTID]
+XCLAIM key group consumer min-idle-time id [id ...] [IDLE ms] [TIME ms] [RETRYCOUNT n] [FORCE] [JUSTID] [LASTID id]
 ```
 
 Changes ownership of pending entries to a different consumer. Entries must be idle for at least `min-idle-time` milliseconds. Use for manual recovery of stuck entries.
@@ -426,6 +441,12 @@ XRANGE events:orders 1711670000000 1711680000000 COUNT 100
 
 ## See Also
 
+- [Pub/Sub Commands](pubsub.md) - fire-and-forget alternative when durability is not required
+- [List Commands](lists.md) - simpler queues when consumer groups are not needed
 - [Queue Patterns](../patterns/queues.md) - stream-based queues with consumer groups
 - [Pub/Sub Patterns](../patterns/pubsub-patterns.md) - streams vs pub/sub comparison
+- [Performance Summary](../valkey-features/performance-summary.md) - pipeline prefetch (40% throughput gain in 9.0+)
+- [Key Best Practices](../best-practices/keys.md) - key naming for streams and consumer groups
+- [Memory Best Practices](../best-practices/memory.md) - stream memory usage and trimming strategies
+- [Performance Best Practices](../best-practices/performance.md) - XREAD blocking vs polling trade-offs
 - [Anti-Patterns](../anti-patterns/quick-reference.md) - unbounded stream growth, pub/sub for durable messaging

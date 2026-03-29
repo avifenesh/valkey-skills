@@ -10,7 +10,7 @@ Use when working with Valkey in cluster mode and you want to understand the new 
 
 In Redis and Valkey prior to 9.0, cluster mode was restricted to database 0. The `SELECT` command returned an error if you tried to switch databases. This was a long-standing limitation that forced applications to use key prefixes for namespace isolation instead of database numbers.
 
-Valkey 9.0 lifts this restriction. All 16 databases (or however many are configured via the `cluster-databases` directive (default 1)) are available in cluster mode.
+Valkey 9.0 lifts this restriction. Multiple databases are available in cluster mode when configured via the `cluster-databases` directive (default 1, meaning only database 0). Set `cluster-databases 16` to enable databases 0-15.
 
 ### How It Works
 
@@ -106,9 +106,16 @@ Atomic slot migration is enabled automatically in Valkey 9.0+ when using the clu
 
 ## See Also
 
+- [What is Valkey](../overview/what-is-valkey.md) - overview and Valkey-only feature list
+- [Compatibility and Migration](../overview/compatibility.md) - migrating from Redis to Valkey
+- [Conditional Operations](conditional-ops.md) - SET IFEQ and DELIFEQ
+- [Hash Field Expiration](hash-field-ttl.md) - per-field TTL on hash entries
+- [Polygon Geospatial Queries](geospatial.md) - GEOSEARCH BYPOLYGON (also 9.0)
+- [Performance Summary](performance-summary.md) - atomic slot migration performance context
+- [Server Commands](../commands/server.md) - SELECT, DBSIZE, and CONFIG GET for cluster-databases
+- [Transaction Commands](../commands/transactions.md) - all keys in a transaction must share the same hash slot
+- [Pub/Sub Commands](../commands/pubsub.md) - sharded pub/sub routes within the owning shard
 - [Key Best Practices](../best-practices/keys.md) - cluster hash tags for key co-location
 - [Security: Auth and ACL](../security/auth-and-acl.md) - ACL database restrictions in cluster mode
-- [Conditional Operations](conditional-ops.md) - SET IFEQ, DELIFEQ
-- [Hash Field Expiration](hash-field-ttl.md) - per-field expiration
 - For cluster operations: see valkey-ops `reference/cluster/resharding.md` and `reference/cluster/operations.md`
 - For cluster internals: see valkey-dev `reference/cluster/slot-migration.md`
