@@ -1,6 +1,6 @@
 ---
 name: valkey-glide-java
-description: "Use when building Java applications with Valkey GLIDE. Covers CompletableFuture API, GlideClient, configuration builders, error handling, batching, Spring integration, and migration from Jedis/Lettuce."
+description: "Use when building Java applications with Valkey GLIDE. Covers CompletableFuture API, GlideClient, configuration builders, TLS, authentication, OpenTelemetry, error handling, batching, Spring integration, and migration from Jedis/Lettuce."
 version: 1.0.0
 argument-hint: "[topic]"
 ---
@@ -337,7 +337,7 @@ Batch tx = new Batch(true);
 tx.set("key", "value");
 tx.incr("counter");
 tx.get("key");
-Object[] result = client.run(tx, false).get();
+Object[] result = client.exec(tx, false).get();
 // result: ["OK", 1L, "value"]
 ```
 
@@ -348,7 +348,7 @@ Batch batch = new Batch(false);
 batch.set("k1", "v1");
 batch.set("k2", "v2");
 batch.get("k1");
-Object[] result = client.run(batch, false).get();
+Object[] result = client.exec(batch, false).get();
 ```
 
 The second parameter to `run()` is `raiseOnError` - when true, throws on the first error; when false, returns errors inline in the result array.
@@ -683,12 +683,12 @@ batch.get("nonexistent");
 batch.incr("k1");  // will fail - not numeric
 
 // raiseOnError=false returns errors inline in result array
-Object[] results = client.run(batch, false).get();
+Object[] results = client.exec(batch, false).get();
 // results[2] is a RequestException
 
 // raiseOnError=true throws on first error
 try {
-    Object[] results2 = client.run(batch, true).get();
+    Object[] results2 = client.exec(batch, true).get();
 } catch (ExecutionException e) {
     System.err.println("Batch failed: " + e.getCause().getMessage());
 }

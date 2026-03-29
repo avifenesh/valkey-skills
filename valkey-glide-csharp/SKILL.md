@@ -189,6 +189,27 @@ await client.ExpireAsync("session", 3600);  // 1 hour TTL
 var ttl = await client.TTLAsync("session");
 ```
 
+### Streams
+
+```csharp
+// Add entry
+var entryId = await client.XAddAsync("mystream", new Dictionary<string, string> {
+    { "sensor", "temp" }, { "value", "23.5" },
+});
+
+// Read entries
+var entries = await client.XReadAsync(new Dictionary<string, string> {
+    { "mystream", "0" },
+});
+
+// Consumer group
+await client.XGroupCreateAsync("mystream", "mygroup", "0");
+var messages = await client.XReadGroupAsync("mygroup", "consumer1",
+    new Dictionary<string, string> { { "mystream", ">" } });
+var ackCount = await client.XAckAsync("mystream", "mygroup",
+    new[] { "1234567890123-0" });
+```
+
 ---
 
 ## Return Types
@@ -304,7 +325,7 @@ string str = val.ToString();
 
 **GLIDE:**
 ```csharp
-await client.Set("key", "value");
+await client.SetAsync("key", "value");
 var val = await client.GetAsync("key");
 ```
 
@@ -394,3 +415,10 @@ MUSL/Alpine support, `Span<T>`/`Memory<T>` optimization, blocking subscribe, Val
 - Maintained in a separate repository from the main GLIDE monorepo
 - NuGet package: `Valkey.Glide`
 - IAM authentication is available for AWS ElastiCache
+
+---
+
+## Cross-References
+
+- `valkey-glide` skill - architecture, connection model, features shared across all languages
+- `valkey` skill - Valkey server commands, data types, patterns

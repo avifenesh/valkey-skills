@@ -1,6 +1,6 @@
 ---
 name: valkey-glide-php
-description: "Use when building PHP applications with Valkey GLIDE. Covers synchronous FFI API, installation methods (PIE/Composer/PECL), configuration, and basic operations."
+description: "Use when building PHP applications with Valkey GLIDE. Covers synchronous C extension API, installation methods (PIE/Composer/PECL), configuration, and basic operations."
 version: 1.0.0
 argument-hint: "[topic]"
 ---
@@ -165,7 +165,14 @@ The PHP client throws exceptions on errors:
 try {
     $value = $client->get('key');
 } catch (ValkeyGlideException $e) {
-    echo "Error: " . $e->getMessage() . "\n";
+    $msg = $e->getMessage();
+    if (str_contains($msg, 'timeout')) {
+        echo "Request timed out - consider increasing requestTimeout\n";
+    } elseif (str_contains($msg, 'connection')) {
+        echo "Connection lost - client is reconnecting\n";
+    } else {
+        echo "Error: {$msg}\n";
+    }
 }
 ```
 
@@ -206,6 +213,21 @@ $item = $client->rpop('queue');  // "item1"
 $client->sadd('tags', 'php', 'valkey', 'glide');
 $members = $client->smembers('tags');
 $isMember = $client->sismember('tags', 'php');  // true
+```
+
+### Streams
+
+```php
+// Add entry
+$entryId = $client->xadd('mystream', '*', ['sensor' => 'temp', 'value' => '23.5']);
+
+// Read entries
+$entries = $client->xread(['mystream' => '0']);
+
+// Consumer group
+$client->xgroupCreate('mystream', 'mygroup', '0');
+$messages = $client->xreadgroup('mygroup', 'consumer1', ['mystream' => '>']);
+$ackCount = $client->xack('mystream', 'mygroup', ['1234567890123-0']);
 ```
 
 ---
@@ -260,3 +282,10 @@ The build process: Rust FFI library compilation, then `phpize && ./configure && 
 - Alpine Linux / MUSL is not supported
 - Some advanced features (OpenTelemetry, compression) may lag behind the core clients
 - No official framework integrations yet (PHPRedis aliases may enable use with Laravel's Redis driver, but untested)
+
+---
+
+## Cross-References
+
+- `valkey-glide` skill - architecture, connection model, features shared across all languages
+- `valkey` skill - Valkey server commands, data types, patterns

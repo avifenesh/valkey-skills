@@ -298,7 +298,7 @@ No drop-in replacement or compatibility layer exists for Python. The recommended
 
 ## See Also
 
-- [Python client API reference](../clients/python.md) - full GLIDE Python API details
+- **valkey-glide-python** skill - full GLIDE Python API details
 - [PubSub](../features/pubsub.md) - subscription patterns and dynamic PubSub
 - [Batching](../features/batching.md) - pipeline and transaction patterns
 - [TLS and authentication](../features/tls-auth.md) - TLS setup and credential management

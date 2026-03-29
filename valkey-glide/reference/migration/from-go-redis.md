@@ -310,7 +310,7 @@ No drop-in compatibility layer exists for Go. The recommended approach:
 
 ## See Also
 
-- [Go client API reference](../clients/go.md) - full GLIDE Go API details
+- **valkey-glide-go** skill - full GLIDE Go API details
 - [Batching](../features/batching.md) - pipeline and transaction patterns
 - [PubSub](../features/pubsub.md) - subscription patterns and dynamic PubSub
 - [TLS and authentication](../features/tls-auth.md) - TLS setup and credential management

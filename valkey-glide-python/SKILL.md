@@ -1,6 +1,6 @@
 ---
 name: valkey-glide-python
-description: "Use when building Python applications with Valkey GLIDE. Covers async/sync APIs, GlideClient, GlideClusterClient, configuration, error handling, batching, PubSub, and migration from redis-py."
+description: "Use when building Python applications with Valkey GLIDE. Covers async/sync APIs, GlideClient, GlideClusterClient, configuration, TLS, authentication, OpenTelemetry, error handling, batching, PubSub, and migration from redis-py."
 version: 1.0.0
 argument-hint: "[topic]"
 ---
@@ -235,7 +235,7 @@ All error classes are in `glide_shared.exceptions`:
 | `RequestError` | Base for request-level failures |
 | `TimeoutError` | Request exceeded `request_timeout` |
 | `ConnectionError` | Connection lost (client auto-reconnects) |
-| `RunAbortError` | Transaction aborted (WATCH key changed) |
+| `ExecAbortError` | Transaction aborted (WATCH key changed) |
 | `ConfigurationError` | Invalid client configuration |
 | `ClosingError` | Client closed, no longer usable |
 
@@ -364,7 +364,7 @@ pipe = Batch(is_atomic=False)
 pipe.set("k1", "v1")
 pipe.set("k2", "v2")
 pipe.get("k1")
-results = await client.run(pipe, raise_on_error=False)
+results = await client.exec(pipe, raise_on_error=False)
 ```
 
 ### Transaction (Atomic)
@@ -373,7 +373,7 @@ results = await client.run(pipe, raise_on_error=False)
 tx = Batch(is_atomic=True)
 tx.set("k1", "v1")
 tx.get("k1")
-results = await client.run(tx, raise_on_error=True)
+results = await client.exec(tx, raise_on_error=True)
 ```
 
 ---
@@ -492,12 +492,12 @@ from glide import Batch
 pipe = Batch(is_atomic=False)
 pipe.set("k1", "v1")
 pipe.get("k1")
-results = await client.run(pipe, raise_on_error=False)
+results = await client.exec(pipe, raise_on_error=False)
 
 tx = Batch(is_atomic=True)
 tx.set("k1", "v1")
 tx.get("k1")
-results = await client.run(tx, raise_on_error=True)
+results = await client.exec(tx, raise_on_error=True)
 ```
 
 ### Side-by-Side: Cluster Mode
@@ -744,12 +744,12 @@ batch.get("nonexistent")
 batch.incr("k1")  # will fail - not numeric
 
 # raise_on_error=False returns errors inline
-results = await client.run(batch, raise_on_error=False)
+results = await client.exec(batch, raise_on_error=False)
 # results[0] = "OK", results[1] = None, results[2] = RequestError
 
 # raise_on_error=True throws on first error
 try:
-    results = await client.run(batch, raise_on_error=True)
+    results = await client.exec(batch, raise_on_error=True)
 except RequestError as e:
     print(f"Batch failed: {e}")
 ```
@@ -792,7 +792,6 @@ config = GlideClientConfiguration(
 
 ## Ecosystem Integrations
 
-- `aiocache` - GLIDE backend support for async caching
 - AWS Lambda Powertools for Python - GLIDE support in the idempotency feature
 
 For FastAPI, manually create the async client at startup and inject as a dependency. Since GLIDE uses a single multiplexed connection per node, create separate instances only for blocking commands in multi-worker deployments.

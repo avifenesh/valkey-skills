@@ -1,6 +1,6 @@
 ---
 name: valkey-glide-nodejs
-description: "Use when building Node.js or TypeScript applications with Valkey GLIDE. Covers Promise API, GlideClient, TypeScript types, ESM/CJS support, batching, PubSub, and migration from ioredis."
+description: "Use when building Node.js or TypeScript applications with Valkey GLIDE. Covers Promise API, GlideClient, TypeScript types, ESM/CJS support, TLS, authentication, OpenTelemetry, batching, PubSub, and migration from ioredis."
 version: 1.0.0
 argument-hint: "[topic]"
 ---
@@ -162,9 +162,26 @@ const config = {
 };
 ```
 
-### IAM Authentication
+### IAM Authentication (AWS ElastiCache / MemoryDB)
 
-See the `valkey-glide` skill TLS and Auth reference for IAM setup details in Node.js.
+```typescript
+import { GlideClusterClient, ServiceType } from "@valkey/valkey-glide";
+
+const client = await GlideClusterClient.createClient({
+    addresses: [{ host: "my-cluster.amazonaws.com", port: 6379 }],
+    useTLS: true,
+    credentials: {
+        username: "myIamUser",
+        iamAuthentication: {
+            clusterName: "my-cluster",
+            service: ServiceType.ElastiCache, // or ServiceType.MemoryDB
+            region: "us-east-1",
+        },
+    },
+});
+```
+
+Password and IAM are mutually exclusive. GLIDE handles automatic token refresh using the default AWS credential chain.
 
 ---
 
@@ -189,7 +206,7 @@ AZ Affinity requires Valkey 8.0+ and `clientAz` must be set.
 | `TimeoutError` | Request exceeded `requestTimeout` |
 | `ConnectionError` | Connection lost (auto-reconnects) |
 | `ClosingError` | Client closed, no longer usable |
-| `RunAbortError` | Transaction aborted (WATCH key changed) |
+| `ExecAbortError` | Transaction aborted (WATCH key changed) |
 | `ConfigurationError` | Invalid client configuration |
 
 ```typescript
@@ -325,22 +342,22 @@ const keyType = await client.type("key");
 ```typescript
 import { Batch } from "@valkey/valkey-glide";
 
-const tx = new Batch()
+const tx = new Batch(true)
     .set("key", "value")
     .incr("counter")
     .get("key");
-const result = await client.run(tx);
+const result = await client.exec(tx);
 // ["OK", 1, "value"]
 ```
 
 ### Pipeline (Non-Atomic)
 
 ```typescript
-const batch = new Batch()
+const batch = new Batch(false)
     .set("k1", "v1")
     .set("k2", "v2")
     .get("k1");
-const result = await client.run(batch);
+const result = await client.exec(batch);
 ```
 
 For cluster mode, use `ClusterBatch`.
@@ -672,12 +689,12 @@ batch.get("nonexistent");
 batch.incr("k1");  // will fail - not numeric
 
 // raiseOnError=false returns errors inline
-const results = await client.run(batch, false);
+const results = await client.exec(batch, false);
 // results[2] is a RequestError
 
 // raiseOnError=true throws on first error
 try {
-    const results2 = await client.run(batch, true);
+    const results2 = await client.exec(batch, true);
 } catch (error) {
     if (error instanceof RequestError) {
         console.error(`Batch failed: ${error.message}`);

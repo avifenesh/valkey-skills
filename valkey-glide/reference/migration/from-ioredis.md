@@ -313,7 +313,7 @@ No drop-in compatibility layer exists for Node.js. The recommended approach:
 
 ## See Also
 
-- [Node.js client API reference](../clients/nodejs.md) - full GLIDE Node.js API details
+- **valkey-glide-nodejs** skill - full GLIDE Node.js API details
 - [Scripting](../features/scripting.md) - Lua scripting and the Script class
 - [PubSub](../features/pubsub.md) - subscription patterns and dynamic PubSub
 - [Batching](../features/batching.md) - pipeline and transaction patterns

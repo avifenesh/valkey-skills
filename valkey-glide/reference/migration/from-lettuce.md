@@ -311,7 +311,7 @@ For native migration, the key steps:
 
 ## See Also
 
-- [Java client API reference](../clients/java.md) - full GLIDE Java API details
+- **valkey-glide-java** skill - full GLIDE Java API details
 - [Batching](../features/batching.md) - pipeline and transaction patterns
 - [AZ Affinity](../features/az-affinity.md) - availability zone aware routing
 - [OpenTelemetry](../features/opentelemetry.md) - observability integration

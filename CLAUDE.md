@@ -11,7 +11,7 @@
 | `valkey/` | valkey | Application developers using Valkey | 37 | ~11,513 |
 | `valkey-dev/` | valkey-dev | Valkey server contributors | 58 | ~13,191 |
 | `valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 52 | ~12,600 |
-| `valkey-glide/` | valkey-glide | GLIDE shared architecture, features, best practices | 32 | ~9,417 |
+| `valkey-glide/` | valkey-glide | GLIDE shared architecture, features, best practices | 26 | ~7,630 |
 | `valkey-ecosystem/` | valkey-ecosystem | Ecosystem tools and services | 28 | ~6,233 |
 
 ### GLIDE Per-Language (7 skills, code-heavy)
@@ -23,7 +23,7 @@
 | `valkey-glide-nodejs/` | valkey-glide-nodejs | 765 | TypeScript, ESM/CJS, ioredis migration |
 | `valkey-glide-go/` | valkey-glide-go | 581 | CGO, Result[T], go-redis migration |
 | `valkey-glide-csharp/` | valkey-glide-csharp | 396 | .NET 8.0+, StackExchange.Redis migration |
-| `valkey-glide-php/` | valkey-glide-php | 262 | FFI, PIE/Composer/PECL |
+| `valkey-glide-php/` | valkey-glide-php | 262 | C extension, PIE/Composer/PECL |
 | `valkey-glide-ruby/` | valkey-glide-ruby | 287 | redis-rb API, v1.0.0, full command surface |
 
 ### Glide-MQ (Valkey-Powered Message Queues, 3 skills)
@@ -45,7 +45,7 @@ The AI loads SKILL.md into context, scans the tables, and reads only the specifi
 
 ## Quality
 
-207 reference files, ~52,954 lines across 5 Valkey core skills + 3 Glide-MQ skills. Every skill built with the full 13-phase pipeline: wave 1 writers, gap analysis, wave 2 fill, deep research, enrichment, enhance (5 groups), merge-sort (2 pairs), unification, validate (3 per subject), fix, SKILL.md write, SKILL.md enhance, commit.
+207 reference files, ~51,167 lines across 5 Valkey core skills + 3 Glide-MQ skills. Every skill built with the full 13-phase pipeline: wave 1 writers, gap analysis, wave 2 fill, deep research, enrichment, enhance (5 groups), merge-sort (2 pairs), unification, validate (3 per subject), fix, SKILL.md write, SKILL.md enhance, commit.
 
 valkey-dev is the reference implementation:
 - 58 reference files, ~13,191 lines

@@ -7,14 +7,14 @@ argument-hint: "[topic]"
 
 # Valkey GLIDE Client Reference
 
-32 source-verified reference docs for the official Valkey GLIDE multi-language client. All API names, defaults, and config fields verified against actual glide-core Rust source and language wrapper code.
+26 source-verified reference docs for the official Valkey GLIDE multi-language client. Per-language client API details live in the dedicated per-language skills (valkey-glide-python, valkey-glide-java, etc.). All API names, defaults, and config fields verified against actual glide-core Rust source and language wrapper code.
 
 Browse by topic below. Each link leads to a focused reference with code examples, configuration tables, and verified API details.
 
 ## Routing
 
-- Python/Java/Node/Go/PHP/C# setup -> Clients
-- Cluster vs standalone -> Clients, Architecture (Cluster Topology)
+- Python/Java/Node/Go/PHP/C# setup -> Per-language skills (see Language Clients)
+- Cluster vs standalone -> Per-language skills, Architecture (Cluster Topology)
 - Connection pooling/timeouts/reconnection -> Architecture (Connection Model)
 - Pipelines/transactions/batching -> Features (Batching)
 - Pub/Sub patterns/sharded subscriptions -> Features (PubSub)
@@ -56,20 +56,11 @@ For language-specific API details, code examples, and migration guides, use the 
 | Java | **valkey-glide-java** | CompletableFuture, builders, Jedis/Lettuce migration, Spring |
 | Node.js | **valkey-glide-nodejs** | Promise API, TypeScript, ioredis migration |
 | Go | **valkey-glide-go** | Synchronous API, CGO, Result[T], go-redis migration |
-| PHP | **valkey-glide-php** | FFI extension, PIE/Composer/PECL install |
+| PHP | **valkey-glide-php** | C extension, PIE/Composer/PECL install |
 | C# | **valkey-glide-csharp** | Async/await, .NET 8.0+, StackExchange.Redis migration |
 | Ruby | **valkey-glide-ruby** | In development |
 
-Detailed per-language reference files are also available here:
-
-| Topic | Reference |
-|-------|-----------|
-| Python API reference | [python](reference/clients/python.md) |
-| Java API reference | [java](reference/clients/java.md) |
-| Node.js API reference | [nodejs](reference/clients/nodejs.md) |
-| Go API reference | [go](reference/clients/go.md) |
-| PHP API reference | [php](reference/clients/php.md) |
-| C# API reference | [csharp](reference/clients/csharp.md) |
+Per-language API details (configuration, data types, streams, OTel, TLS, PubSub, migration, gotchas) live in the per-language skills listed above. Use those skills directly for language-specific questions.
 
 
 ## Features

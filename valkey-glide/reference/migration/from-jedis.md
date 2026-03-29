@@ -324,7 +324,7 @@ For the zero-code-change path using the Jedis compatibility layer, see the Migra
 
 ## See Also
 
-- [Java client API reference](../clients/java.md) - full GLIDE Java API details
+- **valkey-glide-java** skill - full GLIDE Java API details
 - [Batching](../features/batching.md) - pipeline and transaction patterns
 - [TLS and authentication](../features/tls-auth.md) - TLS setup and credential management
 - [Production deployment](../best-practices/production.md) - timeout tuning, connection management, observability

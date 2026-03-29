@@ -196,6 +196,21 @@ client.incr("counter")
 results = client.exec
 ```
 
+## Streams
+
+```ruby
+# Add entry
+entry_id = client.xadd("mystream", { "sensor" => "temp", "value" => "23.5" })
+
+# Read entries
+entries = client.xread({ "mystream" => "0" })
+
+# Consumer group
+client.xgroup(:create, "mystream", "mygroup", "0")
+messages = client.xreadgroup("mygroup", "consumer1", { "mystream" => ">" })
+ack_count = client.xack("mystream", "mygroup", "1234567890123-0")
+```
+
 ---
 
 ## Error Types
@@ -285,3 +300,10 @@ The Ruby client is designed as a drop-in replacement for redis-rb. The API follo
 - Cluster mode available via `cluster_mode: true` option but less tested than standalone
 - Some advanced features may not be available yet
 - No official framework integrations (Rails, Sidekiq) documented
+
+---
+
+## Cross-References
+
+- `valkey-glide` skill - architecture, connection model, features shared across all languages
+- `valkey` skill - Valkey server commands, data types, patterns

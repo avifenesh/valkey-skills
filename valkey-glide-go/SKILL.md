@@ -282,6 +282,31 @@ The `Exec` method returns `([]any, error)`. The `raiseOnError` parameter control
 
 ---
 
+## Streams
+
+```go
+import "github.com/valkey-io/valkey-glide/go/v2/options"
+
+// Add entry
+entryId, err := client.XAdd(ctx, "mystream", map[string]string{
+    "sensor": "temp", "value": "23.5",
+})
+
+// Read entries
+entries, err := client.XRead(ctx, map[string]string{"mystream": "0"})
+
+// Consumer group
+_, err = client.XGroupCreate(ctx, "mystream", "mygroup", "0")
+messages, err := client.XReadGroup(ctx, "mygroup", "consumer1",
+    map[string]string{"mystream": ">"})
+ackCount, err := client.XAck(ctx, "mystream", "mygroup",
+    []string{"1234567890123-0"})
+```
+
+Use a dedicated client for blocking XREAD/XREADGROUP to avoid blocking the multiplexed connection.
+
+---
+
 ## OpenTelemetry in Go
 
 The GLIDE Go client supports OpenTelemetry tracing. Spans are created per-command and per-batch. Configure the OpenTelemetry SDK in your Go application and GLIDE will emit spans automatically when tracing is enabled.
@@ -579,3 +604,10 @@ No drop-in compatibility layer exists for Go. The recommended approach:
 | 2.0 | GA release (June 2025), PubSub support |
 | 2.2 | `go mod vendor` support |
 | 2.3 | Dynamic PubSub, ACL commands, cluster management commands |
+
+---
+
+## Cross-References
+
+- `valkey-glide` skill - architecture, connection model, features shared across all languages
+- `valkey` skill - Valkey server commands, data types, patterns

@@ -63,7 +63,7 @@ Active publication cadence in 2026:
 - 2026-02-04: Valkey Newsletter launch
 - 2026-02-19: Operational Lessons
 - 2026-02-25: Introducing Valkey Admin
-- 2026-03-10: Valkey Search 1.2
+- 2026-03-17: Valkey Search 1.2
 - 2026-03-27: Valkey Tooling Primitives (calls out ecosystem tooling gaps)
 
 ## Governance

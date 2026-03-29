@@ -315,7 +315,7 @@ No drop-in compatibility layer exists for C#, though the GLIDE C# client intenti
 
 ## See Also
 
-- [C# client API reference](../clients/csharp.md) - full GLIDE C# API details
+- **valkey-glide-csharp** skill - full GLIDE C# API details
 - [Batching](../features/batching.md) - pipeline and transaction patterns
 - [PubSub](../features/pubsub.md) - subscription patterns and dynamic PubSub
 - [TLS and authentication](../features/tls-auth.md) - TLS setup and credential management
