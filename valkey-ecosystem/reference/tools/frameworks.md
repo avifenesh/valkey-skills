@@ -170,10 +170,36 @@ Queue frameworks are among the most common integrations for Valkey. They use Val
 
 | Framework | Language | Valkey Status | Migration Effort |
 |-----------|----------|---------------|------------------|
+| **glide-mq** | Node.js | **Valkey-native** | New or migrate from BullMQ/Bee-Queue |
 | Sidekiq | Ruby | Official (v8.0+) | Config change only |
 | BullMQ | Node.js | Compatible | Endpoint swap |
 | Celery | Python | Partial | Endpoint swap, caveats |
 | RQ | Python | Compatible | Endpoint swap |
+
+### glide-mq (Node.js) - Valkey-Native
+
+glide-mq is a message queue library built from the ground up for Valkey. Unlike BullMQ and other Redis-based queues that work with Valkey through RESP compatibility, glide-mq uses Valkey Functions (FCALL) for single-round-trip operations and native cluster support via hash-tagged keys.
+
+- **Install**: `npm install glide-mq`
+- **Requires**: Node.js 20+, Valkey 7.0+
+- **Key features**: Per-key ordered processing, runtime group rate limiting, dead letter queues, gzip compression, in-memory testing mode, cron scheduling, workflow DAGs
+- **Connection**: Uses `{ addresses: [{ host, port }] }` format (not ioredis-style `{ host, port }`)
+- **Classes**: Queue, Worker, Producer, FlowProducer, QueueEvents, Broadcast
+
+```typescript
+import { Queue, Worker } from 'glide-mq';
+
+const connection = { addresses: [{ host: 'localhost', port: 6379 }] };
+const queue = new Queue('tasks', { connection });
+await queue.add('email', { to: 'user@example.com' }, { attempts: 3, priority: 1 });
+
+const worker = new Worker('tasks', async (job) => {
+  // process job
+  return { sent: true };
+}, { connection, concurrency: 10 });
+```
+
+Migration guides available for BullMQ and Bee-Queue users. See the **glide-mq**, **glide-mq-migrate-bullmq**, and **glide-mq-migrate-bee** skills for details.
 
 ### Sidekiq (Ruby)
 

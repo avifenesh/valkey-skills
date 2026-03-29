@@ -30,6 +30,7 @@ Browse by topic below. Each link leads to a focused reference with comparison ta
 - Prometheus/Grafana/redis_exporter/alerts -> Monitoring (Prometheus)
 - Datadog/New Relic/Percona PMM -> Monitoring (Platforms)
 - GUI tools/desktop clients/Redis Commander -> Monitoring (GUI Tools)
+- Message queues/glide-mq/job processing/workers -> Tools (Frameworks)
 - Spring Boot/Django/Rails/Sidekiq/BullMQ/Celery -> Tools (Frameworks)
 - Docker/Compose/containers/valkey-bundle -> Tools (Docker)
 - Kubernetes/operators/Helm/StatefulSet -> Tools (Kubernetes)
@@ -88,7 +89,7 @@ Browse by topic below. Each link leads to a focused reference with comparison ta
 
 | Topic | Reference |
 |-------|-----------|
-| Spring Data Valkey, django-valkey, Rails/Sidekiq, BullMQ, Celery, Keyv | [frameworks](reference/tools/frameworks.md) |
+| glide-mq (Valkey-native queues), Spring Data Valkey, Django, Rails/Sidekiq, BullMQ, Celery | [frameworks](reference/tools/frameworks.md) |
 | Docker images, Compose patterns, valkey-bundle, production hardening | [docker](reference/tools/docker.md) |
 | Operators (official + Hyperspike), StatefulSets, sidecars, service mesh | [kubernetes](reference/tools/kubernetes.md) |
 | GitHub Actions, GitLab CI, service containers, test data setup | [ci-cd](reference/tools/ci-cd.md) |

@@ -184,5 +184,7 @@ Combined Valkey-native downloads: ~1.3M/week Python, ~594K/week Node.js. Early b
 - `clients/nodejs.md` - iovalkey deep dive, ioredis migration
 - `clients/java.md` - valkey-java, Redisson, Spring Data Valkey
 - `clients/other-languages.md` - Go, Rust, .NET, PHP, Swift, Scala, C
+- `../tools/frameworks.md` - framework integrations including glide-mq (Valkey-native message queue for Node.js)
+- **glide-mq** skill - greenfield queue development with Valkey-native FCALL operations
 - `modules/overview.md` - module system overview; GLIDE provides dedicated APIs for JSON and Search modules
 - `modules/gaps.md` - feature gaps between Valkey modules and Redis Stack/Redis 8
