@@ -52,10 +52,9 @@ Included modules: valkey-json, valkey-bloom, valkey-search, valkey-ldap.
 ### Bitnami Images
 
 Bitnami publishes Valkey images at `docker.io/bitnami/valkey`. The Bitnami Helm
-charts (`bitnami/valkey` and `bitnami/valkey-cluster`, appVersion 8.1.3)
-use these images along with bundled redis-exporter 1.76.0 for Prometheus metrics.
-Note that Bitnami charts require a commercial subscription for production use
-since August 2025.
+charts (`bitnami/valkey` and `bitnami/valkey-cluster`) use these images along
+with bundled redis-exporter for Prometheus metrics. Note that Bitnami charts
+require a commercial subscription for production use.
 
 For Testcontainers usage, see the [Testing Tools](testing.md) reference.
 

@@ -7,7 +7,7 @@ scrape configuration, metric naming, and multi-instance setups.
 
 ## Exporter: oliver006/redis_exporter
 
-The `oliver006/redis_exporter` (v1.82.0, March 2026) is the standard
+The `oliver006/redis_exporter` is the standard
 Prometheus exporter for Valkey. Officially branded as "Prometheus Valkey &
 Redis Metrics Exporter". It natively supports `valkey://` and `valkeys://`
 URI schemes in addition to `redis://` and `rediss://`. Available on Docker

@@ -103,9 +103,9 @@ Most Redis clients work with Valkey by changing only the connection endpoint. Fo
 | Jedis | Valkey GLIDE (Java) | Low-Medium | GLIDE includes Jedis compatibility layer |
 | Lettuce | Lettuce (keep) | None | Lettuce works with Valkey unchanged |
 | go-redis | valkey-go | Medium | API differences exist; valkey-go has auto-pipelining |
-| Redisson | Redisson (keep) | None | Redisson supports Valkey natively since v3.48.0 |
+| Redisson | Redisson (keep) | None | Redisson supports Valkey natively |
 | StackExchange.Redis | StackExchange.Redis (keep) | None | Explicitly supports Valkey; auto-detects via GetProductVariant |
-| StackExchange.Redis | Valkey GLIDE (C#) | Low | API-compatible with SE.Redis v2.8.58 |
+| StackExchange.Redis | Valkey GLIDE (C#) | Low | API designed for SE.Redis compatibility |
 
 ### Effort Levels Explained
 

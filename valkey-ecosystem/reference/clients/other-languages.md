@@ -109,7 +109,7 @@ StackExchange.Redis is the dominant .NET client for Redis-compatible servers. It
 
 | | |
 |---|---|
-| **Version** | 2.12.8 (March 2026) |
+| **Version** | Check NuGet for latest |
 | **NuGet** | `StackExchange.Redis` |
 | **Install** | `dotnet add package StackExchange.Redis` |
 
@@ -130,9 +130,9 @@ Valkey-specific features:
 
 ### Valkey GLIDE C# (Preview)
 
-GLIDE C# is in preview. Its API is designed to be compatible with StackExchange.Redis v2.8.58, enabling migration with minimal code changes.
+GLIDE C# is in preview. Its API is designed to be compatible with StackExchange.Redis, enabling migration with minimal code changes.
 
-GLIDE C# reached v0.9.0 (September 2025) and is maintained in its own repo (valkey-glide-csharp). Since GLIDE C# is still in preview, StackExchange.Redis remains the production recommendation for .NET applications. See the **valkey-glide** skill for GLIDE C# API details and current status.
+GLIDE C# is maintained in its own repo (valkey-glide-csharp). Since GLIDE C# is still in preview, StackExchange.Redis remains the production recommendation for .NET applications. See the **valkey-glide** skill for GLIDE C# API details and current status.
 
 ## PHP
 
@@ -142,7 +142,7 @@ phpredis is a C extension providing a PHP API for Redis-compatible servers. It i
 
 | | |
 |---|---|
-| **Version** | 6.3.0 (November 2025) |
+| **Version** | Check pecl.php.net for latest |
 | **Install** | `pecl install redis` |
 | **PHP** | 7.4+ |
 
@@ -162,7 +162,7 @@ Predis is a pure PHP client - no C extension required.
 
 | | |
 |---|---|
-| **Version** | 3.4.2 (March 2026) |
+| **Version** | Check Packagist for latest |
 | **Install** | `composer require predis/predis` |
 
 ```php
@@ -172,7 +172,7 @@ $client->set('key', 'value');
 $result = $client->get('key');
 ```
 
-Predis explicitly brands as "Redis/Valkey client for PHP" (7,751 stars). Version 3.4.0 brought a 25% handshake performance improvement, retry support, and `VRANGE` command support (Valkey-specific).
+Predis explicitly brands as "Redis/Valkey client for PHP". Recent versions brought a 25% handshake performance improvement, retry support, and `VRANGE` command support (Valkey-specific).
 
 Choose Predis when:
 - You cannot install C extensions (shared hosting)
@@ -181,18 +181,18 @@ Choose Predis when:
 
 ### Valkey GLIDE PHP (1.0 GA)
 
-GLIDE PHP reached 1.0.0 GA in January 2026 - a significant milestone. It is maintained in its own repo (valkey-glide-php). See the **valkey-glide** skill for API details.
+GLIDE PHP has reached 1.0.0 GA. It is maintained in its own repo (valkey-glide-php). See the **valkey-glide** skill for API details.
 
 ## Swift
 
 ### valkey-swift (Official)
 
-valkey-swift is the official Swift client for Valkey, reaching 1.0 GA in February 2026 and 1.1.0 in March 2026.
+valkey-swift is the official Swift client for Valkey, which has reached GA.
 
 | | |
 |---|---|
-| **Version** | 1.1.0 (March 2026) |
-| **Stars** | 124 |
+| **Version** | Check GitHub releases for latest |
+| **Repo** | [valkey-io/valkey-swift](https://github.com/valkey-io/valkey-swift) |
 | **Install** | Swift Package Manager |
 
 ```swift
@@ -202,7 +202,7 @@ valkey-swift is the official Swift client for Valkey, reaching 1.0 GA in Februar
 
 This is a new client (not a fork) designed for server-side Swift (Linux + macOS). It went from 0.1.0 to 1.1.0 in 8 months, showing strong development velocity.
 
-Key features (1.0+): persistent connection pool, all Valkey v9.0.2 commands, pipelining, transactions, cluster mode with automatic routing/MOVED/ASK redirection/topology refresh/replica reads, standalone with replica support.
+Key features (1.0+): persistent connection pool, full Valkey command coverage, pipelining, transactions, cluster mode with automatic routing/MOVED/ASK redirection/topology refresh/replica reads, standalone with replica support.
 
 1.1.0 additions: retry support for pipelined commands, graceful cluster shutdown, regular topology refresh for standalone client, Valkey command-line tool written in valkey-swift.
 
@@ -316,11 +316,10 @@ hiredis-cluster is a C client for Valkey and Redis Cluster, maintained by Ericss
 
 | | |
 |---|---|
-| **Version** | 0.14.0 (August 2024) |
 | **Install** | Build from source |
-| **Repo** | GitHub: Nordix/hiredis-cluster (104 stars) |
+| **Repo** | GitHub: Nordix/hiredis-cluster |
 
-Uses `redisClusterContext` with `redisClusterCommand()` for SET/GET operations. Still actively maintained (last pushed March 2026). Primarily used for embedded systems, high-performance C applications, and as the foundation for higher-level client wrappers.
+Uses `redisClusterContext` with `redisClusterCommand()` for SET/GET operations. Actively maintained. Primarily used for embedded systems, high-performance C applications, and as the foundation for higher-level client wrappers.
 
 For new projects targeting Valkey, prefer libvalkey over hiredis-cluster.
 
@@ -328,13 +327,13 @@ For new projects targeting Valkey, prefer libvalkey over hiredis-cluster.
 
 | Language | Native Valkey Client | Compatible Redis Client | GLIDE Status |
 |----------|---------------------|------------------------|--------------|
-| Go | valkey-go (1.0.73) | go-redis | GA |
+| Go | valkey-go | go-redis | GA |
 | Rust | None | redis-rs | No Rust binding |
-| .NET/C# | None | StackExchange.Redis (2.12.8) | Preview (0.9.0) |
-| PHP | None | phpredis (6.3.0), Predis (3.4.2) | 1.0 GA |
-| Swift | valkey-swift (1.1.0) | None | Not available |
+| .NET/C# | None | StackExchange.Redis | Preview |
+| PHP | None | phpredis, Predis | 1.0 GA |
+| Swift | valkey-swift | None | Not available |
 | Scala | valkey4cats | GLIDE (underlying) | Not available |
-| C | libvalkey (0.4.0) | hiredis-cluster (0.14.0) | Not available |
+| C | libvalkey | hiredis-cluster | Not available |
 | Ruby | None | redis-rb | In development (separate repo) |
 | C++ | None | None | In development (separate repo) |
 

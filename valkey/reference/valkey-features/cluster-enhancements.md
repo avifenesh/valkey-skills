@@ -30,17 +30,14 @@ Each database is a separate namespace. The same key name in database 0 and datab
 
 **Testing and debugging**: Compare behavior of the same keys across databases. Use one database for production traffic and another for shadow testing.
 
-**Atomic key replacement via MOVE**: Move a key atomically from one database to another within the same node.
+**Atomic key migration via MOVE**: Move a key atomically from one database to another within the same node. MOVE fails if the key already exists in the destination database.
 
 ```
-SELECT 0
-SET mykey "old_value"
-
-# Prepare new value in database 1
+# Prepare value in staging database
 SELECT 1
 SET mykey "new_value"
 
-# Atomic swap
+# Move to production database (succeeds only if mykey does not exist in db 0)
 MOVE mykey 0
 ```
 

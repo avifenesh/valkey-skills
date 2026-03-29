@@ -126,9 +126,8 @@ Yandex Cloud provides a Managed Service for Valkey via the `yandex_mdb_redis_clu
 
 The project-maintained Helm chart is the recommended deployment method for Valkey on Kubernetes.
 
-- **Latest version**: valkey-0.9.3 (2026-01-15)
 - **Registry**: `oci://registry-1.docker.io/valkeycharts/valkey`
-- **Source**: [valkey-io/valkey-helm](https://github.com/valkey-io/valkey-helm) (239 stars)
+- **Source**: [valkey-io/valkey-helm](https://github.com/valkey-io/valkey-helm)
 - **Install repo**: `helm repo add valkey https://valkey.io/valkey-helm/`
 - **Slack**: #Valkey-helm channel
 
@@ -176,7 +175,7 @@ Percona products.
 ### Terraform Module Gaps
 
 No dedicated, well-maintained Terraform modules exist for self-hosted Valkey.
-CloudPosse's `terraform-aws-elasticache-redis` (147 stars) works with Valkey
+CloudPosse's `terraform-aws-elasticache-redis` works with Valkey
 since AWS ElastiCache supports Valkey as an engine, but module naming and docs
 are Redis-centric. For self-hosted deployments, use Terraform's Helm provider
 with the official Valkey Helm chart.

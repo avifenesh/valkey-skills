@@ -306,7 +306,7 @@ return 0
 
 **Timeout**: Default script timeout is 5 seconds (`busy-reply-threshold`). After the timeout, clients receive BUSY errors but the script continues. Use SCRIPT KILL to abort a read-only script, or SHUTDOWN NOSAVE as a last resort for write scripts.
 
-**Determinism**: Scripts must be deterministic for correct replication. Avoid `TIME`, `RANDOMKEY`, or any non-deterministic commands. Use the read-only variants (EVAL_RO, FCALL_RO) when possible.
+**Replication**: Valkey uses effects replication by default (each write command within a script is replicated individually). This means non-deterministic commands like `TIME` and `RANDOMKEY` are safe to use in scripts - the actual effects are replicated, not the script itself. The older `lua-replicate-commands` config is deprecated and ignored. Use the read-only variants (EVAL_RO, FCALL_RO) when your script performs no writes.
 
 **Cluster mode**: All keys accessed by a script must hash to the same slot. Use hash tags `{tag}` to co-locate keys.
 

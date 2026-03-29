@@ -266,7 +266,7 @@ GEOHASH locations "san-francisco"
 
 ```
 GEOSEARCH key
-    FROMMEMBER member | FROMLONLAT longitude latitude
+    [FROMMEMBER member | FROMLONLAT longitude latitude]
     BYRADIUS radius M | KM | FT | MI |
     BYBOX width height M | KM | FT | MI |
     BYPOLYGON num-vertices lon1 lat1 [lon lat ...]
@@ -275,7 +275,7 @@ GEOSEARCH key
     [WITHCOORD] [WITHDIST] [WITHHASH]
 ```
 
-Searches for members within a specified area. Three shape options: circle (BYRADIUS), rectangle (BYBOX), and polygon (BYPOLYGON, Valkey 9.0+).
+Searches for members within a specified area. Three shape options: circle (BYRADIUS), rectangle (BYBOX), and polygon (BYPOLYGON, Valkey 9.0+). FROMMEMBER/FROMLONLAT is required for BYRADIUS and BYBOX but NOT used with BYPOLYGON - the polygon vertices define the search area directly.
 
 **Complexity**: O(N+log M)
 
@@ -304,7 +304,7 @@ GEOSEARCH locations BYPOLYGON 4 -123 38 -117 38 -117 34 -123 34 ASC WITHCOORD
 
 ```
 GEOSEARCHSTORE destination source
-    FROMMEMBER member | FROMLONLAT longitude latitude
+    [FROMMEMBER member | FROMLONLAT longitude latitude]
     BYRADIUS radius M | KM | FT | MI |
     BYBOX width height M | KM | FT | MI |
     BYPOLYGON num-vertices lon1 lat1 [lon lat ...]

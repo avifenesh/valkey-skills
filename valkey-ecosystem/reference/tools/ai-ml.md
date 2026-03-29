@@ -8,7 +8,7 @@ Use when evaluating Valkey for AI/ML use cases - vector search for RAG, semantic
 
 Valkey serves as a high-performance in-memory layer for AI/ML applications. Its
 sub-millisecond latency and support for vector similarity search via the
-valkey-search module (113 stars, v1.2.0 GA) make it suitable for
+valkey-search module make it suitable for
 several roles in modern AI architectures:
 
 | Role | How Valkey Fits |
@@ -114,9 +114,9 @@ Valkey is well-suited as a persistence layer for AI agent memory - conversation 
 
 | Project | Description |
 |---------|-------------|
-| [Recall](https://github.com/joseairosa/recall) (163 stars) | Persistent cross-session memory for Claude and AI agents, backed by Valkey. Self-host or use managed SaaS (recallmcp.com) |
-| [Cognee](https://github.com/topoteretes/cognee) (14,755 stars) | AI memory system with Valkey vector database adapter |
-| [Mem0](https://docs.mem0.ai/components/vectordbs/dbs/valkey) (51,000+ stars) | Universal memory layer for AI agents with Valkey vector store adapter using HNSW/FLAT indexing |
+| [Recall](https://github.com/joseairosa/recall) | Persistent cross-session memory for Claude and AI agents, backed by Valkey. Self-host or use managed SaaS (recallmcp.com) |
+| [Cognee](https://github.com/topoteretes/cognee) | AI memory system with Valkey vector database adapter |
+| [Mem0](https://docs.mem0.ai/components/vectordbs/dbs/valkey) | Universal memory layer for AI agents with Valkey vector store adapter using HNSW/FLAT indexing |
 
 ### MCP Servers
 
@@ -125,7 +125,7 @@ Model Context Protocol (MCP) servers provide AI agents with structured access to
 | Server | Description |
 |--------|-------------|
 | [AWS MCP Server](https://github.com/awslabs/mcp) | Official AWS MCP suite with Valkey/ElastiCache access |
-| [Valkey MCP Task Management](https://github.com/jbrinkman/valkey-ai-tasks) (25 stars) | Task management for AI agents with Valkey persistence |
+| [Valkey MCP Task Management](https://github.com/jbrinkman/valkey-ai-tasks) | Task management for AI agents with Valkey persistence |
 
 ## Feature Store for ML Pipelines
 
@@ -142,7 +142,7 @@ This pattern avoids the latency of database lookups during inference while keepi
 
 ## valkey-bundle
 
-The [valkey-bundle](https://github.com/valkey-io/valkey-bundle) (14 stars)
+The [valkey-bundle](https://github.com/valkey-io/valkey-bundle)
 packages valkey-server with all official modules (valkey-search, valkey-json,
 valkey-bloom) into a single installable unit. For AI workloads, this is the
 simplest way to get vector search, JSON storage, and Bloom filters in one

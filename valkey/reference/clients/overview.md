@@ -6,19 +6,19 @@ Use when choosing a Valkey client library for your application, migrating from a
 
 ## Valkey GLIDE (Official Client)
 
-GLIDE (General Language Independent Driver for the Enterprise) is the official Valkey client. Built in Rust with language bindings, it uses a single multiplexed connection per cluster node with auto-pipelining. Current version: **v2.3.0**.
+GLIDE (General Language Independent Driver for the Enterprise) is the official Valkey client. Built in Rust with language bindings, it uses a single multiplexed connection per cluster node with auto-pipelining.
 
 ### Language Support
 
-| Language | Package | Version | Status |
-|----------|---------|---------|--------|
-| Python | `pip install valkey-glide` | 2.3.0 | GA |
-| Node.js | `npm install @valkey/valkey-glide` | 2.3.0 | GA |
-| Java | `io.valkey:valkey-glide` (Maven) | 2.3.0 | GA |
-| Go | `go get github.com/valkey-io/valkey-glide/go/v2` | 2.3.0 | GA |
-| PHP | `valkey-glide-php` | 1.0.0 | GA |
-| C# | `valkey-glide-csharp` | 0.9.0 | Preview |
-| Ruby | `valkey-glide-ruby` | - | In development |
+| Language | Package | Status |
+|----------|---------|--------|
+| Python | `pip install valkey-glide` | GA |
+| Node.js | `npm install @valkey/valkey-glide` | GA |
+| Java | `io.valkey:valkey-glide` (Maven) | GA |
+| Go | `go get github.com/valkey-io/valkey-glide/go/v2` | GA |
+| PHP | `valkey-glide-php` | GA |
+| C# | `valkey-glide-csharp` | Preview |
+| Ruby | `valkey-glide-ruby` | In development |
 
 ### Key Advantages
 
@@ -102,16 +102,16 @@ All major Redis clients work with Valkey out of the box. No code changes require
 
 Beyond GLIDE, several language-specific clients are maintained as first-party Valkey projects:
 
-| Language | Client | Version | License | Notes |
-|----------|--------|---------|---------|-------|
-| Python | valkey-py | 6.1.0 | MIT | Fork of redis-py |
-| Node.js | iovalkey | v0.3.1 | MIT | Fork of ioredis |
-| Java | valkey-java | v5.3.0 | MIT | Fork of jedis |
-| Java | redisson | v3.48.0 | Apache-2.0 | 50+ Java objects/services |
-| Go | valkey-go | 1.0.67 | Apache-2.0 | Auto-pipelining, client-side caching |
-| PHP | phpredis | 6.1.0 | PHP-3.01 | C extension |
-| PHP | predis | v2.3.0 | MIT | Pure PHP |
-| Swift | valkey-swift | v1.0.0 | Apache-2.0 | First-party Swift client |
+| Language | Client | License | Notes |
+|----------|--------|---------|-------|
+| Python | valkey-py | MIT | Fork of redis-py |
+| Node.js | iovalkey | MIT | Fork of ioredis |
+| Java | valkey-java | MIT | Fork of jedis |
+| Java | redisson | Apache-2.0 | 50+ Java objects/services |
+| Go | valkey-go | Apache-2.0 | Auto-pipelining, client-side caching |
+| PHP | phpredis | PHP-3.01 | C extension |
+| PHP | predis | MIT | Pure PHP |
+| Swift | valkey-swift | Apache-2.0 | First-party Swift client |
 
 ### Advanced Feature Comparison
 

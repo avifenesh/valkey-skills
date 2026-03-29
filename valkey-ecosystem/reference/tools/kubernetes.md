@@ -69,10 +69,9 @@ spec:
 
 ### Hyperspike/valkey-operator (Community)
 
-The most mature community operator. 302 stars (2x the official operator).
-Latest release: v0.0.61 (2025-10-12). Supports cluster mode with TLS,
-Prometheus monitoring (bundles redis_exporter v1.78.0), and cert-manager
-integration. Container images are cosign-verified. Ships Valkey 8.1.4.
+The most mature community operator. Supports cluster mode with TLS,
+Prometheus monitoring (bundles redis_exporter), and cert-manager
+integration. Container images are cosign-verified.
 
 **CRD**: `Valkey` (API version `hyperspike.io/v1`)
 
@@ -114,7 +113,7 @@ cosign verify ghcr.io/hyperspike/valkey-operator:$LATEST \
 | Operator | Description | Notes |
 |----------|-------------|-------|
 | **SAP/redis-operator** | Manages Redis/Valkey clusters on Kubernetes | Originally Redis-focused; works with Valkey via compatibility |
-| **OT-CONTAINER-KIT/redis-operator** | Golang-based, supports standalone/cluster/replication/sentinel | 1300+ stars; Redis-native but compatible with Valkey images |
+| **OT-CONTAINER-KIT/redis-operator** | Golang-based, supports standalone/cluster/replication/sentinel | Redis-native but compatible with Valkey images |
 
 ### Operator Selection Guide
 
@@ -184,7 +183,7 @@ containers:
       - containerPort: 6379
 
   - name: exporter
-    image: oliver006/redis_exporter:v1.78.0
+    image: oliver006/redis_exporter:latest
     ports:
       - containerPort: 9121
         name: metrics

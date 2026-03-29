@@ -27,11 +27,11 @@ Note: `bind` defaults to `* -::*` in the source (`CONFIG_DEFAULT_BINDADDR`), whi
 |-----------|---------|-------------|
 | `maxmemory` | `0` (unlimited) | Hard memory limit in bytes. Set explicitly in production. |
 | `maxmemory-policy` | `noeviction` | What to do when maxmemory is reached. See [eviction policies](eviction.md). |
-
-**maxmemory sizing rule of thumb**: If the machine has 10 GB free, set `maxmemory` to 8-9 GB. This accounts for Valkey overhead beyond data, memory fragmentation, fork copy-on-write during BGSAVE, and client output/query buffers. With persistence on write-heavy workloads, reserve up to 40% (fork COW can double page table usage).
 | `maxmemory-clients` | `0` (disabled) | Max aggregate memory for client buffers. Accepts bytes or percentage (e.g., `5%`). |
 | `maxmemory-samples` | `5` | Number of keys sampled for LRU/LFU approximation. Higher = more accurate but slower. |
 | `maxmemory-eviction-tenacity` | `10` | Effort level for eviction (0-100). Higher values try harder to meet maxmemory. |
+
+**maxmemory sizing rule of thumb**: If the machine has 10 GB free, set `maxmemory` to 8-9 GB. This accounts for Valkey overhead beyond data, memory fragmentation, fork copy-on-write during BGSAVE, and client output/query buffers. With persistence on write-heavy workloads, reserve up to 40% (fork COW can double page table usage).
 
 **Source verification note**: The research guide lists `maxmemory-policy allkeys-lru` as a default. This is incorrect - the source default is `noeviction` (`MAXMEMORY_NO_EVICTION` at line 3339 in config.c). The guide was showing a recommended value, not the actual default.
 

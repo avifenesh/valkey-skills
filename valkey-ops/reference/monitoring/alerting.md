@@ -140,7 +140,7 @@ groups:
   - name: valkey-performance
     rules:
       - alert: ValkeyHighLatency
-        expr: rate(redis_commands_duration_seconds_total[5m]) / rate(redis_commands_processed_total[5m]) > 0.01
+        expr: sum(rate(redis_commands_duration_seconds_total[5m])) / sum(rate(redis_commands_processed_total[5m])) > 0.01
         for: 5m
         labels: { severity: warning }
         annotations:

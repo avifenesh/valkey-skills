@@ -11,7 +11,7 @@ Use when evaluating whether Valkey covers your module needs, understanding what 
 | JSON documents | Bundled in core | valkey-json module (GA) | No - feature parity |
 | Bloom filters | Bundled in core | valkey-bloom module (GA) | No - feature parity |
 | Vector similarity search | Bundled in core | valkey-search module (GA) | No - feature parity |
-| Full-text search | Bundled in core | valkey-search 1.2.0 (GA) | No - added March 2026 |
+| Full-text search | Bundled in core | valkey-search 1.2.0+ (GA) | No - feature parity |
 | Aggregation pipelines | Bundled in core | valkey-search FT.AGGREGATE (GA) | No - added in 1.1.0 |
 | Time series | Bundled in core | **No official module** | **Yes** |
 | Graph | EOL (was RedisGraph) | Not available | No - neither platform supports it |
@@ -25,7 +25,7 @@ Use when evaluating whether Valkey covers your module needs, understanding what 
 
 ### Full-Text Search - RESOLVED
 
-**Status**: Available since valkey-search 1.2.0 (March 2026). Requires Valkey 9.0.1+.
+**Status**: Available since valkey-search 1.2.0. Requires Valkey 9.0.1+.
 
 valkey-search 1.2.0 added full-text search with keyword, phrase, prefix, suffix, wildcard, and fuzzy (typo-tolerant) queries. It also supports tag search for categorical filtering, numeric range queries, and hybrid queries combining text, tag, numeric, and vector dimensions in a single request. FT.AGGREGATE (added in 1.1.0) provides server-side GROUPBY, REDUCE, APPLY, FILTER, and SORTBY.
 

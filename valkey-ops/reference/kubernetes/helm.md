@@ -9,8 +9,8 @@ Use when deploying Valkey on Kubernetes via Helm, choosing between the official 
 | Feature | Official Valkey Chart | Bitnami Chart |
 |---------|----------------------|---------------|
 | Repository | `valkey/valkey` | `oci://registry-1.docker.io/bitnamicharts/valkey` |
-| **Chart version** | **0.9.3** | **4.0.2** |
-| **App version** | **Valkey 9.0.1** | **Valkey 8.1.3** |
+| **Chart version** | Check chart repo for latest | Check Bitnami for latest |
+| **App version** | Check chart repo for latest | Check Bitnami for latest |
 | Architectures | Standalone, replication | Standalone, replication, cluster |
 | Cluster mode | No | Yes (separate `valkey-cluster` chart) |
 | Sentinel | No | Yes |

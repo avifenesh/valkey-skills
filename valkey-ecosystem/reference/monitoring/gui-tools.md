@@ -15,7 +15,6 @@ The first official Valkey administration tool. Web-based with an Electron
 desktop app. Closest Valkey-native alternative to Redis Insight.
 
 - **Repo**: [valkey-io/valkey-admin](https://github.com/valkey-io/valkey-admin)
-- **Version**: v0.1.0 (2026-01-22)
 - **Features**: Real-time metrics dashboard, key browser, command execution,
   cluster topology visualization, hot key monitoring, slow log viewer,
   COMMANDLOG support (large requests + large replies), monitoring dashboards

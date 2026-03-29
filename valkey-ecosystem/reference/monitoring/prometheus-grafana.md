@@ -13,15 +13,11 @@ branded as "Prometheus Valkey & Redis Metrics Exporter". Despite the name
 retaining "redis", the project explicitly supports Valkey 7.x, 8.x, and 9.x
 with native `valkey://` and `valkeys://` URI schemes.
 
-- **Latest version**: v1.82.0 (2026-03-08)
 - **Port**: 9121 (default)
 - **Repo**: [oliver006/redis_exporter](https://github.com/oliver006/redis_exporter)
 - **Distribution**: Docker Hub, ghcr.io, quay.io, standalone binary
 - **License**: MIT
-- **Release cadence**: Roughly monthly (v1.75.0 through v1.82.0 between Aug 2025 and Mar 2026)
-
-v1.82.0 added hostname-based metric export via cluster discovery and Redis role
-labels on all metrics.
+- **Release cadence**: Roughly monthly; check GitHub releases for latest
 
 ### Quick start
 
@@ -58,9 +54,9 @@ keep the default.
 
 ### Embedded in Operators and Charts
 
-The Hyperspike operator bundles redis_exporter (bumped to v1.78.0 in their
-v0.0.61 release). Bitnami Helm charts bundle redis-exporter 1.76.0. Both
-auto-configure the exporter sidecar and ServiceMonitor creation.
+The Hyperspike operator and Bitnami Helm charts both bundle redis_exporter
+and auto-configure the exporter sidecar and ServiceMonitor creation. Check
+each project's releases for the bundled exporter version.
 
 ---
 

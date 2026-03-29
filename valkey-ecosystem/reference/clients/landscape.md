@@ -21,29 +21,28 @@ However, "compatible" and "native" are different levels of support:
 
 Forked from established Redis clients by the Valkey community. These are drop-in replacements with API compatibility and Valkey-native awareness.
 
-| Language | Client | Forked From | Version |
-|----------|--------|-------------|---------|
-| Python | valkey-py | redis-py | 6.1.1 |
-| Node.js | iovalkey | ioredis | 0.3.3 |
-| Java | valkey-java | Jedis | 5.5.0 |
-| Go | valkey-go | (built from scratch) | 1.0.73 |
-| Swift | valkey-swift | (new) | 1.1.0 |
+| Language | Client | Forked From |
+|----------|--------|-------------|
+| Python | valkey-py | redis-py |
+| Node.js | iovalkey | ioredis |
+| Java | valkey-java | Jedis |
+| Go | valkey-go | (built from scratch) |
+| Swift | valkey-swift | (new) |
 
-valkey-go is notable - it is not a fork but a purpose-built client with auto-pipelining designed specifically for Valkey. It has the highest GitHub stars (609) of any standalone Valkey-native client.
+valkey-go is notable - it is not a fork but a purpose-built client with auto-pipelining designed specifically for Valkey.
 
-**iovalkey staleness concern**: iovalkey has not had an npm publish since June 2025 (v0.3.3). The v0.x versioning suggests it has not reached 1.0 stability. Teams wanting active Valkey Node.js development should evaluate GLIDE Node.js as an alternative.
+**iovalkey staleness concern**: iovalkey has had infrequent npm publishes and remains at v0.x versioning, suggesting it has not reached 1.0 stability. Teams wanting active Valkey Node.js development should evaluate GLIDE Node.js as an alternative.
 
 ### 2. Valkey GLIDE (Official Multi-Language Client)
 
 GLIDE (General Language Independent Driver for the Enterprise) is the official Valkey client, written in Rust with language-specific bindings. It ships pre-configured with production best practices from over a decade of operating Redis-compatible services.
 
-- **GA**: Python, Java, Node.js, Go, PHP (1.0 GA January 2026)
-- **Preview**: C# (v0.9.0)
+- **GA**: Python, Java, Node.js, Go, PHP
+- **Preview**: C#
 - **In development**: C++, Ruby (split into separate repos: valkey-glide-cpp, valkey-glide-ruby)
 - **Key features**: AZ-affinity routing, auto-reconnect, connection pooling, cluster-aware, mTLS, OpenTelemetry
 - **Java bonus**: Jedis compatibility layer for zero-code migration; Java 8 backward compatibility
-- **C# bonus**: API-compatible with StackExchange.Redis v2.8.58
-- **Latest version**: v2.3.0
+- **C# bonus**: API designed for StackExchange.Redis compatibility
 
 The GLIDE project is splitting language-specific clients into separate repos (valkey-glide-ruby, valkey-glide-cpp, valkey-glide-php, valkey-glide-csharp) while the core monorepo continues to host Python, Java, Node.js, and Go.
 
@@ -86,7 +85,7 @@ These clients are maintained by Redis Ltd. or the broader Redis community. They 
 | Java | valkey-java | GLIDE for Jedis compat layer; Redisson for distributed objects |
 | Go | valkey-go | GLIDE Go (GA) for managed service optimization |
 | Rust | redis-rs | Only viable option; works well |
-| .NET/C# | StackExchange.Redis | GLIDE C# (v0.9.0 preview) for Valkey-native features |
+| .NET/C# | StackExchange.Redis | GLIDE C# (preview) for Valkey-native features |
 | PHP | phpredis | Predis for pure PHP; GLIDE PHP (1.0 GA) for Valkey-native |
 | Swift | valkey-swift | Only Valkey-native option |
 | Scala | valkey4cats | Built on Lettuce for reactive |
@@ -125,7 +124,7 @@ These clients are maintained by Redis Ltd. or the broader Redis community. They 
 | Jedis | valkey-java | Minimal | Drop-in replacement |
 | Jedis | GLIDE Java | Zero | Jedis compatibility layer |
 | go-redis | valkey-go | Moderate | API differences; migration guide available |
-| SE.Redis | GLIDE C# | Minimal | API-compatible with SE.Redis v2.8.58 |
+| SE.Redis | GLIDE C# | Minimal | API designed for SE.Redis compatibility |
 | Any Redis client | Same client | Zero | Change connection endpoint only |
 
 ## RESP Protocol Compatibility Notes
@@ -164,18 +163,16 @@ Versions listed here are from late 2025 / early 2026 and will change. Always che
 | Lettuce | 7.4.0 | Maven: `io.lettuce:lettuce-core` |
 | StackExchange.Redis | 2.12.8 | NuGet: `StackExchange.Redis` |
 
-## Download Metrics (March 2026)
+## Download Metrics
 
 Adoption snapshot showing Valkey-native client traction relative to Redis equivalents:
 
-| Ecosystem | Valkey-Native | Weekly Downloads | Redis Equivalent | Weekly Downloads | Adoption Ratio |
-|-----------|--------------|-----------------|-----------------|-----------------|----------------|
-| Python | valkey-py | ~1.14M | redis-py | ~46M | ~2.5% |
-| Python | valkey-glide | ~172K | - | - | - |
-| Node.js | iovalkey | ~344K | ioredis | ~16M | ~2.2% |
-| Node.js | @valkey/valkey-glide | ~250K | - | - | - |
+| Ecosystem | Valkey-Native | Redis Equivalent | Notes |
+|-----------|--------------|-----------------|-------|
+| Python | valkey-py, valkey-glide | redis-py | Check PyPI for current download stats |
+| Node.js | iovalkey, @valkey/valkey-glide | ioredis | Check npm for current download stats |
 
-Combined Valkey-native downloads: ~1.3M/week Python, ~594K/week Node.js. Early but growing.
+Valkey-native client adoption is early but growing. Check package registries for current download metrics.
 
 ## Cross-References
 

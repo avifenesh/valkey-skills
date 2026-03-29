@@ -18,13 +18,13 @@ npm install iovalkey
 
 ### Version
 
-- **Current**: 0.3.3 (check npm for latest)
+- **Version**: Check npm for latest
 - **Node.js**: 14+
 - **Server**: Valkey 7.2+
 - **TypeScript**: Built-in type definitions
-- **Downloads**: ~344K/week on npm (~2.2% of ioredis's ~16M/week)
+- **Downloads**: Check npm for latest stats
 
-**Staleness concern**: iovalkey has not had an npm publish since June 2025 (v0.3.3). The v0.x versioning suggests it has not reached 1.0 stability. For teams wanting an actively developed Valkey Node.js client, GLIDE Node.js (~250K/week) may be the stronger choice given its active release cadence.
+**Staleness concern**: iovalkey has had infrequent npm publishes and remains at v0.x versioning, suggesting it has not reached 1.0 stability. For teams wanting an actively developed Valkey Node.js client, GLIDE Node.js may be the stronger choice given its active release cadence.
 
 ### Basic Usage
 
@@ -89,7 +89,7 @@ import Redis from "ioredis";
 const client = new Redis({ host: "valkey-server", port: 6379 });
 ```
 
-This works via RESP protocol compatibility. ioredis is community-maintained (15,243 stars, 297 open issues) and has no native Valkey awareness, but it remains fully functional for standard operations. Key gap: ioredis lacks AZ-affinity routing - a feature available in iovalkey and GLIDE natively.
+This works via RESP protocol compatibility. ioredis is community-maintained and has no native Valkey awareness, but it remains fully functional for standard operations. Key gap: ioredis lacks AZ-affinity routing - a feature available in iovalkey and GLIDE natively.
 
 ## node-redis Compatibility
 
@@ -180,7 +180,7 @@ await client.set("key", "value");
 const result = await client.get("key");
 ```
 
-GLIDE Node.js gets ~250K downloads/week on npm. Version 2.3.0 added dynamic PubSub support, mTLS, OpenTelemetry parent span propagation, and read-only mode. Combined with iovalkey, Valkey-native Node.js client downloads are ~594K/week.
+GLIDE Node.js is actively published on npm. Recent releases added dynamic PubSub support, mTLS, OpenTelemetry parent span propagation, and read-only mode.
 
 For detailed GLIDE Node.js API coverage, connection management, cluster configuration, and advanced patterns, see the **valkey-glide** skill.
 

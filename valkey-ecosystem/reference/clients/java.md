@@ -22,18 +22,15 @@ valkey-java is the official Java client for Valkey, forked from Jedis. It mainta
 
 ### Version
 
-- **Current**: 5.5.0 (check Maven Central for latest)
+- **Version**: Check Maven Central for latest
 - **Java**: 8+
 - **Server**: Valkey 7.2+
 
-### Recent Changes
+### Valkey-Specific Commands
 
-- **5.5.0** (October 2025) - hash field expiration commands
-- **5.4.0** (July 2025) - `SETIFEQ`/`DELIFEQ` commands, `BGSAVE` cancel, custom retry handlers
+valkey-java supports Valkey-specific commands (`SETIFEQ`, `DELIFEQ`, hash field expiration) that are not available in Jedis, making it the choice for teams using Valkey-only features.
 
-These Valkey-specific commands (`SETIFEQ`, `DELIFEQ`, hash field expiration) are not available in Jedis, making valkey-java the choice for teams using Valkey-only features.
-
-**Adoption note**: With 54 GitHub stars, valkey-java has limited community mindshare. Most Java users either stick with Jedis/Lettuce (endpoint swap) or adopt GLIDE.
+**Adoption note**: valkey-java has limited community mindshare. Most Java users either stick with Jedis/Lettuce (endpoint swap) or adopt GLIDE.
 
 ### Basic Usage
 
@@ -82,7 +79,7 @@ StatefulRedisConnection<String, String> connection = client.connect();
 connection.sync().set("key", "value");
 ```
 
-**Latest version**: 7.4.0 (February 2026). Lettuce continues active development with 5,727 GitHub stars.
+Lettuce continues active development. Check Maven Central for the latest version.
 
 Lettuce is recommended for:
 - Reactive/async applications (Project Reactor integration)
@@ -106,7 +103,7 @@ Redisson is a unique client - it provides 50+ distributed Java data structures o
 
 ### Valkey Support
 
-Redisson explicitly supports both Valkey and Redis (24,285 GitHub stars - by far the most popular client with Valkey awareness). Version 4.0 (December 2025) was a major version bump with breaking changes. Configure for Valkey:
+Redisson explicitly supports both Valkey and Redis and is the most popular client with Valkey awareness. Configure for Valkey:
 
 ```java
 Config config = new Config();
@@ -161,7 +158,7 @@ Choose Redisson over valkey-java or Jedis when you need:
 
 ## Valkey GLIDE for Java
 
-GLIDE Java provides a Rust-core client with production-hardened defaults, AZ-affinity, and a Jedis compatibility layer. Version 2.3.0 added Java 8 backward compatibility, uber JAR for multi-platform builds, mTLS support, read-only mode, and additional commands (`EVAL_RO`, `EVALSHA_RO`, ACL commands, `WAITAOF`).
+GLIDE Java provides a Rust-core client with production-hardened defaults, AZ-affinity, and a Jedis compatibility layer. Recent releases added Java 8 backward compatibility, uber JAR for multi-platform builds, mTLS support, read-only mode, and additional commands (`EVAL_RO`, `EVALSHA_RO`, ACL commands, `WAITAOF`).
 
 ### Install (Maven)
 
@@ -204,12 +201,14 @@ For detailed GLIDE Java API coverage, AZ-affinity, batching, and advanced patter
 
 ## Spring Data Valkey
 
-Spring Data Valkey is the official first-class Spring integration for Valkey, forked from Spring Data Redis 3.5.1.
+Spring Data Valkey is the official first-class Spring integration for Valkey, forked from Spring Data Redis.
 
 ### Install
 
-- **Spring Boot Starter**: `io.valkey.springframework.boot:spring-boot-starter-data-valkey:1.0.0`
-- **Standalone**: `io.valkey.springframework.data:spring-data-valkey:1.0.0`
+- **Spring Boot Starter**: `io.valkey.springframework.boot:spring-boot-starter-data-valkey`
+- **Standalone**: `io.valkey.springframework.data:spring-data-valkey`
+
+Check Maven Central for the latest version.
 
 ### Key Features
 

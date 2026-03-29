@@ -216,7 +216,7 @@ async def write_with_consistency(redis, key: str, value: str):
         logger.warning('Write not yet replicated')
 ```
 
-### WAITAOF (Valkey 8.0+)
+### WAITAOF (since 7.2)
 
 `WAITAOF` blocks until previous writes have been fsynced to disk on the primary and/or replicas. Stronger guarantee than `WAIT`, which only confirms in-memory replication.
 

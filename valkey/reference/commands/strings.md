@@ -54,7 +54,7 @@ Sets `key` to hold `value`. Overwrites any existing value and type. Creates the 
 SET cache:product:42 '{"name":"Widget"}' EX 3600
 
 -- Set only if key does not exist (distributed lock acquire)
-SET lock:checkout NX PX 30000
+SET lock:checkout "owner:txn:8832" NX PX 30000
 
 -- Conditional update: only set if current value matches (Valkey 8.1+)
 SET config:version "v2" IFEQ "v1"

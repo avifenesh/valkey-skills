@@ -11,16 +11,14 @@ valkey-bloom adds Bloom filters as a native data type to Valkey. A Bloom filter 
 | Property | Value |
 |----------|-------|
 | Status | GA |
-| Version | 1.0.1 (February 2026) |
 | License | BSD |
 | Language | Rust (uses `bloomfilter::Bloom` crate, BSD-2-Clause) |
-| Stars | 52 |
 | Redis equivalent | RedisBloom (BF.* commands) |
 | Compatibility | API compatible with Redis Bloom BF.* commands and client libraries |
 | Valkey version | 8.1+ (feature flag `valkey_8_0` for 8.0 compatibility) |
 | Included in | valkey-bundle container image |
 
-**Security update**: Version 1.0.1 (February 2026) fixes CVE-2026-21864 - a remote denial-of-service vulnerability triggered by malformed RESTORE commands. Upgrade immediately if running 1.0.0.
+**Security update**: Version 1.0.1 fixes CVE-2026-21864 - a remote denial-of-service vulnerability triggered by malformed RESTORE commands. Upgrade immediately if running 1.0.0.
 
 ## Commands
 

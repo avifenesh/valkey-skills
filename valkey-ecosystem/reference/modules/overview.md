@@ -20,12 +20,12 @@ docker pull valkey/valkey-bundle
 
 The bundle includes all official modules. New releases of any module automatically trigger a bundle release.
 
-| Module | Latest Version | Status |
-|--------|---------------|--------|
-| valkey-json | 1.0.2 | GA |
-| valkey-bloom | 1.0.1 | GA |
-| valkey-search | 1.2.0 | GA |
-| valkey-ldap | 1.0.0 | GA |
+| Module | Status |
+|--------|--------|
+| valkey-json | GA |
+| valkey-bloom | GA |
+| valkey-search | GA |
+| valkey-ldap | GA |
 
 The bundle is the simplest way to get all official modules running. For production deployments where you need only specific modules, load them individually.
 
@@ -235,8 +235,8 @@ For new modules, the Rust SDK is recommended unless you need to minimize depende
 | **valkey-luajit** | Drop-in LuaJIT replacement for Valkey's built-in Lua engine. Significantly faster script execution. Optional FFI support (disabled by default). | C |
 | **valkey-admin** | Web-based cluster administration tool. Real-time metrics, key browser, command execution, topology visualization, hot key monitoring, slow log analysis. | TypeScript (React + Electron) |
 | **valkey-namespace** | Namespace support for keys - multiple logical namespaces in a single instance. | Ruby |
-| **valkey-operator** | Kubernetes operator for Valkey. Active development, 147 stars. | Go |
-| **valkeymodule-rs** | Official Rust SDK for building Valkey modules (81 stars). | Rust |
+| **valkey-operator** | Kubernetes operator for Valkey. Active development. | Go |
+| **valkeymodule-rs** | Official Rust SDK for building Valkey modules. | Rust |
 
 ## Cross-References
 

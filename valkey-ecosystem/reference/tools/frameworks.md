@@ -6,10 +6,9 @@ Use when integrating Valkey into application frameworks - Spring, Django, Rails,
 
 ## Spring Data Valkey (Java)
 
-Spring Data Valkey is the official first-class Valkey integration for the Spring ecosystem. It is a fork of Spring Data Redis 3.5.1, maintained by the Valkey project. The v1.0.0 GA release (March 2026) marks production readiness.
+Spring Data Valkey is the official first-class Valkey integration for the Spring ecosystem. It is a fork of Spring Data Redis, maintained by the Valkey project. It has reached GA and is production-ready.
 
 - **Repo**: [valkey-io/spring-data-valkey](https://github.com/valkey-io/spring-data-valkey)
-- **Latest version**: v1.0.0 GA (2026-03-16)
 
 ### Maven Coordinates
 
@@ -74,7 +73,7 @@ For existing Spring Data Redis projects, migration is a package rename with API-
 Full-featured cache and session backend for Django, forked from django-redis with Valkey-native improvements. Part of the Django Commons organization (community-maintained Django packages).
 
 - **Repo**: [django-commons/django-valkey](https://github.com/django-commons/django-valkey)
-- **Latest version**: 0.4.0 (2025-12-12)
+- **Version**: Check PyPI for latest
 - **Install**: `pip install django-valkey`
 
 Configuration:
@@ -109,7 +108,7 @@ django-redis also works with Valkey by changing only the server endpoint (using 
 
 ### Sidekiq
 
-Sidekiq 8.0+ (latest: v8.1.2) officially supports Valkey 7.2+. The README
+Sidekiq 8.0+ officially supports Valkey 7.2+. The README
 states: "Sidekiq supports Valkey and Dragonfly as Redis alternatives." CI runs
 against Valkey. A proposal for a GLIDE adapter (pluggable datastore interface)
 was rejected - Sidekiq stays coupled to redis-client, and Valkey works through
@@ -213,7 +212,7 @@ end
 
 ### BullMQ (Node.js)
 
-BullMQ (latest: v5.71.1, 8,600+ stars) works with Valkey as a drop-in Redis
+BullMQ works with Valkey as a drop-in Redis
 replacement via ioredis. GLIDE integration has been requested but is not yet
 implemented. Taskforce maintains an active benchmarking repo
 (taskforcesh/bullmq-valkey-bench), suggesting deeper Valkey evaluation is
@@ -227,7 +226,7 @@ const queue = new Queue('tasks', {
 
 ### Celery (Python)
 
-Celery (28,000+ stars) works with Valkey using the `redis://` URL scheme:
+Celery works with Valkey using the `redis://` URL scheme:
 
 ```python
 app = Celery('tasks', broker='redis://localhost:6379/0')
@@ -238,7 +237,7 @@ has been open for nearly two years with no progress. The kombu transport library
 does not have a `valkey://` scheme. Switching the broker URL to `valkey://`
 breaks celery-beat scheduling. Continue using `redis://` URLs.
 
-A community workaround exists: `vuonglv1612/celery-valkey-backend` (7 stars) - a
+A community workaround exists: `vuonglv1612/celery-valkey-backend` - a
 custom result backend for Valkey, but not an official Celery package.
 
 ### RQ - Redis Queue (Python)
@@ -253,7 +252,7 @@ These integrations use Valkey as a caching layer for object-relational mappers a
 
 ### Hibernate Second-Level Cache (via Redisson)
 
-Redisson provides a Hibernate second-level cache backed by Valkey. Redisson explicitly supports both Valkey and Redis as of v3.48.0.
+Redisson provides a Hibernate second-level cache backed by Valkey. Redisson explicitly supports both Valkey and Redis.
 
 Configuration in `hibernate.cfg.xml`:
 
@@ -301,7 +300,7 @@ Keyv is a popular key-value abstraction used by libraries like got, cacheable-re
 
 | Scenario | Recommended Path |
 |----------|-----------------|
-| New Spring project | Spring Boot Starter for Valkey (v1.0.0 GA) |
+| New Spring project | Spring Boot Starter for Valkey (GA) |
 | Existing Spring + Redis | Keep Spring Data Redis, swap endpoint |
 | New Django project | django-valkey |
 | Existing Django + Redis | django-redis works, migrate at your pace |

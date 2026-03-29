@@ -19,9 +19,8 @@ The fork preserves full compatibility with Redis OSS through version 7.2 while a
 | License | BSD 3-clause (fully open source) |
 | Governance | Linux Foundation |
 | Forked from | Redis 7.2.4 (March 2024) |
-| Latest versions | 8.1.x (stable), 9.0.x (latest) |
+| Major versions | 8.x (LTS), 9.x (latest) |
 | Protocol | RESP2 / RESP3 (fully compatible) |
-| Contributors | 346+ active contributors |
 | Default port | 6379 (same as Redis) |
 
 ---
@@ -93,7 +92,8 @@ If you need these capabilities, your options are:
 | 7.2.x | Inherited | Baseline fork from Redis 7.2.4. Full Redis OSS compatibility. |
 | 8.0 | 2024 | I/O multithreading overhaul (3x throughput), dual-channel replication, command batching. |
 | 8.1 | 2025 | SET IFEQ, new hashtable (20-30 bytes/key savings), COMMANDLOG, TLS I/O offload, iterator prefetch. |
-| 9.0 | 2025 | DELIFEQ, hash field TTL (11 commands), HGETDEL (9.1), numbered databases in cluster, atomic slot migration, polygon geo queries. Performance: 1B RPS across 2,000 nodes, pipeline memory prefetch (40% higher throughput), zero-copy responses (20% gain), MPTCP (25% latency reduction), SIMD for BITCOUNT/HyperLogLog (200% gain). Un-deprecated 25 commands. |
+| 9.0 | 2025 | DELIFEQ, hash field TTL (11 commands), numbered databases in cluster, atomic slot migration, polygon geo queries. Performance: 1B RPS across 2,000 nodes, pipeline memory prefetch (40% higher throughput), zero-copy responses (20% gain), MPTCP (25% latency reduction), SIMD for BITCOUNT/HyperLogLog (200% gain). Un-deprecated 25 commands. |
+| 9.1 | 2025 | HGETDEL (atomic get-and-delete for hash fields). |
 
 ---
 

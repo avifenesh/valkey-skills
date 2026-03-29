@@ -6,15 +6,13 @@ Use when implementing vector similarity search, full-text search, hybrid queries
 
 ## Overview
 
-valkey-search is a comprehensive search module for Valkey. Originally contributed by Google Cloud as a vector-only engine, it has evolved rapidly into a full-featured search solution. Version 1.2.0 (March 2026) added full-text search, tag search, numeric range queries, and server-side aggregations - transforming it from a vector-only tool into a combined search engine comparable to RediSearch.
+valkey-search is a comprehensive search module for Valkey. Originally contributed by Google Cloud as a vector-only engine, it has evolved rapidly into a full-featured search solution. Version 1.2.0 added full-text search, tag search, numeric range queries, and server-side aggregations - transforming it from a vector-only tool into a combined search engine comparable to RediSearch.
 
 | Property | Value |
 |----------|-------|
 | Status | GA |
-| Version | 1.2.0 (March 2026) |
 | License | BSD |
 | Contributor | Google Cloud |
-| Stars | 113 |
 | Redis equivalent | RediSearch |
 | Requires | Valkey 9.0.1+ |
 | Included in | valkey-bundle container image |

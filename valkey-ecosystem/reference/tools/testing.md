@@ -13,7 +13,7 @@ Testcontainers provides lightweight, disposable Valkey instances for integration
 | Language | Package | Status | Install |
 |----------|---------|--------|---------|
 | Go | `testcontainers.org/modules/valkey` | GA (first-class module) | `go get github.com/testcontainers/testcontainers-go/modules/valkey` |
-| Node.js | `@testcontainers/valkey` | GA (first-class module) | `npm install @testcontainers/valkey` (v11.13.0+) |
+| Node.js | `@testcontainers/valkey` | GA (first-class module) | `npm install @testcontainers/valkey` |
 | Java | GenericContainer | No dedicated module | Use `GenericContainer<>("valkey/valkey:9.0")` |
 | Python | GenericContainer | No dedicated module | Use `DockerContainer("valkey/valkey:9.0")` |
 | Rust | `testcontainers_modules` crate | GA | `cargo add testcontainers_modules --features valkey` |
@@ -106,7 +106,7 @@ This gives you valkey-json, valkey-bloom, valkey-search, and valkey-ldap in a si
 
 ---
 
-## Spring Data Valkey Test Support (v1.0.0 GA)
+## Spring Data Valkey Test Support (GA)
 
 Spring Data Valkey provides first-class testing integration for Spring Boot applications.
 

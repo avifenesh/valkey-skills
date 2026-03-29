@@ -8,7 +8,7 @@ Use when deploying Valkey via a Kubernetes operator, comparing operator options,
 
 | Feature | Hyperspike Operator | SAP Operator |
 |---------|-------------------|--------------|
-| **Version** | **v0.0.61** | **v1alpha1** |
+| **API version** | `hyperspike.io/v1` | **v1alpha1** |
 | Modes | Standalone, Sentinel, Cluster | Sentinel, Static primary |
 | CRD name | `Valkey` (shortName: `vk`) | `Redis` |
 | API group | `hyperspike.io` | `cache.cs.sap.com` |
@@ -124,9 +124,7 @@ spec:
 - Container image signing via cosign
 
 **Known limitation**: the `replicas` field currently creates extra primary
-nodes rather than per-shard replicas. Track
-`github.com/hyperspike/valkey-operator/issues/186` for updates. No
-backup/restore functionality.
+nodes rather than per-shard replicas. No backup/restore functionality.
 
 ### External Access (Hyperspike)
 

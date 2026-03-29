@@ -115,8 +115,8 @@ Returns the internal encoding Valkey uses to store the value. Understanding enco
 
 | Type | Compact Encoding | Full Encoding | Threshold |
 |------|-----------------|---------------|-----------|
-| String | `int`, `embstr` | `raw` | 44 bytes |
-| Hash | `listpack` | `hashtable` | 128 fields or 64-byte values |
+| String | `int`, `embstr` | `raw` | 52 bytes |
+| Hash | `listpack` | `hashtable` | 512 fields or 64-byte values |
 | List | `listpack` | `quicklist` | 128 elements or 64-byte values |
 | Set | `listpack`, `intset` | `hashtable` | 128 members or 64-byte values |
 | Sorted Set | `listpack` | `skiplist` | 128 members or 64-byte values |

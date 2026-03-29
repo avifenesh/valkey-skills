@@ -21,10 +21,10 @@ pip install valkey[hiredis]
 
 ### Version
 
-- **Current**: 6.1.1 (check PyPI for latest)
+- **Version**: Check PyPI for latest
 - **Python**: 3.8+
 - **Server**: Valkey 7.2+
-- **Downloads**: ~1.14M/week on PyPI (~2.5% of redis-py's ~46M/week)
+- **Downloads**: Check PyPI for latest stats
 
 ### Basic Usage
 
@@ -158,7 +158,7 @@ await client.set("key", "value")
 result = await client.get("key")
 ```
 
-GLIDE Python is async-first. Version 2.3.0 added sync client support with `bytearray`/`memoryview` arguments, response buffers for reduced memory copies, and OpenTelemetry integration. GLIDE Python gets ~172K downloads/week on PyPI.
+GLIDE Python is async-first. Recent releases added sync client support with `bytearray`/`memoryview` arguments, response buffers for reduced memory copies, and OpenTelemetry integration.
 
 For detailed API coverage, connection management, AZ-affinity configuration, and advanced patterns, see the **valkey-glide** skill.
 

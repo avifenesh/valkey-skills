@@ -179,8 +179,8 @@ curr=$(valkey-cli COMMANDLOG LEN slow)
 # Alert if new slow commands appeared
 ```
 
-For production monitoring, the Prometheus exporter (oliver006/redis_exporter
-v1.82.0) exposes slowlog metrics that map to the commandlog's slow log:
+For production monitoring, the Prometheus exporter (oliver006/redis_exporter)
+exposes slowlog metrics that map to the commandlog's slow log:
 
 | Prometheus Metric | Description |
 |-------------------|-------------|
