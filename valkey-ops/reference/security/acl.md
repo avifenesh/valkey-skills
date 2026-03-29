@@ -1,0 +1,225 @@
+# ACL Configuration
+
+Use when setting up access control for Valkey - creating users, assigning
+permissions, restricting commands and keys, managing ACL files, and auditing
+access denials.
+
+Source-verified against `src/acl.c` and `src/server.h` in valkey-io/valkey.
+
+---
+
+## ACL SETUSER Syntax
+
+```
+ACL SETUSER <username> [rule [rule ...]]
+```
+
+Rules are processed left to right. Each rule modifies the user state:
+
+| Rule | Effect |
+|------|--------|
+| `on` | Enable the user (allow AUTH) |
+| `off` | Disable the user (reject AUTH, kill existing connections) |
+| `>password` | Add a cleartext password (hashed with SHA-256 internally) |
+| `<password` | Remove a cleartext password |
+| `#hash` | Add a pre-hashed SHA-256 password |
+| `!hash` | Remove a pre-hashed password |
+| `nopass` | Allow authentication with any password |
+| `resetpass` | Clear all passwords and remove nopass flag |
+| `+command` | Allow a specific command |
+| `-command` | Deny a specific command |
+| `+@category` | Allow all commands in a category |
+| `-@category` | Deny all commands in a category |
+| `+command\|subcommand` | Allow a specific subcommand |
+| `allcommands` | Alias for `+@all` |
+| `nocommands` | Alias for `-@all` |
+| `~pattern` | Allow read+write access to keys matching the glob pattern |
+| `%R~pattern` | Allow read-only access to matching keys |
+| `%W~pattern` | Allow write-only access to matching keys |
+| `allkeys` | Alias for `~*` |
+| `resetkeys` | Clear all key patterns |
+| `&pattern` | Allow Pub/Sub channel access matching the pattern |
+| `allchannels` | Alias for `&*` |
+| `resetchannels` | Clear all channel patterns |
+| `alldbs` | Allow access to all databases |
+| `reset` | Reset user to default state (off, no passwords, no permissions) |
+
+---
+
+## Command Categories
+
+Defined in `src/acl.c` and `src/server.h`. The full list from source:
+
+| Category | Description |
+|----------|-------------|
+| `@keyspace` | Key management commands (RENAME, DEL, EXISTS, TYPE, etc.) |
+| `@read` | Commands that read data |
+| `@write` | Commands that modify data |
+| `@set` | Set data type commands |
+| `@sortedset` | Sorted set commands |
+| `@list` | List commands |
+| `@hash` | Hash commands |
+| `@string` | String commands |
+| `@bitmap` | Bitmap commands |
+| `@hyperloglog` | HyperLogLog commands |
+| `@geo` | Geospatial commands |
+| `@stream` | Stream commands |
+| `@pubsub` | Pub/Sub commands |
+| `@admin` | Administrative commands |
+| `@fast` | O(1) or O(log N) commands |
+| `@slow` | Commands that are not @fast |
+| `@blocking` | Commands that can block (BLPOP, WAIT, etc.) |
+| `@dangerous` | Potentially destructive or resource-intensive commands |
+| `@connection` | Connection management (AUTH, SELECT, CLIENT, etc.) |
+| `@transaction` | MULTI/EXEC/DISCARD |
+| `@scripting` | Lua scripting and functions |
+
+View categories at runtime: `ACL CAT`
+View commands in a category: `ACL CAT dangerous`
+
+---
+
+## Selectors (Multi-Permission Sets)
+
+Selectors allow a single user to have multiple independent permission sets.
+Each selector is enclosed in parentheses. If any selector matches, access
+is granted (OR logic).
+
+```
+ACL SETUSER myuser on >pass +GET ~data:* (+SET ~cache:*)
+```
+
+This user can GET from `data:*` keys via the root selector, OR SET on `cache:*`
+keys via the second selector. Verified in `src/acl.c` - selectors are stored
+as a linked list per user and evaluated sequentially.
+
+---
+
+## User Role Examples
+
+### Admin - full access
+
+```
+ACL SETUSER admin on >verystrongpassword ~* &* +@all
+```
+
+### Application - all data commands, no dangerous or scripting
+
+```
+ACL SETUSER application on >strongpassword +@all -@dangerous -@scripting ~*
+```
+
+### Read-only monitor
+
+```
+ACL SETUSER monitor on >monitorpass +get +mget +info +ping ~*
+```
+
+### Cache writer with key restrictions
+
+```
+ACL SETUSER cache_writer on >cachepass ~cached:* +get +set +del +expire
+```
+
+### Replication user (on primary)
+
+```
+ACL SETUSER replica on >replicapass +psync +replconf +ping
+```
+
+### Sentinel user (minimal permissions)
+
+```
+ACL SETUSER sentinel on >sentinelpass +multi +slaveof +ping +subscribe +config|rewrite +role +publish +info
+```
+
+---
+
+## ACL Persistence
+
+### Option 1: ACL file (recommended)
+
+Store ACL definitions in a dedicated file, separate from `valkey.conf`:
+
+```
+# valkey.conf
+aclfile /etc/valkey/users.acl
+```
+
+The ACL file config parameter is immutable - it cannot be changed at runtime
+(verified: `IMMUTABLE_CONFIG` flag in `src/config.c`).
+
+Manage at runtime:
+
+```
+ACL LOAD    # Reload ACL file from disk
+ACL SAVE    # Write current ACL state to disk
+```
+
+### Option 2: Inline in valkey.conf
+
+```
+# valkey.conf
+user application on >strongpassword +@all -@dangerous ~*
+user monitor on >monitorpass +get +info +ping ~*
+```
+
+When using inline config, `CONFIG REWRITE` persists ACL changes.
+
+Important: Do not mix both methods. If `aclfile` is set, inline `user`
+directives in `valkey.conf` are ignored.
+
+---
+
+## ACL Management Commands
+
+```bash
+# List all users with their rules
+ACL LIST
+
+# Get detailed info for a specific user
+ACL GETUSER application
+
+# Delete a user
+ACL DELUSER olduser
+
+# Generate a cryptographically secure password
+ACL GENPASS
+ACL GENPASS 128    # specify bit length
+
+# View the security log (access denials)
+ACL LOG
+ACL LOG COUNT 20   # last 20 entries
+ACL LOG RESET      # clear the log
+
+# Check which user current connection uses
+ACL WHOAMI
+```
+
+---
+
+## Default User
+
+Every new connection starts as the `default` user. The default user has full
+permissions by default (`+@all ~* &* on nopass alldbs`). In production,
+restrict or disable it:
+
+```
+# Disable the default user entirely
+ACL SETUSER default off
+
+# Or set a password and restrict permissions
+ACL SETUSER default on >strongpassword +@all -@dangerous ~*
+```
+
+When `requirepass` is set in config, it applies to the default user's password.
+ACLs are the preferred authentication mechanism over `requirepass`.
+
+---
+
+## See Also
+
+- [Security Hardening](hardening.md) - defense in depth, network security
+- [TLS Configuration](tls.md) - certificate-based authentication
+- [Command Restriction](rename-commands.md) - rename-command vs ACL comparison
+- [See valkey-dev: acl](../valkey-dev/reference/security/acl.md) - user structs, selector evaluation, bitmap permission internals
