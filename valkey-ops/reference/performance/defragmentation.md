@@ -159,4 +159,4 @@ If fragmentation ratio exceeds 2.0 and active defrag is insufficient:
 - [Troubleshooting OOM](../troubleshooting/oom.md) - fragmentation as OOM contributor
 - [Monitoring Metrics](../monitoring/metrics.md) - `mem_fragmentation_ratio`, `active_defrag_running`
 - [Monitoring Alerting](../monitoring/alerting.md) - fragmentation alert rules
-- [See valkey-dev: defragmentation](../valkey-dev/reference/memory/defragmentation.md) - allocator interaction, jemalloc purging, scan stages
+- [See valkey-dev: defragmentation](../../../valkey-dev/reference/memory/defragmentation.md) - allocator interaction, jemalloc purging, scan stages

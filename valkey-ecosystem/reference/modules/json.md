@@ -15,7 +15,7 @@ valkey-json adds a native JSON data type to Valkey with full JSONPath query supp
 | Language | C++ (uses RapidJSON parser) |
 | Redis equivalent | RedisJSON |
 | Compatibility | API + RDB compatible with RedisJSON v1.0.8+ and v2 |
-| Valkey version | 8.1+ |
+| Valkey version | 8.0+ |
 | Included in | valkey-bundle container image |
 
 ## Key Commands

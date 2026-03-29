@@ -100,7 +100,7 @@ If you need these capabilities, your options are:
 ## Community and Ecosystem
 
 - **GitHub**: [github.com/valkey-io/valkey](https://github.com/valkey-io/valkey)
-- **Official client**: Valkey GLIDE (Rust core, bindings for Java, Python, Node.js, Go, C#, PHP)
+- **Official client**: Valkey GLIDE (Rust core, bindings for Java, Python, Node.js, Go, C#, PHP, Ruby)
 - **Cloud providers**: AWS ElastiCache and MemoryDB support Valkey, as do other providers
 - **Module compatibility**: Redis modules load in Valkey via the compatible module API
 - **Existing tooling**: redis-benchmark, redis-cli patterns, RDB tools, and monitoring exporters work with Valkey

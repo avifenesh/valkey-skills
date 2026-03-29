@@ -7,7 +7,7 @@ argument-hint: "[topic]"
 
 # Valkey GLIDE Client Reference
 
-26 source-verified reference docs for the official Valkey GLIDE multi-language client. Per-language client API details live in the dedicated per-language skills (valkey-glide-python, valkey-glide-java, etc.). All API names, defaults, and config fields verified against actual glide-core Rust source and language wrapper code.
+32 source-verified reference docs for the official Valkey GLIDE multi-language client. Per-language client API details live in the dedicated per-language skills (valkey-glide-python, valkey-glide-java, etc.). All API names, defaults, and config fields verified against actual glide-core Rust source and language wrapper code.
 
 Browse by topic below. Each link leads to a focused reference with code examples, configuration tables, and verified API details.
 
@@ -58,7 +58,7 @@ For language-specific API details, code examples, and migration guides, use the 
 | Go | **valkey-glide-go** | Synchronous API, CGO, Result[T], go-redis migration |
 | PHP | **valkey-glide-php** | C extension, PIE/Composer/PECL install |
 | C# | **valkey-glide-csharp** | Async/await, .NET 8.0+, StackExchange.Redis migration |
-| Ruby | **valkey-glide-ruby** | In development |
+| Ruby | **valkey-glide-ruby** | GA (`valkey-rb` gem) |
 
 Per-language API details (configuration, data types, streams, OTel, TLS, PubSub, migration, gotchas) live in the per-language skills listed above. Use those skills directly for language-specific questions.
 

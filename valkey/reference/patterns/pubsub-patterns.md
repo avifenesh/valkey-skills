@@ -291,5 +291,5 @@ SSUBSCRIBE {user:1000}:presence
 - [Security: Auth and ACL](../security/auth-and-acl.md) - channel-level ACL restrictions for pub/sub
 - [Clients Overview](../clients/overview.md) - dedicated subscriber connections and PubSub state restoration
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - pub/sub for durable messaging, blocking commands on shared connections
-- valkey-ops [configuration/pubsub](../../valkey-ops/reference/configuration/pubsub.md) - buffer limits, sharded pub/sub config, pattern performance
-- valkey-ops [performance/client-caching](../../valkey-ops/reference/performance/client-caching.md) - CLIENT TRACKING configuration
+- valkey-ops [configuration/pubsub](../../../valkey-ops/reference/configuration/pubsub.md) - buffer limits, sharded pub/sub config, pattern performance
+- valkey-ops [performance/client-caching](../../../valkey-ops/reference/performance/client-caching.md) - CLIENT TRACKING configuration

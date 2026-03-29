@@ -9,7 +9,7 @@ argument-hint: "[migration scope or question]"
 
 Provides guidance for migrating BullMQ applications to glide-mq - connection conversion, API mapping, and breaking changes.
 
-> This is a thin wrapper. For the complete migration guide with advanced patterns, see `node_modules/glide-mq/skills/` or https://avifenesh.github.io/glide-mq.dev/migration/from-bullmq
+> This is a thin wrapper. For the complete migration guide with advanced patterns, see https://avifenesh.github.io/glide-mq.dev/migration/from-bullmq
 
 ## When to Use
 
@@ -60,7 +60,7 @@ import { Queue, Worker } from 'bullmq';      import { Queue, Worker } from 'glid
 // connection: { host, port }                // connection: { addresses: [{ host, port }] }
 ```
 
-The processor function signature is identical. Most code is a drop-in replacement after fixing the connection and imports.
+The processor function signature is similar, but glide-mq has several breaking differences in connection format, scheduling API, backoff strategy, and default options. Review the Key Differences table below and the full migration guide before migrating.
 
 ## Key Differences
 

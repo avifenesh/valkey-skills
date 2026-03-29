@@ -128,7 +128,7 @@ The [valkey-namespace](https://github.com/valkey-io/valkey-namespace) gem provid
 
 - **Repo**: [valkey-io/valkey-namespace](https://github.com/valkey-io/valkey-namespace)
 - **Install**: `gem install valkey-namespace`
-- **Requires**: valkey-glide-ruby gem
+- **Requires**: `valkey-rb` gem
 
 ```ruby
 require 'valkey-namespace'
@@ -153,7 +153,7 @@ Key points:
 - Automatically prepends namespace to keys on write and strips it on read
 - Administrative commands (`FLUSHALL`, etc.) bypass namespacing - use `namespaced.valkey.flushall()` explicitly
 - Blind passthrough of unknown commands is deprecated in v1.0.0 and will be removed in v2.0
-- Compatible with Valkey and Redis 6.2, 7.0, 7.1, 7.2 via valkey-glide-ruby
+- Compatible with Valkey and Redis 6.2, 7.0, 7.1, 7.2 via `valkey-rb`
 
 This gem is particularly useful for Rails applications where multiple services or environments share a single Valkey instance - for example, separating Sidekiq queues, cache entries, and session data by namespace.
 

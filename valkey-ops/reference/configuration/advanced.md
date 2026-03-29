@@ -281,4 +281,4 @@ Settings that must be coordinated - changing one without the other causes proble
 - [Bare Metal Setup](../deployment/bare-metal.md) - systemd, kernel tuning, directory structure
 - [Docker Deployment](../deployment/docker.md) - container deployment and config injection
 - [Latency Diagnosis](../performance/latency.md) - diagnosing expiration and latency issues
-- [See valkey-dev: config system](../valkey-dev/reference/config/config-system.md) - config parsing internals
+- [See valkey-dev: config system](../../../valkey-dev/reference/config/config-system.md) - config parsing internals

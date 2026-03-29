@@ -272,6 +272,6 @@ valkey-cli INFO memory
 - [Monitoring Metrics](../monitoring/metrics.md) - `used_memory`, `mem_fragmentation_ratio` metrics
 - [Kubernetes StatefulSets](../kubernetes/statefulset.md) - memory resource sizing and fork headroom in containers
 - [Kubernetes Tuning](../kubernetes/tuning-k8s.md) - THP and overcommit settings in K8s
-- [See valkey-dev: zmalloc](../valkey-dev/reference/memory/zmalloc.md) - per-thread memory counters, jemalloc integration
-- [See valkey-dev: defragmentation](../valkey-dev/reference/memory/defragmentation.md) - active defrag internals
-- [See valkey-dev: lazy-free](../valkey-dev/reference/memory/lazy-free.md) - asynchronous object freeing
+- [See valkey-dev: zmalloc](../../../valkey-dev/reference/memory/zmalloc.md) - per-thread memory counters, jemalloc integration
+- [See valkey-dev: defragmentation](../../../valkey-dev/reference/memory/defragmentation.md) - active defrag internals
+- [See valkey-dev: lazy-free](../../../valkey-dev/reference/memory/lazy-free.md) - asynchronous object freeing

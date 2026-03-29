@@ -231,7 +231,7 @@ sudo chown 999:999 /data/valkey    # UID 999 = valkey user in official image
 ### Network Modes
 
 - **Bridge (default)**: Fine for standalone instances. Clients connect via mapped port.
-- **Host**: Required for Sentinel and Cluster in Docker. Avoids NAT issues with node discovery.
+- **Host**: Simplest option for Sentinel and Cluster in Docker. Alternatively, configure announced addresses (`cluster-announce-ip`/`sentinel announce-ip`) to avoid NAT issues.
 - **Overlay**: For Docker Swarm multi-host deployments.
 
 For Cluster mode, use `--net=host` or set `cluster-announce-ip`, `cluster-announce-port`, and `cluster-announce-bus-port` to the host's external addresses.

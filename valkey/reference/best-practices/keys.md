@@ -278,5 +278,5 @@ MEMORY DOCTOR
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - key-related anti-patterns at a glance
 
 **Ops**:
-- valkey-ops [performance/memory](../../valkey-ops/reference/performance/memory.md) - hash bucketing, memory diagnostics
-- valkey-ops [configuration/encoding](../../valkey-ops/reference/configuration/encoding.md) - encoding threshold tuning
+- valkey-ops [performance/memory](../../../valkey-ops/reference/performance/memory.md) - hash bucketing, memory diagnostics
+- valkey-ops [configuration/encoding](../../../valkey-ops/reference/configuration/encoding.md) - encoding threshold tuning

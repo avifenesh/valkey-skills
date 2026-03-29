@@ -1,32 +1,28 @@
 ---
 name: valkey-glide-ruby
-description: "Use when building Ruby applications with Valkey GLIDE. Covers the Ruby client (in development), installation from source, and planned features."
+description: "Use when building Ruby applications with Valkey GLIDE. Covers the Ruby client (valkey-rb gem), installation, API reference, and redis-rb migration."
 version: 1.0.0
 argument-hint: "[topic]"
 ---
 
 # Valkey GLIDE Ruby Client Reference
 
-Synchronous Ruby client for Valkey built on the GLIDE Rust core via FFI. Designed as a drop-in replacement for redis-rb. Version 1.0.0 published but no gem release yet - install from source.
+Synchronous Ruby client for Valkey built on the GLIDE Rust core via FFI. Designed as a drop-in replacement for redis-rb.
 
 **Repository:** [valkey-io/valkey-glide-ruby](https://github.com/valkey-io/valkey-glide-ruby)
 
-**Status:** In active development. No published gem on RubyGems yet.
+**Status:** GA. valkey-rb 1.0.0 published on RubyGems.
 
 ## Installation
 
-### From Source (Current)
-
-```bash
-git clone https://github.com/valkey-io/valkey-glide-ruby.git
-cd valkey-glide-ruby
-bundle install
-```
-
-### From RubyGems (Planned)
-
 ```bash
 gem install valkey-rb
+```
+
+Or in Gemfile:
+
+```ruby
+gem 'valkey-rb'
 ```
 
 **Requirements:** Ruby 2.6+, FFI gem (~> 1.17.0), google-protobuf gem (~> 3.23)

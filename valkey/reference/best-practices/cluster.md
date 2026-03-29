@@ -357,4 +357,4 @@ async def cluster_scan(client, pattern: str):
 
 **Anti-Patterns**: [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - CROSSSLOT errors, hot slots, Lua in cluster pitfalls
 
-**Ops**: valkey-ops [cluster/setup](../../valkey-ops/reference/cluster/setup.md), [cluster/operations](../../valkey-ops/reference/cluster/operations.md), [cluster/resharding](../../valkey-ops/reference/cluster/resharding.md)
+**Ops**: valkey-ops [cluster/setup](../../../valkey-ops/reference/cluster/setup.md), [cluster/operations](../../../valkey-ops/reference/cluster/operations.md), [cluster/resharding](../../../valkey-ops/reference/cluster/resharding.md)

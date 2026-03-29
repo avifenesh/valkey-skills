@@ -160,5 +160,5 @@ Monitor I/O thread utilization with `INFO server` - check
 - [Monitoring Metrics](../monitoring/metrics.md) - `io_threads_active` and throughput metrics
 - [Kubernetes StatefulSets](../kubernetes/statefulset.md) - CPU resource sizing for I/O threads in containers
 - [Kubernetes Tuning](../kubernetes/tuning-k8s.md) - kernel and CPU tuning for I/O threads in K8s
-- [See valkey-dev: io-threads](../valkey-dev/reference/threading/io-threads.md) - internal architecture, job queue design
-- [See valkey-dev: prefetch](../valkey-dev/reference/threading/prefetch.md) - batch key prefetching
+- [See valkey-dev: io-threads](../../../valkey-dev/reference/threading/io-threads.md) - internal architecture, job queue design
+- [See valkey-dev: prefetch](../../../valkey-dev/reference/threading/prefetch.md) - batch key prefetching

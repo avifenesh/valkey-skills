@@ -257,7 +257,8 @@ See the **valkey-glide** skill for complete GlideFt API reference and code examp
 | Tag search | Yes (1.2.0+) | Yes |
 | Numeric range queries | Yes (1.2.0+) | Yes |
 | FT.AGGREGATE | Yes (1.1.0+) | Yes |
-| Stemming, phonetic matching | **Not yet** | Yes |
+| Stemming | Yes | Yes |
+| Phonetic matching | **Not yet** | Yes |
 | Auto-complete / suggestions | **Not yet** | Yes |
 | FT.CURSOR | **Not yet** | Yes |
 | INFIELDS / INKEYS parameters | **Not yet** | Yes |

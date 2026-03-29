@@ -11,7 +11,7 @@ Use when evaluating whether Valkey covers your module needs, understanding what 
 | JSON documents | Bundled in core | valkey-json module (GA) | No - feature parity |
 | Bloom filters | Bundled in core | valkey-bloom module (GA) | No - feature parity |
 | Vector similarity search | Bundled in core | valkey-search module (GA) | No - feature parity |
-| Full-text search | Bundled in core | valkey-search 1.2.0+ (GA) | No - feature parity |
+| Full-text search | Bundled in core | valkey-search 1.2.0+ (GA) | Mostly closed - minor gaps remain (phonetic, autocomplete) |
 | Aggregation pipelines | Bundled in core | valkey-search FT.AGGREGATE (GA) | No - added in 1.1.0 |
 | Time series | Bundled in core | **No official module** | **Yes** |
 | Graph | EOL (was RedisGraph) | Not available | No - neither platform supports it |
@@ -31,13 +31,13 @@ valkey-search 1.2.0 added full-text search with keyword, phrase, prefix, suffix,
 
 This was previously the single largest functional gap between Valkey and Redis 8. It is now closed for most use cases.
 
-**Remaining search gaps vs RediSearch**: Stemming, phonetic matching, auto-complete/suggestions, and FT.CURSOR are not yet available. These are open feature requests for future releases.
+**Remaining search gaps vs RediSearch**: Phonetic matching, auto-complete/suggestions, and FT.CURSOR are not yet available. Stemming is now supported (use NOSTEM on fields where stemming should be disabled).
 
-**When you still need an external search service**: If your workload requires stemming, language-aware search, phonetic matching, or auto-complete suggestions, pair Valkey with a dedicated search engine until these features land in valkey-search.
+**When you still need an external search service**: If your workload requires phonetic matching or auto-complete suggestions, pair Valkey with a dedicated search engine until these features land in valkey-search.
 
 | Alternative | Type | Notes |
 |-------------|------|-------|
-| Elasticsearch / OpenSearch | External service | Full-featured; needed for stemming and language analysis |
+| Elasticsearch / OpenSearch | External service | Full-featured; needed for phonetic matching and language analysis |
 | Meilisearch | External service | Lightweight, typo-tolerant; good for smaller datasets |
 | Typesense | External service | Fast, good developer experience |
 
@@ -127,7 +127,7 @@ These are niche data structures. Most applications do not need them, and reasona
 | Your Need | Recommendation |
 |-----------|---------------|
 | JSON + Bloom + Vector + Full-text search | Valkey with modules covers this fully (valkey-search 1.2.0+) |
-| Stemming, phonetic, auto-complete | Add Elasticsearch/OpenSearch alongside Valkey (not yet in valkey-search) |
+| Phonetic matching, auto-complete | Add Elasticsearch/OpenSearch alongside Valkey (not yet in valkey-search) |
 | Time series with downsampling | Add TimescaleDB/InfluxDB; or use Sorted Sets for simple cases |
 | Graph queries | Use FalkorDB, Neo4j, or Memgraph as a separate service |
 | Cuckoo/CMS/TopK/t-digest | Evaluate if you truly need these; workarounds exist |

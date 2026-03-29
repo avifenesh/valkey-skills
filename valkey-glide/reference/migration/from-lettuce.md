@@ -281,7 +281,7 @@ Object[] result2 = client.exec(pipe, false).get();
 
 ## Spring Data Valkey as an Alternative
 
-If your application uses Spring Data Redis with Lettuce, consider Spring Data Valkey (`spring-boot-starter-data-valkey`) instead of a direct migration. Set `spring.data.valkey.client-type=glide` to use the GLIDE driver while keeping the Spring RedisTemplate API. This gives you GLIDE Rust core benefits (AZ affinity, OpenTelemetry, reconnection) with no application code changes.
+If your application uses Spring Data Redis with Lettuce, consider Spring Data Valkey (`spring-boot-starter-data-valkey`) instead of a direct migration. Set `spring.data.valkey.client-type=valkeyglide` to use the GLIDE driver. Migration involves renaming `RedisTemplate` to `ValkeyTemplate` and `ReactiveRedisTemplate` to `ReactiveValkeyTemplate`. Note: the reactive API remains Lettuce-based, not GLIDE.
 
 ---
 

@@ -283,7 +283,7 @@ Valkey 8.0+ uses I/O multithreading to parallelize network read/write while keep
 
 **Talk to your ops team** about enabling I/O threads if you observe high throughput needs. Typical production configs use 4-9 total threads depending on available CPU cores.
 
-> Cross-reference: See valkey-ops [performance/io-threads](../../valkey-ops/reference/performance/io-threads.md) for thread count guidelines, benchmarks, and CPU affinity tuning.
+> Cross-reference: See valkey-ops [performance/io-threads](../../../valkey-ops/reference/performance/io-threads.md) for thread count guidelines, benchmarks, and CPU affinity tuning.
 
 ---
 
@@ -337,6 +337,6 @@ Valkey 8.0+ uses I/O multithreading to parallelize network read/write while keep
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - KEYS, DEL on big keys, missing pipelining, and more
 
 **Ops**:
-- valkey-ops [performance/io-threads](../../valkey-ops/reference/performance/io-threads.md) - I/O thread configuration and benchmarks
-- valkey-ops [performance/latency](../../valkey-ops/reference/performance/latency.md) - latency diagnosis workflow
-- valkey-ops [configuration/lazyfree](../../valkey-ops/reference/configuration/lazyfree.md) - lazy free configuration details
+- valkey-ops [performance/io-threads](../../../valkey-ops/reference/performance/io-threads.md) - I/O thread configuration and benchmarks
+- valkey-ops [performance/latency](../../../valkey-ops/reference/performance/latency.md) - latency diagnosis workflow
+- valkey-ops [configuration/lazyfree](../../../valkey-ops/reference/configuration/lazyfree.md) - lazy free configuration details

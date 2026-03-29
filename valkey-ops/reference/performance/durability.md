@@ -229,5 +229,5 @@ ulimit -n 65535
 - [Troubleshooting OOM](../troubleshooting/oom.md) - memory pressure from fork COW overhead
 - [Monitoring Metrics](../monitoring/metrics.md) - persistence and performance metrics
 - [Workload Presets](../configuration/workload-presets.md) - complete configs by use case
-- [See valkey-dev: io-threads](../valkey-dev/reference/threading/io-threads.md) - I/O thread internals
-- [See valkey-dev: prefetch](../valkey-dev/reference/threading/prefetch.md) - batch key prefetching
+- [See valkey-dev: io-threads](../../../valkey-dev/reference/threading/io-threads.md) - I/O thread internals
+- [See valkey-dev: prefetch](../../../valkey-dev/reference/threading/prefetch.md) - batch key prefetching

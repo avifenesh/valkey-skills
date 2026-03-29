@@ -353,5 +353,5 @@ SET cache:stable:product_details "..." EX 86400   # 1 day
 - [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions for cache key namespaces
 - [Clients Overview](../clients/overview.md) - client-side caching support and connection patterns
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - missing TTL, no `maxmemory`, and cache-related mistakes
-- valkey-ops [performance/client-caching](../../valkey-ops/reference/performance/client-caching.md) - CLIENT TRACKING server configuration
-- valkey-ops [configuration/eviction](../../valkey-ops/reference/configuration/eviction.md) - eviction policy selection for caches
+- valkey-ops [performance/client-caching](../../../valkey-ops/reference/performance/client-caching.md) - CLIENT TRACKING server configuration
+- valkey-ops [configuration/eviction](../../../valkey-ops/reference/configuration/eviction.md) - eviction policy selection for caches

@@ -152,4 +152,4 @@ valkey-cli CONFIG GET lazyfree-*
 - [Workload Presets](workload-presets.md) - lazyfree in context of complete configs
 - [Memory Optimization](../performance/memory.md) - encoding thresholds, fragmentation
 - [Latency Diagnosis](../performance/latency.md) - diagnosing large key operation latency
-- [See valkey-dev: lazy-free](../valkey-dev/reference/memory/lazy-free.md) - BIO thread implementation, atomic counters
+- [See valkey-dev: lazy-free](../../../valkey-dev/reference/memory/lazy-free.md) - BIO thread implementation, atomic counters

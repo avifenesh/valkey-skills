@@ -229,4 +229,4 @@ delta(redis_slowlog_length[10m])
 - [Prometheus Setup](prometheus.md) - exporter exposes slowlog metrics from the commandlog
 - [Alerting Rules](alerting.md) - ValkeySlowlogGrowing alert for commandlog entries
 - [Grafana Dashboards](grafana.md) - dashboard panels for commandlog visualization
-- [See valkey-dev: commandlog](../valkey-dev/reference/monitoring/commandlog.md) - entry lifecycle, memory management internals
+- [See valkey-dev: commandlog](../../../valkey-dev/reference/monitoring/commandlog.md) - entry lifecycle, memory management internals

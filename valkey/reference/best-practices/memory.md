@@ -274,6 +274,6 @@ data = json.loads(zlib.decompress(raw))
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - no `maxmemory`, missing TTL, values over 1 MB, and more
 
 **Ops**:
-- valkey-ops [configuration/encoding](../../valkey-ops/reference/configuration/encoding.md) - encoding threshold configuration reference
-- valkey-ops [performance/memory](../../valkey-ops/reference/performance/memory.md) - `maxmemory` config, fragmentation, hash bucketing details
-- valkey-ops [configuration/eviction](../../valkey-ops/reference/configuration/eviction.md) - eviction policy selection and LFU tuning
+- valkey-ops [configuration/encoding](../../../valkey-ops/reference/configuration/encoding.md) - encoding threshold configuration reference
+- valkey-ops [performance/memory](../../../valkey-ops/reference/performance/memory.md) - `maxmemory` config, fragmentation, hash bucketing details
+- valkey-ops [configuration/eviction](../../../valkey-ops/reference/configuration/eviction.md) - eviction policy selection and LFU tuning

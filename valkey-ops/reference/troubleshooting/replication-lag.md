@@ -219,4 +219,4 @@ Alert rules:
 - [Durability vs Performance](../performance/durability.md) - persistence settings affecting replication
 - [Monitoring Metrics](../monitoring/metrics.md) - `master_repl_offset`, `slave_repl_offset` metrics
 - [Monitoring Alerting](../monitoring/alerting.md) - replication lag alert rules
-- [See valkey-dev: replication overview](../valkey-dev/reference/replication/overview.md) - replication protocol internals
+- [See valkey-dev: replication overview](../../../valkey-dev/reference/replication/overview.md) - replication protocol internals

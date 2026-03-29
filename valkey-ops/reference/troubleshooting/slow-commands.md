@@ -261,5 +261,5 @@ cluster rebalancing to move the hot slot to a less-loaded shard.
 - [Monitoring Metrics](../monitoring/metrics.md) - commandstats and performance metrics
 - [Security ACL](../security/acl.md) - restrict dangerous commands via ACL instead of rename
 - [Security Rename Commands](../security/rename-commands.md) - disable or rename dangerous commands
-- [See valkey-dev: commandlog](../valkey-dev/reference/monitoring/commandlog.md) - commandlog internals, entry format
-- [See valkey-dev: latency](../valkey-dev/reference/monitoring/latency.md) - latency event types, DOCTOR report generation
+- [See valkey-dev: commandlog](../../../valkey-dev/reference/monitoring/commandlog.md) - commandlog internals, entry format
+- [See valkey-dev: latency](../../../valkey-dev/reference/monitoring/latency.md) - latency event types, DOCTOR report generation

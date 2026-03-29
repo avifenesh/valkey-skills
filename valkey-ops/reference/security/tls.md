@@ -280,4 +280,4 @@ openssl s_client -connect valkey-host:6379 -CAfile ca.crt
 - [Alerting Rules](../monitoring/alerting.md) - alerts for connection failures and TLS handshake errors
 - [Replication Tuning](../replication/tuning.md) - TLS for replication connections
 - [Cluster Setup](../cluster/setup.md) - TLS for cluster bus
-- [See valkey-dev: tls](../valkey-dev/reference/security/tls.md) - SSL context architecture, OpenSSL integration internals
+- [See valkey-dev: tls](../../../valkey-dev/reference/security/tls.md) - SSL context architecture, OpenSSL integration internals

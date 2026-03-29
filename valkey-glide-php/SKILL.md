@@ -13,7 +13,7 @@ Synchronous PHP client for Valkey built on the GLIDE Rust core via native C exte
 
 ## Installation
 
-**Requirements:** PHP 8.2 - 8.3
+**Requirements:** PHP 8.1+
 
 ### Via PIE (PHP Installer for Extensions)
 

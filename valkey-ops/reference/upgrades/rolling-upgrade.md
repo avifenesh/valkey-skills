@@ -215,9 +215,10 @@ valkey-cli INFO server | grep valkey_version  # confirm version
 - **Light-weight cluster messages**: 9.0 uses light-weight messages between
   nodes. Fix for duplicate multi-meet packets in mixed clusters landed in
   9.0.1.
-- **Sentinel ACL regression**: 9.0.0 required `+failover` ACL permission
-  in the failover path. Fixed in 9.0.1. If upgrading Sentinel to 9.0, use
-  9.0.1+ or add `+failover` to Sentinel user ACL.
+- **Sentinel ACL change**: Sentinel 9.0+ requires `+failover` ACL permission
+  in the failover path. This is a permanent requirement since Valkey Sentinel
+  9.0, not a temporary regression. Add `+failover` to Sentinel user ACL
+  before upgrading.
 - **Hash field expiration bugs**: 9.0.0-9.0.1 had memory leaks, crashes,
   and data corruption. Use 9.0.3+ in production.
 
@@ -260,5 +261,5 @@ Key constraint: downgrading across RDB major versions may fail if the new versio
 - [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - Sentinel failover procedures
 - [Cluster Operations](../cluster/operations.md) - cluster failover procedures
 - [Production Checklist](../production-checklist.md) - pre-upgrade verification
-- [See valkey-dev: cluster/failover](../valkey-dev/reference/cluster/failover.md) - cluster failover internals
-- [See valkey-dev: cluster/slot-migration](../valkey-dev/reference/cluster/slot-migration.md) - slot migration details
+- [See valkey-dev: cluster/failover](../../../valkey-dev/reference/cluster/failover.md) - cluster failover internals
+- [See valkey-dev: cluster/slot-migration](../../../valkey-dev/reference/cluster/slot-migration.md) - slot migration details

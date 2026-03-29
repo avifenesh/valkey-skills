@@ -92,7 +92,7 @@ Starting with RDB version 80 (Valkey 9.0), files use the `VALKEY` magic string i
 | 8.1.0 GA | Mar 2025 | SIMD, embedded hash values, BGSAVE CANCEL |
 | 8.1.1-8.1.6 | Apr 2025-Feb 2026 | Security and bug fixes |
 | 9.0.0 GA | Oct 2025 | Atomic slot migration, hash field expiration |
-| 9.0.1 | Dec 2025 | Bug fixes (Sentinel ACL regression fix) |
+| 9.0.1 | Dec 2025 | Bug fixes |
 | 9.0.2 | Feb 2026 | Critical hash field expiration bug fixes |
 | 9.0.3 | Feb 2026 | Security (3 CVEs) |
 
@@ -102,9 +102,10 @@ Lua VM crash after `FUNCTION FLUSH ASYNC` + `FUNCTION LOAD`, and crash
 when aborting slot migration during child snapshot. **Use 9.0.3+ in
 production.**
 
-**Sentinel ACL regression**: 9.0.0 required `+failover` ACL permission
-in the Sentinel failover path. Fixed in 9.0.1. Update Sentinel ACL rules
-if upgrading directly to 9.0.0.
+**Sentinel ACL change**: Sentinel 9.0+ requires `+failover` ACL permission
+in the failover path. This is a permanent requirement since Valkey Sentinel
+9.0, not a temporary regression. Add `+failover` to Sentinel user ACL
+before upgrading to any 9.0.x release.
 
 ---
 
@@ -151,6 +152,6 @@ These config directives are silently ignored (verified from `src/config.c`):
 - [Sentinel Architecture](../sentinel/architecture.md) - Sentinel version considerations during upgrades
 - [Cluster Operations](../cluster/operations.md) - cluster failover procedures for version transitions
 - [Production Checklist](../production-checklist.md) - pre-upgrade verification
-- [See valkey-dev: replication overview](../valkey-dev/reference/replication/overview.md) - replication protocol internals
-- [See valkey-dev: rdb](../valkey-dev/reference/persistence/rdb.md) - RDB format details
-- [See valkey-dev: cluster/failover](../valkey-dev/reference/cluster/failover.md) - cluster failover mechanics
+- [See valkey-dev: replication overview](../../../valkey-dev/reference/replication/overview.md) - replication protocol internals
+- [See valkey-dev: rdb](../../../valkey-dev/reference/persistence/rdb.md) - RDB format details
+- [See valkey-dev: cluster/failover](../../../valkey-dev/reference/cluster/failover.md) - cluster failover mechanics

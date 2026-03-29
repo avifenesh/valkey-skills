@@ -17,7 +17,7 @@ Async/await C# client for Valkey built on the GLIDE Rust core via native interop
 dotnet add package Valkey.Glide
 ```
 
-**Requirements:** .NET 8.0+
+**Requirements:** .NET 6.0+ or .NET 8.0+
 
 **Platform support:** Linux (x86_64, arm64), macOS (Apple Silicon, x86_64), Windows (x86_64). No Alpine/MUSL support.
 

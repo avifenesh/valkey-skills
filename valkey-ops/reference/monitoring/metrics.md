@@ -281,4 +281,4 @@ Key NR metrics: `net.connectedClients`, `system.usedMemoryBytes`,
 - [Troubleshooting Slow Commands](../troubleshooting/slow-commands.md) - slow command investigation
 - [Troubleshooting OOM](../troubleshooting/oom.md) - memory alert response
 - [Security ACL](../security/acl.md) - ACL LOG for access denial auditing
-- [See valkey-dev: latency](../valkey-dev/reference/monitoring/latency.md) - latency monitor internals
+- [See valkey-dev: latency](../../../valkey-dev/reference/monitoring/latency.md) - latency monitor internals

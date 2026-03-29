@@ -7,7 +7,7 @@ argument-hint: "[topic]"
 
 # Valkey Contributor Reference
 
-58 source-verified reference docs covering every major subsystem of the Valkey server.
+59 source-verified reference docs covering every major subsystem of the Valkey server.
 
 Browse by subsystem below or ask about a specific topic. Each link leads to a focused reference doc with struct definitions, function signatures, and implementation details verified against the actual C source.
 
@@ -15,7 +15,7 @@ Browse by subsystem below or ask about a specific topic. Each link leads to a fo
 
 - Building/compiling -> Build & Test
 - Crash/hang investigation -> Architecture (event-loop), Threading, Monitoring (debug)
-- Data type behavior -> Data Structures, Config (encoding-transitions)
+- Data type behavior -> Data Structures (encoding-transitions), Config
 - Eviction/maxmemory/LRU/LFU -> Memory (eviction)
 - Performance work -> Threading, Memory, Monitoring (latency)
 - New command implementation -> Architecture (command-dispatch), Modules

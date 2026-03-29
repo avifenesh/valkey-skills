@@ -288,5 +288,5 @@ Fields to watch: `omem` (output memory), `sub` (subscriptions), `psub`
 - [Monitoring Alerting](../monitoring/alerting.md) - alert rules for subscriber memory
 - [Monitoring Metrics](../monitoring/metrics.md) - `pubsub_channels`, `pubsub_patterns` metrics
 - [Security ACL](../security/acl.md) - `acl-pubsub-default` and channel permissions
-- [See valkey-dev: pubsub](../valkey-dev/reference/pubsub/pubsub.md) - Pub/Sub internals
-- [See valkey-dev: notifications](../valkey-dev/reference/pubsub/notifications.md) - keyspace notification implementation
+- [See valkey-dev: pubsub](../../../valkey-dev/reference/pubsub/pubsub.md) - Pub/Sub internals
+- [See valkey-dev: notifications](../../../valkey-dev/reference/pubsub/notifications.md) - keyspace notification implementation

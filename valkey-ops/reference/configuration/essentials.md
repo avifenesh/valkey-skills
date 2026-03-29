@@ -162,5 +162,5 @@ Similarly, `dynamic-hz` is deprecated - the behavior it controlled is now always
 - [Replication Setup](../replication/setup.md) - primary-replica configuration using the replication parameters above
 - [Sentinel Architecture](../sentinel/architecture.md) - HA via Sentinel, uses `replica-priority` and `down-after-milliseconds`
 - [Cluster Setup](../cluster/setup.md) - cluster mode, uses the cluster parameters above
-- [See valkey-dev: config system](../valkey-dev/reference/config/config-system.md) - config parsing, validation, and rewrite internals
-- [See valkey-dev: db management](../valkey-dev/reference/config/db-management.md) - database selection and key space internals
+- [See valkey-dev: config system](../../../valkey-dev/reference/config/config-system.md) - config parsing, validation, and rewrite internals
+- [See valkey-dev: db management](../../../valkey-dev/reference/config/db-management.md) - database selection and key space internals

@@ -197,4 +197,4 @@ either:
 - [Slow Command Investigation](../troubleshooting/slow-commands.md) - hot key detection and mitigation
 - [Configuration Essentials](../configuration/essentials.md) - client connection tuning
 - [Monitoring Metrics](../monitoring/metrics.md) - `tracking_clients`, `tracking_total_keys` metrics
-- [See valkey-dev: tracking](../valkey-dev/reference/monitoring/tracking.md) - radix tree structure, invalidation dispatch internals
+- [See valkey-dev: tracking](../../../valkey-dev/reference/monitoring/tracking.md) - radix tree structure, invalidation dispatch internals

@@ -258,4 +258,4 @@ For large clusters (hundreds to thousands of nodes):
 - [Monitoring Alerting](../monitoring/alerting.md) - cluster health alert rules
 - [Security Hardening](../security/hardening.md) - firewall rules for cluster client and bus ports
 - [Security TLS](../security/tls.md) - TLS for cluster bus encryption
-- [See valkey-dev: cluster/failover](../valkey-dev/reference/cluster/failover.md) - cluster protocol internals, gossip, failover election
+- [See valkey-dev: cluster/failover](../../../valkey-dev/reference/cluster/failover.md) - cluster protocol internals, gossip, failover election

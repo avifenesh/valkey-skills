@@ -12,16 +12,18 @@ Self-contained guide for building Python applications with Valkey GLIDE. Covers 
 ## Installation
 
 ```bash
+# Async API (asyncio, anyio, trio)
 pip install valkey-glide
+
+# Sync API (GLIDE 2.1+)
+pip install valkey-glide-sync
 ```
 
 **Requirements:** Python 3.9 - 3.14
 
 **Platform support:** Linux (x86_64, arm64), macOS (Apple Silicon, x86_64). No Windows. No Alpine/MUSL (requires glibc 2.17+).
 
-**Modules:**
-- `glide` - async API (asyncio, anyio, trio)
-- `glide_sync` - sync API (GLIDE 2.1+)
+**Packages:** The async and sync clients are distributed as separate packages. `valkey-glide` provides the `glide` module (async). `valkey-glide-sync` provides the `glide_sync` module (sync).
 
 ---
 

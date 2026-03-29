@@ -16,9 +16,9 @@ GLIDE (General Language Independent Driver for the Enterprise) is the official V
 | Node.js | `npm install @valkey/valkey-glide` | GA |
 | Java | `io.valkey:valkey-glide` (Maven) | GA |
 | Go | `go get github.com/valkey-io/valkey-glide/go/v2` | GA |
-| PHP | `valkey-glide-php` | GA |
-| C# | `valkey-glide-csharp` | Preview |
-| Ruby | `valkey-glide-ruby` | In development |
+| PHP | `valkey-io/valkey-glide-php` (Composer) | GA |
+| C# | `Valkey.Glide` (NuGet) | Preview |
+| Ruby | `valkey-rb` (RubyGems) | GA |
 
 ### Key Advantages
 

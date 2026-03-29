@@ -180,4 +180,4 @@ For full binary format details, see valkey-dev `reference/persistence/rdb.md`.
 - [Configuration Essentials](../configuration/essentials.md) - RDB config defaults
 - [Capacity Planning](../operations/capacity-planning.md) - memory sizing for fork overhead
 - [Production Checklist](../production-checklist.md) - pre-launch persistence verification
-- [See valkey-dev: rdb](../valkey-dev/reference/persistence/rdb.md) - RDB binary format internals
+- [See valkey-dev: rdb](../../../valkey-dev/reference/persistence/rdb.md) - RDB binary format internals

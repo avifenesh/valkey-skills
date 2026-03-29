@@ -262,6 +262,6 @@ echo never > /sys/kernel/mm/transparent_hugepage/enabled
 - [Defragmentation](defragmentation.md) - defrag-related latency
 - [I/O Threads](io-threads.md) - throughput optimization to reduce I/O-bound latency
 - [Kubernetes Tuning](../kubernetes/tuning-k8s.md) - THP and kernel settings affecting latency in containers
-- [See valkey-dev: latency](../valkey-dev/reference/monitoring/latency.md) - latency monitor internals, event types, HdrHistogram integration
-- [See valkey-dev: commandlog](../valkey-dev/reference/monitoring/commandlog.md) - commandlog architecture, entry format
-- [See valkey-dev: debug](../valkey-dev/reference/monitoring/debug.md) - software watchdog, DEBUG commands
+- [See valkey-dev: latency](../../../valkey-dev/reference/monitoring/latency.md) - latency monitor internals, event types, HdrHistogram integration
+- [See valkey-dev: commandlog](../../../valkey-dev/reference/monitoring/commandlog.md) - commandlog architecture, entry format
+- [See valkey-dev: debug](../../../valkey-dev/reference/monitoring/debug.md) - software watchdog, DEBUG commands

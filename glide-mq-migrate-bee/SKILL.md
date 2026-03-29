@@ -9,7 +9,7 @@ argument-hint: "[migration scope or question]"
 
 Provides guidance for migrating Bee-Queue applications to glide-mq - chained builder to options object conversion, API mapping, and architectural changes.
 
-> This is a thin wrapper. For the complete migration guide, see `node_modules/glide-mq/skills/` or https://avifenesh.github.io/glide-mq.dev/migration/from-bee-queue
+> This is a thin wrapper. For the complete migration guide, see https://avifenesh.github.io/glide-mq.dev/migration/from-bee-queue
 
 ## When to Use
 
@@ -21,14 +21,13 @@ Invoke this skill when:
 
 ## Why Migrate
 
-Bee-Queue is unmaintained (last release 2021) with Node.js compatibility issues. It lacks:
+Bee-Queue (2.0.0, Dec 2025) uses Redis-based list polling. It lacks:
 - Cluster support and TLS
-- Delayed jobs and priority queues
-- TypeScript types
+- Priority queues
+- TypeScript types (bundled)
 - Workflow orchestration
-- Active maintenance and security patches
 
-glide-mq provides all of these with 35%+ higher throughput.
+glide-mq is built natively on Valkey using FCALL with higher throughput, cluster support, and advanced features like workflows and scheduling.
 
 ## Install
 

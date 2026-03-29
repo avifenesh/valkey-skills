@@ -269,5 +269,5 @@ r = redis.Redis(
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - security anti-patterns (no auth, FLUSHALL accessible)
 
 **Ops**:
-- valkey-ops [security/acl](../../valkey-ops/reference/security/acl.md) - ACL operational setup
-- valkey-ops [security/tls](../../valkey-ops/reference/security/tls.md) - TLS operational setup
+- valkey-ops [security/acl](../../../valkey-ops/reference/security/acl.md) - ACL operational setup
+- valkey-ops [security/tls](../../../valkey-ops/reference/security/tls.md) - TLS operational setup

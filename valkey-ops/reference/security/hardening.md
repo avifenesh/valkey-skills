@@ -250,5 +250,5 @@ Run through this checklist before any production deployment:
 - [Commandlog](../monitoring/commandlog.md) - slow command logging referenced in security checklist
 - [Alerting Rules](../monitoring/alerting.md) - alerts for rejected connections and anomalies
 - [Production Checklist](../production-checklist.md) - full security checklist
-- [See valkey-dev: acl](../valkey-dev/reference/security/acl.md) - ACL internals
-- [See valkey-dev: tls](../valkey-dev/reference/security/tls.md) - TLS internals
+- [See valkey-dev: acl](../../../valkey-dev/reference/security/acl.md) - ACL internals
+- [See valkey-dev: tls](../../../valkey-dev/reference/security/tls.md) - TLS internals

@@ -371,7 +371,7 @@ Spring Data Valkey provides GLIDE as a first-class driver.
 
 **From Spring Data Redis with Jedis:** Set `spring.data.valkey.client-type=valkeyglide`. Migration involves a package rename (`redis` to `valkey`) and class rename (`RedisTemplate` to `ValkeyTemplate`). An automated `sed` script is provided in the Spring Data Valkey MIGRATION.md.
 
-**From Spring Data Redis with Lettuce:** Set `spring.data.valkey.client-type=glide` to use the GLIDE driver while keeping the Spring RedisTemplate API. Gives GLIDE Rust core benefits (AZ affinity, OpenTelemetry, reconnection) with no application code changes. Note: the reactive `ReactiveRedisTemplate` is only available with the Lettuce driver, not GLIDE.
+**From Spring Data Redis with Lettuce:** Set `spring.data.valkey.client-type=valkeyglide` to use the GLIDE driver. Migration involves renaming `RedisTemplate` to `ValkeyTemplate` and `ReactiveRedisTemplate` to `ReactiveValkeyTemplate`. Note: the reactive API (`ReactiveValkeyTemplate`) remains Lettuce-based, not GLIDE.
 
 ---
 

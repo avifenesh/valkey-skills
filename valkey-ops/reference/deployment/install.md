@@ -182,5 +182,5 @@ This shows the exact version, OS, compiler, and allocator in use.
 - [Workload Presets](../configuration/workload-presets.md) - complete configs by use case
 - [Sentinel Architecture](../sentinel/architecture.md) - HA with Sentinel for non-clustered deployments
 - [Cluster Setup](../cluster/setup.md) - distributed deployment with automatic sharding
-- [See valkey-dev: building](../valkey-dev/reference/build/building.md) - contributor-level build details
-- [See valkey-dev: testing](../valkey-dev/reference/testing/tcl-tests.md) - test suite internals
+- [See valkey-dev: building](../../../valkey-dev/reference/build/building.md) - contributor-level build details
+- [See valkey-dev: testing](../../../valkey-dev/reference/testing/tcl-tests.md) - test suite internals

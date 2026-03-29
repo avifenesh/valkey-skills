@@ -95,7 +95,7 @@ Use when preparing a Valkey deployment for production, auditing an existing setu
 - [ ] **Release notes reviewed** - check for breaking changes, deprecated configs, new defaults
 - [ ] **Rollback plan documented** - know how to revert if the upgrade fails
 - [ ] **Replica versions compatible** - see [upgrades/compatibility.md](upgrades/compatibility.md)
-- [ ] **Valkey 9.0: use 9.0.3+** - 9.0.0-9.0.1 had critical hash field expiration bugs (memory leaks, crashes, data corruption). 9.0.0 Sentinel had ACL regression requiring `+failover` permission (fixed 9.0.1).
+- [ ] **Valkey 9.0: use 9.0.3+** - 9.0.0-9.0.1 had critical hash field expiration bugs (memory leaks, crashes, data corruption). Sentinel 9.0+ requires `+failover` ACL permission (permanent requirement, not a regression).
 
 ## See Also
 

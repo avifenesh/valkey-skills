@@ -1,18 +1,18 @@
 # valkey-skills
 
-> Domain-specific AI skills for the Valkey ecosystem - 18 skills covering application development, server internals, operations, GLIDE client (7 languages), ecosystem tools, and message queues
+> Domain-specific AI skills for the Valkey ecosystem - 15 skills covering application development, server internals, operations, GLIDE client (7 languages), ecosystem tools, and message queues
 
 ## Skills
 
-### Valkey Core (5 skills, 207 reference files)
+### Valkey Core (5 skills, 208 reference files)
 
-| Directory | Skill | Audience | Files | Lines |
-|-----------|-------|----------|-------|-------|
-| `valkey/` | valkey | Application developers using Valkey | 37 | ~11,513 |
-| `valkey-dev/` | valkey-dev | Valkey server contributors | 58 | ~13,191 |
-| `valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 52 | ~12,600 |
-| `valkey-glide/` | valkey-glide | GLIDE shared architecture, features, best practices | 26 | ~7,630 |
-| `valkey-ecosystem/` | valkey-ecosystem | Ecosystem tools and services | 28 | ~6,233 |
+| Directory | Skill | Audience | Files |
+|-----------|-------|----------|-------|
+| `valkey/` | valkey | Application developers using Valkey | 37 |
+| `valkey-dev/` | valkey-dev | Valkey server contributors | 59 |
+| `valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 52 |
+| `valkey-glide/` | valkey-glide | GLIDE shared architecture, features, best practices | 32 |
+| `valkey-ecosystem/` | valkey-ecosystem | Ecosystem tools and services | 28 |
 
 ### GLIDE Per-Language (7 skills, code-heavy)
 
@@ -36,19 +36,20 @@
 
 ## Architecture
 
-Each skill follows the same pattern:
+Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-ecosystem) follow the router pattern:
 - `SKILL.md` - concise router (<500 lines) with trigger phrases and reference tables
 - `reference/` - deep RAG library of focused docs (100-300 lines each)
-- `resources/` - source metadata from research phase
+
+Per-language GLIDE skills and Glide-MQ skills are self-contained single-file SKILL.md documents.
 
 The AI loads SKILL.md into context, scans the tables, and reads only the specific reference file needed. No context bloat.
 
 ## Quality
 
-207 reference files, ~51,167 lines across 5 Valkey core skills + 3 Glide-MQ skills. Every skill built with the full 13-phase pipeline: wave 1 writers, gap analysis, wave 2 fill, deep research, enrichment, enhance (5 groups), merge-sort (2 pairs), unification, validate (3 per subject), fix, SKILL.md write, SKILL.md enhance, commit.
+208 reference files across 5 Valkey core skills + 7 per-language GLIDE skills + 3 Glide-MQ skills. Every skill built with the full 13-phase pipeline: wave 1 writers, gap analysis, wave 2 fill, deep research, enrichment, enhance (5 groups), merge-sort (2 pairs), unification, validate (3 per subject), fix, SKILL.md write, SKILL.md enhance, commit.
 
 valkey-dev is the reference implementation:
-- 58 reference files, ~13,191 lines
+- 59 reference files
 - Every claim verified against actual Valkey C source code
 - 1,440 claims validated by 15 independent review agents
 - 29 errors found and fixed (2% initial error rate -> 0%)

@@ -107,7 +107,7 @@ Even with `min-replicas-to-write`, a client library connected to the old primary
 
 | Check | Command | Expected |
 |-------|---------|----------|
-| Quorum health | `SENTINEL ckquorum mymaster` | "OK <n> usable Sentinels" |
+| Quorum health | `SENTINEL ckquorum mymaster` | "OK `<n>` usable Sentinels" |
 | Replica count | `SENTINEL replicas mymaster` | At least `min-replicas-to-write` replicas listed |
 | Replication lag | `INFO replication` on primary | All replicas showing `lag` < `min-replicas-max-lag` |
 | Sentinel count | `SENTINEL sentinels mymaster` | Expected number of Sentinels (odd, >= 3) |

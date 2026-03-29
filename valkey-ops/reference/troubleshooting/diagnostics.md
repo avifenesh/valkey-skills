@@ -335,6 +335,6 @@ echo "=== Slow Cmds ===";   $CLI SLOWLOG GET 5
 - [Monitoring Alerting](../monitoring/alerting.md) - alert rules for all diagnostic categories
 - [Security ACL](../security/acl.md) - ACL LOG for unauthorized access diagnosis
 - [Security Hardening](../security/hardening.md) - security checklist and defense-in-depth layers
-- [See valkey-dev: debug](../valkey-dev/reference/monitoring/debug.md) - DEBUG command internals, software watchdog
-- [See valkey-dev: latency](../valkey-dev/reference/monitoring/latency.md) - latency monitor internals
-- [See valkey-dev: commandlog](../valkey-dev/reference/monitoring/commandlog.md) - commandlog architecture
+- [See valkey-dev: debug](../../../valkey-dev/reference/monitoring/debug.md) - DEBUG command internals, software watchdog
+- [See valkey-dev: latency](../../../valkey-dev/reference/monitoring/latency.md) - latency monitor internals
+- [See valkey-dev: commandlog](../../../valkey-dev/reference/monitoring/commandlog.md) - commandlog architecture

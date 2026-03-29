@@ -137,7 +137,7 @@ For detailed client migration patterns, API mapping, and GLIDE adoption guidance
 | RedisTimeSeries | No official module | Community redistimeseries.so works on Valkey 7.2 |
 | RedisGraph | Not available | RedisGraph was EOL'd Jan 2025; consider FalkorDB |
 
-If you depend on advanced RediSearch features like stemming, phonetic matching, or auto-complete, these are not yet available in valkey-search. Basic full-text search (keyword, phrase, prefix, suffix, wildcard, fuzzy) is supported since valkey-search 1.2.0.
+If you depend on advanced RediSearch features like phonetic matching or auto-complete, these are not yet available in valkey-search. Full-text search with stemming, keyword, phrase, prefix, suffix, wildcard, and fuzzy queries is supported since valkey-search 1.2.0.
 
 ### 3. Managed Service Migration
 

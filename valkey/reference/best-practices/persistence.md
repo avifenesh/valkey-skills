@@ -200,7 +200,7 @@ If you are an application developer and someone else manages Valkey:
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - missing TTL, no `maxmemory`, and related pitfalls
 
 **Ops**:
-- valkey-ops [persistence/rdb](../../valkey-ops/reference/persistence/rdb.md) - RDB configuration, fork overhead, backup procedures
-- valkey-ops [persistence/aof](../../valkey-ops/reference/persistence/aof.md) - AOF configuration, fsync policies, hybrid persistence
-- valkey-ops [performance/durability](../../valkey-ops/reference/performance/durability.md) - full durability vs performance spectrum
-- valkey-ops [persistence/backup-recovery](../../valkey-ops/reference/persistence/backup-recovery.md) - backup scripts and disaster recovery
+- valkey-ops [persistence/rdb](../../../valkey-ops/reference/persistence/rdb.md) - RDB configuration, fork overhead, backup procedures
+- valkey-ops [persistence/aof](../../../valkey-ops/reference/persistence/aof.md) - AOF configuration, fsync policies, hybrid persistence
+- valkey-ops [performance/durability](../../../valkey-ops/reference/performance/durability.md) - full durability vs performance spectrum
+- valkey-ops [persistence/backup-recovery](../../../valkey-ops/reference/persistence/backup-recovery.md) - backup scripts and disaster recovery

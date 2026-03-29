@@ -110,20 +110,21 @@ Heroku's Key-Value Store is built on Valkey 8.x, replacing their previous Redis 
 
 ### Profile
 
-Percona does not offer a hosted Valkey service. Instead, they provide enterprise support, consulting, and migration services for organizations running Valkey.
+Percona offers Valkey as a fully managed service through Percona Ivee, alongside enterprise support, consulting, and migration services.
 
 ### Key Details
 
 | Property | Value |
 |----------|-------|
-| Type | Support, managed services, and project-based consulting |
+| Type | Managed service (Percona Ivee), support, and consulting |
 | Versions | All |
 | Key person | Kyle Davis - Valkey General Manager at Percona |
-| Services | Enterprise support, migration planning, performance tuning |
+| Services | Managed Valkey (Ivee), enterprise support, migration planning, performance tuning |
 | Monitoring | Percona Monitoring and Management (PMM) supports Valkey |
 
 ### Strengths
 
+- **Managed service**: Percona Ivee provides fully managed Valkey with automated operations
 - **Expert support**: Deep database expertise applied to Valkey operations
 - **Migration services**: Professional guidance for Redis-to-Valkey migrations
 - **PMM integration**: Percona Monitoring and Management provides Valkey dashboards
@@ -321,7 +322,7 @@ Microsoft has not announced Valkey support for Azure Cache. Azure maintains "Azu
 | Aiven | Yes (AWS/GCP/Azure) | Yes | Standard | SOC 2 | Terraform |
 | DigitalOcean | No | No | Standard | SOC 2 | Terraform |
 | Heroku | No | No | JSON + Bloom | HIPAA (Shield) | CLI/API |
-| Percona | N/A (support only) | N/A | N/A | N/A | N/A |
+| Percona (Ivee) | No | No | Standard | Enterprise | Terraform |
 | UpCloud | No | No | Standard | GDPR | API |
 | Exoscale | No | No | Standard | EU | Terraform |
 | Vultr | No | No | Standard | - | API |

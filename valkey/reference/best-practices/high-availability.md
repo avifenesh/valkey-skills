@@ -299,6 +299,6 @@ Arguments: `WAITAOF <local_fsyncs> <replica_fsyncs> <timeout_ms>`
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - pub/sub for durable messaging, no authentication
 
 **Ops**:
-- valkey-ops [sentinel/setup](../../valkey-ops/reference/sentinel/setup.md) - Sentinel deployment and configuration
-- valkey-ops [sentinel/tuning](../../valkey-ops/reference/sentinel/tuning.md) - failover timing and quorum tuning
-- valkey-ops [replication/](../../valkey-ops/reference/replication/) - replication internals and troubleshooting
+- valkey-ops [sentinel/architecture](../../../valkey-ops/reference/sentinel/architecture.md) - Sentinel architecture and failover mechanics
+- valkey-ops [sentinel/deployment-runbook](../../../valkey-ops/reference/sentinel/deployment-runbook.md) - Sentinel deployment and configuration
+- valkey-ops [replication/](../../../valkey-ops/reference/replication/) - replication internals and troubleshooting

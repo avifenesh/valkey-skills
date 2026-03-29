@@ -229,5 +229,5 @@ client-output-buffer-limit pubsub 32mb 8mb 60
 - [Capacity Planning](../operations/capacity-planning.md) - memory sizing guidelines
 - [Monitoring Alerting](../monitoring/alerting.md) - memory alert rules
 - [Monitoring Metrics](../monitoring/metrics.md) - `used_memory`, `mem_fragmentation_ratio` thresholds
-- [See valkey-dev: zmalloc](../valkey-dev/reference/memory/zmalloc.md) - allocator internals, per-thread counters
-- [See valkey-dev: defragmentation](../valkey-dev/reference/memory/defragmentation.md) - active defragmentation implementation
+- [See valkey-dev: zmalloc](../../../valkey-dev/reference/memory/zmalloc.md) - allocator internals, per-thread counters
+- [See valkey-dev: defragmentation](../../../valkey-dev/reference/memory/defragmentation.md) - active defragmentation implementation

@@ -148,12 +148,12 @@ These track count, sum, and max for each type, reported via INFO.
 
 Returns one entry per active event: `[event, timestamp, latency_ms, max_ms, sum_ms, count]`.
 
-### LATENCY HISTORY <event>
+### LATENCY HISTORY `<event>`
 
 Returns all non-zero samples for the event as `[timestamp, latency_ms]` pairs,
 ordered oldest to newest from the circular buffer.
 
-### LATENCY GRAPH <event>
+### LATENCY GRAPH `<event>`
 
 Generates an ASCII sparkline chart showing latency over time, with labels
 indicating how long ago each sample was recorded (e.g. "3s", "2m", "1h").

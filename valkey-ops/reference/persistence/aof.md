@@ -219,4 +219,4 @@ If the AOF is truncated:
 - [Configuration Essentials](../configuration/essentials.md) - AOF config defaults
 - [Capacity Planning](../operations/capacity-planning.md) - memory sizing for fork overhead
 - [Production Checklist](../production-checklist.md) - pre-launch persistence verification
-- [See valkey-dev: aof](../valkey-dev/reference/persistence/aof.md) - multi-part AOF architecture internals
+- [See valkey-dev: aof](../../../valkey-dev/reference/persistence/aof.md) - multi-part AOF architecture internals

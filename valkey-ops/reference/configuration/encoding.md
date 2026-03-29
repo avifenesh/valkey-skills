@@ -166,5 +166,5 @@ Multiply by millions of keys and the difference is significant. With 10 million 
 - [Eviction Policies](eviction.md) - memory pressure that triggers eviction
 - [Lazy Free Configuration](lazyfree.md) - async deletion for large keys after encoding conversion
 - [Memory Optimization](../performance/memory.md) - maxmemory, eviction, data modeling
-- [See valkey-dev: encoding transitions](../valkey-dev/reference/data-structures/encoding-transitions.md) - C implementation of encoding checks and conversion logic
-- [See valkey-dev: listpack](../valkey-dev/reference/data-structures/listpack.md) - listpack internal structure
+- [See valkey-dev: encoding transitions](../../../valkey-dev/reference/data-structures/encoding-transitions.md) - C implementation of encoding checks and conversion logic
+- [See valkey-dev: listpack](../../../valkey-dev/reference/data-structures/listpack.md) - listpack internal structure

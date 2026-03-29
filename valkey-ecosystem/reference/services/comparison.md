@@ -144,7 +144,7 @@ Many organizations use managed services for production and self-hosted Valkey (v
 | Durability | No | Yes (11 nines) | No | No | No | No |
 | Vector search | Yes (built-in) | No | Yes (built-in) | No | No | No |
 | JSON module | Yes (built-in) | No | Yes | No | No | Yes |
-| Bloom module | No | No | No | No | No | Yes |
+| Bloom module | No | No | Yes | No | No | Yes |
 | Cross-region | Yes | No | Yes | No | No | No |
 | Free tier | $100 credit | No | No | Yes (permanent) | No | No |
 | HIPAA | Yes | Yes | Yes | No | No | Yes (Shield) |

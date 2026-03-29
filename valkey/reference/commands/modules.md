@@ -12,7 +12,7 @@ Module commands are not part of the core Valkey server. They require loading the
 |--------|--------|-----------|-------|
 | Bloom (valkey-bloom) | Stable | valkey-bundle | Probabilistic membership testing |
 | JSON (valkey-json) | Stable | valkey-bundle | JSON document storage and manipulation |
-| Search (valkey-search) | In development | valkey-bundle | Full-text search and secondary indexing |
+| Search (valkey-search) | GA | valkey-bundle | Full-text search, vector similarity, and secondary indexing |
 
 **Checking loaded modules**:
 

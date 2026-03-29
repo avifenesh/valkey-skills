@@ -334,7 +334,7 @@ For new projects targeting Valkey, prefer libvalkey over hiredis-cluster.
 | Swift | valkey-swift | None | Not available |
 | Scala | valkey4cats | GLIDE (underlying) | Not available |
 | C | libvalkey | hiredis-cluster | Not available |
-| Ruby | None | redis-rb | In development (separate repo) |
+| Ruby | None | redis-rb | GA (`valkey-rb` gem, separate repo) |
 | C++ | None | None | In development (separate repo) |
 
 ## Cross-References

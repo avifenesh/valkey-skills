@@ -19,7 +19,7 @@ intended for application use.
 
 ### Object Introspection
 
-**DEBUG OBJECT <key> [fast]**
+**DEBUG OBJECT `<key>` [fast]**
 
 Reports low-level details about a key's value object:
 - Memory address and refcount
@@ -29,13 +29,13 @@ Reports low-level details about a key's value object:
 - For quicklist: node count, average fill, listpack max, compression flag,
   and total uncompressed size (unless `fast`)
 
-**DEBUG SDSLEN <key>**
+**DEBUG SDSLEN `<key>`**
 
 Reports SDS string internals for string-type keys:
 - key_sds_len, key_sds_avail, obj_alloc
 - val_sds_len, val_sds_avail, val_alloc
 
-**DEBUG LISTPACK <key>** / **DEBUG QUICKLIST <key> [detail]**
+**DEBUG LISTPACK `<key>`** / **DEBUG QUICKLIST `<key>` [detail]**
 
 Prints internal encoding structure to stdout (not to the client).
 
@@ -47,7 +47,7 @@ Computes a SHA1 digest of the entire dataset. Uses XOR-based accumulation
 so key ordering does not affect the result. Hash, set, and zset elements use
 XOR (order-independent); lists use mixing (order-dependent).
 
-**DEBUG DIGEST-VALUE <key> [key ...]**
+**DEBUG DIGEST-VALUE `<key>` [key ...]**
 
 Computes per-key SHA1 digests. Operates on logically expired keys (bypasses
 expiry checks).
@@ -94,7 +94,7 @@ Flushes AOF buffers, empties database, reloads AOF from disk.
 Reports sizes of core C structures: robj, dictentry, sdshdr variants. Useful
 for estimating memory overhead.
 
-**DEBUG HTSTATS <dbid> [full]** / **DEBUG HTSTATS-KEY <key> [full]**
+**DEBUG HTSTATS `<dbid>` [full]** / **DEBUG HTSTATS-KEY `<key>` [full]**
 
 Hash table statistics for database-level or key-level hash tables.
 
@@ -102,13 +102,13 @@ Hash table statistics for database-level or key-level hash tables.
 
 Dumps client memory usage bucket information (requires maxmemory-clients).
 
-**DEBUG MALLCTL <key> [val]** / **DEBUG MALLCTL-STR <key> [val]**
+**DEBUG MALLCTL `<key>` [val]** / **DEBUG MALLCTL-STR `<key>` [val]**
 
 Direct jemalloc mallctl interface (only available with jemalloc builds).
 
 ### Protocol Testing
 
-**DEBUG PROTOCOL <type>**
+**DEBUG PROTOCOL `<type>`**
 
 Returns test values for each RESP3 type: string, integer, double, bignum,
 null, array, set, map, attrib, push, verbatim, true, false. Used for client
@@ -154,8 +154,9 @@ each. This can detect RAM errors without destroying data.
 ### bugReportEnd
 
 Prints the closing banner with links to the Valkey GitHub issues page, removes
-the PID file if daemonized, then either calls `abort()` or re-raises the
-original signal to produce a core dump.
+the PID file if daemonized. Exit paths:
+- If `use_exit_on_panic` is enabled: calls `_exit(1)` (immediate termination, no core dump)
+- Otherwise: calls `abort()` or re-raises the original signal to produce a core dump
 
 ## Stack Trace Collection
 

@@ -9,7 +9,7 @@ argument-hint: "[task description]"
 
 Provides guidance for greenfield glide-mq message queue development - queues, workers, producers, job scheduling, and workflows.
 
-> This is a thin wrapper. For full API reference, advanced patterns, and deep documentation, see `node_modules/glide-mq/skills/` or https://avifenesh.github.io/glide-mq.dev/
+> This is a thin wrapper. For full API reference, advanced patterns, and deep documentation, see https://avifenesh.github.io/glide-mq.dev/
 
 ## When to Use
 

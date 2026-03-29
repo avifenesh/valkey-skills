@@ -254,5 +254,5 @@ Run these checks after any migration to verify data integrity:
 - [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - Sentinel setup for migrated deployments
 - [Cluster Setup](../cluster/setup.md) - cluster creation for Redis Cluster migrations
 - [Production Checklist](../production-checklist.md) - post-migration verification
-- [See valkey-dev: cluster/overview](../valkey-dev/reference/cluster/overview.md) - cluster protocol internals
-- [See valkey-dev: replication overview](../valkey-dev/reference/replication/overview.md) - replication protocol internals
+- [See valkey-dev: cluster/overview](../../../valkey-dev/reference/cluster/overview.md) - cluster protocol internals
+- [See valkey-dev: replication overview](../../../valkey-dev/reference/replication/overview.md) - replication protocol internals
