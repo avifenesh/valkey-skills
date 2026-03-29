@@ -6,26 +6,34 @@ Use when choosing a Valkey client library for your application, migrating from a
 
 ## Valkey GLIDE (Official Client)
 
-GLIDE (General Language Independent Driver for the Enterprise) is the official Valkey client. Built in Rust with language bindings, it uses a single multiplexed connection per cluster node with auto-pipelining. Current version: **v2.1.1** (released 2025-10-08).
+GLIDE (General Language Independent Driver for the Enterprise) is the official Valkey client. Built in Rust with language bindings, it uses a single multiplexed connection per cluster node with auto-pipelining. Current version: **v2.3.0**.
 
 ### Language Support
 
 | Language | Package | Version | Status |
 |----------|---------|---------|--------|
-| Python | `pip install valkey-glide` | v2.1.1 | GA |
-| Node.js | `npm install @valkey/valkey-glide` | v2.1.1 | GA |
-| Java | `io.valkey:valkey-glide` (Maven) | v2.1.1 | GA |
-| Go | `go get github.com/valkey-io/valkey-glide/go` | v2.1.1 | GA |
-| C# | `valkey-glide-csharp` | - | Preview |
-| PHP | `valkey-glide-php` | - | Preview |
+| Python | `pip install valkey-glide` | 2.3.0 | GA |
+| Node.js | `npm install @valkey/valkey-glide` | 2.3.0 | GA |
+| Java | `io.valkey:valkey-glide` (Maven) | 2.3.0 | GA |
+| Go | `go get github.com/valkey-io/valkey-glide/go/v2` | 2.3.0 | GA |
+| PHP | `valkey-glide-php` | 1.0.0 | GA |
+| C# | `valkey-glide-csharp` | 0.9.0 | Preview |
+| Ruby | `valkey-glide-ruby` | - | In development |
 
 ### Key Advantages
 
+- **AZ Affinity routing**: Route reads to the closest availability zone replica - reduces latency by ~500us and cross-AZ transfer costs by up to 75%. GLIDE-only feature, not available in any other client.
+- **IAM authentication**: Native token-based auth for AWS ElastiCache/MemoryDB without managing passwords. GLIDE-only.
+- **Built-in OpenTelemetry**: Per-command tracing spans and metrics without wrapping calls. GLIDE-only.
 - **Auto-pipelining**: Commands are automatically batched, reducing round-trips without explicit pipeline management
 - **Single connection per node**: Multiplexed design eliminates connection pool sizing decisions
 - **Rust core**: One implementation shared across all languages, reducing per-language bugs
 - **First-class Valkey support**: Immediate support for new Valkey commands ([SET IFEQ, DELIFEQ](../valkey-features/conditional-ops.md), [hash field TTL](../valkey-features/hash-field-ttl.md))
 - **Cluster-aware**: Automatic topology discovery, redirect handling, and reconnection
+- **Dynamic PubSub**: Runtime subscribe/unsubscribe (GLIDE 2.3+), with automatic resubscription on reconnect
+- **Transparent compression**: Zstd/LZ4 compression for large values on SET/GET
+
+> See the **valkey-glide** skill for detailed API reference, configuration, and migration guides per language.
 
 ### Installation
 
@@ -117,7 +125,7 @@ Beyond GLIDE, several language-specific clients are maintained as first-party Va
 | Persistent Connection Pool | No | Yes | Yes | Yes | Yes | Yes | Yes |
 | Smart Backoff (Storm Prevention) | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
 
-**When to use GLIDE over traditional clients**: GLIDE has the broadest feature support for cluster operations (cluster scan, PubSub restoration, AZ-based reads). Use traditional clients when you need client-side caching (valkey-go, redisson) or persistent connection pools.
+**When to use GLIDE over traditional clients**: GLIDE is the only client with AZ Affinity routing (cloud cost optimization), IAM authentication (AWS managed services), and built-in OpenTelemetry. It also has the broadest cluster feature support (cluster scan, PubSub restoration). Use traditional clients when you need client-side caching (valkey-go, redisson) or persistent connection pools.
 
 ---
 
@@ -125,6 +133,8 @@ Beyond GLIDE, several language-specific clients are maintained as first-party Va
 
 ### Choose GLIDE when:
 
+- You deploy on **AWS ElastiCache/MemoryDB** and want AZ Affinity (cross-AZ cost savings up to 75%) and IAM authentication - these are GLIDE-only features
+- You need **built-in observability** - OpenTelemetry tracing and metrics without additional instrumentation
 - Starting a **new project** with no existing Redis client dependency
 - You need **first-class support for Valkey-specific features** (SET IFEQ, DELIFEQ, hash field TTL commands)
 - You want **auto-pipelining without managing pipelines** explicitly

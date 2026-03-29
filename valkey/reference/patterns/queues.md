@@ -313,6 +313,26 @@ XTRIM queue:tasks MINID ~ 1711584000000-0
 - **Simple queue**: Fire-and-forget tasks where occasional loss is acceptable. Background jobs with idempotent processing.
 - **Reliable queue (LMOVE)**: Tasks where loss is unacceptable but you want simplicity. Fewer consumers.
 - **Stream queue**: Production workloads with multiple consumers, acknowledgment, replay, and monitoring needs. The recommended approach for non-trivial queue workloads.
+- **glide-mq** (Node.js): For production job queues that need retries, scheduling, priority, dead letter queues, and per-key ordered processing out of the box - built natively on Valkey using FCALL. See the **glide-mq** skill.
+
+```typescript
+// glide-mq example - production queue with retries and scheduling
+import { Queue, Worker } from 'glide-mq';
+
+const connection = { addresses: [{ host: 'localhost', port: 6379 }] };
+const queue = new Queue('tasks', { connection });
+
+await queue.add('send-email', { to: 'user@example.com' }, {
+  attempts: 3,
+  backoff: { type: 'exponential', delay: 1000 },
+  priority: 1,
+});
+
+const worker = new Worker('tasks', async (job) => {
+  console.log(`Processing ${job.name}:`, job.data);
+  return { sent: true };
+}, { connection, concurrency: 10 });
+```
 
 ---
 
