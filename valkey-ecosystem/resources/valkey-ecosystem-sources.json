@@ -1,0 +1,340 @@
+{
+  "topic": "Valkey Ecosystem",
+  "created": "2026-03-29",
+  "depth": "deep",
+  "source_count": 40,
+  "sources": [
+    {
+      "id": 1,
+      "title": "Valkey Official Website",
+      "url": "https://valkey.io/",
+      "type": "primary",
+      "category": "overview",
+      "notes": "Main project site with docs, blog, and client listings"
+    },
+    {
+      "id": 2,
+      "title": "Valkey Client Libraries",
+      "url": "https://valkey.io/clients/",
+      "type": "primary",
+      "category": "clients",
+      "notes": "Official listing of recommended client libraries per language with versions"
+    },
+    {
+      "id": 3,
+      "title": "Valkey GLIDE GitHub Repository",
+      "url": "https://github.com/valkey-io/valkey-glide",
+      "type": "primary",
+      "category": "clients",
+      "notes": "Official multi-language client written in Rust; Python, Java, Node.js, Go, C#, PHP"
+    },
+    {
+      "id": 4,
+      "title": "Valkey GLIDE Documentation",
+      "url": "https://glide.valkey.io/overview/",
+      "type": "primary",
+      "category": "clients",
+      "notes": "GLIDE feature overview, migration guides, and API docs"
+    },
+    {
+      "id": 5,
+      "title": "valkey-py GitHub Repository",
+      "url": "https://github.com/valkey-io/valkey-py",
+      "type": "primary",
+      "category": "clients",
+      "notes": "Python client forked from redis-py; hiredis and cluster support"
+    },
+    {
+      "id": 6,
+      "title": "iovalkey GitHub Repository",
+      "url": "https://github.com/valkey-io/iovalkey",
+      "type": "primary",
+      "category": "clients",
+      "notes": "Node.js client forked from ioredis; TypeScript; Cluster/Sentinel/Streams"
+    },
+    {
+      "id": 7,
+      "title": "valkey-java GitHub Repository",
+      "url": "https://github.com/valkey-io/valkey-java",
+      "type": "primary",
+      "category": "clients",
+      "notes": "Java client forked from Jedis; simplicity and performance focused"
+    },
+    {
+      "id": 8,
+      "title": "Redisson - Valkey & Redis Java Client",
+      "url": "https://github.com/redisson/redisson",
+      "type": "primary",
+      "category": "clients",
+      "notes": "50+ distributed Java objects; Spring/Hibernate/JCache; supports Valkey natively"
+    },
+    {
+      "id": 9,
+      "title": "redis-rs Rust Client",
+      "url": "https://github.com/redis-rs/redis-rs",
+      "type": "primary",
+      "category": "clients",
+      "notes": "Rust client explicitly supporting Valkey via RESP protocol; GLIDE core built on it"
+    },
+    {
+      "id": 10,
+      "title": "StackExchange.Redis",
+      "url": "https://github.com/StackExchange/StackExchange.Redis",
+      "type": "primary",
+      "category": "clients",
+      "notes": ".NET client with explicit Valkey support; GetProductVariant API for server detection"
+    },
+    {
+      "id": 11,
+      "title": "Valkey GLIDE Jedis Migration Guide",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/Migration-Guide-Jedis",
+      "type": "guide",
+      "category": "migration",
+      "notes": "Side-by-side migration from Jedis to GLIDE with code examples"
+    },
+    {
+      "id": 12,
+      "title": "Valkey GLIDE StackExchange.Redis Migration Guide",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/Migration-Guide-StackExchange.Redis",
+      "type": "guide",
+      "category": "migration",
+      "notes": "Migration from StackExchange.Redis to GLIDE C#"
+    },
+    {
+      "id": 13,
+      "title": "Valkey GLIDE go-redis Migration Guide",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/Migration-Guide-go%E2%80%90redis",
+      "type": "guide",
+      "category": "migration",
+      "notes": "Migration from go-redis to GLIDE Go client"
+    },
+    {
+      "id": 14,
+      "title": "Valkey Migration from Redis Documentation",
+      "url": "https://valkey.io/topics/migration/",
+      "type": "primary",
+      "category": "migration",
+      "notes": "Official server migration guide; RDB snapshot and replication methods"
+    },
+    {
+      "id": 15,
+      "title": "redis_exporter - Prometheus Exporter for Valkey & Redis",
+      "url": "https://github.com/oliver006/redis_exporter",
+      "type": "primary",
+      "category": "monitoring",
+      "notes": "Prometheus exporter supporting Valkey 7.x, 8.x, 9.x; port 9121"
+    },
+    {
+      "id": 16,
+      "title": "Grafana Valkey Dashboard",
+      "url": "https://grafana.com/grafana/dashboards/24733-valkey/",
+      "type": "primary",
+      "category": "monitoring",
+      "notes": "Pre-built Grafana dashboard for Valkey monitoring"
+    },
+    {
+      "id": 17,
+      "title": "Percona Monitoring and Management for Valkey",
+      "url": "https://www.percona.com/blog/how-to-monitor-valkey-redis-with-percona-monitoring-and-management/",
+      "type": "guide",
+      "category": "monitoring",
+      "notes": "PMM-based Valkey monitoring with VictoriaMetrics backend"
+    },
+    {
+      "id": 18,
+      "title": "Redimo - Valkey & Redis GUI",
+      "url": "https://www.redimo.dev/",
+      "type": "tool",
+      "category": "monitoring",
+      "notes": "Desktop GUI with native Valkey auto-detection; real-time monitoring"
+    },
+    {
+      "id": 19,
+      "title": "Keyscope - Unified Redis/Valkey GUI",
+      "url": "https://keyscope.dev/",
+      "type": "tool",
+      "category": "monitoring",
+      "notes": "Desktop + JetBrains IDE plugin; Valkey 9 multi-DB cluster support"
+    },
+    {
+      "id": 20,
+      "title": "AWS ElastiCache and MemoryDB Valkey Support",
+      "url": "https://aws.amazon.com/blogs/database/amazon-elasticache-and-amazon-memorydb-announce-support-for-valkey/",
+      "type": "primary",
+      "category": "managed-services",
+      "notes": "AWS managed Valkey; serverless and node-based; 20-33% cheaper than Redis"
+    },
+    {
+      "id": 21,
+      "title": "Google Cloud Memorystore for Valkey",
+      "url": "https://docs.cloud.google.com/memorystore/docs/valkey/product-overview",
+      "type": "primary",
+      "category": "managed-services",
+      "notes": "Google managed Valkey; 99.99% SLA; built-in vector search; 1-250 nodes"
+    },
+    {
+      "id": 22,
+      "title": "Aiven for Valkey",
+      "url": "https://aiven.io/valkey",
+      "type": "primary",
+      "category": "managed-services",
+      "notes": "Multi-cloud managed Valkey; free tier; Valkey 9 support; multi-version"
+    },
+    {
+      "id": 23,
+      "title": "DigitalOcean Managed Caching for Valkey",
+      "url": "https://www.digitalocean.com/products/managed-databases-valkey",
+      "type": "primary",
+      "category": "managed-services",
+      "notes": "Replaces Managed Redis; from $15/mo; HA available"
+    },
+    {
+      "id": 24,
+      "title": "Heroku Key-Value Store (Valkey)",
+      "url": "https://www.heroku.com/key-value-store/",
+      "type": "primary",
+      "category": "managed-services",
+      "notes": "Built on Valkey 8; JSON + Bloom modules; HIPAA Shield plan"
+    },
+    {
+      "id": 25,
+      "title": "Valkey Bundle - One Stop Shop Blog Post",
+      "url": "https://valkey.io/blog/valkey-bundle-one-stop-shop-for-low-latency-modern-applications/",
+      "type": "primary",
+      "category": "modules",
+      "notes": "valkey-bundle container with JSON, Bloom, Search, LDAP modules"
+    },
+    {
+      "id": 26,
+      "title": "ValkeyJSON RFC",
+      "url": "https://github.com/valkey-io/valkey-rfc/blob/main/ValkeyJSON.md",
+      "type": "primary",
+      "category": "modules",
+      "notes": "JSON module RFC; RedisJSON v1/v2 API compatibility details"
+    },
+    {
+      "id": 27,
+      "title": "Introducing Bloom Filters for Valkey",
+      "url": "https://valkey.io/blog/introducing-bloom-filters/",
+      "type": "primary",
+      "category": "modules",
+      "notes": "Official blog post on valkey-bloom 1.0; Rust implementation; BF.* API compatible"
+    },
+    {
+      "id": 28,
+      "title": "Introducing Vector Search to Valkey",
+      "url": "https://valkey.io/blog/introducing-valkey-search/",
+      "type": "primary",
+      "category": "modules",
+      "notes": "Google-contributed vector search; KNN/HNSW; billions of vectors"
+    },
+    {
+      "id": 29,
+      "title": "Spring Data Valkey",
+      "url": "https://github.com/valkey-io/spring-data-valkey",
+      "type": "primary",
+      "category": "frameworks",
+      "notes": "Fork of Spring Data Redis 3.5.1; ValkeyTemplate; OpenTelemetry; Boot starter"
+    },
+    {
+      "id": 30,
+      "title": "django-valkey",
+      "url": "https://github.com/django-commons/django-valkey",
+      "type": "primary",
+      "category": "frameworks",
+      "notes": "Django cache and session backend; fork of django-redis; cluster support"
+    },
+    {
+      "id": 31,
+      "title": "Sidekiq 8.0 Announcement",
+      "url": "https://www.mikeperham.com/2025/03/05/introducing-sidekiq-8.0/",
+      "type": "primary",
+      "category": "frameworks",
+      "notes": "Sidekiq 8 officially supports Valkey 7.2+"
+    },
+    {
+      "id": 32,
+      "title": "Celery Valkey Support Issue (kombu)",
+      "url": "https://github.com/celery/kombu/issues/2245",
+      "type": "issue",
+      "category": "frameworks",
+      "notes": "Tracking valkey:// transport support in Celery/kombu"
+    },
+    {
+      "id": 33,
+      "title": "BullMQ Valkey Glide Support Issue",
+      "url": "https://github.com/taskforcesh/bullmq/issues/3083",
+      "type": "issue",
+      "category": "frameworks",
+      "notes": "BullMQ works with Valkey; GLIDE integration requested"
+    },
+    {
+      "id": 34,
+      "title": "Testcontainers Valkey Module",
+      "url": "https://testcontainers.com/modules/valkey/",
+      "type": "primary",
+      "category": "testing",
+      "notes": "Throwaway Valkey instances for integration testing; Java, Go, Node.js, Rust"
+    },
+    {
+      "id": 35,
+      "title": "valkey-perf-benchmark",
+      "url": "https://github.com/valkey-io/valkey-perf-benchmark",
+      "type": "primary",
+      "category": "tools",
+      "notes": "Advanced benchmarking tool; TLS and cluster mode; cross-config comparison"
+    },
+    {
+      "id": 36,
+      "title": "Valkey 9.0 Release Blog",
+      "url": "https://valkey.io/blog/introducing-valkey-9/",
+      "type": "primary",
+      "category": "overview",
+      "notes": "Valkey 9.0 features; 40% throughput improvement; atomic slot migration; 1B+ RPS"
+    },
+    {
+      "id": 37,
+      "title": "Valkey Helm Chart Blog Post",
+      "url": "https://valkey.io/blog/valkey-helm-chart/",
+      "type": "primary",
+      "category": "infrastructure",
+      "notes": "Official Helm chart; standalone and primary-replica topologies"
+    },
+    {
+      "id": 38,
+      "title": "AWS Terraform for ElastiCache Valkey",
+      "url": "https://aws.amazon.com/blogs/database/building-secure-amazon-elasticache-for-valkey-deployments-with-terraform/",
+      "type": "guide",
+      "category": "infrastructure",
+      "notes": "Terraform IaC for ElastiCache Valkey with security best practices"
+    },
+    {
+      "id": 39,
+      "title": "Valkey 2025 Year-End Review",
+      "url": "https://valkey.io/blog/2025-year-end/",
+      "type": "primary",
+      "category": "overview",
+      "notes": "Project retrospective; community growth; module releases; adoption metrics"
+    },
+    {
+      "id": 40,
+      "title": "Percona Enterprise Support for Valkey",
+      "url": "https://www.percona.com/blog/the-open-source-ripple-effect-how-valkey-is-redefining-the-future-of-caching-and-why-it-matters/",
+      "type": "primary",
+      "category": "managed-services",
+      "notes": "Enterprise support, migration consulting, and managed services for Valkey"
+    }
+  ],
+  "categories": {
+    "overview": "General Valkey project information and releases",
+    "clients": "Client libraries across programming languages",
+    "migration": "Migration guides from Redis to Valkey",
+    "monitoring": "Observability, metrics, GUI tools, APM",
+    "managed-services": "Cloud provider managed Valkey offerings",
+    "modules": "Valkey modules - JSON, Bloom, Search, LDAP",
+    "frameworks": "Application frameworks with Valkey integration",
+    "testing": "Testing tools and containers",
+    "tools": "Developer tools, benchmarking, CLI",
+    "infrastructure": "Terraform, Helm, Kubernetes deployment"
+  }
+}

@@ -1,0 +1,331 @@
+{
+  "metadata": {
+    "topic": "Valkey Development and Contribution",
+    "created": "2026-03-29",
+    "depth": "deep",
+    "source_count": 40,
+    "description": "Comprehensive guide for contributors to the Valkey server codebase - architecture, internals, build system, testing, governance, and contribution workflow"
+  },
+  "sources": [
+    {
+      "id": 1,
+      "title": "Valkey GitHub Repository",
+      "url": "https://github.com/valkey-io/valkey",
+      "type": "repository",
+      "category": "codebase",
+      "relevance": "Primary source code repository with README, build instructions, and project structure"
+    },
+    {
+      "id": 2,
+      "title": "Valkey CONTRIBUTING.md",
+      "url": "https://github.com/valkey-io/valkey/blob/unstable/CONTRIBUTING.md",
+      "type": "documentation",
+      "category": "contribution-workflow",
+      "relevance": "Official contribution guide covering DCO, PR process, testing requirements, and development workflow"
+    },
+    {
+      "id": 3,
+      "title": "Valkey GOVERNANCE.md",
+      "url": "https://github.com/valkey-io/valkey/blob/unstable/GOVERNANCE.md",
+      "type": "documentation",
+      "category": "governance",
+      "relevance": "TSC structure, decision-making process, voting rules, maintainer management, and major decision criteria"
+    },
+    {
+      "id": 4,
+      "title": "Valkey MAINTAINERS.md",
+      "url": "https://github.com/valkey-io/valkey/blob/unstable/MAINTAINERS.md",
+      "type": "documentation",
+      "category": "governance",
+      "relevance": "Current maintainers list with company affiliations, committers, and leadership structure"
+    },
+    {
+      "id": 5,
+      "title": "Valkey DeepWiki - Architecture Overview",
+      "url": "https://deepwiki.com/valkey-io/valkey",
+      "type": "reference",
+      "category": "architecture",
+      "relevance": "Comprehensive codebase analysis covering event loop, networking, data structures, persistence, replication, cluster, threading"
+    },
+    {
+      "id": 6,
+      "title": "Valkey DeepWiki - Build and Setup",
+      "url": "https://deepwiki.com/valkey-io/valkey/1.3-build-and-setup",
+      "type": "reference",
+      "category": "build-system",
+      "relevance": "Build system details including Makefile targets, dependencies, and build process overview"
+    },
+    {
+      "id": 7,
+      "title": "Valkey DeepWiki - Testing and QA",
+      "url": "https://deepwiki.com/valkey-io/valkey/9-testing-and-quality-assurance",
+      "type": "reference",
+      "category": "testing",
+      "relevance": "Test framework architecture, test organization, CI/CD integration, key testing components"
+    },
+    {
+      "id": 8,
+      "title": "Valkey Tests README",
+      "url": "https://github.com/valkey-io/valkey/blob/unstable/tests/README.md",
+      "type": "documentation",
+      "category": "testing",
+      "relevance": "Official test suite documentation - running tests, debugging, tagging system, TLS setup, external server mode"
+    },
+    {
+      "id": 9,
+      "title": "Valkey Development Guide Issue #1558",
+      "url": "https://github.com/valkey-io/valkey/issues/1558",
+      "type": "discussion",
+      "category": "development-workflow",
+      "relevance": "Coding style, naming conventions, configuration philosophy, best practices for Valkey developers"
+    },
+    {
+      "id": 10,
+      "title": "Valkey Releases and Versioning Schema",
+      "url": "https://valkey.io/topics/releases/",
+      "type": "documentation",
+      "category": "release-process",
+      "relevance": "Complete versioning scheme, release cadence, RC process, support timelines, API compatibility contracts"
+    },
+    {
+      "id": 11,
+      "title": "Valkey 8.0 Release Announcement",
+      "url": "https://valkey.io/blog/valkey-8-0-0-rc1/",
+      "type": "blog",
+      "category": "release-features",
+      "relevance": "I/O threading rewrite, dual-channel replication, per-slot metrics, RDMA support, key embedding"
+    },
+    {
+      "id": 12,
+      "title": "Valkey 8.1 GA Release",
+      "url": "https://valkey.io/blog/valkey-8-1-0-ga/",
+      "type": "blog",
+      "category": "release-features",
+      "relevance": "New hashtable, SIMD optimizations, active defrag improvements, TLS threading, COMMANDLOG, SET IFEQ"
+    },
+    {
+      "id": 13,
+      "title": "Valkey 9.0 Introduction",
+      "url": "https://valkey.io/blog/introducing-valkey-9/",
+      "type": "blog",
+      "category": "release-features",
+      "relevance": "Atomic slot migration, multi-database clustering, hash field expiration, MPTCP, AVX-512, TLS cert auth"
+    },
+    {
+      "id": 14,
+      "title": "Unlock 1 Million RPS - Valkey I/O Threading",
+      "url": "https://valkey.io/blog/unlock-one-million-rps/",
+      "type": "blog",
+      "category": "io-threading",
+      "relevance": "Deep dive into I/O threading architecture, thread roles, synchronization, dynamic management, performance metrics"
+    },
+    {
+      "id": 15,
+      "title": "Unlock 1 Million RPS Part 2 - Memory Access Amortization",
+      "url": "https://valkey.io/blog/unlock-one-million-rps-part2/",
+      "type": "blog",
+      "category": "performance",
+      "relevance": "Key prefetch optimization, batch command processing, memory_prefetch.c implementation, 50% throughput improvement"
+    },
+    {
+      "id": 16,
+      "title": "Performance Optimization Methodology for Valkey",
+      "url": "https://valkey.io/blog/performance-optimization-methodology-for-valkey/",
+      "type": "blog",
+      "category": "performance",
+      "relevance": "Profiling tools (perf, VTune), false sharing, lock contention, thread-local storage, optimization methodology"
+    },
+    {
+      "id": 17,
+      "title": "A New Hash Table for Valkey",
+      "url": "https://valkey.io/blog/new-hash-table/",
+      "type": "blog",
+      "category": "data-structures",
+      "relevance": "Open-addressing design, 64-byte cache-line buckets, secondary hash, child bucket chaining, memory savings"
+    },
+    {
+      "id": 18,
+      "title": "Valkey RESP Protocol Specification",
+      "url": "https://valkey.io/topics/protocol/",
+      "type": "documentation",
+      "category": "protocol",
+      "relevance": "Complete RESP2/RESP3 specification - data types, encoding, pipelining, push modes, inline commands"
+    },
+    {
+      "id": 19,
+      "title": "Valkey Cluster Specification",
+      "url": "https://valkey.io/topics/cluster-spec/",
+      "type": "documentation",
+      "category": "cluster",
+      "relevance": "Hash slots, gossip protocol, cluster bus, failure detection, failover, configuration epochs, slot migration"
+    },
+    {
+      "id": 20,
+      "title": "Valkey Replication Documentation",
+      "url": "https://valkey.io/topics/replication/",
+      "type": "documentation",
+      "category": "replication",
+      "relevance": "PSYNC protocol, full/partial sync, replication IDs, backlog, diskless replication, dual-channel sync"
+    },
+    {
+      "id": 21,
+      "title": "Valkey Persistence Documentation",
+      "url": "https://valkey.io/topics/persistence/",
+      "type": "documentation",
+      "category": "persistence",
+      "relevance": "RDB snapshots, AOF logging, multi-part AOF, fsync policies, hybrid RDB+AOF, fork-based saves"
+    },
+    {
+      "id": 22,
+      "title": "Valkey Modules Introduction",
+      "url": "https://valkey.io/topics/modules-intro/",
+      "type": "documentation",
+      "category": "module-api",
+      "relevance": "Module development guide - OnLoad, command registration, data access, memory management, replication"
+    },
+    {
+      "id": 23,
+      "title": "Valkey Modules API Reference",
+      "url": "https://valkey.io/topics/modules-api-ref/",
+      "type": "documentation",
+      "category": "module-api",
+      "relevance": "Complete API function reference - memory, commands, strings, replies, keys, data types, blocking, clustering"
+    },
+    {
+      "id": 24,
+      "title": "Valkey Modules API for Native Types",
+      "url": "https://valkey.io/topics/modules-native-types/",
+      "type": "documentation",
+      "category": "module-api",
+      "relevance": "Custom type registration, RDB callbacks, AOF rewriting, 9-character type names, persistence functions"
+    },
+    {
+      "id": 25,
+      "title": "Valkey Modules 101 Blog",
+      "url": "https://valkey.io/blog/modules-101/",
+      "type": "blog",
+      "category": "module-api",
+      "relevance": "Step-by-step module tutorial in C and Rust, compilation, loading, Makefile setup"
+    },
+    {
+      "id": 26,
+      "title": "Valkey Modules Rust SDK",
+      "url": "https://github.com/valkey-io/valkeymodule-rs",
+      "type": "repository",
+      "category": "module-api",
+      "relevance": "Rust SDK for module development - idiomatic Rust API, macro-based configuration"
+    },
+    {
+      "id": 27,
+      "title": "Linux Foundation - Valkey Launch Announcement",
+      "url": "https://www.linuxfoundation.org/press/linux-foundation-launches-open-source-valkey-community",
+      "type": "press-release",
+      "category": "governance",
+      "relevance": "Project founding, Linux Foundation governance model, initial backers (AWS, Google, Oracle, Ericsson, Snap)"
+    },
+    {
+      "id": 28,
+      "title": "Forking Ahead: A Year of Valkey",
+      "url": "https://www.linuxfoundation.org/blog/a-year-of-valkey",
+      "type": "blog",
+      "category": "governance",
+      "relevance": "First-year retrospective, community growth, governance evolution, weekly meetings structure"
+    },
+    {
+      "id": 29,
+      "title": "Valkey 2025 Year-End Review",
+      "url": "https://valkey.io/blog/2025-year-end/",
+      "type": "blog",
+      "category": "community",
+      "relevance": "Community metrics (346 contributors), 2026 roadmap, events, module ecosystem growth"
+    },
+    {
+      "id": 30,
+      "title": "Redis vs Valkey Deep Technical Comparison",
+      "url": "https://www.dragonflydb.io/blog/redis-8-0-vs-valkey-8-1-a-technical-comparison",
+      "type": "blog",
+      "category": "fork-comparison",
+      "relevance": "Architecture differences, I/O threading comparison, feature divergence, licensing split"
+    },
+    {
+      "id": 31,
+      "title": "Valkey vs Redis - Better Stack",
+      "url": "https://betterstack.com/community/comparisons/redis-vs-valkey/",
+      "type": "comparison",
+      "category": "fork-comparison",
+      "relevance": "Performance benchmarks, threading models, feature comparison, fork differences"
+    },
+    {
+      "id": 32,
+      "title": "Redis Under the Hood",
+      "url": "https://pauladamsmith.com/articles/redis-under-the-hood.html",
+      "type": "blog",
+      "category": "internals",
+      "relevance": "Event loop walkthrough, ae.c internals, command dispatch, file/time event processing (applies to Valkey fork base)"
+    },
+    {
+      "id": 33,
+      "title": "Redis Event Library Documentation",
+      "url": "https://redis.io/docs/latest/operate/oss_and_stack/reference/internals/internals-rediseventlib/",
+      "type": "documentation",
+      "category": "internals",
+      "relevance": "ae library design, platform backends (epoll/kqueue/select), event registration (applies to Valkey)"
+    },
+    {
+      "id": 34,
+      "title": "Redis SDS String Internals",
+      "url": "https://redis.io/docs/latest/operate/oss_and_stack/reference/internals/internals-sds/",
+      "type": "documentation",
+      "category": "data-structures",
+      "relevance": "SDS header structure, memory layout, type variants (SDS_TYPE_5 through SDS_TYPE_64), design rationale"
+    },
+    {
+      "id": 35,
+      "title": "antirez/sds - Simple Dynamic Strings Library",
+      "url": "https://github.com/antirez/sds",
+      "type": "repository",
+      "category": "data-structures",
+      "relevance": "Original SDS implementation - API reference, header layout, preallocation strategy"
+    },
+    {
+      "id": 36,
+      "title": "Valkey SECURITY.md",
+      "url": "https://github.com/valkey-io/valkey/blob/unstable/SECURITY.md",
+      "type": "documentation",
+      "category": "security",
+      "relevance": "Vulnerability reporting process, responsible disclosure, vendor notification procedure"
+    },
+    {
+      "id": 37,
+      "title": "Valkey Active Defragmentation - Jemalloc Integration",
+      "url": "https://github.com/valkey-io/valkey/issues/1141",
+      "type": "issue",
+      "category": "memory",
+      "relevance": "Active defrag duty cycle, 500us cycle time, anti-starvation protection, jemalloc native interfaces"
+    },
+    {
+      "id": 38,
+      "title": "Valkey 8.0 Multithreading Discussion",
+      "url": "https://github.com/orgs/valkey-io/discussions/1019",
+      "type": "discussion",
+      "category": "io-threading",
+      "relevance": "I/O thread configuration guidance, io-threads setting, performance tuning for multi-core systems"
+    },
+    {
+      "id": 39,
+      "title": "Valkey Documentation - Topics",
+      "url": "https://valkey.io/topics/",
+      "type": "documentation",
+      "category": "reference",
+      "relevance": "Hub for all Valkey technical documentation - data types, persistence, replication, cluster, security, modules"
+    },
+    {
+      "id": 40,
+      "title": "Valkey LFX Insights",
+      "url": "https://insights.linuxfoundation.org/project/valkey",
+      "type": "analytics",
+      "category": "community",
+      "relevance": "Community contribution metrics, contributor counts, organization participation, project health analytics"
+    }
+  ]
+}

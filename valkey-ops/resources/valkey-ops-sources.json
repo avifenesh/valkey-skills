@@ -1,0 +1,288 @@
+{
+  "topic": "Valkey Operations for Self-Hosted Deployments",
+  "created": "2026-03-29",
+  "depth": "deep",
+  "source_count": 40,
+  "sources": [
+    {
+      "id": 1,
+      "title": "Valkey Documentation - Installation",
+      "url": "https://valkey.io/topics/installation/",
+      "type": "official-docs",
+      "topics": ["installation", "package-managers", "docker", "building-from-source"]
+    },
+    {
+      "id": 2,
+      "title": "Valkey Documentation - Configuration (valkey.conf)",
+      "url": "https://valkey.io/topics/valkey.conf/",
+      "type": "official-docs",
+      "topics": ["configuration", "tuning", "parameters"]
+    },
+    {
+      "id": 3,
+      "title": "Valkey Configuration File (GitHub unstable branch)",
+      "url": "https://github.com/valkey-io/valkey/blob/unstable/valkey.conf",
+      "type": "source-code",
+      "topics": ["configuration", "reference", "all-parameters"]
+    },
+    {
+      "id": 4,
+      "title": "Valkey Documentation - Persistence",
+      "url": "https://valkey.io/topics/persistence/",
+      "type": "official-docs",
+      "topics": ["rdb", "aof", "hybrid-persistence", "fsync", "backup"]
+    },
+    {
+      "id": 5,
+      "title": "Valkey Documentation - High Availability with Sentinel",
+      "url": "https://valkey.io/topics/sentinel/",
+      "type": "official-docs",
+      "topics": ["sentinel", "high-availability", "failover", "quorum", "split-brain"]
+    },
+    {
+      "id": 6,
+      "title": "Valkey Documentation - Cluster Tutorial",
+      "url": "https://valkey.io/topics/cluster-tutorial/",
+      "type": "official-docs",
+      "topics": ["cluster", "sharding", "resharding", "hash-slots", "node-management"]
+    },
+    {
+      "id": 7,
+      "title": "Valkey Documentation - Cluster Specification",
+      "url": "https://valkey.io/topics/cluster-spec/",
+      "type": "official-docs",
+      "topics": ["cluster", "gossip-protocol", "failure-detection", "configEpoch", "election"]
+    },
+    {
+      "id": 8,
+      "title": "Valkey Documentation - Replication",
+      "url": "https://valkey.io/topics/replication/",
+      "type": "official-docs",
+      "topics": ["replication", "psync", "diskless-replication", "backlog", "primary-replica"]
+    },
+    {
+      "id": 9,
+      "title": "Valkey Documentation - Security",
+      "url": "https://valkey.io/topics/security/",
+      "type": "official-docs",
+      "topics": ["security", "authentication", "protected-mode", "network-security"]
+    },
+    {
+      "id": 10,
+      "title": "Valkey Documentation - ACL",
+      "url": "https://valkey.io/topics/acl/",
+      "type": "official-docs",
+      "topics": ["acl", "access-control", "user-management", "permissions"]
+    },
+    {
+      "id": 11,
+      "title": "Valkey Documentation - TLS",
+      "url": "https://valkey.io/topics/tls/",
+      "type": "official-docs",
+      "topics": ["tls", "ssl", "encryption", "certificates", "mtls"]
+    },
+    {
+      "id": 12,
+      "title": "Valkey Blog - How to Properly Secure Your Valkey Deployment",
+      "url": "https://valkey.io/blog/properly-secure-your-valkey-deployment/",
+      "type": "blog",
+      "topics": ["security", "defense-in-depth", "acl-examples", "hardening"]
+    },
+    {
+      "id": 13,
+      "title": "Valkey Documentation - Diagnosing Latency Issues",
+      "url": "https://valkey.io/topics/latency/",
+      "type": "official-docs",
+      "topics": ["latency", "troubleshooting", "fork", "transparent-hugepages", "swapping"]
+    },
+    {
+      "id": 14,
+      "title": "Valkey Documentation - Latency Monitoring",
+      "url": "https://valkey.io/topics/latency-monitor/",
+      "type": "official-docs",
+      "topics": ["latency-monitor", "latency-commands", "threshold", "events"]
+    },
+    {
+      "id": 15,
+      "title": "Valkey Documentation - Memory Optimization",
+      "url": "https://valkey.io/topics/memory-optimization/",
+      "type": "official-docs",
+      "topics": ["memory", "listpack", "encoding", "optimization", "data-structures"]
+    },
+    {
+      "id": 16,
+      "title": "Valkey Documentation - Key Eviction (LRU/LFU Cache)",
+      "url": "https://valkey.io/topics/lru-cache/",
+      "type": "official-docs",
+      "topics": ["eviction", "maxmemory", "lru", "lfu", "cache-policies"]
+    },
+    {
+      "id": 17,
+      "title": "Valkey Documentation - Client Handling",
+      "url": "https://valkey.io/topics/clients/",
+      "type": "official-docs",
+      "topics": ["clients", "maxclients", "timeout", "output-buffer", "client-eviction"]
+    },
+    {
+      "id": 18,
+      "title": "Valkey Documentation - Administration",
+      "url": "https://valkey.io/topics/admin/",
+      "type": "official-docs",
+      "topics": ["administration", "kernel-tuning", "production", "maintenance"]
+    },
+    {
+      "id": 19,
+      "title": "Valkey Documentation - Troubleshooting",
+      "url": "https://valkey.io/topics/problems/",
+      "type": "official-docs",
+      "topics": ["troubleshooting", "crashes", "memory-testing"]
+    },
+    {
+      "id": 20,
+      "title": "Valkey Documentation - Migration from Redis to Valkey",
+      "url": "https://valkey.io/topics/migration/",
+      "type": "official-docs",
+      "topics": ["migration", "redis-compatibility", "upgrade", "replication-migration"]
+    },
+    {
+      "id": 21,
+      "title": "Valkey Documentation - Releases and Versioning Schema",
+      "url": "https://valkey.io/topics/releases/",
+      "type": "official-docs",
+      "topics": ["versioning", "releases", "support-policy", "compatibility"]
+    },
+    {
+      "id": 22,
+      "title": "Valkey Blog - Valkey 9.0 Features and Improvements",
+      "url": "https://valkey.io/blog/introducing-valkey-9/",
+      "type": "blog",
+      "topics": ["valkey-9", "atomic-slot-migration", "hash-field-expiration", "performance"]
+    },
+    {
+      "id": 23,
+      "title": "Valkey Blog - Atomic Slot Migration",
+      "url": "https://valkey.io/blog/atomic-slot-migration/",
+      "type": "blog",
+      "topics": ["atomic-slot-migration", "resharding", "cluster-management"]
+    },
+    {
+      "id": 24,
+      "title": "Valkey Blog - Valkey 8.1 GA",
+      "url": "https://valkey.io/blog/valkey-8-1-0-ga/",
+      "type": "blog",
+      "topics": ["valkey-8.1", "hashtable", "performance", "reliability"]
+    },
+    {
+      "id": 25,
+      "title": "Valkey Blog - Performance Optimization Methodology Part 1",
+      "url": "https://valkey.io/blog/performance-optimization-methodology-for-valkey/",
+      "type": "blog",
+      "topics": ["performance", "profiling", "false-sharing", "optimization"]
+    },
+    {
+      "id": 26,
+      "title": "Valkey Blog - Unlock 1 Million RPS Part 2",
+      "url": "https://valkey.io/blog/unlock-one-million-rps-part2/",
+      "type": "blog",
+      "topics": ["io-threads", "multi-threading", "performance", "benchmarking"]
+    },
+    {
+      "id": 27,
+      "title": "Valkey Blog - Official Valkey Helm Chart",
+      "url": "https://valkey.io/blog/valkey-helm-chart/",
+      "type": "blog",
+      "topics": ["kubernetes", "helm", "deployment-architectures"]
+    },
+    {
+      "id": 28,
+      "title": "Valkey Helm Chart values.yaml (GitHub)",
+      "url": "https://github.com/valkey-io/valkey-helm/blob/main/valkey/values.yaml",
+      "type": "source-code",
+      "topics": ["kubernetes", "helm", "configuration-values"]
+    },
+    {
+      "id": 29,
+      "title": "Hyperspike Valkey Operator (GitHub)",
+      "url": "https://github.com/hyperspike/valkey-operator",
+      "type": "source-code",
+      "topics": ["kubernetes", "operator", "cluster-management", "crd"]
+    },
+    {
+      "id": 30,
+      "title": "SAP Valkey Operator (GitHub)",
+      "url": "https://github.com/SAP/valkey-operator",
+      "type": "source-code",
+      "topics": ["kubernetes", "operator", "sentinel", "tls"]
+    },
+    {
+      "id": 31,
+      "title": "Prometheus Exporter for Valkey and Redis (oliver006/redis_exporter)",
+      "url": "https://github.com/oliver006/redis_exporter",
+      "type": "tool",
+      "topics": ["monitoring", "prometheus", "metrics", "grafana"]
+    },
+    {
+      "id": 32,
+      "title": "Grafana Dashboard 763 - Redis Dashboard for Prometheus",
+      "url": "https://grafana.com/grafana/dashboards/763-redis-dashboard-for-prometheus-redis-exporter-1-x/",
+      "type": "tool",
+      "topics": ["monitoring", "grafana", "dashboard", "visualization"]
+    },
+    {
+      "id": 33,
+      "title": "Percona - Valkey/Redis Configurations and Persistent Settings",
+      "url": "https://www.percona.com/blog/valkey-redis-configurations-and-persistent-setting-of-the-key-parameters/",
+      "type": "blog",
+      "topics": ["configuration", "persistence", "parameters"]
+    },
+    {
+      "id": 34,
+      "title": "Percona - Valkey/Redis Replication and Auto-Failover with Sentinel",
+      "url": "https://www.percona.com/blog/valkey-redis-replication-and-auto-failover-with-sentinel-service/",
+      "type": "blog",
+      "topics": ["replication", "sentinel", "failover"]
+    },
+    {
+      "id": 35,
+      "title": "Percona - How to Monitor Valkey/Redis with PMM",
+      "url": "https://www.percona.com/blog/how-to-monitor-valkey-redis-with-percona-monitoring-and-management/",
+      "type": "blog",
+      "topics": ["monitoring", "prometheus", "grafana", "pmm"]
+    },
+    {
+      "id": 36,
+      "title": "Percona - Practical Guide to Valkey Configuration and Production Tuning",
+      "url": "https://experience.percona.com/valkey-redis/valkey-configuration-guide/",
+      "type": "guide",
+      "topics": ["configuration", "production-tuning", "best-practices"]
+    },
+    {
+      "id": 37,
+      "title": "Valkey Command Reference - INFO",
+      "url": "https://valkey.io/commands/info/",
+      "type": "official-docs",
+      "topics": ["monitoring", "metrics", "info-command"]
+    },
+    {
+      "id": 38,
+      "title": "AWS Best Practices - Valkey/Redis OSS Clients and ElastiCache",
+      "url": "https://aws.amazon.com/blogs/database/best-practices-valkey-redis-oss-clients-and-amazon-elasticache/",
+      "type": "blog",
+      "topics": ["client-best-practices", "connection-pooling", "timeout"]
+    },
+    {
+      "id": 39,
+      "title": "Valkey Systemd Service File (GitHub)",
+      "url": "https://github.com/valkey-io/valkey/blob/unstable/utils/systemd-valkey_server.service",
+      "type": "source-code",
+      "topics": ["systemd", "service-management", "bare-metal"]
+    },
+    {
+      "id": 40,
+      "title": "Bitnami Valkey Helm Chart (ArtifactHub)",
+      "url": "https://artifacthub.io/packages/helm/bitnami/valkey",
+      "type": "tool",
+      "topics": ["kubernetes", "helm", "bitnami", "deployment"]
+    }
+  ]
+}

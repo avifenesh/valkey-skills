@@ -1,0 +1,367 @@
+{
+  "topic": "Valkey GLIDE - Official Multi-Language Client for Valkey",
+  "generated": "2026-03-29",
+  "source_count": 40,
+  "sources": [
+    {
+      "id": 1,
+      "title": "Valkey GLIDE - Official Documentation",
+      "url": "https://glide.valkey.io/",
+      "type": "documentation",
+      "category": "overview",
+      "relevance": "primary",
+      "description": "Main documentation site for Valkey GLIDE with quickstart guides, tutorials, API reference, and migration guides."
+    },
+    {
+      "id": 2,
+      "title": "Welcome to Valkey GLIDE - Overview",
+      "url": "https://glide.valkey.io/overview/",
+      "type": "documentation",
+      "category": "overview",
+      "relevance": "primary",
+      "description": "Overview page covering architecture, supported languages, features (AZ Affinity, PubSub, batching, OpenTelemetry), and engine compatibility."
+    },
+    {
+      "id": 3,
+      "title": "Valkey GLIDE GitHub Repository",
+      "url": "https://github.com/valkey-io/valkey-glide",
+      "type": "repository",
+      "category": "source-code",
+      "relevance": "primary",
+      "description": "Main repository containing Rust core, Java, Python, Node.js, and Go wrappers. Includes README with version support matrix and feature list."
+    },
+    {
+      "id": 4,
+      "title": "Quick Start Guide",
+      "url": "https://glide.valkey.io/getting-started/quickstart/",
+      "type": "documentation",
+      "category": "getting-started",
+      "relevance": "primary",
+      "description": "Installation and basic connection examples for all six supported languages: Python, Java, Node.js, Go, PHP, C#."
+    },
+    {
+      "id": 5,
+      "title": "Announcing Valkey GLIDE 2.0 - AWS Blog",
+      "url": "https://aws.amazon.com/blogs/database/announcing-valkey-glide-2-0-with-support-for-go-opentelemetry-and-batching/",
+      "type": "blog",
+      "category": "announcements",
+      "relevance": "primary",
+      "description": "GLIDE 2.0 announcement covering Go support, OpenTelemetry integration, batching API, and performance benchmarks."
+    },
+    {
+      "id": 6,
+      "title": "Introducing Valkey GLIDE - AWS Blog",
+      "url": "https://aws.amazon.com/blogs/database/introducing-valkey-glide-an-open-source-client-library-for-valkey-and-redis-open-source/",
+      "type": "blog",
+      "category": "announcements",
+      "relevance": "primary",
+      "description": "Original GLIDE introduction covering Rust core architecture, language bindings, connection management, and design philosophy."
+    },
+    {
+      "id": 7,
+      "title": "General Concepts - GLIDE Wiki",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/General-Concepts",
+      "type": "documentation",
+      "category": "architecture",
+      "relevance": "primary",
+      "description": "Core concepts: multiplexed connections, lazy connections, multi-slot commands, inflight request management, batching, PubSub, cluster scan, OpenTelemetry."
+    },
+    {
+      "id": 8,
+      "title": "Client Comparison",
+      "url": "https://glide.valkey.io/reference/client-comparisons/",
+      "type": "documentation",
+      "category": "comparison",
+      "relevance": "primary",
+      "description": "Feature-by-feature comparison of GLIDE vs Jedis, redis-py, node_redis, go-redis, and StackExchange.Redis."
+    },
+    {
+      "id": 9,
+      "title": "Valkey Client Libraries",
+      "url": "https://valkey.io/clients/",
+      "type": "documentation",
+      "category": "overview",
+      "relevance": "secondary",
+      "description": "Official Valkey client library listing showing GLIDE alongside other community clients."
+    },
+    {
+      "id": 10,
+      "title": "Migration Guide: Jedis to GLIDE",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/Migration-Guide-Jedis",
+      "type": "documentation",
+      "category": "migration",
+      "relevance": "primary",
+      "description": "Comprehensive side-by-side code examples for migrating from Jedis to GLIDE: connections, strings, hashes, lists, sets, sorted sets, transactions, Lua scripts."
+    },
+    {
+      "id": 11,
+      "title": "Migration Guide: ioredis to GLIDE",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/Migration-Guide-ioredis",
+      "type": "documentation",
+      "category": "migration",
+      "relevance": "primary",
+      "description": "Complete migration guide from ioredis to GLIDE Node.js client with code comparisons for all data types and operations."
+    },
+    {
+      "id": 12,
+      "title": "Migration Guide: redis-py to GLIDE",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/Migration-Guide-redis%E2%80%90py",
+      "type": "documentation",
+      "category": "migration",
+      "relevance": "primary",
+      "description": "Complete migration guide from redis-py to GLIDE Python client with API differences, parameter mapping, and code examples."
+    },
+    {
+      "id": 13,
+      "title": "Migration Guide: go-redis to GLIDE",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/Migration-Guide-go%E2%80%90redis",
+      "type": "documentation",
+      "category": "migration",
+      "relevance": "primary",
+      "description": "Complete migration guide from go-redis to GLIDE Go client covering configuration mapping, result types, error handling, and batch operations."
+    },
+    {
+      "id": 14,
+      "title": "Python Wrapper Wiki",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/Python-wrapper",
+      "type": "documentation",
+      "category": "python",
+      "relevance": "primary",
+      "description": "Python async wrapper documentation with cluster/standalone configuration, batch operations, read strategies, and advanced features."
+    },
+    {
+      "id": 15,
+      "title": "Python Sync Wrapper Wiki",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/Python-wrapper-%E2%80%90-sync",
+      "type": "documentation",
+      "category": "python",
+      "relevance": "primary",
+      "description": "Python synchronous API (v2.1+) documentation with limitations, batch operations, retry strategies, and read configuration."
+    },
+    {
+      "id": 16,
+      "title": "Go Wrapper Wiki",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/Golang-wrapper",
+      "type": "documentation",
+      "category": "go",
+      "relevance": "primary",
+      "description": "Go wrapper architecture, CGO bridge, batch API, read strategies, TLS, OpenTelemetry, error handling, and performance considerations."
+    },
+    {
+      "id": 17,
+      "title": "Node.js Wrapper Wiki",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/NodeJS-wrapper",
+      "type": "documentation",
+      "category": "nodejs",
+      "relevance": "secondary",
+      "description": "Node.js client documentation including TypeScript support, ESM/CJS compatibility, and napi-rs architecture."
+    },
+    {
+      "id": 18,
+      "title": "Java Wrapper Wiki",
+      "url": "https://github.com/valkey-io/valkey-glide/wiki/Java-Wrapper",
+      "type": "documentation",
+      "category": "java",
+      "relevance": "secondary",
+      "description": "Java client documentation including JNI/Protobuf communication, CompletableFuture API, and configuration patterns."
+    },
+    {
+      "id": 19,
+      "title": "Introducing the Valkey Glide Go Client - Blog",
+      "url": "https://valkey.io/blog/2025-03-4-go-client-in-public-preview/",
+      "type": "blog",
+      "category": "go",
+      "relevance": "primary",
+      "description": "Go client architecture deep-dive: CGO bridge, multiplexed connections, consensus-based topology, synchronous API design, read strategies."
+    },
+    {
+      "id": 20,
+      "title": "AZ Affinity Strategy - Blog",
+      "url": "https://valkey.io/blog/az-affinity-strategy/",
+      "type": "blog",
+      "category": "features",
+      "relevance": "primary",
+      "description": "Detailed AZ Affinity coverage: strategy types, configuration in Python/Java/Node.js, latency reduction (~500us), cost savings examples."
+    },
+    {
+      "id": 21,
+      "title": "AWS Reduces Latency with AZ Affinity - InfoQ",
+      "url": "https://www.infoq.com/news/2025/02/valkey-glide-az-affinity-routing/",
+      "type": "article",
+      "category": "features",
+      "relevance": "secondary",
+      "description": "Third-party coverage of AZ Affinity routing feature, cost analysis, and technical requirements."
+    },
+    {
+      "id": 22,
+      "title": "Pub/Sub Basics Tutorial",
+      "url": "https://glide.valkey.io/tutorials/pubsub/pubsub-basics/",
+      "type": "documentation",
+      "category": "features",
+      "relevance": "primary",
+      "description": "Pub/Sub tutorial covering subscription modes, message reception methods, dynamic subscriptions (v2.3+), and automatic reconnection."
+    },
+    {
+      "id": 23,
+      "title": "Pub/Sub and Streaming - DeepWiki",
+      "url": "https://deepwiki.com/valkey-io/valkey-glide/3.5-pubsub-and-streaming",
+      "type": "documentation",
+      "category": "features",
+      "relevance": "primary",
+      "description": "Comprehensive Pub/Sub architecture: exact/pattern/sharded modes, Streams API, consumer groups, cluster routing, transaction compatibility."
+    },
+    {
+      "id": 24,
+      "title": "OpenTelemetry Configuration - Java",
+      "url": "https://glide.valkey.io/languages/java/valkey-commands/open-telemetry/",
+      "type": "documentation",
+      "category": "features",
+      "relevance": "secondary",
+      "description": "Java-specific OpenTelemetry setup including collector configuration, sampling, and span structure."
+    },
+    {
+      "id": 25,
+      "title": "Setting up TLS Tutorial",
+      "url": "https://glide.valkey.io/tutorials/tls/",
+      "type": "documentation",
+      "category": "security",
+      "relevance": "secondary",
+      "description": "TLS configuration tutorial: basic TLS, custom certificates, binary mode certificate reading, hostname verification."
+    },
+    {
+      "id": 26,
+      "title": "Timeouts and Reconnect Strategy - Go",
+      "url": "https://glide.valkey.io/languages/go/how-to/timeouts-and-reconnect-strategy/",
+      "type": "documentation",
+      "category": "best-practices",
+      "relevance": "secondary",
+      "description": "Go-specific timeout configuration and exponential backoff reconnection strategy documentation."
+    },
+    {
+      "id": 27,
+      "title": "Best Practices: Valkey Clients - AWS Blog",
+      "url": "https://aws.amazon.com/blogs/database/best-practices-valkey-redis-oss-clients-and-amazon-elasticache/",
+      "type": "blog",
+      "category": "best-practices",
+      "relevance": "secondary",
+      "description": "AWS best practices for Valkey clients including timeout configuration, reconnection, and connection handling."
+    },
+    {
+      "id": 28,
+      "title": "Python API Documentation - Standalone",
+      "url": "https://valkey.io/valkey-glide/python/glide_client/",
+      "type": "documentation",
+      "category": "api-reference",
+      "relevance": "secondary",
+      "description": "Python GlideClient API reference for standalone mode operations."
+    },
+    {
+      "id": 29,
+      "title": "Python API Documentation - Cluster",
+      "url": "https://valkey.io/valkey-glide/python/async/glide_cluster_client/",
+      "type": "documentation",
+      "category": "api-reference",
+      "relevance": "secondary",
+      "description": "Python GlideClusterClient API reference for cluster mode operations."
+    },
+    {
+      "id": 30,
+      "title": "Python Configuration API",
+      "url": "https://valkey.io/valkey-glide/python/config/",
+      "type": "documentation",
+      "category": "api-reference",
+      "relevance": "secondary",
+      "description": "Python configuration classes: GlideClientConfiguration, GlideClusterClientConfiguration, NodeAddress, ServerCredentials, BackoffStrategy."
+    },
+    {
+      "id": 31,
+      "title": "Redis vs ioredis vs valkey-glide Benchmark",
+      "url": "https://glama.ai/blog/2026-01-26-redis-vs-ioredis-vs-valkey-glide",
+      "type": "benchmark",
+      "category": "performance",
+      "relevance": "primary",
+      "description": "Detailed performance comparison: throughput for SET/GET/HSET/HGET, batched operations, concurrent performance. GLIDE ~15-20% slower for sequential, competitive for batched."
+    },
+    {
+      "id": 32,
+      "title": "valkey-glide on PyPI",
+      "url": "https://pypi.org/project/valkey-glide/",
+      "type": "package",
+      "category": "distribution",
+      "relevance": "secondary",
+      "description": "PyPI package page with installation instructions and version history."
+    },
+    {
+      "id": 33,
+      "title": "@valkey/valkey-glide on npm",
+      "url": "https://www.npmjs.com/package/@valkey/valkey-glide",
+      "type": "package",
+      "category": "distribution",
+      "relevance": "secondary",
+      "description": "npm package page with installation and supported Node.js versions."
+    },
+    {
+      "id": 34,
+      "title": "Go Package Documentation",
+      "url": "https://pkg.go.dev/github.com/valkey-io/valkey-glide/go/v2",
+      "type": "documentation",
+      "category": "api-reference",
+      "relevance": "secondary",
+      "description": "Go package documentation on pkg.go.dev with API reference."
+    },
+    {
+      "id": 35,
+      "title": "Valkey GLIDE Releases",
+      "url": "https://github.com/valkey-io/valkey-glide/releases",
+      "type": "repository",
+      "category": "releases",
+      "relevance": "primary",
+      "description": "Complete release history from v1.0 through v2.3.0 with changelogs and feature additions per version."
+    },
+    {
+      "id": 36,
+      "title": "Jedis Compatibility Layer",
+      "url": "https://glide.valkey.io/languages/java/migration/jedis/jedis-compatibility-layer/",
+      "type": "documentation",
+      "category": "migration",
+      "relevance": "secondary",
+      "description": "Drop-in Jedis-compatible wrapper backed by GLIDE for zero-code-change migration."
+    },
+    {
+      "id": 37,
+      "title": "Valkey GLIDE C# Repository",
+      "url": "https://github.com/valkey-io/valkey-glide-csharp",
+      "type": "repository",
+      "category": "source-code",
+      "relevance": "secondary",
+      "description": "C# client (preview) separate repository with .NET 8.0+ support, async/await patterns."
+    },
+    {
+      "id": 38,
+      "title": "Valkey GLIDE PHP Repository",
+      "url": "https://github.com/valkey-io/valkey-glide-php",
+      "type": "repository",
+      "category": "source-code",
+      "relevance": "secondary",
+      "description": "PHP client (preview) separate repository with PHPRedis API compatibility."
+    },
+    {
+      "id": 39,
+      "title": "Spring Data Valkey",
+      "url": "https://github.com/valkey-io/spring-data-valkey",
+      "type": "repository",
+      "category": "integration",
+      "relevance": "secondary",
+      "description": "Spring Boot starter for Valkey with GLIDE, Lettuce, and Jedis driver support. Auto-configuration, Actuator health, OpenTelemetry."
+    },
+    {
+      "id": 40,
+      "title": "Commands and Data Types - DeepWiki",
+      "url": "https://deepwiki.com/valkey-io/valkey-glide/3.1-commands-and-data-types",
+      "type": "documentation",
+      "category": "api-reference",
+      "relevance": "secondary",
+      "description": "Comprehensive command coverage across all data types: strings, hashes, lists, sets, sorted sets, streams, bitmaps, geo, hyperloglog."
+    }
+  ]
+}
