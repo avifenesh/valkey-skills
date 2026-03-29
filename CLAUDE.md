@@ -1,26 +1,38 @@
 # valkey-skills
 
-> Domain-specific AI skills for the Valkey ecosystem - 8 skills covering application development, server internals, operations, GLIDE client, ecosystem tools, and message queues
+> Domain-specific AI skills for the Valkey ecosystem - 18 skills covering application development, server internals, operations, GLIDE client (7 languages), ecosystem tools, and message queues
 
 ## Skills
 
-### Valkey Core
+### Valkey Core (5 skills, 207 reference files)
 
 | Directory | Skill | Audience | Files | Lines |
 |-----------|-------|----------|-------|-------|
 | `valkey/` | valkey | Application developers using Valkey | 37 | ~11,513 |
 | `valkey-dev/` | valkey-dev | Valkey server contributors | 58 | ~13,191 |
 | `valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 52 | ~12,600 |
-| `valkey-glide/` | valkey-glide | GLIDE multi-language client users | 32 | ~9,417 |
+| `valkey-glide/` | valkey-glide | GLIDE shared architecture, features, best practices | 32 | ~9,417 |
 | `valkey-ecosystem/` | valkey-ecosystem | Ecosystem tools and services | 28 | ~6,233 |
 
-### Glide-MQ (Valkey-Powered Message Queues)
+### GLIDE Per-Language (7 skills, code-heavy)
+
+| Directory | Skill | Lines | Content |
+|-----------|-------|-------|---------|
+| `valkey-glide-python/` | valkey-glide-python | 838 | Async/sync, all data types, OTel, redis-py migration |
+| `valkey-glide-java/` | valkey-glide-java | 772 | CompletableFuture, Spring, Jedis/Lettuce migration |
+| `valkey-glide-nodejs/` | valkey-glide-nodejs | 765 | TypeScript, ESM/CJS, ioredis migration |
+| `valkey-glide-go/` | valkey-glide-go | 581 | CGO, Result[T], go-redis migration |
+| `valkey-glide-csharp/` | valkey-glide-csharp | 396 | .NET 8.0+, StackExchange.Redis migration |
+| `valkey-glide-php/` | valkey-glide-php | 262 | FFI, PIE/Composer/PECL |
+| `valkey-glide-ruby/` | valkey-glide-ruby | 287 | redis-rb API, v1.0.0, full command surface |
+
+### Glide-MQ (Valkey-Powered Message Queues, 3 skills)
 
 | Directory | Skill | Purpose |
 |-----------|-------|---------|
-| `glide-mq/` | glide-mq | Greenfield message queue development - queues, workers, producers, scheduling, workflows |
-| `glide-mq-migrate-bullmq/` | glide-mq-migrate-bullmq | Migrate from BullMQ to glide-mq - connection, API mapping, breaking changes |
-| `glide-mq-migrate-bee/` | glide-mq-migrate-bee | Migrate from Bee-Queue to glide-mq - chained builder to options, API mapping |
+| `glide-mq/` | glide-mq | Greenfield queue development - queues, workers, producers, scheduling, workflows |
+| `glide-mq-migrate-bullmq/` | glide-mq-migrate-bullmq | Migrate from BullMQ - connection, API mapping, breaking changes |
+| `glide-mq-migrate-bee/` | glide-mq-migrate-bee | Migrate from Bee-Queue - chained builder to options, API mapping |
 
 ## Architecture
 
