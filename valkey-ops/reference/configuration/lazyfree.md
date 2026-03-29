@@ -146,7 +146,10 @@ valkey-cli CONFIG GET lazyfree-*
 
 ## See Also
 
+- [Configuration Essentials](essentials.md) - all config defaults including lazyfree summary
 - [Eviction Configuration](eviction.md) - maxmemory-policy, tenacity
+- [Encoding Thresholds](encoding.md) - compact encodings and memory impact
+- [Workload Presets](workload-presets.md) - lazyfree in context of complete configs
 - [Memory Optimization](../performance/memory.md) - encoding thresholds, fragmentation
 - [Latency Diagnosis](../performance/latency.md) - diagnosing large key operation latency
 - [See valkey-dev: lazy-free](../valkey-dev/reference/memory/lazy-free.md) - BIO thread implementation, atomic counters

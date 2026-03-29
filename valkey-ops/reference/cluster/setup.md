@@ -89,6 +89,16 @@ The `masterauth` is required so replicas can authenticate to primaries during re
 - **Recommended**: 6 nodes (3 primaries + 3 replicas) for HA
 - **Production**: 6+ nodes across availability zones
 
+With 6 nodes (3P+3R), the cluster survives any single node failure. It cannot survive simultaneous failure of a primary and its own replica. With `cluster-require-full-coverage yes` (default), the cluster goes down if any slot range is uncovered. Probability of cluster unavailability after 2 random node failures: ~11%.
+
+### Multi-DC Cluster Topologies
+
+**Pattern A: Replica per DC** - all primaries in DC-A, all replicas in DC-B. On DC-A failure, all replicas in DC-B promote. Problem: DC-A failure requires promoting all replicas simultaneously.
+
+**Pattern B: Spread primaries across DCs** - distribute primaries and replicas so single DC failure loses at most 1-2 primaries, not all. Better fault distribution.
+
+**`replica-priority` for DC affinity**: Set lower priority values on replicas in the same DC as clients to prefer local promotion. Example: same-DC replicas at priority 10, cross-DC replicas at priority 100. Priority 0 means "never promote."
+
 ### Step 1: Start Nodes
 
 Start each node with cluster mode enabled. Each node needs its own port and working directory:
@@ -214,6 +224,5 @@ Source: `cluster.c` - `getNodeByQuery()`, `clusterRedirectClient()`
 - [Cluster Resharding](resharding.md) - moving slots between nodes
 - [Cluster Operations](operations.md) - failover, health checks, scalability
 - [Cluster Consistency](consistency.md) - write safety and partition behavior
-- [Configuration Essentials](../configuration/essentials.md) - cluster config defaults
-- [Security TLS](../security/tls.md) - TLS for cluster bus
-- [See valkey-dev: cluster/overview](../valkey-dev/reference/cluster/overview.md) - gossip protocol, cluster bus, message types
+- [Replication Setup](../replication/setup.md) - primary-replica replication fundamentals used by cluster replicas
+- [Replication Tuning](../replication/tuning.md) - backlog sizing, diskless sync (applies to cluster replicas)

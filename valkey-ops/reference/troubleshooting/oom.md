@@ -169,6 +169,34 @@ swapon /swapfile
 - Verify batch jobs are not loading excessive data
 - Check for pub/sub clients with large output buffers
 
+## Root Causes
+
+1. **No `maxmemory` set** - 64-bit instances default to no memory limit, gradually
+   consuming all free memory until the OOM killer fires.
+2. **Replication buffer overhead** - Replication and AOF buffers are NOT counted
+   against `maxmemory`. Formula: `used_memory - mem_not_counted_for_evict > maxmemory`
+   triggers eviction. Set `maxmemory` 10-20% lower than available RAM when using
+   replication.
+3. **Copy-on-write during fork** - BGSAVE/BGREWRITEAOF can use up to 2x memory
+   due to COW. Write-heavy workloads touch many pages during fork, each requiring
+   a copy. With THP enabled, this is dramatically worse.
+4. **Client output buffer bloat** - Pub/Sub subscribers that cannot keep up, or
+   replicas with slow links, accumulate output buffers that bypass `maxmemory`.
+5. **Large key accumulation** - A single hash, set, or sorted set growing
+   unbounded. Use `--bigkeys` and `--memkeys` to identify.
+
+## Production Thresholds
+
+| Metric | Healthy | Warning | Critical |
+|--------|---------|---------|----------|
+| `used_memory / maxmemory` | < 75% | 75-90% | > 90% |
+| `evicted_keys` (rate) | 0 | > 0 (if unexpected) | sustained high rate |
+| `mem_not_counted_for_evict` | < 5% of `maxmemory` | 5-15% | > 15% |
+| Client `tot-mem` (single) | < 10MB | 10-100MB | > 100MB |
+
+AWS ElastiCache best practices: set alarms at 65% WARN, 80% HIGH, 90% CRITICAL
+for `DatabaseMemoryUsagePercentage`.
+
 ## Prevention
 
 ```bash
@@ -176,6 +204,11 @@ swapon /swapfile
 maxmemory 12gb
 maxmemory-policy allkeys-lfu
 maxmemory-clients 5%
+
+# Output buffer limits (prevent buffer bloat)
+client-output-buffer-limit normal 0 0 0
+client-output-buffer-limit replica 256mb 64mb 60
+client-output-buffer-limit pubsub 32mb 8mb 60
 
 # Alert thresholds (configure in your monitoring)
 # WARN: used_memory > 70% of maxmemory
@@ -189,8 +222,12 @@ maxmemory-clients 5%
 
 - [Memory Optimization](../performance/memory.md) - encoding thresholds, memory-efficient data modeling
 - [Defragmentation](../performance/defragmentation.md) - active defrag configuration
+- [Latency Diagnosis](../performance/latency.md) - memory pressure causes latency spikes
+- [Diagnostics Reference](diagnostics.md) - 7-phase diagnostic runbook, fork latency
+- [Replication Lag](replication-lag.md) - OOM on primary can cascade to replica disconnections
 - [Eviction Policies](../configuration/eviction.md) - maxmemory-policy selection
 - [Capacity Planning](../operations/capacity-planning.md) - memory sizing guidelines
 - [Monitoring Alerting](../monitoring/alerting.md) - memory alert rules
+- [Monitoring Metrics](../monitoring/metrics.md) - `used_memory`, `mem_fragmentation_ratio` thresholds
 - [See valkey-dev: zmalloc](../valkey-dev/reference/memory/zmalloc.md) - allocator internals, per-thread counters
 - [See valkey-dev: defragmentation](../valkey-dev/reference/memory/defragmentation.md) - active defragmentation implementation

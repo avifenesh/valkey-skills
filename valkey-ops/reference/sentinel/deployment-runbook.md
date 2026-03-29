@@ -154,9 +154,33 @@ Source: `sentinel.c` - `sentinelHandleConfiguration()`, verified defaults at lin
 
 ---
 
+## Cross-Datacenter Sentinel Placement
+
+### Pattern: 2-2-1 Across 3 DCs
+
+```
+DC-A: Primary + S1 + S2
+DC-B: Replica + S3 + S4
+DC-C: S5 (tiebreaker)
+```
+
+Quorum=3 ensures no single DC failure triggers unwanted failover. DC-C's sole Sentinel acts as the tiebreaker. If DC-A goes down, S3+S4+S5 (3 of 5) authorize failover to DC-B's replica.
+
+### Pattern: Sentinels in Client Boxes
+
+```
+DC-A: Primary + S1
+DC-B: Replica + S2
+App-Servers: S3, S4, S5 (collocated with clients)
+```
+
+Quorum=3. This places Sentinels where clients are, so failover reflects client connectivity. If the primary is reachable by the majority of clients, it stays primary. Documented in the official docs as "Example 3: Sentinel in the client boxes."
+
+---
+
 ## Docker and NAT Considerations
 
-Port remapping and NAT break Sentinel auto-discovery because Sentinel learns addresses from INFO output and hello messages - these report the container-internal address, not the host-accessible one.
+Port remapping and NAT break Sentinel auto-discovery because Sentinel learns addresses from INFO output and hello messages - these report the container-internal address, not the host-accessible one. Each Sentinel announces its own IP:port via hello messages; with NAT/Docker port mapping, announced addresses are wrong.
 
 ### Option 1: Host Networking (Recommended)
 
@@ -212,6 +236,8 @@ How it differs from standard failover:
 | Use case | Unplanned failures, emergencies | Planned maintenance, upgrades |
 
 The primary must support the `FAILOVER` command (checked via `master_failover_state` in INFO output). This requires Valkey 9.0+ on the primary.
+
+**Client library warning**: Client libraries must fully implement the Sentinel client protocol (not just pub/sub) to handle the fast role change. Clients relying only on pub/sub messages may reconnect to the old (now-demoted) primary and get READONLY errors.
 
 Source: `sentinel.c` - `SRI_COORD_FAILOVER` flag (line 80), `sentinelFailoverSendFailover()` sends `FAILOVER TO <host> <port> TIMEOUT <ms>` wrapped in MULTI with CLIENT PAUSE WRITE
 
@@ -275,5 +301,4 @@ sudo systemctl enable --now valkey-sentinel
 - [Sentinel Architecture](architecture.md) - failure detection, quorum, election protocol
 - [Split-Brain Prevention](split-brain.md) - network partition strategies
 - [Replication Setup](../replication/setup.md) - primary-replica configuration
-- [Docker Deployment](../deployment/docker.md) - Docker Sentinel considerations
-- [See valkey-dev: sentinel-mode](../valkey-dev/reference/sentinel/sentinel-mode.md) - state machine, data structures, script execution internals
+- [Replication Tuning](../replication/tuning.md) - backlog sizing and Docker/NAT networking for replicas

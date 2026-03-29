@@ -27,6 +27,8 @@ Note: `bind` defaults to `* -::*` in the source (`CONFIG_DEFAULT_BINDADDR`), whi
 |-----------|---------|-------------|
 | `maxmemory` | `0` (unlimited) | Hard memory limit in bytes. Set explicitly in production. |
 | `maxmemory-policy` | `noeviction` | What to do when maxmemory is reached. See [eviction policies](eviction.md). |
+
+**maxmemory sizing rule of thumb**: If the machine has 10 GB free, set `maxmemory` to 8-9 GB. This accounts for Valkey overhead beyond data, memory fragmentation, fork copy-on-write during BGSAVE, and client output/query buffers. With persistence on write-heavy workloads, reserve up to 40% (fork COW can double page table usage).
 | `maxmemory-clients` | `0` (disabled) | Max aggregate memory for client buffers. Accepts bytes or percentage (e.g., `5%`). |
 | `maxmemory-samples` | `5` | Number of keys sampled for LRU/LFU approximation. Higher = more accurate but slower. |
 | `maxmemory-eviction-tenacity` | `10` | Effort level for eviction (0-100). Higher values try harder to meet maxmemory. |
@@ -141,11 +143,7 @@ Similarly, `dynamic-hz` is deprecated - the behavior it controlled is now always
 | `hz` | `10` | Server timer frequency in calls/sec. Higher = more responsive but more CPU. |
 | `disable-thp` | `yes` | Disable Transparent Huge Pages for the Valkey process. |
 | `activerehashing` | `yes` | Incrementally rehash hash tables in background. |
-| `lazyfree-lazy-eviction` | `yes` | Async free on eviction. |
-| `lazyfree-lazy-expire` | `yes` | Async free on key expiration. |
-| `lazyfree-lazy-server-del` | `yes` | Async free on server-side DEL (e.g., RENAME). |
-| `lazyfree-lazy-user-del` | `yes` | DEL command behaves like UNLINK (async free). |
-| `lazyfree-lazy-user-flush` | `yes` | FLUSHDB/FLUSHALL default to async mode. |
+| `lazyfree-lazy-*` | all `yes` | All five lazyfree parameters default to yes. See [Lazy Free Configuration](lazyfree.md) for details. |
 | `hide-user-data-from-log` | `yes` | Redact user data (keys, values) from log messages. |
 | `busy-reply-threshold` | `5000` | Milliseconds before long-running script triggers BUSY error. Alias: `lua-time-limit`. |
 | `proto-max-bulk-len` | `512mb` | Maximum size of a single RESP bulk string. |
@@ -154,8 +152,15 @@ Similarly, `dynamic-hz` is deprecated - the behavior it controlled is now always
 ## See Also
 
 - [Eviction Policies](eviction.md) - maxmemory-policy details
+- [Lazy Free Configuration](lazyfree.md) - async deletion tuning
 - [Encoding Thresholds](encoding.md) - compact encoding tuning
+- [Pub/Sub Configuration](pubsub.md) - subscriber buffers and keyspace notifications
 - [Workload Presets](workload-presets.md) - complete configs by use case
 - [Advanced Configuration](advanced.md) - logging, shutdown, OOM, CPU pinning
+- [Bare Metal Setup](../deployment/bare-metal.md) - systemd, kernel tuning, directory structure
+- [Docker Deployment](../deployment/docker.md) - container-based deployment
+- [Replication Setup](../replication/setup.md) - primary-replica configuration using the replication parameters above
+- [Sentinel Architecture](../sentinel/architecture.md) - HA via Sentinel, uses `replica-priority` and `down-after-milliseconds`
+- [Cluster Setup](../cluster/setup.md) - cluster mode, uses the cluster parameters above
 - [See valkey-dev: config system](../valkey-dev/reference/config/config-system.md) - config parsing, validation, and rewrite internals
 - [See valkey-dev: db management](../valkey-dev/reference/config/db-management.md) - database selection and key space internals

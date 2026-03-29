@@ -44,38 +44,14 @@ The primary defense against split-brain data loss is configuring the primary to 
 
 ### min-replicas-to-write and min-replicas-max-lag
 
-Configure on the primary (in `valkey.conf`):
+Configure the primary to stop accepting writes when it cannot confirm replication:
 
 ```
 min-replicas-to-write 1
 min-replicas-max-lag 10
 ```
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `min-replicas-to-write` | 0 (disabled) | Minimum number of replicas that must be connected and not lagging for the primary to accept writes |
-| `min-replicas-max-lag` | 10 | Maximum replication lag in seconds before a replica is considered "lagging" |
-
-Source: `config.c` - verified defaults: `min-replicas-to-write` defaults to 0, `min-replicas-max-lag` defaults to 10
-
-### How It Works
-
-The primary tracks each replica's last acknowledged replication offset via the `REPLCONF ACK` mechanism. A replica is considered "good" if its last ACK was received within `min-replicas-max-lag` seconds. If the count of good replicas drops below `min-replicas-to-write`, the primary rejects all write commands with:
-
-```
--NOREPLICAS Not enough good replicas to write.
-```
-
-### Sizing Guidelines
-
-| Deployment | `min-replicas-to-write` | `min-replicas-max-lag` | Rationale |
-|------------|------------------------|----------------------|-----------|
-| 1 primary + 2 replicas | 1 | 10 | Tolerate one replica down; primary stops writes if isolated from both replicas |
-| 1 primary + 3 replicas | 1 | 10 | Same protection, higher read throughput |
-| 1 primary + 1 replica | 1 | 10 | Any network split stops writes immediately - most conservative |
-| Cross-region | 1 | 30 | Higher lag tolerance for WAN replication |
-
-Setting `min-replicas-to-write` to 0 (default) disables the check entirely - the primary accepts writes regardless of replica state.
+The primary tracks each replica's last acknowledged offset via `REPLCONF ACK`. When the count of replicas with recent ACKs drops below `min-replicas-to-write`, the primary rejects writes with `-NOREPLICAS`. See [Replication Safety](../replication/safety.md) for the full parameter reference, sizing guidelines, and deployment recommendations.
 
 ---
 
@@ -93,7 +69,7 @@ Partition A (minority):        Partition B (majority):
 
 **Without `min-replicas-to-write`**: Primary in partition A keeps accepting writes. Sentinels in partition B promote Replica1. When the partition heals, the old primary becomes a replica and discards all writes it accepted during the split.
 
-**With `min-replicas-to-write 1`**: Primary in partition A stops accepting writes after `min-replicas-max-lag` seconds (default 10s). Data loss is limited to the writes accepted in that lag window.
+**With `min-replicas-to-write 1`**: Primary in partition A stops accepting writes after `min-replicas-max-lag` seconds (default 10s). Data loss is limited to the writes accepted in that lag window. **Trade-off**: if both replicas go down (not partitioned, just crashed), the primary also stops accepting writes. Availability is sacrificed for consistency.
 
 ### Scenario 2: Sentinel Quorum Split
 
@@ -106,7 +82,7 @@ Partition A:                   Partition B:
 
 With 3 Sentinels and quorum=2: Partition B has 2 Sentinels (meets quorum) and the majority (2 of 3). Failover proceeds in partition B. The primary in partition A continues serving, but with `min-replicas-to-write 1` it will stop writes since it has no connected replicas.
 
-### Scenario 3: Even Sentinel Split (Design Error)
+### Scenario 3: Even Sentinel Split (Anti-Pattern)
 
 ```
 Partition A:                   Partition B:
@@ -115,7 +91,7 @@ Partition A:                   Partition B:
 +----------+  +----------+    +----------+  +----------+
 ```
 
-With only 2 Sentinels: neither partition has a majority. No failover occurs. The system stalls until the partition heals. This is why you must deploy an odd number of Sentinels (minimum 3).
+With only 2 Sentinels: if the primary's box fails, S1 also fails. S2 alone cannot achieve majority (needs 2 of 2). The system is DOWN with no failover. If quorum=1 and S2 could somehow failover, a network partition creates TWO primaries with no way to resolve which is correct. This is explicitly documented as "DON'T DO THIS" in the official Sentinel docs. **Rule: NEVER deploy 2 Sentinels.**
 
 ### Scenario 4: Client on the Wrong Side
 
@@ -153,6 +129,7 @@ For stronger guarantees, use `WAIT <numreplicas> <timeout>` on individual comman
 
 ## See Also
 
-- [Sentinel Architecture](architecture.md) - Quorum, majority, failure detection mechanics
-- [Sentinel Deployment Runbook](deployment-runbook.md) - Step-by-step deployment
-- [Cluster Consistency](../cluster/consistency.md) - Write safety in cluster mode
+- [Sentinel Architecture](architecture.md) - quorum, majority, failure detection mechanics
+- [Sentinel Deployment Runbook](deployment-runbook.md) - step-by-step deployment
+- [Replication Safety](../replication/safety.md) - full min-replicas reference and safety checklist
+- [Cluster Consistency](../cluster/consistency.md) - write safety in cluster mode

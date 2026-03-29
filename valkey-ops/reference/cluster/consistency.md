@@ -39,7 +39,7 @@ Partition A (minority):        Partition B (majority):
 3. The majority partition promotes the replica
 4. When the partition heals, the old primary discovers a new primary and becomes a replica - discarding all writes it accepted during the partition
 
-**Window**: Up to `cluster-node-timeout` before the cluster detects the failure, plus the failover election time. With the default 15-second timeout, this window can be 15-20 seconds of potentially lost writes.
+**Window**: Up to `cluster-node-timeout` before the cluster detects the failure, plus the failover election time. With the default 15-second timeout, this window can be 15-20 seconds of potentially lost writes. The minority primary stops accepting writes after `NODE_TIMEOUT` because it can no longer reach the majority of primaries, which provides a built-in bound on the data loss window.
 
 ### Scenario 3: Stale Client Routing
 
@@ -72,16 +72,14 @@ Important: `WAIT` reduces but does not eliminate the data loss window. If the pr
 
 ### min-replicas-to-write (Server-Side)
 
-Configure the cluster nodes to reject writes when not enough replicas are connected:
+Configure each cluster primary to reject writes when not enough replicas are connected. This applies per-node, not cluster-wide - each primary independently checks its own replica count.
 
 ```
 min-replicas-to-write 1
 min-replicas-max-lag 10
 ```
 
-This applies per-node, not cluster-wide. Each primary independently checks its own replica count. When the number of connected, non-lagging replicas drops below the threshold, all write commands are rejected with `-NOREPLICAS`.
-
-Source: `config.c` - `min-replicas-to-write` defaults to 0 (disabled), `min-replicas-max-lag` defaults to 10 seconds
+When the number of connected, non-lagging replicas drops below the threshold, all write commands are rejected with `-NOREPLICAS`. See [Replication Safety](../replication/safety.md) for the full parameter reference, sizing guidelines, and deployment recommendations.
 
 ### cluster-require-full-coverage
 
@@ -162,26 +160,18 @@ For truly strong consistency requirements, consider whether Valkey Cluster is th
 
 ## Failure Detection Timing
 
-Understanding the timing helps estimate the data loss window:
+Understanding the timing helps estimate the data loss window. See [Cluster Operations](operations.md) for full failover timing, the PFAIL/FAIL state machine, and replica election delay.
 
-| Phase | Duration | Configurable Via |
-|-------|----------|-----------------|
-| PFAIL detection | `cluster-node-timeout` (default 15s) | `cluster-node-timeout` |
-| PFAIL -> FAIL promotion | Gossip propagation (seconds) | Depends on cluster size |
-| Failover election | ~1-5s (rank delay + voting) | `cluster-node-timeout` affects delays |
-| Total worst case | ~20-30s with defaults | Lower `cluster-node-timeout` reduces this |
+Summary: typical failover time is `NODE_TIMEOUT + 1-2 seconds` (~16-17s with defaults). The data loss window during a partition equals the time before the isolated primary stops accepting writes - bounded by `cluster-node-timeout` (the primary detects it cannot reach the majority of primaries) or `min-replicas-max-lag` (whichever fires first).
 
 Lowering `cluster-node-timeout` reduces the failure detection window but increases the risk of false positives (transient network issues triggering unnecessary failovers).
-
-Source: `cluster_legacy.c` - PFAIL is set when node is unresponsive for `cluster_node_timeout`, FAIL reports expire after `cluster_node_timeout * 2`
 
 ---
 
 ## See Also
 
 - [Cluster Setup](setup.md) - configuration parameters that affect consistency
-- [Cluster Operations](operations.md) - manual failover for controlled transitions
+- [Cluster Operations](operations.md) - manual failover, automatic failover timing, PFAIL/FAIL state machine
 - [Cluster Resharding](resharding.md) - slot migration and write-loss windows
-- [Split-Brain Prevention](../sentinel/split-brain.md) - similar concepts for non-clustered deployments
-- [See valkey-dev: cluster/failover](../valkey-dev/reference/cluster/failover.md) - PFAIL/FAIL protocol, election mechanics, timing constants
-- [See valkey-dev: cluster/overview](../valkey-dev/reference/cluster/overview.md) - cluster state determination logic
+- [Replication Safety](../replication/safety.md) - min-replicas reference, WAIT command details, safety checklist
+- [Split-Brain Prevention](../sentinel/split-brain.md) - write safety for non-clustered (Sentinel) deployments

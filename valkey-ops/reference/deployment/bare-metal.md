@@ -251,6 +251,28 @@ sudo systemctl enable --now valkey@6380
 ```
 
 
+## EC2 and Cloud VM Considerations
+
+- Use **HVM-based instances**, not PV (paravirtual) - PV has poor fork() performance affecting BGSAVE/BGREWRITEAOF
+- EBS volumes can have high latency - consider `repl-diskless-sync yes` to avoid EBS I/O bottleneck for replication
+- **Memory sizing for write-heavy workloads with persistence**: BGSAVE/BGREWRITEAOF fork causes copy-on-write. A write-heavy workload can use up to 2x normal memory during the save. Size `maxmemory` to at most 50% of available RAM in this scenario. Cache-only deployments (`save ""`, `appendonly no`) do not have this overhead.
+- Modern instances (m3.medium and newer) have adequate fork performance
+
+
+## Low-Latency Tuning (NUMA, cgroups)
+
+On dedicated hosts, use OS-level tools for latency isolation:
+
+- `numactl --membind=0 --cpunodebind=0 valkey-server ...` - bind to a single NUMA node to avoid cross-node memory access
+- `cgroups` - isolate Valkey from other processes for predictable CPU and memory
+- `chrt -r 99 valkey-server ...` - set real-time process priority (use with caution)
+- `taskset` - CPU pinning, but do NOT pin to a single core. Valkey forks background tasks (BGSAVE, AOF rewrite) that are CPU-intensive and need their own cores.
+
+For diagnostic commands:
+- `MEMORY DOCTOR` - runtime memory diagnostics, available without special config
+- `LATENCY DOCTOR` - requires `latency-monitor-threshold > 0` to be set first
+
+
 ## Health Checks
 
 After deployment, verify the instance is healthy:
@@ -272,7 +294,12 @@ valkey-cli INFO clients | grep connected_clients
 ## See Also
 
 - [Configuration Essentials](../configuration/essentials.md) - all config defaults
+- [Workload Presets](../configuration/workload-presets.md) - complete configs by use case
+- [Advanced Configuration](../configuration/advanced.md) - CPU pinning, OOM score, structured logging
+- [Lazy Free Configuration](../configuration/lazyfree.md) - async deletion for large keys
 - [Installing Valkey](install.md) - package manager and source builds
 - [Docker Deployment](docker.md) - container-based deployment
+- [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - adding HA with Sentinel to bare-metal nodes
+- [Cluster Setup](../cluster/setup.md) - distributed cluster deployment
 - [Security Hardening](../security/hardening.md) - defense in depth
 - [Production Checklist](../production-checklist.md) - full pre-launch verification

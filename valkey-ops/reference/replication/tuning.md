@@ -52,10 +52,20 @@ echo "Write rate: $RATE bytes/sec"
 
 ### Production Recommendations
 
+| Write Rate | Max Disconnect | Safety Factor | Recommended Backlog |
+|-----------|----------------|---------------|-------------------|
+| 1 MB/s | 30s | 2x | 60 MB |
+| 5 MB/s | 60s | 2x | 600 MB |
+| 20 MB/s | 120s | 2x | ~5 GB |
+| 50 MB/s | 60s | 2x | ~6 GB |
+
 - **Minimum 256MB** for production workloads with replication
 - **1GB or more** for high-write-throughput systems
 - The default 10MB is almost always too small for production
+- For cross-DC links, size generously - WAN disconnections last longer
 - Monitor `INFO replication` for `repl_backlog_size` and `repl_backlog_first_byte_offset` to confirm coverage
+
+`repl-backlog-ttl` (default 3600s): How long to retain the backlog after the last replica disconnects. Set to 0 to retain forever if replicas might reconnect after long outages.
 
 ## Diskless Replication
 
@@ -104,9 +114,11 @@ Set to `0` for single-replica setups. Increase for environments where multiple r
 
 `swapdb` provides the best availability - the replica serves the old dataset until the new one is fully loaded, then swaps atomically. However, it requires enough memory to hold both datasets simultaneously.
 
-## Dual-Channel Replication (Valkey 8+)
+## Dual-Channel Replication
 
-Dual-channel replication transfers the RDB snapshot and replication backlog simultaneously over separate connections. This accelerates full synchronization.
+Dual-channel replication was a proposed feature in the Valkey development process that uses a separate TCP connection for RDB transfer during full resync, allowing the main replication link to continue streaming incremental commands.
+
+**Status**: The config parameter `dual-channel-replication-enabled` exists in the source code (default `no`), and capability negotiation is present in `replication.c`. However, dual-channel replication is NOT documented as a released feature in the official Valkey replication docs as of 9.0. The official `replication.md` topic does not mention it. Use standard diskless replication (`repl-diskless-sync`) as the primary mechanism for improving full-sync performance.
 
 ### Configuration
 
@@ -114,34 +126,15 @@ Dual-channel replication transfers the RDB snapshot and replication backlog simu
 |-----------|---------|---------|-------------|
 | `dual-channel-replication-enabled` | `no` | Yes | Enable dual-channel sync |
 
-Default verified in `src/config.c`: `0` (no). Being made default in Valkey 9.
+### How It Would Work
 
-### How It Works
-
-In traditional full sync:
-1. Primary sends RDB snapshot (can take minutes for large datasets)
-2. Primary buffers writes in backlog during transfer
-3. After RDB load, replica catches up from backlog
-
-With dual-channel:
-1. Primary sends RDB on a dedicated RDB channel
-2. Simultaneously, the primary streams replication commands on the main channel
-3. The replica applies the RDB and catches up from the main channel in parallel
-
-This reduces the total sync time and the size of the replication backlog needed.
+In traditional full sync, the primary sends the RDB snapshot, buffers writes during transfer, then sends buffered commands. With dual-channel, the primary would send the RDB on a dedicated channel while simultaneously streaming replication commands on the main channel. The replica applies both in parallel, reducing total sync time.
 
 ### Requirements
 
 - Both primary and replica must have `dual-channel-replication-enabled yes`
 - `repl-diskless-sync` must be enabled on the primary (dual-channel uses socket-based transfer)
 - The replica advertises `dual-channel` capability during PSYNC handshake
-
-From `src/replication.c`:
-```c
-if (!strcasecmp(objectGetVal(c->argv[j + 1]), "dual-channel") && server.dual_channel_replication) {
-    c->repl_data->replica_capa |= REPLICA_CAPA_DUAL_CHANNEL;
-}
-```
 
 If the primary has dual-channel disabled, it ignores the capability and falls back to normal sync.
 
@@ -219,16 +212,23 @@ This is simpler but gives up container network isolation.
 # Check replication lag across all replicas
 valkey-cli INFO replication | grep -E "slave[0-9]+:|repl_backlog"
 
-# Key metrics to alert on:
-# - lag > 5 seconds (replica falling behind)
-# - master_link_status:down (replica disconnected)
-# - repl_backlog_size vs write rate (backlog too small)
+# Monitor sync counters for cascading resync detection
+valkey-cli INFO stats | grep -E "sync_full|sync_partial"
 ```
+
+### Alert Thresholds
+
+| Condition | Threshold | Severity |
+|-----------|-----------|----------|
+| `master_link_status:down` | Any occurrence | Immediate alert |
+| Replica `lag` | > 5 seconds | Warning |
+| Replica `lag` | > 30 seconds | Critical |
+| `master_repl_offset - slave_repl_offset` > `repl_backlog_size * 0.8` | Approaching limit | Critical - full resync imminent |
+| `sync_full` counter incrementing | Unexpected increase | Investigate - possible backlog undersize |
 
 ## See Also
 
 - [Replication Setup](setup.md) - basic primary-replica configuration
 - [Replication Safety](safety.md) - min-replicas settings and data loss prevention
-- [Troubleshooting Replication Lag](../troubleshooting/replication-lag.md) - diagnosing lag issues
-- [See valkey-dev: replication overview](../valkey-dev/reference/replication/overview.md) - replication protocol internals
-- [See valkey-dev: dual-channel](../valkey-dev/reference/replication/dual-channel.md) - dual-channel replication internals
+- [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - deploying Sentinel over replicated setups
+- [Cluster Setup](../cluster/setup.md) - cluster mode (backlog sizing applies to cluster replicas too)

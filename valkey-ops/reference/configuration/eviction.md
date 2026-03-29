@@ -114,6 +114,20 @@ With factor 10 (default), roughly 1 million hits are needed to saturate the coun
 
 Controls how fast old access patterns are forgotten. At `1` (default), the counter halves every minute when not accessed. Set to `0` to never decay - not recommended because formerly hot keys stay hot forever.
 
+### When LFU Outperforms LRU
+
+LFU provides better hit ratios when:
+- Strong frequency skew - some keys are accessed 1000x more than others
+- The hot-set is relatively stable over time
+- Scan-like operations exist that would "pollute" LRU cache (one-time full scans push out hot keys)
+
+LRU is better when:
+- Access patterns shift rapidly (today's hot keys are tomorrow's cold keys)
+- Recency matters more than frequency
+- The workload is mostly power-law distributed (LRU already handles this well)
+
+Use `OBJECT FREQ <key>` to inspect LFU counters on individual keys. Compare `keyspace_hits / (keyspace_hits + keyspace_misses)` in `INFO stats` before and after policy changes.
+
 
 ## Monitoring Eviction
 
@@ -144,7 +158,10 @@ If `evicted_keys` is rising rapidly, either increase `maxmemory` or accept highe
 ## See Also
 
 - [Configuration Essentials](essentials.md) - `maxmemory` and `maxmemory-policy` defaults
+- [Workload Presets](workload-presets.md) - preset configs showing policy choices per use case
+- [Advanced Configuration](advanced.md) - active expiration effort, OOM score adjustment
 - [Memory Optimization](../performance/memory.md) - encoding thresholds, data modeling
 - [Lazy Free Configuration](lazyfree.md) - async free during eviction
+- [Encoding Thresholds](encoding.md) - compact encodings that reduce memory pressure
 - [Monitoring Metrics](../monitoring/metrics.md) - `evicted_keys` and memory metrics
 - [Troubleshooting OOM](../troubleshooting/oom.md) - when eviction is not enough

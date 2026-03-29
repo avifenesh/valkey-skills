@@ -4,6 +4,25 @@ Use when setting up Valkey on a new machine - package manager, source build, or 
 
 ---
 
+## Current Versions (as of 2026-03-29)
+
+| Branch | Latest | Docker Tags | Notes |
+|--------|--------|-------------|-------|
+| 9.0.x (stable) | 9.0.3 | `9`, `9.0`, `9.0.3`, `latest` | Security release - patch immediately |
+| 8.1.x | 8.1.6 | `8`, `8.1`, `8.1.6` | |
+| 8.0.x | 8.0.7 | `8.0`, `8.0.7` | |
+| 7.2.x | 7.2.12 | `7`, `7.2`, `7.2.12` | |
+
+**9.0.3 is a security release** fixing three CVEs:
+- CVE-2025-67733: RESP protocol injection via Lua error_reply
+- CVE-2026-21863: Remote DoS with malformed cluster bus message
+- CVE-2026-27623: Reset request type after handling empty requests
+
+Subscribe to [valkey-io/valkey releases](https://github.com/valkey-io/valkey/releases) for security advisories.
+
+Binary artifacts are published for arm64 and x86_64 on Ubuntu Jammy and Noble.
+
+
 ## Package Manager Install
 
 | OS | Command |
@@ -90,6 +109,8 @@ make USE_TCMALLOC=yes    # Google tcmalloc
 
 Jemalloc is strongly recommended for production on Linux - it enables `activedefrag` and provides better memory fragmentation behavior.
 
+Note: Official Docker images are built with `BUILD_TLS=yes` and `USE_FAST_FLOAT=yes` (>= 8.1), so TLS is available out of the box in containers without a custom build.
+
 ### TLS Build
 
 ```bash
@@ -158,5 +179,8 @@ This shows the exact version, OS, compiler, and allocator in use.
 - [Bare Metal Setup](bare-metal.md) - systemd, kernel tuning, permissions
 - [Docker Deployment](docker.md) - container-based deployment
 - [Configuration Essentials](../configuration/essentials.md) - initial config after install
+- [Workload Presets](../configuration/workload-presets.md) - complete configs by use case
+- [Sentinel Architecture](../sentinel/architecture.md) - HA with Sentinel for non-clustered deployments
+- [Cluster Setup](../cluster/setup.md) - distributed deployment with automatic sharding
 - [See valkey-dev: building](../valkey-dev/reference/build/building.md) - contributor-level build details
 - [See valkey-dev: testing](../valkey-dev/reference/testing/tcl-tests.md) - test suite internals

@@ -44,6 +44,35 @@ valkey-cli CONFIG SET maxmemory-policy allkeys-lfu
 valkey-cli CONFIG SET maxmemory-clients 5%
 ```
 
+### maxmemory with Replication
+
+When replication is configured, set maxmemory 10-20% lower than available RAM.
+Replication and AOF buffers are NOT counted against maxmemory for eviction.
+The formula for eviction triggering is:
+`used_memory - mem_not_counted_for_evict > maxmemory`. Monitor
+`mem_not_counted_for_evict` in `INFO memory` to see replication buffer overhead.
+If a replica disconnects and needs full resync, the primary allocates a large
+output buffer for the RDB transfer.
+
+### Fork Memory Overhead
+
+BGSAVE and BGREWRITEAOF use fork(), which copies the page table:
+
+```
+page_table_size = (dataset_size / page_size) * pointer_size
+```
+
+| Dataset Size | Page Table Copy | Typical Fork Time |
+|-------------|----------------|-------------------|
+| 1 GB | 2 MB | 10-20 ms |
+| 8 GB | 16 MB | 80-160 ms |
+| 24 GB | 48 MB | 240-480 ms |
+| 64 GB | 128 MB | 640-1280 ms |
+
+These estimates assume 4KB pages, 8-byte pointers, and 10-20ms per GB on modern
+hardware. VMs without hardware-assisted virtualization can be 5-10x worse.
+Provision based on peak memory usage, not average.
+
 ## Encoding Thresholds
 
 Valkey uses compact internal encodings (listpack) for small collections, then
@@ -82,6 +111,29 @@ valkey-cli OBJECT ENCODING mykey
 valkey-cli MEMORY USAGE mykey
 ```
 
+## Valkey 8.0 Cluster Mode Memory Savings
+
+Two automatic optimizations in 8.0 that require no configuration changes:
+
+1. **Dictionary per slot** - Replaces the single global dictionary with 16,384
+   per-slot dictionaries, saving 16 bytes per key (no more slot-prev/slot-next
+   pointers). Rehashing is localized to individual slot dictionaries.
+
+2. **Key embedding** - Keys are embedded directly into dictionary entries instead
+   of a separate SDS pointer, saving 8 bytes per key and eliminating one random
+   pointer dereference per lookup.
+
+Measured savings (6.3M keys, 16-byte values):
+
+| Version | Memory Used | Savings |
+|---------|------------|---------|
+| Valkey 7.2 | 693.64 MB | baseline |
+| + Dict per slot | 598.77 MB | -13.68% |
+| + Key embedding (Valkey 8.0) | 550.56 MB | **-20.63% total** |
+
+These savings apply only in cluster mode. Standalone mode benefits from key
+embedding but not the per-slot dictionary change.
+
 ## Memory-Efficient Data Modeling
 
 ### 1. Hash-based storage
@@ -99,6 +151,23 @@ SET user:1000:age "30"
 # Use:
 HSET user:1000 name "Alice" email "alice@example.com" age "30"
 ```
+
+### Hash Bucketing for Extreme Density
+
+For millions of simple key-value pairs, group keys into hash buckets so each
+hash stays under the listpack threshold:
+
+```bash
+# Instead of: SET media:1234 <user_id>
+# Use: HSET mediabucket:1 234 <user_id>
+# Bucket key = id / 1000, field = id % 1000
+```
+
+Instagram Engineering case study: storing 300M key-value pairs, naive
+`SET media:<id> <user_id>` consumed ~70MB per 1M keys (21GB total). Switching
+to hash bucketing reduced memory to ~16MB per 1M keys (5GB total) - a 4x
+reduction. This works because small hashes use listpack encoding that is
+5-10x more memory efficient than individual top-level keys.
 
 ### 2. Bit operations for boolean flags
 
@@ -152,7 +221,7 @@ valkey-cli INFO memory | grep mem_fragmentation_ratio
 CONFIG SET activedefrag yes
 
 # Tune defrag thresholds
-CONFIG SET active-defrag-enabled yes
+CONFIG SET activedefrag yes
 CONFIG SET active-defrag-threshold-lower 10    # Start when frag > 10%
 CONFIG SET active-defrag-threshold-upper 100   # Max effort when frag > 100%
 CONFIG SET active-defrag-cycle-min 1           # Min CPU% for defrag
@@ -193,11 +262,16 @@ valkey-cli INFO memory
 ## See Also
 
 - [Defragmentation](defragmentation.md) - active defrag configuration and monitoring
+- [Latency Diagnosis](latency.md) - memory-related latency (fork, eviction, expiration)
+- [Troubleshooting OOM](../troubleshooting/oom.md) - OOM diagnosis and resolution
+- [Diagnostics Reference](../troubleshooting/diagnostics.md) - MEMORY DOCTOR, MEMORY STATS commands
 - [Encoding Thresholds](../configuration/encoding.md) - detailed encoding threshold reference
 - [Eviction Policies](../configuration/eviction.md) - policy selection and LFU tuning
 - [Lazy Free](../configuration/lazyfree.md) - async free configuration
 - [Capacity Planning](../operations/capacity-planning.md) - memory sizing guidelines
-- [Troubleshooting OOM](../troubleshooting/oom.md) - OOM diagnosis and resolution
+- [Monitoring Metrics](../monitoring/metrics.md) - `used_memory`, `mem_fragmentation_ratio` metrics
+- [Kubernetes StatefulSets](../kubernetes/statefulset.md) - memory resource sizing and fork headroom in containers
+- [Kubernetes Tuning](../kubernetes/tuning-k8s.md) - THP and overcommit settings in K8s
 - [See valkey-dev: zmalloc](../valkey-dev/reference/memory/zmalloc.md) - per-thread memory counters, jemalloc integration
 - [See valkey-dev: defragmentation](../valkey-dev/reference/memory/defragmentation.md) - active defrag internals
 - [See valkey-dev: lazy-free](../valkey-dev/reference/memory/lazy-free.md) - asynchronous object freeing

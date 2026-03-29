@@ -22,8 +22,8 @@ All defaults verified against `src/config.c` in the Valkey source tree.
 | Parameter | Default | Mutable | Description |
 |-----------|---------|---------|-------------|
 | `replicaof` | (none) | No (immutable via config) | Primary host and port |
-| `primaryauth` | (none) | Yes | Password for primary authentication |
-| `primaryuser` | (none) | Yes | ACL username for primary authentication |
+| `masterauth` | (none) | Yes | Password for primary authentication (alias: `primaryauth`) |
+| `masteruser` | (none) | Yes | ACL username for primary authentication (alias: `primaryuser`) |
 | `replica-read-only` | `yes` | Yes | Reject write commands on replica |
 | `replica-serve-stale-data` | `yes` | Yes | Serve data during sync or when link is down |
 | `replica-lazy-flush` | `yes` | Yes | Async flush on full resync (avoid blocking) |
@@ -51,7 +51,7 @@ On each replica host:
 
 ```
 replicaof 192.168.1.10 6379
-primaryauth YOUR_PASSWORD
+masterauth YOUR_PASSWORD
 replica-read-only yes
 ```
 
@@ -62,7 +62,7 @@ replica-read-only yes
 valkey-cli REPLICAOF 192.168.1.10 6379
 
 # Set auth if needed
-valkey-cli CONFIG SET primaryauth YOUR_PASSWORD
+valkey-cli CONFIG SET masterauth YOUR_PASSWORD
 ```
 
 ### Promote Replica to Primary
@@ -124,13 +124,15 @@ The replication backlog size determines how long a replica can be disconnected b
 
 ### Replication ID
 
-Each Valkey instance has a replication ID. When a replica connects, it must present the correct replication ID. After a failover, the new primary generates a new replication ID but remembers the old one (secondary ID), allowing replicas of the old primary to partial-resync with the new primary.
+Each Valkey instance has a replication ID. When a replica connects, it must present the correct replication ID. After a failover, the new primary generates a new replication ID but remembers the old one (secondary ID), allowing replicas of the old primary to partial-resync with the new primary. This is why Valkey uses two replication IDs - it avoids expensive full resyncs on the common case of failover followed by replica reconnection.
+
+On reconnect, a replica sends `PSYNC <replication-id> <offset>`. The primary checks: (1) does the replication ID match (current or secondary)? (2) is the requested offset still within the backlog? If both yes: partial resync. If no: full resync.
 
 ## Operational Notes
 
 ### Authentication
 
-If the primary requires a password (`requirepass`), set `primaryauth` on each replica. For ACL-based auth, also set `primaryuser`.
+If the primary requires a password (`requirepass`), set `masterauth` on each replica. For ACL-based auth, also set `masteruser`. Valkey also accepts the aliases `primaryauth` and `primaryuser`.
 
 ### Multiple Replicas
 
@@ -155,9 +157,8 @@ With `replica-serve-stale-data yes` (the default), replicas continue serving rea
 
 ## See Also
 
-- [Replication Tuning](tuning.md) - backlog sizing, diskless sync, dual-channel
+- [Replication Tuning](tuning.md) - backlog sizing, diskless sync, Docker/NAT networking
 - [Replication Safety](safety.md) - min-replicas settings, data loss prevention
 - [Sentinel Architecture](../sentinel/architecture.md) - automatic failover for replicated setups
-- [Configuration Essentials](../configuration/essentials.md) - replication config defaults
-- [See valkey-dev: replication overview](../valkey-dev/reference/replication/overview.md) - replication protocol internals
-- [See valkey-dev: dual-channel](../valkey-dev/reference/replication/dual-channel.md) - dual-channel replication internals
+- [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - step-by-step Sentinel deployment on top of replication
+- [Cluster Setup](../cluster/setup.md) - cluster mode (which uses replication internally per shard)

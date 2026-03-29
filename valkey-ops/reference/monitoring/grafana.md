@@ -7,7 +7,7 @@ community dashboards, configuring data sources, and building key panels.
 
 ## Prerequisites
 
-- Prometheus scraping Valkey exporter (see `reference/monitoring/prometheus.md`)
+- Prometheus scraping Valkey exporter (see [Prometheus Setup](prometheus.md))
 - Grafana 9.x or later with Prometheus data source configured
 
 ---
@@ -29,10 +29,15 @@ Import pre-built dashboards from Grafana.com by Dashboard ID:
 
 | Dashboard ID | Name | Best For |
 |-------------|------|----------|
-| 763 | Redis Dashboard for Prometheus Redis Exporter 1.x | General-purpose, well-maintained |
-| 14091 | Redis Exporter mixin-generated | Mixin-based, alerting-aligned |
-| 11835 | Redis HA (Helm stable/redis-ha) | HA / Sentinel deployments |
-| 20154 | Redis Prometheus Exporter | Alternative general dashboard |
+| 763 | Redis Dashboard for Prometheus Redis Exporter 1.x | Official (maintained by oliver006), general-purpose |
+| 14091 | Redis Overview | Compact single-pane overview |
+| 11835 | Redis Dashboard for Prometheus Redis Exporter | Community variant |
+| 12776 | Redis Cluster Overview | Cluster-specific panels |
+
+Dashboard 763 is the canonical choice - it ships with the exporter source
+(`contrib/grafana_prometheus_redis_dashboard.json`). It supports multi-value
+instance dropdowns for Sentinel environments. Note that single-stat panels
+(uptime, total memory, clients) do not aggregate across multiple instances.
 
 ### Import steps
 
@@ -105,6 +110,25 @@ panels organized by category.
 | RDB save status | `redis_rdb_last_bgsave_status` | Stat (1=ok, 0=err) |
 | AOF rewrite status | `redis_aof_last_bgrewrite_status` | Stat |
 | Changes since save | `redis_rdb_changes_since_last_save` | Time series |
+| Time since last save | `time() - redis_rdb_last_save_timestamp_seconds` | Stat (seconds) |
+| AOF pending fsyncs | `redis_aof_pending_bio_fsync` | Time series |
+
+### Command latency row (requires latencystats, Valkey 7+)
+
+| Panel | Query | Visualization |
+|-------|-------|---------------|
+| Top 5 by p99.9 | `topk(5, avg_over_time(redis_latency_percentiles_usec{quantile="99.9"}[10s]))` | Bar gauge |
+| Per-command time/sec | `sum by(cmd) (irate(redis_commands_duration_seconds_total[1m]))` | Time series |
+| Top 10 by CPU time | `topk(10, sum by(cmd) (redis_commands_duration_seconds_total) != 0)` | Table |
+| Network I/O | `irate(redis_net_input_bytes_total[5m])` and `irate(redis_net_output_bytes_total[5m])` | Time series |
+
+### Cluster row (cluster mode only)
+
+| Panel | Query | Visualization |
+|-------|-------|---------------|
+| Cluster state | `redis_cluster_state` | Stat (1=ok, 0=fail) |
+| Slots ok/fail/pfail | `redis_cluster_slots_ok`, `redis_cluster_slots_fail`, `redis_cluster_slots_pfail` | Stat |
+| Cluster message rate | `rate(redis_cluster_messages_sent_total[5m])` | Time series |
 
 ---
 
@@ -161,9 +185,44 @@ Place exported dashboard JSON files in `/var/lib/grafana/dashboards/valkey/`.
 
 ---
 
+## Percona PMM Dashboards
+
+Percona PMM ships 10 dedicated Valkey dashboards (`percona/grafana-dashboards`
+repository, `dashboards/Valkey/` directory). PMM uses `redis_exporter` under
+the hood, registered as an external service:
+
+```bash
+pmm-admin add external --service-name=valkey-primary \
+  --listen-port=9121 \
+  --group=valkey \
+  --environment=production
+```
+
+Key dashboard names:
+
+| Dashboard | Highlights |
+|-----------|------------|
+| Valkey/Redis Overview | Top 5 commands by latency, cumulative R/W rate |
+| Valkey Clients | Per-service connected/blocked/evicted clients |
+| Valkey Memory | Memory % usage, eviction policy, expired/evicted rates |
+| Valkey Replication | Replica vs master offset lag, full/partial resyncs |
+| Valkey Load | Commands/sec, IO thread operations, hits/misses |
+| Valkey Command Details | Per-command latency histograms (GET, SET, RPOP, etc.), p99.9 |
+| Valkey Persistence Details | AOF appendfsync policy, RDB save config, COW sizes |
+| Valkey Cluster Details | Slot status, cluster state per service, known nodes |
+
+PMM's distinguishing feature is per-command latency histograms using
+`redis_commands_latencies_usec_bucket` - useful for identifying which
+commands contribute most to tail latency.
+
+---
+
 ## See Also
 
 - [Monitoring Metrics](metrics.md) - metric definitions and source verification
 - [Prometheus Setup](prometheus.md) - exporter and scrape configuration
 - [Alerting Rules](alerting.md) - alert thresholds aligned with dashboard panels
+- [Commandlog](commandlog.md) - slow command logging and Grafana panel examples
 - [Performance Latency](../performance/latency.md) - latency diagnosis workflow
+- [Troubleshooting Diagnostics](../troubleshooting/diagnostics.md) - 7-phase investigation when dashboards show anomalies
+- [Troubleshooting Slow Commands](../troubleshooting/slow-commands.md) - slow command investigation

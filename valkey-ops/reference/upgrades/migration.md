@@ -202,6 +202,37 @@ Note: `bind` and `port` ARE modifiable at runtime despite some documentation sta
 | `extended-redis-compatibility` | Redis identity mode |
 | `rdb-version-check` | RDB version strictness |
 
+## Data Validation After Migration
+
+Run these checks after any migration to verify data integrity:
+
+1. **Key count**: `INFO keyspace` on source and target - compare `db0:keys` values
+2. **Memory usage**: `INFO memory` - should be within ~10% between instances
+3. **Spot-check values**: `RANDOMKEY` then compare values and types on both
+4. **TTL validation**: Compare TTLs on sampled keys - should be within a few seconds
+5. **Data type verification**: `TYPE <key>` and `OBJECT ENCODING <key>` on samples
+6. **Replication offset**: Before promoting, verify `master_repl_offset` matches on both
+7. **Cluster health**: `valkey-cli --cluster check` - all 16384 slots covered, no errors
+8. **Application-level**: Run test suites, compare P50/P99 latency, monitor error rates
+9. **Command stats**: `INFO commandstats` - check for unexpected command failures
+
+---
+
+## Downtime Estimates by Method
+
+| Method | Topology | Downtime |
+|--------|----------|----------|
+| Replication + failover | Standalone | Seconds (client switch only) |
+| RDB snapshot restore | Standalone | Minutes to hours (dataset dependent) |
+| Rolling upgrade | Cluster | Zero (per-shard seconds) |
+| Sentinel failover | Sentinel | 1-5 seconds |
+| Helm migration (Bitnami to Official) | Kubernetes | Brief maintenance window |
+| ElastiCache RDB export | Managed to self-hosted | 30-60+ minutes |
+| ElastiCache replication | Managed to self-hosted | Seconds (if network allows) |
+| Dual-write | Any | Zero (requires code changes) |
+
+---
+
 ## Migration Checklist
 
 1. [ ] Verify source is Redis OSS 7.2 or earlier (not Redis CE 7.4+)
@@ -220,6 +251,8 @@ Note: `bind` and `port` ARE modifiable at runtime despite some documentation sta
 
 - [Version Compatibility](compatibility.md) - RDB versions and replication compatibility
 - [Rolling Upgrades](rolling-upgrade.md) - zero-downtime upgrade procedures
+- [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - Sentinel setup for migrated deployments
+- [Cluster Setup](../cluster/setup.md) - cluster creation for Redis Cluster migrations
 - [Production Checklist](../production-checklist.md) - post-migration verification
 - [See valkey-dev: cluster/overview](../valkey-dev/reference/cluster/overview.md) - cluster protocol internals
 - [See valkey-dev: replication overview](../valkey-dev/reference/replication/overview.md) - replication protocol internals

@@ -216,13 +216,50 @@ CONFIG SET io-threads 4
 Note: I/O threads do not help with slow individual commands - they parallelize
 the I/O path, not command execution.
 
+## Hot Key Detection
+
+A hot key receives disproportionate operations. In cluster mode, it means one
+shard handles all the load while others idle. Five detection methods:
+
+```bash
+# Method 1: --hotkeys mode (requires LFU eviction policy)
+valkey-cli CONFIG SET maxmemory-policy allkeys-lfu
+valkey-cli --hotkeys
+# Reports keys ranked by access frequency using OBJECT FREQ internally
+
+# Method 2: Individual key frequency (LFU mode required)
+valkey-cli OBJECT FREQ <key>
+
+# Method 3: MONITOR sampling (brief use only - adds overhead)
+timeout 10 valkey-cli MONITOR > /tmp/monitor.log
+# Parse most accessed keys from the capture
+
+# Method 4: OBJECT IDLETIME for cold key detection (LRU mode)
+valkey-cli OBJECT IDLETIME <key>
+# Find keys never accessed (wasted memory)
+
+# Method 5: Big key analysis (memory, not frequency)
+valkey-cli --bigkeys       # Largest key per data type
+valkey-cli --memkeys       # Ranks by actual MEMORY USAGE
+```
+
+Mitigation: read replicas for hot reads, client-side caching with
+`CLIENT TRACKING`, key sharding (split hot key across sub-keys), or
+cluster rebalancing to move the hot slot to a less-loaded shard.
+
 ---
 
 ## See Also
 
 - [Latency Diagnosis](../performance/latency.md) - full latency diagnosis workflow
+- [Memory Optimization](../performance/memory.md) - encoding thresholds, `KEYS` alternatives
+- [Defragmentation](../performance/defragmentation.md) - defrag-related latency during scans
+- [Client-Side Caching](../performance/client-caching.md) - reduce hot key load with tracking
+- [Diagnostics Reference](diagnostics.md) - 7-phase diagnostic runbook
 - [Commandlog](../monitoring/commandlog.md) - commandlog configuration and commands
-- [I/O Threads](../performance/io-threads.md) - throughput optimization
+- [I/O Threads](../performance/io-threads.md) - throughput optimization (I/O-bound, not command-bound)
 - [Monitoring Metrics](../monitoring/metrics.md) - commandstats and performance metrics
+- [Security ACL](../security/acl.md) - restrict dangerous commands via ACL instead of rename
+- [Security Rename Commands](../security/rename-commands.md) - disable or rename dangerous commands
 - [See valkey-dev: commandlog](../valkey-dev/reference/monitoring/commandlog.md) - commandlog internals, entry format
 - [See valkey-dev: latency](../valkey-dev/reference/monitoring/latency.md) - latency event types, DOCTOR report generation

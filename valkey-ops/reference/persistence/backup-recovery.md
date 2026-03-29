@@ -88,49 +88,85 @@ echo "[OK] Retention applied: kept last ${RETENTION_DAYS} days"
 
 ## AOF Backup Procedure
 
-AOF backups require temporarily pausing auto-rewrite to avoid file changes mid-copy.
+AOF backups require temporarily pausing auto-rewrite to avoid file changes
+mid-copy. The hardlink optimization minimizes the rewrite-disabled window.
+
+### Hardlink-Based AOF Backup (Recommended)
+
+Valkey guarantees it only appends to files in the AOF directory or
+completely replaces them. This makes hardlinks safe for consistent backup.
 
 ```bash
 #!/bin/bash
-# valkey-backup-aof.sh - AOF directory backup
+# valkey-backup-aof.sh - AOF backup using hardlinks for minimal disabled window
 set -euo pipefail
 
 VALKEY_CLI="valkey-cli -a ${VALKEY_PASSWORD}"
 DATA_DIR="/var/lib/valkey"
 BACKUP_DIR="/backups/valkey/aof"
 DATE=$(date +%Y%m%d_%H%M%S)
+LINK_DIR="${BACKUP_DIR}/${DATE}-links"
 
-# Pause auto-rewrite during copy
+# Save current percentage for restore
+PREV_PCT=$(${VALKEY_CLI} CONFIG GET auto-aof-rewrite-percentage | tail -1)
 ${VALKEY_CLI} CONFIG SET auto-aof-rewrite-percentage 0
 
-# Copy entire AOF directory atomically
-mkdir -p "${BACKUP_DIR}/${DATE}"
-cp -r "${DATA_DIR}/appendonlydir" "${BACKUP_DIR}/${DATE}/"
+# Wait for any in-progress rewrite to finish
+while [ "$(${VALKEY_CLI} INFO persistence | grep aof_rewrite_in_progress | tr -d '\r' | cut -d: -f2)" != "0" ]; do
+  sleep 1
+done
 
-# Re-enable auto-rewrite
-${VALKEY_CLI} CONFIG SET auto-aof-rewrite-percentage 100
+# Create hardlinks (near-instant regardless of file size)
+mkdir -p "$LINK_DIR"
+cp -al "${DATA_DIR}/appendonlydir/" "$LINK_DIR/"
 
-echo "[OK] AOF backup created: ${BACKUP_DIR}/${DATE}"
+# Re-enable auto-rewrite immediately
+${VALKEY_CLI} CONFIG SET auto-aof-rewrite-percentage "${PREV_PCT}"
+
+# Compress from hardlinks at leisure
+tar czf "${BACKUP_DIR}/${DATE}.tar.gz" -C "$LINK_DIR" appendonlydir/
+rm -rf "$LINK_DIR"
+
+echo "[OK] AOF backup: ${BACKUP_DIR}/${DATE}.tar.gz"
 
 # Retention
-find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d -mtime +7 -exec rm -rf {} +
+find "$BACKUP_DIR" -name "*.tar.gz" -mtime +7 -delete
 ```
+
+To make this restart-safe (if the server restarts during backup), add
+`CONFIG REWRITE` after disabling auto-rewrite, then again after
+re-enabling it.
 
 ## Off-Site Backup
 
-### S3/GCS Upload
+### S3 Upload with Encryption and Verification
 
 ```bash
-# After local backup completes
-aws s3 cp "${BACKUP_DIR}/dump_${DATE}.rdb" \
-  "s3://valkey-backups/${HOSTNAME}/" \
+# Compress, upload with SSE, verify size
+gzip "${BACKUP_DIR}/dump_${DATE}.rdb"
+aws s3 cp "${BACKUP_DIR}/dump_${DATE}.rdb.gz" \
+  "s3://valkey-backups/${HOSTNAME}/$(date +%Y/%m)/" \
   --sse AES256 \
   --storage-class STANDARD_IA
-
-# Or GCS
-gsutil cp "${BACKUP_DIR}/dump_${DATE}.rdb" \
-  "gs://valkey-backups/${HOSTNAME}/"
+aws s3 cp "${BACKUP_DIR}/dump_${DATE}.rdb.sha256" \
+  "s3://valkey-backups/${HOSTNAME}/$(date +%Y/%m)/" \
+  --sse AES256 \
+  --storage-class STANDARD_IA
 ```
+
+S3 lifecycle policy for tiered retention: transition to GLACIER_IR at 30
+days, DEEP_ARCHIVE at 90 days, expire at 365 days.
+
+### GCS Upload
+
+```bash
+gsutil -o "GSUtil:parallel_composite_upload_threshold=150M" \
+  cp "${BACKUP_DIR}/dump_${DATE}.rdb.gz" \
+  "gs://valkey-backups/${HOSTNAME}/$(date +%Y/%m)/"
+```
+
+GCS lifecycle: transition to NEARLINE at 30 days, COLDLINE at 90 days,
+delete at 365 days.
 
 ### Cross-Region SCP
 
@@ -138,6 +174,9 @@ gsutil cp "${BACKUP_DIR}/dump_${DATE}.rdb" \
 scp "${BACKUP_DIR}/dump_${DATE}.rdb" \
   backup-user@dr-host:/backups/valkey/
 ```
+
+Always verify upload size matches local file size and set up independent
+alerting if backup transfers fail (official recommendation).
 
 ## Replica-Based Backup
 
@@ -226,6 +265,23 @@ valkey-check-aof --truncate-to-timestamp 1711699200 \
 
 Without timestamps, you can only recover to the last AOF rewrite boundary or the end of the file.
 
+## Recovery Time Estimates
+
+RDB restore time depends primarily on file size and disk speed:
+
+| Dataset Size | RDB File (compressed) | Load Time (SSD) | Load Time (HDD) |
+|-------------|----------------------|-----------------|-----------------|
+| 1 GB | ~400 MB | 2-5 seconds | 5-15 seconds |
+| 5 GB | ~2 GB | 10-20 seconds | 30-60 seconds |
+| 10 GB | ~4 GB | 20-40 seconds | 60-120 seconds |
+| 25 GB | ~10 GB | 45-90 seconds | 2-5 minutes |
+| 50 GB | ~20 GB | 90-180 seconds | 5-10 minutes |
+| 100 GB | ~40 GB | 3-6 minutes | 10-20 minutes |
+
+AOF restore is slower because commands must be replayed. With
+`aof-use-rdb-preamble yes` (hybrid), load times approach RDB since the
+base is in RDB format.
+
 ## Backup Verification
 
 Backups are worthless if you never test restores.
@@ -281,5 +337,8 @@ Adjust based on your data volume and compliance requirements.
 
 - [RDB Persistence](rdb.md) - snapshot configuration details
 - [AOF Persistence](aof.md) - write-ahead log configuration
-- [Replication Safety](../replication/safety.md) - replica-based backup strategy
+- [Durability vs Performance](../performance/durability.md) - persistence trade-off spectrum
+- [Replication Setup](../replication/setup.md) - primary-replica configuration for replica-based backups
+- [Replication Safety](../replication/safety.md) - replica-based backup strategy and write safety
+- [Capacity Planning](../operations/capacity-planning.md) - memory sizing for fork overhead
 - [Production Checklist](../production-checklist.md) - backup verification checklist

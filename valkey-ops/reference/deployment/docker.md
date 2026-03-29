@@ -8,6 +8,19 @@ Use when running Valkey in containers - Docker, Docker Compose, or container orc
 
 The official image is `valkey/valkey` on Docker Hub.
 
+### Base Images and Tag Convention
+
+| Tag Format | Base OS | Notes |
+|------------|---------|-------|
+| `<version>` or `<version>-trixie` | `debian:trixie-slim` | Default variant |
+| `<version>-alpine` or `<version>-alpine3.23` | `alpine:3.23` | Smaller image |
+| `latest` | Debian Trixie | Latest stable |
+| `alpine` | Alpine | Latest stable Alpine |
+
+Supported architectures: `amd64`, `arm64`, `arm` (32-bit), `ppc64le`.
+
+The image is built with `BUILD_TLS=yes` (TLS always available), `USE_FAST_FLOAT=yes` (>= 8.1), and `USE_SYSTEMD=yes` (Debian variant only).
+
 ### Quick Start
 
 ```bash
@@ -40,6 +53,9 @@ Key points:
 - The working directory inside the container is `/data`
 - RDB and AOF files are written to `/data` by default
 - Always mount `/data` as a volume for persistence
+- Protected mode is disabled at build time (source-patched) - Docker port isolation provides equivalent protection
+- The entrypoint sets umask `0077` and drops privileges to the `valkey` user via `setpriv` when running as root
+- Append extra flags without modifying the command via the `VALKEY_EXTRA_FLAGS` env var (e.g., `-e VALKEY_EXTRA_FLAGS="--loglevel verbose"`)
 
 
 ## Bitnami Image
@@ -54,10 +70,29 @@ docker run -d --name valkey \
 ```
 
 Bitnami differences from official image:
+- Base OS is **Photon Linux** (VMware), not Debian. Legacy Debian images moved to `bitnamilegacy/` namespace.
 - Runs as non-root (UID 1001) by default
 - AOF enabled out of the box
 - Config via `VALKEY_*` environment variables
 - Data directory at `/bitnami/valkey/data`
+- The `@` character is NOT supported in `VALKEY_PASSWORD` - known limitation
+- `ALLOW_EMPTY_PASSWORD=yes` is required even for development without auth
+- Partial config overrides via `/opt/bitnami/valkey/mounted-etc/overrides.conf` (ignored if a full `valkey.conf` is mounted)
+
+Key Bitnami env vars beyond `VALKEY_PASSWORD`:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `VALKEY_AOF_ENABLED` | `yes` | Toggle AOF persistence |
+| `VALKEY_RDB_POLICY` | (none) | Custom RDB save policy |
+| `VALKEY_RDB_POLICY_DISABLED` | `no` | Set `yes` to disable all RDB |
+| `VALKEY_DISABLE_COMMANDS` | (none) | Comma-separated list of disabled commands |
+| `VALKEY_IO_THREADS` | (none) | Number of I/O threads |
+| `VALKEY_REPLICATION_MODE` | (none) | `primary` or `replica` |
+| `VALKEY_PRIMARY_HOST` | (none) | Primary hostname for replicas |
+| `VALKEY_TLS_ENABLED` | `no` | Enable TLS |
+| `VALKEY_ACLFILE` | (none) | Path to ACL file |
+| `VALKEY_EXTRA_FLAGS` | (none) | Additional server arguments |
 
 
 ## Docker Compose Patterns
@@ -180,6 +215,8 @@ sudo mkdir -p /data/valkey
 sudo chown 999:999 /data/valkey    # UID 999 = valkey user in official image
 ```
 
+**UID/GID gotcha**: The GID differs between variants - Debian uses GID 999, Alpine uses GID 1000 (because Alpine reserves GID 999). If switching between variants with the same volume, adjust directory group ownership or the container will fail to write persistence files.
+
 
 ## Networking
 
@@ -256,8 +293,12 @@ Set `maxmemory` to roughly 75% of the container memory limit. The remaining 25% 
 
 ## See Also
 
+- [Installing Valkey](install.md) - package manager and source builds
 - [Configuration Essentials](../configuration/essentials.md) - all config defaults
+- [Workload Presets](../configuration/workload-presets.md) - complete configs by use case
+- [Eviction Policies](../configuration/eviction.md) - maxmemory-policy for container memory limits
 - [Bare Metal Setup](bare-metal.md) - non-container deployment
 - [Kubernetes Helm](../kubernetes/helm.md) - Helm chart deployment
 - [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - Docker Sentinel considerations
+- [Cluster Setup](../cluster/setup.md) - cluster mode with Docker (requires host networking or announce addresses)
 - [Production Checklist](../production-checklist.md) - full pre-launch verification

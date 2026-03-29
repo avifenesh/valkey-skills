@@ -10,7 +10,7 @@ maximum safety to maximum speed.
 
 From safest (slowest) to fastest (least durable):
 
-### 1. AOF + appendfsync always
+### 1. AOF + `appendfsync always`
 
 ```
 appendonly yes
@@ -24,7 +24,7 @@ blocking fsync on every write.
 Source-verified: `appendfsync` defaults to `everysec` (AOF_FSYNC_EVERYSEC)
 in `src/config.c` line 3340.
 
-### 2. AOF + appendfsync everysec (default)
+### 2. AOF + `appendfsync everysec` (default)
 
 ```
 appendonly yes
@@ -34,7 +34,7 @@ appendfsync everysec
 Background fsync every second. At most 1 second of data lost on crash.
 Best balance of durability and performance for most production workloads.
 
-### 3. AOF + everysec + no-appendfsync-on-rewrite
+### 3. AOF + `everysec` + `no-appendfsync-on-rewrite`
 
 ```
 appendonly yes
@@ -49,7 +49,7 @@ loss if crash occurs during rewrite.
 Source-verified: `no-appendfsync-on-rewrite` defaults to `no` (0) in
 `src/config.c` line 3263.
 
-### 4. AOF + appendfsync no
+### 4. AOF + `appendfsync no`
 
 ```
 appendonly yes
@@ -183,6 +183,7 @@ estimation.
 
 Up to 25% latency reduction when clients and server support MPTCP. Uses
 multiple network paths simultaneously for lower latency and higher resilience.
+Requires Linux kernel 5.6+. Configuration: `mptcp yes` in valkey.conf.
 
 ### Atomic Slot Migration
 
@@ -208,7 +209,7 @@ ulimit -n 65535
 
 ## Quick Decision Guide
 
-| Scenario | Persistence | appendfsync | io-threads |
+| Scenario | Persistence | `appendfsync` | `io-threads` |
 |----------|-------------|-------------|------------|
 | Cache (reconstructible) | none | - | 4+ |
 | Session store | AOF | everysec | 2-4 |
@@ -223,6 +224,10 @@ ulimit -n 65535
 - [AOF Persistence](../persistence/aof.md) - AOF configuration details
 - [RDB Persistence](../persistence/rdb.md) - snapshot configuration details
 - [I/O Threads](io-threads.md) - multi-threaded I/O configuration
+- [Latency Diagnosis](latency.md) - diagnosing persistence-related latency spikes
+- [Diagnostics Reference](../troubleshooting/diagnostics.md) - fork latency investigation
+- [Troubleshooting OOM](../troubleshooting/oom.md) - memory pressure from fork COW overhead
+- [Monitoring Metrics](../monitoring/metrics.md) - persistence and performance metrics
 - [Workload Presets](../configuration/workload-presets.md) - complete configs by use case
 - [See valkey-dev: io-threads](../valkey-dev/reference/threading/io-threads.md) - I/O thread internals
 - [See valkey-dev: prefetch](../valkey-dev/reference/threading/prefetch.md) - batch key prefetching

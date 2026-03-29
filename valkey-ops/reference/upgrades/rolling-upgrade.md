@@ -204,6 +204,25 @@ valkey-cli INFO replication                 # replication lag, link status
 valkey-cli INFO server | grep valkey_version  # confirm version
 ```
 
+## Valkey 9.0 Cluster Upgrade Considerations
+
+- **Atomic Slot Migration**: Mixed 8.x/9.0 clusters use legacy key-by-key
+  migration. The `SYNCSLOTS CAPA` mechanism (9.0-rc3) handles forward
+  compatibility. Full ASM only after all nodes are 9.0+.
+- **Module compatibility**: Modules must explicitly opt in to Atomic Slot
+  Migration (ASM). Clusters loading modules without ASM support will have
+  ASM disabled cluster-wide. Check all modules before upgrading.
+- **Light-weight cluster messages**: 9.0 uses light-weight messages between
+  nodes. Fix for duplicate multi-meet packets in mixed clusters landed in
+  9.0.1.
+- **Sentinel ACL regression**: 9.0.0 required `+failover` ACL permission
+  in the failover path. Fixed in 9.0.1. If upgrading Sentinel to 9.0, use
+  9.0.1+ or add `+failover` to Sentinel user ACL.
+- **Hash field expiration bugs**: 9.0.0-9.0.1 had memory leaks, crashes,
+  and data corruption. Use 9.0.3+ in production.
+
+---
+
 ## Rollback Plan
 
 If the upgraded version causes issues:

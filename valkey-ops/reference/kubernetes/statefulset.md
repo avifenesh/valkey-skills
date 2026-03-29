@@ -246,16 +246,13 @@ spec:
         runAsNonRoot: true
         runAsUser: 999
         fsGroup: 999
-      affinity:
+      affinity:        # see Pod Anti-Affinity section above
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 100
               podAffinityTerm:
                 labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values: ["valkey"]
+                  matchLabels: { app: valkey }
                 topologyKey: kubernetes.io/hostname
       containers:
         - name: valkey
@@ -317,10 +314,36 @@ spec:
       app: valkey
 ```
 
+## Common StatefulSet Gotchas for Valkey
+
+1. **OOMKilled during persistence** - fork can double memory. Set container
+   memory limit > 2x `maxmemory`, or use AOF-only with `save ""`.
+2. **Headless service must use publishNotReadyAddresses** - without this,
+   DNS records are removed during pod restart, breaking replication discovery.
+3. **PVC stuck in Pending** - check `storageClassName`, `volumeBindingMode:
+   WaitForFirstConsumer`, and zone capacity.
+4. **Cluster gossip port** - port 16379 must be allowed in Network Policies.
+5. **Split-brain with Sentinel** - use `min-replicas-to-write` to mitigate.
+6. **SecurityContext UID conflicts** - official chart uses UID 1000, Bitnami
+   uses 1001. Switching charts requires PVC permission fixes.
+7. **Termination grace period** - increase for large datasets (default 30s
+   may not suffice for RDB saves).
+8. **Volume expansion** - requires `allowVolumeExpansion: true` on StorageClass.
+9. **Client redirection in cluster mode** - clients must handle MOVED/ASK.
+10. **DNS propagation delay** - after pod restart, DNS may take seconds to
+    update. Use retry parameters in startup scripts.
+
+---
+
 ## See Also
 
 - [Helm Charts](helm.md) - chart-based deployment
 - [Kubernetes Operators](operators.md) - CRD-based deployment
 - [Kubernetes Tuning](tuning-k8s.md) - kernel tuning in K8s
 - [Capacity Planning](../operations/capacity-planning.md) - memory and resource sizing
+- [RDB Persistence](../persistence/rdb.md) - snapshot configuration and fork overhead
+- [AOF Persistence](../persistence/aof.md) - write-ahead log configuration
+- [Performance I/O Threads](../performance/io-threads.md) - CPU sizing rules when using I/O threads
+- [Performance Memory](../performance/memory.md) - memory optimization and container sizing
+- [Troubleshooting OOM](../troubleshooting/oom.md) - OOM diagnosis when container limits are exceeded
 - [Production Checklist](../production-checklist.md) - full pre-launch verification

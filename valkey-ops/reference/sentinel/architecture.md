@@ -14,7 +14,7 @@ Sentinel is a separate process that monitors Valkey primaries, their replicas, a
 
 Sentinel runs as a restricted mode of the Valkey server binary. It can be started with `--sentinel` or via the `valkey-sentinel` symlink. On activation, Sentinel sets port 26379, disables protected-mode, restricts the command set to sentinel-specific commands, and skips AOF/RDB loading.
 
-Source: `sentinel.c` - `checkForSentinelMode()`, `initSentinelConfig()`, `initSentinel()`
+Source: `server.c` - `checkForSentinelMode()`, `sentinel.c` - `initSentinelConfig()`, `initSentinel()`
 
 ### Minimum Deployment
 
@@ -33,6 +33,8 @@ Deploy at least 3 Sentinel instances on independent infrastructure - different V
 +----------+     +----------+     +----------+
 ```
 
+**3 Sentinels (quorum=2)** - the minimum viable deployment. Tolerates 1 Sentinel failure. **5 Sentinels (quorum=2 or 3)** - tolerates 2 Sentinel failures. With quorum=2, detection is more sensitive (only 2 agree on SDOWN->ODOWN), but authorization still requires 3 (the majority). With quorum=3, both detection and authorization require 3, reducing false positives. Use 5 for production systems where Valkey is a critical data store. Never use 2 - this is explicitly documented as an anti-pattern (see [Split-Brain Prevention](split-brain.md)).
+
 ### Communication Channels
 
 Each Sentinel maintains two async connections per monitored instance:
@@ -42,7 +44,7 @@ Each Sentinel maintains two async connections per monitored instance:
 | Command (`cc`) | PING, INFO, SENTINEL commands | PING: every 1s (or `down-after-period` if shorter). INFO: every 10s (1s during failover) |
 | Pub/Sub (`pc`) | Subscribe to `__sentinel__:hello` | Receives messages every 2s from other Sentinels |
 
-Connections are reference-counted and shared. 5 Sentinels monitoring 100 primaries create 5 outgoing connections, not 500.
+Each primary and replica gets its own dedicated cc+pc connection pair. Connections are reference-counted and shared only between inter-Sentinel links (Sentinels discovered via different primaries but having the same address reuse one link).
 
 Source: `sentinel.c` - `instanceLink` struct, `sentinelReconnectInstance()`, `sentinelSendPeriodicCommands()`
 
@@ -88,7 +90,7 @@ A single Sentinel's local judgment that an instance is unreachable. Checked by `
 An instance is marked SDOWN when:
 
 1. No valid PING reply for `down-after-milliseconds` (default 30000ms), OR
-2. A primary reports `role:slave` for longer than `down-after-period + 2 * INFO_PERIOD`, OR
+2. A primary reports `role:slave` for longer than `down-after-milliseconds + 2 * INFO_PERIOD`, OR
 3. A primary reboot is detected and exceeds `primary_reboot_down_after_period`
 
 Valid PING responses are `+PONG`, `-LOADING`, or `-MASTERDOWN`. Any other response (or no response) counts as a failure.
@@ -120,7 +122,7 @@ If the time delta between two timer invocations is negative or exceeds 2 seconds
 
 Events: `+tilt` on entry, `-tilt` on exit.
 
-Source: `sentinel.c` - `SENTINEL_TILT_TRIGGER = 2000`, `sentinel_tilt_period = 30000`
+Source: `sentinel.c` - `sentinel_tilt_trigger = 2000` (static variable), `sentinel_tilt_period = 30000`
 
 ---
 
@@ -179,6 +181,16 @@ Source: `sentinel.c` - `sentinelVoteLeader()`, `sentinelGetLeader()`
 | `sentinel_replica_reconf_timeout` | 10000ms | Per-replica reconfig timeout |
 | Failover cooldown | 2 * failover_timeout | Min interval between failover attempts for same primary |
 
+### Failover Timing
+
+Typical end-to-end failover time is `down-after-milliseconds + 1-2 seconds` for Sentinel coordination. The 1-2 second overhead includes SDOWN->ODOWN gossip convergence, leader election (one round), and the `REPLICAOF NO ONE` + promotion detection.
+
+| `down-after-milliseconds` | Approximate total failover time |
+|---------------------------|-------------------------------|
+| 5000 (low-latency prod) | ~6-7 seconds |
+| 30000 (default) | ~31-32 seconds |
+| 60000 (cross-DC) | ~61-62 seconds |
+
 ---
 
 ## Pub/Sub Events
@@ -197,5 +209,6 @@ Other key events: `+sdown`/`-sdown`, `+odown`/`-odown`, `+tilt`/`-tilt`, `+failo
 
 - [Sentinel Deployment Runbook](deployment-runbook.md) - step-by-step deployment and configuration
 - [Split-Brain Prevention](split-brain.md) - network partition strategies
+- [Replication Setup](../replication/setup.md) - primary-replica configuration and PSYNC
 - [Replication Safety](../replication/safety.md) - min-replicas write safety
-- [See valkey-dev: sentinel-mode](../valkey-dev/reference/sentinel/sentinel-mode.md) - data structures, state machine, script execution internals
+- [Cluster Operations](../cluster/operations.md) - cluster-mode failover for comparison

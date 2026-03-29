@@ -27,183 +27,205 @@ groups:
       - alert: ValkeyDown
         expr: redis_up == 0
         for: 1m
-        labels:
-          severity: critical
+        labels: { severity: critical }
         annotations:
           summary: "Valkey instance {{ $labels.instance }} is down"
-          description: "Valkey exporter cannot connect to the instance."
-
 
   - name: valkey-memory
     rules:
       - alert: ValkeyMemoryHigh
         expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
         for: 5m
-        labels:
-          severity: warning
+        labels: { severity: warning }
         annotations:
-          summary: "Valkey memory usage above 90% on {{ $labels.instance }}"
-          description: "Memory usage is {{ $value | humanizePercentage }}."
+          summary: "Memory above 90% on {{ $labels.instance }}"
 
       - alert: ValkeyMemoryCritical
         expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.95
         for: 2m
-        labels:
-          severity: critical
+        labels: { severity: critical }
         annotations:
-          summary: "Valkey memory usage above 95% on {{ $labels.instance }}"
-          description: "Memory usage is {{ $value | humanizePercentage }}. Evictions or OOM imminent."
+          summary: "Memory above 95% on {{ $labels.instance }} - evictions or OOM imminent"
 
       - alert: ValkeyHighFragmentation
         expr: redis_mem_fragmentation_ratio > 1.5
         for: 30m
-        labels:
-          severity: warning
+        labels: { severity: warning }
         annotations:
-          summary: "High memory fragmentation on {{ $labels.instance }}"
-          description: "Fragmentation ratio is {{ $value }}. Consider active defragmentation or restart."
+          summary: "Fragmentation ratio {{ $value }} on {{ $labels.instance }}"
 
       - alert: ValkeyMemorySwapping
         expr: redis_mem_fragmentation_ratio < 1.0
         for: 10m
-        labels:
-          severity: critical
+        labels: { severity: critical }
         annotations:
-          summary: "Valkey may be swapping on {{ $labels.instance }}"
-          description: "Fragmentation ratio is {{ $value }} (below 1.0 indicates RSS < allocated, likely swapping)."
+          summary: "Likely swapping on {{ $labels.instance }} (frag ratio {{ $value }})"
 
       - alert: ValkeyEvictions
         expr: increase(redis_evicted_keys_total[5m]) > 0
         for: 1m
-        labels:
-          severity: warning
+        labels: { severity: warning }
         annotations:
-          summary: "Key evictions occurring on {{ $labels.instance }}"
-          description: "{{ $value }} keys evicted in the last 5 minutes."
+          summary: "{{ $value }} keys evicted in 5m on {{ $labels.instance }}"
 
   - name: valkey-connections
     rules:
       - alert: ValkeyRejectedConnections
         expr: increase(redis_rejected_connections_total[5m]) > 0
         for: 1m
-        labels:
-          severity: warning
+        labels: { severity: warning }
         annotations:
-          summary: "Valkey rejecting connections on {{ $labels.instance }}"
-          description: "{{ $value }} connections rejected. Check maxclients setting."
+          summary: "Rejecting connections on {{ $labels.instance }}"
 
       - alert: ValkeyConnectionsNearLimit
         expr: redis_connected_clients / redis_config_maxclients > 0.8
         for: 5m
-        labels:
-          severity: warning
+        labels: { severity: warning }
         annotations:
-          summary: "Connection count near limit on {{ $labels.instance }}"
-          description: "{{ $value | humanizePercentage }} of maxclients used."
+          summary: "{{ $value | humanizePercentage }} of maxclients on {{ $labels.instance }}"
 
       - alert: ValkeyBlockedClientsHigh
         expr: redis_blocked_clients > 10
         for: 10m
-        labels:
-          severity: warning
+        labels: { severity: warning }
         annotations:
-          summary: "High number of blocked clients on {{ $labels.instance }}"
-          description: "{{ $value }} clients are blocked."
+          summary: "{{ $value }} blocked clients on {{ $labels.instance }}"
 
   - name: valkey-replication
     rules:
       - alert: ValkeyReplicationBroken
         expr: redis_connected_slaves < 1
         for: 2m
-        labels:
-          severity: critical
+        labels: { severity: critical }
         annotations:
           summary: "No replicas connected to {{ $labels.instance }}"
-          description: "Expected at least 1 connected replica."
 
       - alert: ValkeyReplicationLagHigh
         expr: redis_master_last_io_seconds_ago > 30
         for: 5m
-        labels:
-          severity: warning
+        labels: { severity: warning }
         annotations:
-          summary: "Replication lag high on {{ $labels.instance }}"
-          description: "Replica has not received data from primary in {{ $value }} seconds."
+          summary: "No data from primary in {{ $value }}s on {{ $labels.instance }}"
 
       - alert: ValkeyReplicationLinkDown
         expr: redis_master_link_up == 0
         for: 1m
-        labels:
-          severity: critical
+        labels: { severity: critical }
         annotations:
           summary: "Replication link down on {{ $labels.instance }}"
-          description: "Replica cannot reach its primary."
 
   - name: valkey-persistence
     rules:
       - alert: ValkeyRDBSaveFailed
         expr: redis_rdb_last_bgsave_status == 0
         for: 1m
-        labels:
-          severity: critical
+        labels: { severity: critical }
         annotations:
           summary: "RDB save failed on {{ $labels.instance }}"
-          description: "Last background save did not complete successfully."
 
       - alert: ValkeyAOFRewriteFailed
         expr: redis_aof_last_bgrewrite_status == 0
         for: 1m
-        labels:
-          severity: warning
+        labels: { severity: warning }
         annotations:
           summary: "AOF rewrite failed on {{ $labels.instance }}"
-          description: "Last AOF background rewrite did not complete successfully."
 
       - alert: ValkeyAOFWriteFailed
         expr: redis_aof_last_write_status == 0
         for: 1m
-        labels:
-          severity: critical
+        labels: { severity: critical }
         annotations:
-          summary: "AOF write error on {{ $labels.instance }}"
-          description: "AOF writes are failing. Risk of data loss."
+          summary: "AOF writes failing on {{ $labels.instance }} - data loss risk"
 
   - name: valkey-performance
     rules:
       - alert: ValkeyHighLatency
-        expr: >
-          rate(redis_commands_duration_seconds_total[5m])
-          /
-          rate(redis_commands_processed_total[5m])
-          > 0.01
+        expr: rate(redis_commands_duration_seconds_total[5m]) / rate(redis_commands_processed_total[5m]) > 0.01
         for: 5m
-        labels:
-          severity: warning
+        labels: { severity: warning }
         annotations:
-          summary: "High average command latency on {{ $labels.instance }}"
-          description: "Average command duration exceeds 10ms."
+          summary: "Average command latency > 10ms on {{ $labels.instance }}"
 
       - alert: ValkeyLowHitRate
-        expr: >
-          rate(redis_keyspace_hits_total[5m])
-          /
-          (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))
-          < 0.9
+        expr: rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) < 0.9
         for: 15m
-        labels:
-          severity: warning
+        labels: { severity: warning }
         annotations:
-          summary: "Low cache hit rate on {{ $labels.instance }}"
-          description: "Hit rate is {{ $value | humanizePercentage }}. Review access patterns."
+          summary: "Hit rate {{ $value | humanizePercentage }} on {{ $labels.instance }}"
 
       - alert: ValkeySlowFork
         expr: redis_latest_fork_usec > 500000
         for: 0m
-        labels:
-          severity: warning
+        labels: { severity: warning }
         annotations:
-          summary: "Slow fork on {{ $labels.instance }}"
-          description: "Last fork took {{ $value }}us (> 500ms). Large dataset or memory pressure."
+          summary: "Fork took {{ $value }}us on {{ $labels.instance }}"
+
+  - name: valkey-cluster
+    rules:
+      - alert: ValkeyClusterStateNotOk
+        expr: redis_cluster_state == 0
+        for: 30s
+        labels: { severity: critical }
+        annotations:
+          summary: "Cluster state not OK on {{ $labels.instance }}"
+
+      - alert: ValkeyClusterSlotsFail
+        expr: redis_cluster_slots_fail > 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $value }} slots in FAIL state on {{ $labels.instance }}"
+
+      - alert: ValkeyNoMaster
+        expr: (count(redis_instance_info{role="master"}) or vector(0)) < 1
+        for: 30s
+        labels: { severity: critical }
+        annotations:
+          summary: "No Valkey master detected - failover may have failed"
+
+      - alert: ValkeyTooManyMasters
+        expr: count(redis_instance_info{role="master"}) > 1
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $value }} masters detected - possible split-brain"
+
+      - alert: ValkeyClusterFlapping
+        expr: changes(redis_connected_slaves[1m]) > 1
+        for: 2m
+        labels: { severity: warning }
+        annotations:
+          summary: "Replica flapping on {{ $labels.instance }}"
+
+  - name: valkey-operational
+    rules:
+      - alert: ValkeySlowlogGrowing
+        expr: delta(redis_slowlog_length[10m]) > 10
+        for: 0m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $value }} new slowlog entries in 10m on {{ $labels.instance }}"
+
+      - alert: ValkeyHighP99Latency
+        expr: redis_latency_percentiles_usec{quantile="99.9"} > 10000
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "p99.9 latency {{ $value }}us on {{ $labels.instance }}"
+
+      - alert: ValkeyRDBSaveStale
+        expr: time() - redis_rdb_last_save_timestamp_seconds > 3600
+        for: 0m
+        labels: { severity: warning }
+        annotations:
+          summary: "No RDB save in over 1 hour on {{ $labels.instance }}"
+
+      - alert: ValkeyHighKeyEvictionRate
+        expr: rate(redis_evicted_keys_total[5m]) > 100
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Evicting {{ $value }} keys/sec on {{ $labels.instance }}"
 ```
 
 ---
@@ -214,12 +236,12 @@ Quick reference for tuning thresholds to your environment:
 
 | Alert | Default Threshold | Adjust When |
 |-------|-------------------|-------------|
-| Memory high | 90% of maxmemory | Lower for write-heavy workloads |
-| Memory critical | 95% of maxmemory | - |
+| Memory high | 90% of `maxmemory` | Lower for write-heavy workloads |
+| Memory critical | 95% of `maxmemory` | - |
 | Fragmentation high | ratio > 1.5 | Higher if active defrag is enabled |
 | Swapping | ratio < 1.0 | - |
 | Rejected connections | any > 0 | Raise if connection pooling causes bursts |
-| Connections near limit | 80% of maxclients | Adjust based on pool sizing |
+| Connections near limit | 80% of `maxclients` | Adjust based on pool sizing |
 | Blocked clients | > 10 sustained | Adjust based on workload |
 | Replication lag | > 30s since last I/O | Lower for latency-sensitive reads |
 | Replication link down | any down | - |
@@ -227,6 +249,32 @@ Quick reference for tuning thresholds to your environment:
 | Command latency | > 10ms average | Lower for latency-critical apps |
 | Hit rate low | < 90% | Higher for pure cache workloads |
 | Fork duration | > 500ms | Higher for large datasets |
+| Cluster state | != ok | - |
+| Cluster slots fail | > 0 | - |
+| No master | count < 1 | - |
+| Multiple masters | count > 1 | Possible split-brain |
+| Slowlog growing | > 10 entries/10m | Lower for latency-sensitive apps |
+| p99.9 latency | > 10ms | Lower for SLA-bound services |
+| RDB save stale | > 1 hour since last | Adjust based on save schedule |
+| Eviction rate | > 100 keys/sec | Lower for non-cache workloads |
+
+---
+
+## Recording Rules
+
+Pre-compute expensive queries. Add to the same rule file:
+
+```yaml
+groups:
+  - name: valkey-recording
+    rules:
+      - record: valkey:memory_fragmentation_ratio
+        expr: redis_memory_used_rss_bytes / redis_memory_used_bytes
+      - record: valkey:hit_rate
+        expr: rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))
+      - record: valkey:memory_utilization
+        expr: redis_memory_used_bytes / redis_memory_max_bytes
+```
 
 ---
 
@@ -262,10 +310,27 @@ receivers:
 
 ---
 
+## Community Alert Sources
+
+- **awesome-prometheus-alerts** (`samber/awesome-prometheus-alerts`,
+  `dist/rules/redis/`) - includes RedisMissingMaster, RedisTooManyMasters,
+  RedisClusterFlapping, RedisMissingBackup, RedisOutOfSystemMemory.
+- **redis-mixin** (`oliver006/redis_exporter/contrib/redis-mixin/`) -
+  Jsonnet-based alerts including cluster slot and state rules.
+
+---
+
 ## See Also
 
 - [Monitoring Metrics](metrics.md) - metric definitions and INFO field mapping
 - [Prometheus Setup](prometheus.md) - exporter and scrape configuration
 - [Grafana Dashboards](grafana.md) - dashboard thresholds aligned with alerts
+- [Commandlog](commandlog.md) - slow command logging behind ValkeySlowlogGrowing alert
 - [Pub/Sub Configuration](../configuration/pubsub.md) - subscriber buffer alerting
+- [Troubleshooting Diagnostics](../troubleshooting/diagnostics.md) - 7-phase investigation runbook when alerts fire
 - [Troubleshooting OOM](../troubleshooting/oom.md) - memory alert response
+- [Troubleshooting Slow Commands](../troubleshooting/slow-commands.md) - latency alert investigation
+- [Troubleshooting Replication Lag](../troubleshooting/replication-lag.md) - replication alert investigation
+- [Troubleshooting Cluster Partitions](../troubleshooting/cluster-partitions.md) - cluster alert investigation
+- [Performance Latency](../performance/latency.md) - latency diagnosis workflow
+- [Security ACL](../security/acl.md) - ACL LOG for access denial auditing alongside alerts

@@ -81,6 +81,14 @@ CLIENT LIST TYPE pubsub
 | `client_recent_max_output_buffer` | > 50% of hard limit | Approaching disconnect threshold |
 | Frequent disconnects in logs | `"Client ... output buffer limit reached"` | Increase limits or fix slow consumer |
 
+### Interaction with maxmemory-clients
+
+When `maxmemory-clients` is set (e.g., `5%` of maxmemory), client eviction kicks in before output buffer limits. Client eviction disconnects the client using the most memory first, regardless of class. This means a slow Pub/Sub subscriber may be disconnected by client eviction before hitting the pubsub buffer hard limit. Use `CLIENT NO-EVICT on` for critical monitoring or control-plane subscribers.
+
+### Anti-Pattern: Unlimited Pub/Sub Buffers
+
+Setting the pubsub hard limit to `0` (unlimited) is dangerous. A single slow subscriber can consume all available memory, leading to OOM or eviction of data keys. Always set explicit hard limits.
+
 ### Mitigation Strategies
 
 1. **Right-size buffer limits** - match to your subscriber's processing speed
@@ -155,6 +163,8 @@ Keyspace notifications add overhead per matching operation:
 - `A` (all events) on a high-throughput instance can be significant
 - Enable only the specific flags you need
 
+**Anti-pattern**: Enabling `notify-keyspace-events "AKE"` (all events) on a high-write instance generates a Pub/Sub message for every write operation, consuming significant CPU and memory even with zero subscribers.
+
 ---
 
 ## Sharded Pub/Sub (Cluster Mode)
@@ -222,6 +232,13 @@ subscriptions across all clients.
 
 ---
 
+## Scaling Pub/Sub
+
+- **Horizontal**: Use sharded Pub/Sub (`SSUBSCRIBE`/`SPUBLISH`) in cluster mode to distribute load across nodes instead of broadcasting to all
+- **Vertical**: Raise `client-output-buffer-limit pubsub` and ensure `maxmemory-clients` accommodates subscriber buffer memory
+- **Subscriber health**: Monitor `omem` (output buffer memory) in `CLIENT LIST` output to identify slow subscribers before they hit buffer limits
+
+
 ## Monitoring Subscriber Count and Memory
 
 ### Key INFO Metrics
@@ -264,6 +281,10 @@ Fields to watch: `omem` (output memory), `sub` (subscriptions), `psub`
 
 ## See Also
 
+- [Configuration Essentials](essentials.md) - core config parameters including client limits
+- [Eviction Policies](eviction.md) - maxmemory-policy interaction with subscriber memory
+- [Advanced Configuration](advanced.md) - protocol limits and anti-patterns for Pub/Sub buffers
+- [Workload Presets](workload-presets.md) - complete configs by use case
 - [Monitoring Alerting](../monitoring/alerting.md) - alert rules for subscriber memory
 - [Monitoring Metrics](../monitoring/metrics.md) - `pubsub_channels`, `pubsub_patterns` metrics
 - [Security ACL](../security/acl.md) - `acl-pubsub-default` and channel permissions

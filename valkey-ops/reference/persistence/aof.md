@@ -49,14 +49,27 @@ Important: `appendfilename` and `appenddirname` are IMMUTABLE - they cannot be c
 | Policy | Behavior | Max Data Loss | Throughput Impact |
 |--------|----------|---------------|-------------------|
 | `always` | Fsync after every write command | Zero (single command) | High - every write waits for disk |
-| `everysec` | Fsync once per second (default) | ~1 second of writes | Low - background thread handles fsync |
+| `everysec` | Fsync once per second (default) | **~2 seconds worst case** | Low - background thread handles fsync |
 | `no` | Let the OS flush when it decides | OS-dependent (up to 30s) | None |
+
+**Worst-case for `everysec`**: If the background fsync takes > 1 second,
+the main thread delays writes up to an additional second. If 2 seconds
+elapse without fsync completing, a blocking write is forced. The actual
+worst-case data loss is 2 seconds, not 1 second as commonly stated
+(per antirez's persistence analysis).
+
+**`always` mode group commit**: Multiple concurrent clients' writes are
+batched into a single write+fsync. Practical limit ~1000 tx/s on rotational
+disk. SSD improves this significantly.
 
 Recommendation: `everysec` balances durability and performance for most workloads. Use `always` only when you cannot tolerate any data loss and accept the throughput cost.
 
 ### no-appendfsync-on-rewrite
 
-When set to `yes`, Valkey skips fsync during AOF rewrite or RDB save to reduce disk contention. This improves rewrite performance but increases the data loss window. The default `no` is safer.
+When set to `yes`, Valkey skips fsync during AOF rewrite or RDB save to
+reduce disk contention. This means durability drops to `appendfsync no`
+during rewrites - up to 30 seconds of data loss in the worst scenario
+(with default Linux settings). The default `no` is safer.
 
 ## Multi-Part AOF Architecture
 
@@ -105,6 +118,9 @@ AOF rewrite compacts the log by creating a new base file reflecting the current 
 Triggered when both conditions are met:
 1. Current AOF size exceeds last-rewrite size by `auto-aof-rewrite-percentage` (default: 100%)
 2. Current AOF size exceeds `auto-aof-rewrite-min-size` (default: 64MB)
+
+If a rewrite fails, Valkey uses an exponential backoff mechanism for retries
+to prevent repeated fork storms from failing rewrites (e.g., OOM on fork).
 
 ### Manual Rewrite
 
@@ -167,6 +183,23 @@ valkey-cli CONFIG SET appendonly no
 valkey-cli CONFIG REWRITE
 ```
 
+### Startup Log Sequence (Hybrid Persistence)
+
+When loading hybrid AOF (RDB preamble + AOF tail), the server logs:
+
+```
+* Reading RDB preamble from AOF file...
+* Reading the remaining AOF tail...
+```
+
+If the AOF is truncated:
+
+```
+# !!! Warning: short read while loading the AOF file !!!
+# !!! Truncating the AOF at offset 439 !!!
+# AOF loaded anyway because aof-load-truncated is enabled
+```
+
 ## Production Recommendations
 
 1. **Enable hybrid persistence** - `aof-use-rdb-preamble yes` gives you fast restarts with AOF durability
@@ -182,5 +215,8 @@ valkey-cli CONFIG REWRITE
 - [RDB Persistence](rdb.md) - point-in-time snapshots
 - [Backup and Recovery](backup-recovery.md) - automated backup procedures
 - [Durability vs Performance](../performance/durability.md) - persistence trade-off spectrum
+- [Replication Safety](../replication/safety.md) - replica-based backup and write safety
 - [Configuration Essentials](../configuration/essentials.md) - AOF config defaults
+- [Capacity Planning](../operations/capacity-planning.md) - memory sizing for fork overhead
+- [Production Checklist](../production-checklist.md) - pre-launch persistence verification
 - [See valkey-dev: aof](../valkey-dev/reference/persistence/aof.md) - multi-part AOF architecture internals

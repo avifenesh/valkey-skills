@@ -161,7 +161,10 @@ Multiply by millions of keys and the difference is significant. With 10 million 
 
 ## See Also
 
-- [Memory Optimization](../performance/memory.md) - maxmemory, eviction, data modeling
 - [Configuration Essentials](essentials.md) - all config defaults
+- [Workload Presets](workload-presets.md) - encoding thresholds in context of complete configs
+- [Eviction Policies](eviction.md) - memory pressure that triggers eviction
+- [Lazy Free Configuration](lazyfree.md) - async deletion for large keys after encoding conversion
+- [Memory Optimization](../performance/memory.md) - maxmemory, eviction, data modeling
 - [See valkey-dev: encoding transitions](../valkey-dev/reference/data-structures/encoding-transitions.md) - C implementation of encoding checks and conversion logic
 - [See valkey-dev: listpack](../valkey-dev/reference/data-structures/listpack.md) - listpack internal structure

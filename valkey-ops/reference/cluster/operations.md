@@ -47,9 +47,31 @@ Bypasses the election entirely. The replica unilaterally assigns itself a new co
 valkey-cli -p 7003 -a "password" CLUSTER FAILOVER TAKEOVER
 ```
 
-Use as a last resort when the majority of primaries are unreachable and a normal election is impossible. This can cause slot assignment conflicts if the cluster later re-merges with a different view of ownership.
+Use as a last resort when the majority of primaries are unreachable and a normal election is impossible. This can cause slot assignment conflicts if the cluster later re-merges with a different view of ownership. Particularly relevant for multi-DC deployments where the majority of primaries were in the failed DC and automatic failover cannot proceed.
 
 Source: `cluster_legacy.c` - `clusterBumpConfigEpochWithoutConsensus()`, `clusterFailoverReplaceYourPrimary()`
+
+### Automatic Failover Timing
+
+Typical cluster failover time: `NODE_TIMEOUT + 1-2 seconds`. With default `cluster-node-timeout` of 15000ms, failover completes in ~16-17 seconds.
+
+The timeline: PFAIL detected at NODE_TIMEOUT, FAIL declared after majority of primaries report PFAIL (within 2 * NODE_TIMEOUT), then replicas start elections with a rank-based delay of `500ms + random(0-500ms) + REPLICA_RANK * 1000ms`. The best-ranked replica (rank 0, where all replicas agree on FAIL) starts its election immediately with no additional delay beyond the base. Note: the 500ms base delay assumes the default `cluster-node-timeout` of 15000ms (the base is calculated as `min(cluster_node_timeout/30, 500)`).
+
+**Client-visible downtime**: In the cluster tutorial's failover test, the system was unable to accept 578 reads and 577 writes during a simulated primary crash with continuous write load. No data inconsistency was created. This represents ~5-15 seconds of client errors during automatic failover.
+
+### PFAIL/FAIL State Machine
+
+- **PFAIL** (Possible Failure): Local to each node. Set when a node is unreachable for `NODE_TIMEOUT`. Not sufficient to trigger failover.
+- **FAIL**: Set when a majority of primaries report PFAIL/FAIL within `NODE_TIMEOUT * 2` (`FAIL_REPORT_VALIDITY_MULT = 2`). This triggers the replica election.
+- **FAIL clearing**: Mostly one-way. Can only be cleared when the node is reachable and is a replica, or is a primary with no slots, or enough time has passed (`N * NODE_TIMEOUT`) without replica promotion.
+
+The weak agreement protocol means PFAIL->FAIL does not require simultaneous consensus - it is gossip-collected over a time window. This is sufficient for safety because the actual failover election uses a strict majority vote.
+
+Source: `cluster_legacy.c` - PFAIL is set when node is unresponsive for `cluster_node_timeout`, FAIL reports expire after `cluster_node_timeout * 2`
+
+### Comparison: Cluster vs Sentinel Failover
+
+Both use a majority-vote protocol, but differ in structure. Sentinel is a separate process that monitors non-clustered Valkey; cluster failover is built into the data nodes themselves. Sentinel uses SDOWN/ODOWN detection with a configurable quorum, while cluster uses PFAIL/FAIL with gossip-based agreement. See [Sentinel Architecture](../sentinel/architecture.md) for the Sentinel protocol details.
 
 ### Comparison
 
@@ -166,13 +188,23 @@ Source: `cluster_legacy.c` - `clusterHandleReplicaMigration()`
 
 Set `cluster-allow-replica-migration no` to disable automatic migration. Setting `cluster-migration-barrier` to 0 means a primary can donate its last replica.
 
+### Surplus Replica Strategy
+
+Instead of giving every primary 2 replicas (expensive), give 3 or 4 extra replicas to select primaries. Replica migration will automatically redistribute them to cover failures.
+
+Example: 10 primaries, each with 1 replica (20 nodes), plus 3 additional replicas on arbitrary primaries (23 nodes total). When Primary-X's replica fails, one of the surplus replicas migrates to cover Primary-X. When Primary-X itself later fails, the migrated replica promotes. The cluster survives 2 sequential failures that would otherwise be fatal.
+
 ---
 
 ## Cluster Scalability
 
 ### Limits
 
-Valkey 9.0 supports clusters up to 2,000 nodes, capable of over 1 billion requests per second aggregate.
+Valkey 9.0 supports clusters up to 2,000 nodes, capable of over 1 billion requests per second aggregate. Key scalability improvements in 8.1/9.0:
+
+- **Serialized failover with ranking** (8.1): Multiple primary failures no longer cause vote collisions. Shards are ranked by lexicographic shard ID; higher-rank shards failover first, lower-rank shards add delay.
+- **Reconnection throttling** (9.0): Nodes no longer storm reconnections to failed nodes every 100ms. Throttled to reasonable attempts within `cluster-node-timeout`.
+- **Lightweight pub/sub headers** (9.0): Cluster bus pub/sub messages no longer carry the full 2KB slot bitmap. Light header is ~30 bytes.
 
 The practical scaling considerations:
 
@@ -241,5 +273,5 @@ done
 - [Cluster Setup](setup.md) - creating a cluster, hash slots, configuration
 - [Cluster Resharding](resharding.md) - moving slots, adding/removing nodes
 - [Cluster Consistency](consistency.md) - write safety during partitions
-- [Troubleshooting Cluster Partitions](../troubleshooting/cluster-partitions.md) - diagnosing cluster issues
-- [See valkey-dev: cluster/failover](../valkey-dev/reference/cluster/failover.md) - PFAIL/FAIL detection, election protocol, replica rank delay
+- [Sentinel Architecture](../sentinel/architecture.md) - Sentinel-based failover for comparison with cluster failover
+- [Replication Safety](../replication/safety.md) - min-replicas settings, cascading resync prevention

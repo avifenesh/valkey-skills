@@ -83,6 +83,31 @@ Starting with RDB version 80 (Valkey 9.0), files use the `VALKEY` magic string i
 - RDB >= 80: `VALKEY` magic string
 - RDB 12-79: reserved/foreign
 
+## Valkey Release History
+
+| Version | Date | Notes |
+|---------|------|-------|
+| 8.0.0 GA | Sep 2024 | Fork of Redis OSS 7.2.4, fully compatible |
+| 8.0.1-8.0.7 | Oct 2024-Feb 2026 | Security and bug fixes |
+| 8.1.0 GA | Mar 2025 | SIMD, embedded hash values, BGSAVE CANCEL |
+| 8.1.1-8.1.6 | Apr 2025-Feb 2026 | Security and bug fixes |
+| 9.0.0 GA | Oct 2025 | Atomic slot migration, hash field expiration |
+| 9.0.1 | Dec 2025 | Bug fixes (Sentinel ACL regression fix) |
+| 9.0.2 | Feb 2026 | Critical hash field expiration bug fixes |
+| 9.0.3 | Feb 2026 | Security (3 CVEs) |
+
+**9.0 critical bugs in early releases**: 9.0.0-9.0.1 had multiple hash
+field expiration bugs (memory leaks, crashes, data corruption). 9.0.0 had
+Lua VM crash after `FUNCTION FLUSH ASYNC` + `FUNCTION LOAD`, and crash
+when aborting slot migration during child snapshot. **Use 9.0.3+ in
+production.**
+
+**Sentinel ACL regression**: 9.0.0 required `+failover` ACL permission
+in the Sentinel failover path. Fixed in 9.0.1. Update Sentinel ACL rules
+if upgrading directly to 9.0.0.
+
+---
+
 ## Feature Compatibility Between Versions
 
 | Feature | Minimum Version | Notes |
@@ -93,10 +118,19 @@ Starting with RDB version 80 (Valkey 9.0), files use the `VALKEY` magic string i
 | Coordinated Sentinel failover | 9.0+ | `SENTINEL FAILOVER ... COORDINATED` |
 | Memory prefetching for pipelines | 9.0+ | Up to 40% throughput improvement |
 | Zero-copy responses | 9.0+ | Up to 20% improvement for large payloads |
-| SIMD optimizations | 9.0+ | BITCOUNT, HyperLogLog |
+| SIMD optimizations | 8.1+ | BITCOUNT, HyperLogLog |
 | Multipath TCP | 9.0+ | `mptcp` config |
 | 2000-node clusters | 9.0+ | 1B+ RPS capable |
 | `extended-redis-compatibility` | 8.0+ | Reports as Redis for client compatibility |
+
+## Client Library Compatibility
+
+- Valkey 8.x: wire-protocol compatible with Redis; all Redis clients work without changes
+- Valkey 9.x new features (hash field expiration, numbered databases in cluster) require updated client libraries
+- `REDISCLI_AUTH` environment variable is supported alongside `VALKEYCLI_AUTH` (added in 9.0)
+- `LOLWUT` output changed from "Redis ver." to "Valkey ver." in 9.0 - may break naive version detection scripts
+
+---
 
 ## Deprecated Configurations
 
@@ -114,6 +148,8 @@ These config directives are silently ignored (verified from `src/config.c`):
 
 - [Rolling Upgrades](rolling-upgrade.md) - zero-downtime upgrade procedures
 - [Redis Migration](migration.md) - migrating from Redis to Valkey
+- [Sentinel Architecture](../sentinel/architecture.md) - Sentinel version considerations during upgrades
+- [Cluster Operations](../cluster/operations.md) - cluster failover procedures for version transitions
 - [Production Checklist](../production-checklist.md) - pre-upgrade verification
 - [See valkey-dev: replication overview](../valkey-dev/reference/replication/overview.md) - replication protocol internals
 - [See valkey-dev: rdb](../valkey-dev/reference/persistence/rdb.md) - RDB format details

@@ -110,6 +110,22 @@ On managed Kubernetes services, node-level tuning options:
 | GCP GKE | Use a DaemonSet, or configure via node pool `--system-config-from-file` |
 | Azure AKS | Use a DaemonSet, or configure via `customLinuxOsConfig` in node pool |
 
+### StorageClass per Cloud Provider
+
+| Provider | Recommended Class | Provisioner | Notes |
+|----------|------------------|-------------|-------|
+| AWS EKS | `gp3` | `ebs.csi.aws.com` | 3000 IOPS baseline, cheaper than gp2 |
+| GKE | `premium-rwo` | `pd.csi.storage.gke.io` | SSD-backed, single-zone |
+| AKS | `managed-premium` | `disk.csi.azure.com` | Premium SSD, use `cachingMode: ReadOnly` for reads |
+| On-prem | Local PV or Ceph | varies | Lowest latency with local PV (pins pods to nodes) |
+
+All should use `volumeBindingMode: WaitForFirstConsumer` and
+`allowVolumeExpansion: true`. For Valkey, I/O latency matters more than
+throughput - SSD/NVMe storage classes are strongly recommended.
+
+**GKE Autopilot note**: Cannot set sysctls (`net.core.somaxconn` not
+tunable). Security context managed by Autopilot. Resource requests mandatory.
+
 ## Docker and NAT Limitations
 
 Valkey Cluster uses a gossip protocol where nodes exchange their IP addresses and two ports (client port and cluster bus port at client+10000). NAT and port remapping break this protocol.
@@ -270,6 +286,11 @@ Import the community Redis/Valkey dashboard (Grafana dashboard ID 11835 or 763) 
 - [StatefulSet Patterns](statefulset.md) - raw StatefulSet deployment
 - [Helm Charts](helm.md) - chart-based deployment
 - [Kubernetes Operators](operators.md) - CRD-based deployment
+- [Capacity Planning](../operations/capacity-planning.md) - memory and resource sizing
+- [RDB Persistence](../persistence/rdb.md) - fork overhead and memory impact
 - [Bare Metal Setup](../deployment/bare-metal.md) - kernel tuning reference for non-K8s
 - [Monitoring Prometheus](../monitoring/prometheus.md) - exporter setup
+- [Performance I/O Threads](../performance/io-threads.md) - I/O thread count and CPU core allocation
+- [Performance Memory](../performance/memory.md) - memory optimization and fork headroom
+- [Performance Latency](../performance/latency.md) - THP and kernel settings affecting latency
 - [Production Checklist](../production-checklist.md) - full pre-launch verification

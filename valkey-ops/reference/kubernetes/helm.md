@@ -9,13 +9,19 @@ Use when deploying Valkey on Kubernetes via Helm, choosing between the official 
 | Feature | Official Valkey Chart | Bitnami Chart |
 |---------|----------------------|---------------|
 | Repository | `valkey/valkey` | `oci://registry-1.docker.io/bitnamicharts/valkey` |
+| **Chart version** | **0.9.3** | **4.0.2** |
+| **App version** | **Valkey 9.0.1** | **Valkey 8.1.3** |
 | Architectures | Standalone, replication | Standalone, replication, cluster |
 | Cluster mode | No | Yes (separate `valkey-cluster` chart) |
-| Sentinel | Via replication arch | Yes |
+| Sentinel | No | Yes |
+| PDB | No (create manually) | Yes (default) |
 | TLS | Yes | Yes |
 | Metrics sidecar | redis_exporter | redis_exporter |
-| ACL support | Yes | Yes |
-| Persistence | PVC-based | PVC-based |
+| ACL support | Yes (ACL-based) | Yes (password-based default) |
+| Persistence default | Disabled | Enabled (8Gi) |
+| Auth default | Disabled | Enabled (random password) |
+| VPA/HPA | No | Yes (replica autoscaling) |
+| OpenShift | Manual | Auto-adapt security context |
 | Base image | `valkey/valkey` | `bitnami/valkey` (hardened) |
 | License | BSD | Apache 2.0 |
 
@@ -238,10 +244,31 @@ helm upgrade my-valkey valkey/valkey \
 
 Helm upgrades trigger rolling restarts for StatefulSets. Pods are restarted one at a time in reverse ordinal order (highest first), which means replicas restart before the primary.
 
+## Migrating from Bitnami to Official Chart
+
+In-place upgrade is NOT possible due to incompatible naming conventions,
+labels, and StatefulSet structures. Use a replication-based migration:
+
+1. Deploy official chart alongside existing Bitnami deployment
+2. Configure the new instance as a replica of the Bitnami primary via
+   `replicaof` and `primaryauth`
+3. Wait for sync (`INFO replication` shows `master_link_status:up`)
+4. Failover: promote new instance, switch client endpoints
+5. Tear down Bitnami deployment
+
+Plan for a brief maintenance window to ensure all writes are fully
+replicated before switching endpoints.
+
+---
+
 ## See Also
 
 - [StatefulSet Patterns](statefulset.md) - raw StatefulSet deployment
 - [Kubernetes Operators](operators.md) - CRD-based deployment
 - [Kubernetes Tuning](tuning-k8s.md) - kernel tuning in K8s
+- [Capacity Planning](../operations/capacity-planning.md) - memory and resource sizing
 - [Configuration Essentials](../configuration/essentials.md) - Valkey config defaults
+- [Performance I/O Threads](../performance/io-threads.md) - I/O thread count and CPU allocation
+- [Performance Memory](../performance/memory.md) - memory optimization for container sizing
+- [Rolling Upgrades](../upgrades/rolling-upgrade.md) - zero-downtime upgrade procedures
 - [Production Checklist](../production-checklist.md) - full pre-launch verification

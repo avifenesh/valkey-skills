@@ -8,14 +8,17 @@ Use when deploying Valkey via a Kubernetes operator, comparing operator options,
 
 | Feature | Hyperspike Operator | SAP Operator |
 |---------|-------------------|--------------|
-| Modes | Cluster, Sentinel, Standalone | Sentinel, Static primary |
-| CRD name | `Valkey` | `Valkey` |
+| **Version** | **v0.0.61** | **v1alpha1** |
+| Modes | Standalone, Sentinel, Cluster | Sentinel, Static primary |
+| CRD name | `Valkey` (shortName: `vk`) | `Redis` |
 | API group | `hyperspike.io` | `cache.cs.sap.com` |
-| TLS | Yes | Yes |
-| Prometheus integration | ServiceMonitor | Via Bitnami chart |
+| TLS | Yes (cert-manager integration) | Yes (cert-manager integration) |
+| Prometheus integration | ServiceMonitor | ServiceMonitor + PrometheusRule |
+| External access | Envoy proxy or per-shard LB | No |
+| OpenShift | Yes (`platformManagedSecurityContext`) | No |
 | Underlying deployment | Custom StatefulSets | Bitnami Helm chart |
 | Install method | Helm or kubectl | Helm or kubectl |
-| Maturity | Community | Enterprise (SAP) |
+| Maturity | Pre-1.0 (community) | Enterprise (SAP) |
 
 ### When to Use an Operator vs Helm
 
@@ -112,11 +115,41 @@ spec:
 
 ### Hyperspike Operator Features
 
-- Automatic failover handling for Sentinel and Cluster modes
-- TLS certificate management
+- Standalone, Sentinel, and Cluster modes
+- cert-manager integration for TLS (specify issuer name and type)
+- Envoy proxy for external access (avoids per-shard LoadBalancers)
 - Prometheus ServiceMonitor creation
 - Persistent volume claim management
-- Rolling upgrades via StatefulSet update strategy
+- OpenShift support via `platformManagedSecurityContext`
+- Container image signing via cosign
+
+**Known limitation**: the `replicas` field currently creates extra primary
+nodes rather than per-shard replicas. Track
+`github.com/hyperspike/valkey-operator/issues/186` for updates. No
+backup/restore functionality.
+
+### External Access (Hyperspike)
+
+Two modes for external client access:
+
+**Proxy** - single LoadBalancer with Envoy routing (recommended):
+```yaml
+spec:
+  externalAccess:
+    enabled: true
+    type: Proxy
+    proxy:
+      image: "envoyproxy/envoy:v1.32.1"
+      replicas: 2
+```
+
+**LoadBalancer** - one LB per shard (simpler but more expensive):
+```yaml
+spec:
+  externalAccess:
+    enabled: true
+    type: LoadBalancer
+```
 
 ## SAP Valkey Operator
 
@@ -175,9 +208,13 @@ Without Sentinel, the first pod is always the primary. No automatic failover occ
 ### SAP Operator Features
 
 - Two topologies: static primary and Sentinel
+- Auto-generates a binding secret with connection details (host, port,
+  password, CA cert, sentinel config) - customizable via Go templates
+- cert-manager integration (auto self-signed or custom issuer)
+- Prometheus exporter + ServiceMonitor + PrometheusRule
+- Auto-generates topology spread constraints when not specified
+- `sentinel.enabled` is immutable after creation
 - Bitnami chart values passthrough for advanced config
-- TLS support
-- Persistent storage management
 - Namespace-scoped operation
 
 ## Operator Day-2 Operations
@@ -231,4 +268,8 @@ kubectl describe valkey my-cluster
 - [Helm Charts](helm.md) - chart-based deployment
 - [StatefulSet Patterns](statefulset.md) - raw StatefulSet deployment
 - [Kubernetes Tuning](tuning-k8s.md) - kernel tuning in K8s
+- [Capacity Planning](../operations/capacity-planning.md) - memory and resource sizing
+- [Performance I/O Threads](../performance/io-threads.md) - I/O thread CPU allocation for operator manifests
+- [Performance Memory](../performance/memory.md) - memory optimization for resource spec sizing
+- [Rolling Upgrades](../upgrades/rolling-upgrade.md) - zero-downtime upgrade procedures
 - [Production Checklist](../production-checklist.md) - full pre-launch verification

@@ -96,6 +96,28 @@ valkey-cli INFO stats | grep active_defrag
 | 1.5 - 2.0 | Significant fragmentation | Enable active defrag. |
 | > 2.0 | Severe fragmentation | Enable aggressive defrag or consider restart. |
 
+## Common Causes of Fragmentation
+
+1. **Delete-heavy workloads** - Filling 5GB then deleting 2GB leaves RSS at
+   ~5GB while `used_memory` shows ~3GB. The allocator keeps freed pages for
+   future reuse but the OS sees them as allocated.
+2. **Variable-size key churn** - Repeatedly creating and deleting keys of
+   different sizes fragments jemalloc's size classes.
+3. **Large key deletion** - Deleting a 1GB sorted set returns memory in small
+   chunks, creating fragmentation across multiple size classes.
+4. **Listpack-to-hashtable conversions** - When collections exceed
+   `*-max-listpack-entries`, the compact encoding converts to a full hash
+   table, fragmenting the memory that held the original listpack.
+
+### Recovery for Extreme Fragmentation
+
+If fragmentation ratio exceeds 2.0 and active defrag is insufficient:
+1. Enable aggressive defrag settings (cycle-max 25-50).
+2. If ratio exceeds 3.0, consider a rolling restart: failover to replica,
+   restart the old primary (fresh memory layout), then failover back.
+3. For persistent fragmentation, review workload patterns - high delete rates
+   with variable sizes are the primary cause.
+
 ## When to Use vs When to Restart
 
 **Use active defrag when:**
@@ -134,6 +156,7 @@ valkey-cli INFO stats | grep active_defrag
 
 - [Memory Optimization](memory.md) - encoding thresholds, maxmemory tuning
 - [Latency Diagnosis](latency.md) - diagnosing defrag-related latency spikes
-- [Monitoring Metrics](../monitoring/metrics.md) - `mem_fragmentation_ratio`, `active_defrag_running`
 - [Troubleshooting OOM](../troubleshooting/oom.md) - fragmentation as OOM contributor
+- [Monitoring Metrics](../monitoring/metrics.md) - `mem_fragmentation_ratio`, `active_defrag_running`
+- [Monitoring Alerting](../monitoring/alerting.md) - fragmentation alert rules
 - [See valkey-dev: defragmentation](../valkey-dev/reference/memory/defragmentation.md) - allocator interaction, jemalloc purging, scan stages

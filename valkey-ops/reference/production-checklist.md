@@ -10,7 +10,7 @@ Use when preparing a Valkey deployment for production, auditing an existing setu
 - [ ] **net.core.somaxconn >= 65535** - TCP listen backlog. Must match or exceed `tcp-backlog` config.
 - [ ] **Transparent huge pages disabled** - THP causes latency spikes. `echo never > /sys/kernel/mm/transparent_hugepage/enabled`. Make persistent via systemd unit or init container.
 - [ ] **Swap enabled** - safety net to prevent OOM kills. Swap is slow but better than process death. Set `vm.swappiness=1` to minimize swap use under normal operation.
-- [ ] **File descriptor limit >= maxclients + 32** - Valkey needs file descriptors for client connections plus internal file handles. Set via `LimitNOFILE` in systemd or `ulimit -n`.
+- [ ] **File descriptor limit >= `maxclients` + 32** - Valkey needs file descriptors for client connections plus internal file handles. Set via `LimitNOFILE` in systemd or `ulimit -n`.
 - [ ] **Valkey runs as unprivileged user** - never run as root. Create a dedicated `valkey` user with `--system --no-create-home --shell /usr/sbin/nologin`.
 
 ## Configuration
@@ -23,7 +23,7 @@ Use when preparing a Valkey deployment for production, auditing an existing setu
   - Cache-only: `save ""`, `appendonly no`
   - Durable store: `appendonly yes`, `appendfsync everysec`, `aof-use-rdb-preamble yes`
 - [ ] **latency-monitor-threshold enabled** - set to 50-100ms. Enables `LATENCY DOCTOR` and `LATENCY LATEST` diagnostics.
-- [ ] **slowlog configured** - `slowlog-log-slower-than 10000` (10ms), `slowlog-max-len 128`. Review periodically.
+- [ ] **Commandlog configured** - `commandlog-execution-slower-than 10000` (10ms), `commandlog-slow-execution-max-len 128`. Legacy `slowlog-*` aliases also work. Review periodically.
 
 ## Security
 
@@ -47,7 +47,7 @@ Use when preparing a Valkey deployment for production, auditing an existing setu
   - BGSAVE failures
   - Rejected connections
   - Latency spikes (p99 > threshold)
-- [ ] **Slow log reviewed periodically** - `SLOWLOG GET 25` to catch expensive commands.
+- [ ] **Commandlog reviewed periodically** - `COMMANDLOG GET 25 slow` to catch expensive commands. `SLOWLOG GET 25` also works.
 - [ ] **LATENCY DOCTOR available** - requires `latency-monitor-threshold > 0`.
 
 ## Backup
@@ -80,6 +80,14 @@ Use when preparing a Valkey deployment for production, auditing an existing setu
 - [ ] **Startup probe configured** - prevents liveness probe kills during AOF/RDB loading. Set `failureThreshold * periodSeconds` to exceed maximum load time.
 - [ ] **Cluster mode NAT handled** - use `cluster-announce-ip`, `hostNetwork`, or an operator that manages cluster bus routing.
 
+## Persistence Specifics
+
+- [ ] **Fork memory headroom verified** - COW can use up to 2x memory during BGSAVE/AOF rewrite. Page table overhead = `dataset_size / 4KB * 8 bytes`. For 24GB dataset, that is 48MB page table alone.
+- [ ] **`appendfsync everysec` worst case understood** - actual worst-case data loss is 2 seconds (not 1 second). If background fsync takes > 1s, writes are delayed up to an additional second.
+- [ ] **`no-appendfsync-on-rewrite` implications known** - if set to `yes`, durability drops to `appendfsync no` during rewrites (up to 30s data loss).
+- [ ] **Recovery time estimated** - 1GB loads in 2-5s on SSD, 100GB in 3-6 minutes. AOF is slower unless using hybrid (`aof-use-rdb-preamble yes`).
+- [ ] **Off-site backup verified** - verify upload size matches, use independent alerting on backup transfer failures.
+
 ## Pre-Upgrade Verification
 
 - [ ] **Current version documented** - `INFO server | grep valkey_version`
@@ -87,6 +95,7 @@ Use when preparing a Valkey deployment for production, auditing an existing setu
 - [ ] **Release notes reviewed** - check for breaking changes, deprecated configs, new defaults
 - [ ] **Rollback plan documented** - know how to revert if the upgrade fails
 - [ ] **Replica versions compatible** - see [upgrades/compatibility.md](upgrades/compatibility.md)
+- [ ] **Valkey 9.0: use 9.0.3+** - 9.0.0-9.0.1 had critical hash field expiration bugs (memory leaks, crashes, data corruption). 9.0.0 Sentinel had ACL regression requiring `+failover` permission (fixed 9.0.1).
 
 ## See Also
 
@@ -96,14 +105,18 @@ Use when preparing a Valkey deployment for production, auditing an existing setu
 - [Security TLS](security/tls.md) - encryption in transit
 - [Monitoring Metrics](monitoring/metrics.md) - key metrics and thresholds
 - [Monitoring Alerting](monitoring/alerting.md) - Prometheus alert rules
+- [Monitoring Commandlog](monitoring/commandlog.md) - commandlog configuration and audit
+- [Troubleshooting Diagnostics](troubleshooting/diagnostics.md) - 7-phase investigation runbook
 - [Persistence AOF](persistence/aof.md) - AOF configuration
 - [Persistence RDB](persistence/rdb.md) - RDB configuration
 - [Persistence Backup](persistence/backup-recovery.md) - backup procedures
+- [Durability vs Performance](performance/durability.md) - persistence trade-off spectrum
 - [Replication Safety](replication/safety.md) - write safety, split-brain prevention
 - [Capacity Planning](operations/capacity-planning.md) - memory and connection sizing
 - [Upgrades Rolling](upgrades/rolling-upgrade.md) - zero-downtime upgrade procedures
 - [Upgrades Migration](upgrades/migration.md) - Redis to Valkey migration
 - [Upgrades Compatibility](upgrades/compatibility.md) - version compatibility
 - [Kubernetes Helm](kubernetes/helm.md) - Helm chart deployment
+- [Kubernetes Operators](kubernetes/operators.md) - CRD-based deployment
 - [Kubernetes StatefulSets](kubernetes/statefulset.md) - StatefulSet patterns
 - [Kubernetes Tuning](kubernetes/tuning-k8s.md) - kernel tuning in K8s

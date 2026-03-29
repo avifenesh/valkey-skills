@@ -179,9 +179,21 @@ curr=$(valkey-cli COMMANDLOG LEN slow)
 # Alert if new slow commands appeared
 ```
 
-For production monitoring, use the Prometheus exporter which exposes
-`commandlog_*` metrics, or read the commandlog directly from your monitoring
-agent.
+For production monitoring, the Prometheus exporter (oliver006/redis_exporter
+v1.82.0) exposes slowlog metrics that map to the commandlog's slow log:
+
+| Prometheus Metric | Description |
+|-------------------|-------------|
+| `redis_slowlog_length` | Current number of entries in the slow log |
+| `redis_slowlog_last_id` | ID of the most recent slow log entry |
+
+Use `delta(redis_slowlog_length[10m]) > 10` as an alert for growing slow
+command counts. The exporter reads via `SLOWLOG GET` which maps to the `slow`
+commandlog type.
+
+Note: The exporter does not yet expose `large-request` or `large-reply`
+commandlog types. To monitor those, poll via `COMMANDLOG LEN large-request`
+and `COMMANDLOG LEN large-reply` from your monitoring agent directly.
 
 ### Commands Excluded from Logging
 
@@ -189,9 +201,32 @@ Commands with the `CMD_SKIP_COMMANDLOG` flag are never logged. This prevents
 sensitive commands (like AUTH) from appearing in the commandlog with their
 arguments (source: `src/commandlog.c` line 148).
 
+## Grafana Panels for Commandlog
+
+Percona PMM ships a dedicated "Valkey Slowlog" dashboard with these panels:
+
+| Panel | Source |
+|-------|--------|
+| Slowlog length | `redis_slowlog_length` |
+| Slowlog max length | `redis_config_maxclients` (config) |
+| Slowlog threshold | `commandlog-execution-slower-than` value in ms |
+| Slowlog entries | Displayed as a table |
+
+For custom Grafana dashboards, a minimal slow command panel:
+
+```promql
+# Slowlog entry growth rate
+delta(redis_slowlog_length[10m])
+```
+
+---
+
 ## See Also
 
 - [Latency Diagnosis](../performance/latency.md) - latency diagnosis workflow using commandlog data
 - [Slow Command Investigation](../troubleshooting/slow-commands.md) - slow command troubleshooting
 - [Monitoring Metrics](metrics.md) - INFO metrics including commandlog stats
+- [Prometheus Setup](prometheus.md) - exporter exposes slowlog metrics from the commandlog
+- [Alerting Rules](alerting.md) - ValkeySlowlogGrowing alert for commandlog entries
+- [Grafana Dashboards](grafana.md) - dashboard panels for commandlog visualization
 - [See valkey-dev: commandlog](../valkey-dev/reference/monitoring/commandlog.md) - entry lifecycle, memory management internals

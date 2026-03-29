@@ -231,9 +231,54 @@ Source references:
 | `client-query-buffer-limit` | `1gb` | Reduce on memory-constrained instances |
 | `proto-max-bulk-len` | `512mb` | Increase only for unusually large values |
 
+## Common Anti-Patterns
+
+| Anti-Pattern | Symptom | Fix |
+|-------------|---------|-----|
+| No `maxmemory` set | OOM killer terminates Valkey | Always set explicit `maxmemory` |
+| `maxmemory` = total RAM | OOM during BGSAVE fork | Reserve 20-40% for OS, fork COW, buffers |
+| `volatile-*` policy with no TTLs | Writes fail with OOM errors | Use `allkeys-*` or ensure cache keys have TTLs |
+| `hash-max-listpack-entries 10000` | Slow HGET/HSET (O(N) linear scan) | Keep at 128-512 |
+| `hz 500` | Wastes CPU on background tasks | Use 10-100 max |
+| `active-expire-effort 10` + millions of TTL keys | CPU spikes from expiry cycle | Start at 1, increase incrementally |
+| Pub/Sub buffer limit = 0 (unlimited) | Slow subscriber consumes all RAM | Always set hard limits for pubsub |
+| `io-threads` on 2-core machine | Higher latency, not lower | Only enable with 3+ cores |
+| `lfu-decay-time 0` | Old popular keys never become eviction candidates | Use 1 (default) |
+| No `maxmemory-clients` | Client buffers evict data | Set to 5% for production |
+| `KEYS *` in production | Server blocks for seconds | Use `SCAN` with `COUNT` hint |
+
+---
+
+## Config Interaction Warnings
+
+Settings that must be coordinated - changing one without the other causes problems:
+
+| Config A | Config B | Interaction |
+|----------|----------|-------------|
+| `maxmemory` | `maxmemory-policy` | Policy is only active when maxmemory is set |
+| `maxmemory` | `maxmemory-clients` | Client eviction threshold is a percentage of maxmemory |
+| `maxmemory` | replication buffers | Replica output buffers are NOT counted toward eviction calculation |
+| `maxmemory-policy` | TTL on keys | `volatile-*` policies only consider keys with TTL set |
+| `hz` | `active-expire-effort` | Higher hz = more frequent expiry cycles at the given effort level |
+| `hz` | `activedefrag` | Defrag runs as part of the hz background cycle |
+| `client-output-buffer-limit replica` | `repl-backlog-size` | Replica buffer limit must be >= backlog size |
+| `lfu-log-factor` | `lfu-decay-time` | Together control LFU counter sensitivity and adaptation speed |
+| `appendfsync` | `no-appendfsync-on-rewrite` | Skip fsync during rewrite reduces disk pressure but increases data loss window |
+| `save` | `stop-writes-on-bgsave-error` | Failed BGSAVE blocks all writes unless this is disabled |
+| `io-threads` | `commandlog-reply-larger-than` | Large reply logging adds overhead when io-threads is enabled |
+| `active-defrag-cycle-us` | latency | Higher value = more defrag progress but longer per-cycle stalls |
+
+---
+
 ## See Also
 
 - [Configuration Essentials](essentials.md) - core config parameters
+- [Eviction Policies](eviction.md) - maxmemory-policy and eviction tuning
+- [Lazy Free Configuration](lazyfree.md) - async deletion behavior
+- [Encoding Thresholds](encoding.md) - compact encoding tuning referenced in anti-patterns
+- [Pub/Sub Configuration](pubsub.md) - subscriber buffer limits referenced in anti-patterns
+- [Workload Presets](workload-presets.md) - complete configs by use case
 - [Bare Metal Setup](../deployment/bare-metal.md) - systemd, kernel tuning, directory structure
+- [Docker Deployment](../deployment/docker.md) - container deployment and config injection
 - [Latency Diagnosis](../performance/latency.md) - diagnosing expiration and latency issues
 - [See valkey-dev: config system](../valkey-dev/reference/config/config-system.md) - config parsing internals

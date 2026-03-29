@@ -142,18 +142,15 @@ min-replicas-max-lag 10
 
 The isolated primary stops accepting writes after `min-replicas-max-lag` seconds. The data loss window is limited to at most `min-replicas-max-lag` seconds of writes.
 
-### 4. Full Resync Storms
+### 4. Cascading Full Resyncs
 
-When multiple replicas need full resync simultaneously (e.g., after primary restart), the primary:
-
-- Forks once but sends the RDB to all waiting replicas
-- Must buffer all writes during the transfer in the replication backlog
-- Can experience high memory usage and CPU from fork + copy-on-write
+**Production incident pattern**: Primary restart or brief network blip causes all replicas to reconnect simultaneously. If the replication backlog is undersized, all replicas trigger full resync. The primary forks for each (or batches with diskless sync delay), consuming massive memory and CPU. This can cascade - the fork overhead causes further lag, triggering more resyncs.
 
 **Mitigation:**
 - Size `repl-backlog-size` generously to reduce full resyncs (see [Replication Tuning](tuning.md))
 - Use `repl-diskless-sync-delay 5` to batch multiple replicas into one transfer
 - Stagger replica restarts during maintenance
+- Monitor `sync_full` and `sync_partial_ok` counters in `INFO stats` to detect the pattern early
 
 ### 5. Replication Lag Under Load
 
@@ -171,6 +168,16 @@ If lag exceeds `min-replicas-max-lag`, that replica no longer counts toward `min
 - Ensure replicas have sufficient CPU and network bandwidth
 - Reduce write batches or pipeline depth if lag is persistent
 - Consider `repl-disable-tcp-nodelay no` (the default) for lowest latency
+
+### 6. Bandwidth-Driven Node Failures
+
+**Production incident pattern** (source: Mercado Libre, Valkey Unlocked Conference): Payload size distribution causes network bandwidth saturation before CPU or memory thresholds trigger alerts. Nodes fail from bandwidth exhaustion, not traditional resource metrics.
+
+**Mitigation:**
+- Monitor payload size distribution, not just request count
+- Monitor network bytes in/out per node
+- Alert on bandwidth utilization (e.g., >70% of NIC capacity)
+- Use MULTIPATH TCP (`repl-mptcp yes`, Valkey 9.0) to reduce network-induced latency by up to 25%
 
 ## Monitoring Checklist
 
@@ -195,8 +202,7 @@ If lag exceeds `min-replicas-max-lag`, that replica no longer counts toward `min
 ## See Also
 
 - [Replication Setup](setup.md) - basic primary-replica configuration
-- [Replication Tuning](tuning.md) - backlog sizing, diskless sync, dual-channel
-- [Backup and Recovery](../persistence/backup-recovery.md) - disaster recovery procedures
+- [Replication Tuning](tuning.md) - backlog sizing, diskless sync, Docker/NAT networking
 - [Split-Brain Prevention](../sentinel/split-brain.md) - Sentinel-based split-brain mitigation
+- [Sentinel Architecture](../sentinel/architecture.md) - automatic failover for replicated setups
 - [Cluster Consistency](../cluster/consistency.md) - write safety in cluster mode
-- [See valkey-dev: replication overview](../valkey-dev/reference/replication/overview.md) - replication protocol internals

@@ -52,15 +52,17 @@ Do NOT enable when:
 
 ## Thread Count Guidelines
 
-| System | Recommended `io-threads` | Rationale |
-|--------|--------------------------|-----------|
-| 2-4 cores | 2-3 | Leave at least 1 core for OS and background tasks |
-| 8 cores | 4-5 | Diminishing returns beyond this for most workloads |
-| 16 cores | 6-9 | Benchmark showed 1.19M SET RPS with 9 threads on 16-core ARM |
-| 32+ cores | 8-12 | Test incrementally; rarely need more than 12 |
+| Available Cores | Recommended `io-threads` | Rationale |
+|-----------------|--------------------------|-----------|
+| 4 | 2 | Leave cores for main thread + OS. Over-subscribing hurts - a Raspberry Pi CM4 dropped from 416K to 336K RPS with io-threads=5 on 4 cores. |
+| 8 | 5-6 | Reserve 2 cores for IRQ affinity, 1 for main thread, rest for I/O. |
+| 16 | 8-9 | Best tested config: 8 I/O threads + main on c7g.4xlarge (16 ARM cores) reached 1.19M RPS. |
+| 64 (e.g. c7g.16xlarge) | 6 | 1B RPS cluster setup uses 2 cores for IRQ, 6 for valkey-server per node. More threads not needed per shard. |
 
-Key rule: never exceed physical core count. I/O threads that compete for cores
-with the main thread or with each other will hurt rather than help.
+Key rule: never set io-threads >= number of available cores. Over-subscribing
+causes context switching that degrades performance. On a 4-core Raspberry Pi,
+io-threads=2 with prefetch reached 760K RPS while io-threads=5 only managed
+336K RPS.
 
 ## Dynamic Thread Adjustment
 
@@ -78,19 +80,43 @@ spin up only as needed.
 
 ## Performance Benchmarks
 
-From Valkey benchmarks on AWS C7g.16xlarge (16-core ARM, 650 clients):
+From Valkey benchmarks on AWS c7g.4xlarge (16-core ARM, 650 clients, 512-byte
+values, 3M keys):
 
 | Config | Throughput (SET RPS) | Avg Latency |
 |--------|---------------------|-------------|
-| `io-threads 1` | ~360K | 1.792ms |
-| `io-threads 9` | 1.19M | 0.542ms |
+| `io-threads 1` (Valkey 7.2) | ~360K | 1.792ms |
+| `io-threads 9` + prefetch (Valkey 8.0) | 1.19M | 0.542ms |
 
 That is a 230% throughput improvement and 69.8% latency reduction.
 
 The bottleneck in high-throughput scenarios is memory access latency, not CPU
 compute. I/O threads parallelize the memory-intensive read/write/parse work.
-Combined with batch key prefetching (introduced in Valkey 8.1+), this amortizes
-cache misses across commands.
+Combined with batch key prefetching, this amortizes cache misses across commands.
+Profiling shows `lookupKey` consumed >40% of main thread time due to cache
+misses before prefetching was added.
+
+### Reproducing 1.19M RPS
+
+```bash
+# 1. Pin network IRQs to 2 dedicated cores
+for i in {48..51}; do echo 1000 > /proc/irq/$i/smp_affinity; done
+for i in {52..55}; do echo 2000 > /proc/irq/$i/smp_affinity; done
+
+# 2. Start server with 9 threads (8 I/O + 1 main)
+./valkey-server --io-threads 9 --save "" --protected-mode no
+
+# 3. Pin main thread to core 3 (avoid IRQ cores)
+sudo taskset -cp 3 $(pidof valkey-server)
+
+# 4. Run benchmark from a SEPARATE machine
+./valkey-benchmark -t set -d 512 -r 3000000 -c 650 \
+  --threads 50 -h "host-name" -n 100000000000
+```
+
+Key details: match client `--threads` to available load-generation capacity.
+Run the benchmark from a different host - never on the same machine as the
+server.
 
 ## Applying the Configuration
 
@@ -106,7 +132,7 @@ valkey-cli CONFIG REWRITE
 ```
 
 Monitor I/O thread utilization with `INFO server` - check
-`io_threads_active` to see how many threads are currently running.
+`io_threads_active` to check if I/O threads are active (0=off, 1=on).
 
 ## Troubleshooting I/O Threads
 
@@ -128,7 +154,11 @@ Monitor I/O thread utilization with `INFO server` - check
 ## See Also
 
 - [Durability vs Performance](durability.md) - persistence trade-offs with I/O threads
-- [Configuration Essentials](../configuration/essentials.md) - `io-threads` config reference
 - [Latency Diagnosis](latency.md) - troubleshooting latency with I/O threads
+- [Slow Command Investigation](../troubleshooting/slow-commands.md) - when slow commands, not I/O, are the bottleneck
+- [Configuration Essentials](../configuration/essentials.md) - `io-threads` config reference
+- [Monitoring Metrics](../monitoring/metrics.md) - `io_threads_active` and throughput metrics
+- [Kubernetes StatefulSets](../kubernetes/statefulset.md) - CPU resource sizing for I/O threads in containers
+- [Kubernetes Tuning](../kubernetes/tuning-k8s.md) - kernel and CPU tuning for I/O threads in K8s
 - [See valkey-dev: io-threads](../valkey-dev/reference/threading/io-threads.md) - internal architecture, job queue design
 - [See valkey-dev: prefetch](../valkey-dev/reference/threading/prefetch.md) - batch key prefetching

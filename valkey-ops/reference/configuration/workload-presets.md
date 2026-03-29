@@ -13,6 +13,7 @@ Data is expendable. Speed and memory efficiency matter. No persistence needed.
 maxmemory <80% of available RAM>
 maxmemory-policy allkeys-lru
 maxmemory-samples 5
+maxmemory-clients 5%
 
 # Disable all persistence
 save ""
@@ -22,6 +23,20 @@ appendonly no
 io-threads 4
 tcp-keepalive 300
 timeout 300
+
+# Encoding - optimize for many small objects
+hash-max-listpack-entries 128
+hash-max-listpack-value 64
+
+# Defrag - caches have high churn
+activedefrag yes
+active-defrag-ignore-bytes 200mb
+active-defrag-threshold-lower 15
+active-defrag-cycle-max 15
+
+# Network
+tcp-backlog 65535
+maxclients 20000
 
 # Logging
 loglevel notice
@@ -35,8 +50,10 @@ loglevel notice
 | `allkeys-lru` | Automatically evict least-recently-used keys. Best general-purpose cache policy. |
 | `save ""` | Disables RDB snapshots. No persistence overhead, no fork latency spikes. |
 | `appendonly no` | Disables AOF. No fsync overhead. |
+| `maxmemory-clients 5%` | Protect data memory from misbehaving clients. |
 | `io-threads 4` | Offload read/write I/O to threads. Adjust based on CPU cores (2-8 typical). |
 | `timeout 300` | Disconnect idle clients after 5 minutes. Prevents connection leaks. |
+| `activedefrag yes` | Caches with high key churn benefit from online defragmentation (jemalloc only). |
 
 ### When to Use allkeys-lfu Instead
 
@@ -112,9 +129,17 @@ maxmemory-policy volatile-ttl
 appendonly yes
 appendfsync everysec
 aof-use-rdb-preamble yes
+no-appendfsync-on-rewrite yes
 
 # No RDB snapshots (AOF is sufficient)
 save ""
+
+# Encoding - sessions are small hashes (10-30 fields)
+hash-max-listpack-entries 128
+hash-max-listpack-value 128
+
+# Expiry - sessions expire frequently, be moderately aggressive
+active-expire-effort 3
 
 # Connection management
 timeout 0
@@ -130,7 +155,10 @@ io-threads 4
 |-----------|-----------|
 | `volatile-ttl` | Evict sessions closest to expiration first. Sessions nearing TTL are about to expire anyway. |
 | `appendonly yes` | Persist sessions across restarts. Users do not have to re-authenticate. |
+| `no-appendfsync-on-rewrite yes` | Skip fsync during AOF rewrite to reduce disk pressure. |
 | `save ""` | AOF is sufficient. Skipping RDB avoids fork overhead. |
+| `hash-max-listpack-value 128` | Sessions may contain JSON blobs in fields - raise from default 64. |
+| `active-expire-effort 3` | Sessions expire frequently; reclaim memory moderately faster than default. |
 | `timeout 0` | Do not disconnect idle clients - the application manages session lifecycle. |
 
 ### Alternative: volatile-lru
@@ -157,18 +185,24 @@ maxmemory-policy noeviction
 appendonly yes
 appendfsync everysec
 aof-use-rdb-preamble yes
+no-appendfsync-on-rewrite yes
 
 # RDB for backup
 save 3600 1 300 100 60 10000
 
 # Queue-specific tuning
 list-max-listpack-size -2
+list-compress-depth 0
 stream-node-max-entries 100
 stream-node-max-bytes 4096
 
 # Client management
 timeout 0
 tcp-keepalive 60
+
+# Replication (queues need HA)
+repl-backlog-size 256mb
+client-output-buffer-limit replica 512mb 128mb 120
 
 # Performance
 io-threads 4
@@ -180,9 +214,13 @@ io-threads 4
 |-----------|-----------|
 | `noeviction` | Never drop queue entries. Workers must process them. |
 | `appendfsync everysec` | Balance between durability and throughput. |
+| `no-appendfsync-on-rewrite yes` | Reduce disk pressure during AOF rewrite. |
 | `tcp-keepalive 60` | Detect dead worker connections quickly (60s vs default 300s). |
 | `list-max-listpack-size -2` | 8KB per quicklist node. Good balance for queue entries. |
+| `list-compress-depth 0` | No compression - queues are LIFO/FIFO, all nodes are accessed. |
 | `timeout 0` | Workers may block on BRPOP/XREAD - do not disconnect them. |
+| `repl-backlog-size 256mb` | Large backlog for write-heavy queues to support partial resync. |
+| `client-output-buffer-limit replica 512mb ...` | Match buffer to backlog size for write-heavy primaries with long RDB transfers. |
 
 
 ## Rate Limiter / Counter
@@ -258,6 +296,11 @@ This ensures the primary rejects writes if no replicas are connected and acknowl
 
 - [Eviction Policies](eviction.md) - policy details and tuning
 - [Configuration Essentials](essentials.md) - all config defaults
+- [Lazy Free Configuration](lazyfree.md) - async deletion behavior (all defaults are yes)
 - [Encoding Thresholds](encoding.md) - memory tuning via compact encodings
+- [Pub/Sub Configuration](pubsub.md) - subscriber buffers and keyspace notifications
+- [Advanced Configuration](advanced.md) - structured logging, OOM score, CPU pinning
+- [Bare Metal Setup](../deployment/bare-metal.md) - systemd and kernel tuning for production
+- [Docker Deployment](../deployment/docker.md) - container resource limits and config injection
 - [I/O Threads](../performance/io-threads.md) - thread count guidelines
 - [Durability vs Performance](../performance/durability.md) - persistence trade-offs

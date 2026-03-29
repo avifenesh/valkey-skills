@@ -21,7 +21,7 @@ Security should be applied at every layer. No single control is sufficient.
 | 4. Authorization | Command/key restrictions | Least-privilege ACL rules per role |
 | 5. Encryption | TLS in transit | `tls-port` with `port 0` |
 | 6. Process isolation | Unprivileged user | Run as `valkey` user, not root |
-| 7. Monitoring | Audit logging | ACL LOG, slow log, connection tracking |
+| 7. Monitoring | Audit logging | ACL LOG, commandlog, connection tracking |
 
 ---
 
@@ -177,6 +177,38 @@ chmod 750 /var/lib/valkey            # data directory
 
 ---
 
+## CVE History - Top Vulnerabilities
+
+Valkey inherits Redis attack surface. These are the highest-severity CVEs
+operators should verify are patched.
+
+| CVE / Advisory | CVSS | Description | Fix |
+|----------------|------|-------------|-----|
+| GHSA-9rfg-jx7v-52p6 | 9.8 | Lua use-after-free via GC - potential RCE | Valkey patched |
+| GHSA-cjwh-fcpr-v5r7 | 9.8 | Stack buffer overflow in Lua bit library - potential RCE | 7.2.7, 8.0.1 |
+| CVE-2015-4335 | 10.0 | Arbitrary Lua bytecode execution via EVAL | Redis < 2.8.21, < 3.0.2 |
+| CVE-2018-11218 | 9.8 | Memory corruption in cmsgpack Lua library | Redis < 4.0.10, < 5.0-rc2 |
+| CVE-2016-8339 | 9.8 | Buffer overflow via CONFIG SET client-output-buffer-limit | Redis < 3.2.4 |
+
+Patch priority: Critical (CVSS >= 9.0) within 72 hours. High (7.0-8.9)
+within 30 days. Subscribe to `github.com/valkey-io/valkey/security/advisories`.
+
+---
+
+## PCI DSS Key Mappings
+
+| PCI Req | Control | Valkey Implementation |
+|---------|---------|----------------------|
+| 1.3 | Restrict public access | Network segmentation, never expose port to internet |
+| 2.1 | Change vendor defaults | Disable or password-protect default user, change default port |
+| 4.1 | Strong TLS in transit | `tls-port 6379`, `port 0`, TLS 1.2+ only |
+| 7.1-7.2 | Need-to-know access | Per-user ACLs with key patterns and command restrictions |
+| 8.1-8.5 | Unique user IDs | Named ACL users per service, no shared default user |
+| 10.1-10.2 | Audit trail | ACL LOG, commandlog, syslog integration |
+| 11.5 | Change detection | Monitor valkey.conf and ACL file for unauthorized changes |
+
+---
+
 ## Credential Management
 
 - Never commit passwords to version control
@@ -205,7 +237,7 @@ Run through this checklist before any production deployment:
 | KEYS command blocked for apps | `ACL GETUSER app` - verify `-keys` or `-@dangerous` |
 | No credentials in version control | Review `valkey.conf` and deployment scripts |
 | ACL LOG monitored | `ACL LOG` - check for unexpected denials |
-| Slow log configured | `CONFIG GET slowlog-log-slower-than` |
+| Commandlog configured | `CONFIG GET commandlog-execution-slower-than` |
 
 ---
 
@@ -214,6 +246,9 @@ Run through this checklist before any production deployment:
 - [ACL Configuration](acl.md) - per-user access control
 - [TLS Configuration](tls.md) - encryption in transit
 - [Command Restriction](rename-commands.md) - rename-command directive
+- [Monitoring Metrics](../monitoring/metrics.md) - ACL LOG and connection tracking
+- [Commandlog](../monitoring/commandlog.md) - slow command logging referenced in security checklist
+- [Alerting Rules](../monitoring/alerting.md) - alerts for rejected connections and anomalies
 - [Production Checklist](../production-checklist.md) - full security checklist
 - [See valkey-dev: acl](../valkey-dev/reference/security/acl.md) - ACL internals
 - [See valkey-dev: tls](../valkey-dev/reference/security/tls.md) - TLS internals

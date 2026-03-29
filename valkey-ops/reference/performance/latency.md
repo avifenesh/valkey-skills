@@ -206,17 +206,47 @@ CONFIG SET watchdog-period 0
 The watchdog uses SIGALRM to interrupt the main thread and log a stack trace.
 This has overhead - use only during active investigation.
 
+## Transparent Huge Pages - The #1 Linux Misconfiguration
+
+THP is the single most common Linux misconfiguration for Valkey. When enabled,
+after fork, copy-on-write operates on 2MB pages instead of 4KB. A write to any
+byte in a 2MB huge page forces the entire 2MB to be copied. In a busy instance,
+a few event loops can trigger near-complete COW of the entire process memory.
+
+Diagnosis: `rdb_last_cow_size` (in `INFO persistence`) approaching
+`used_memory` is a strong indicator that THP is the cause.
+
+```bash
+# Check THP status
+cat /sys/kernel/mm/transparent_hugepage/enabled
+# If output contains [always] or [madvise], THP is active
+
+# Disable immediately
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+
+# Persist across reboots (add to systemd unit or /etc/rc.local)
+```
+
+### Network Latency Reference
+
+| Connection Type | Typical Latency |
+|----------------|----------------|
+| 1 Gbit/s network | ~200 us |
+| Loopback (localhost) | ~50-100 us |
+| Unix domain socket | ~30 us |
+
 ## Common Latency Causes
 
 | Cause | Indicator | Fix |
 |-------|-----------|-----|
+| THP enabled | `rdb_last_cow_size` near `used_memory`, LATENCY DOCTOR warns | `echo never > /sys/kernel/mm/transparent_hugepage/enabled` |
 | Slow commands | commandlog entries, `command` event | Use SCAN instead of KEYS, UNLINK instead of DEL |
 | Fork latency | `fork` event, `latest_fork_usec` | Disable THP, use diskless replication |
 | AOF fsync | `aof-fsync-always` event | Switch to `appendfsync everysec` |
 | Disk I/O contention | `aof-write-*` events | Use SSD, local disk, `data=writeback` |
 | Expiration storms | `expire-cycle` event | Jitter TTLs, tune `hz` |
 | Mass eviction | `eviction-cycle` event | Increase maxmemory, use LFU |
-| THP | LATENCY DOCTOR warns | `echo never > /sys/kernel/mm/transparent_hugepage/enabled` |
+| Swapping | Sporadic 100ms+ spikes unrelated to commands | Set maxmemory, check `/proc/<pid>/smaps` for swap entries |
 | Noisy neighbor (VM) | High intrinsic latency | Dedicated instance or bare metal |
 
 ---
@@ -225,8 +255,13 @@ This has overhead - use only during active investigation.
 
 - [Commandlog](../monitoring/commandlog.md) - slow command, large request/reply logging
 - [Slow Command Investigation](../troubleshooting/slow-commands.md) - specific slow command patterns
+- [Diagnostics Reference](../troubleshooting/diagnostics.md) - 7-phase diagnostic runbook, fork latency
+- [Troubleshooting OOM](../troubleshooting/oom.md) - memory pressure as latency contributor
 - [Monitoring Metrics](../monitoring/metrics.md) - performance metrics and thresholds
+- [Monitoring Alerting](../monitoring/alerting.md) - latency alert rules
 - [Defragmentation](defragmentation.md) - defrag-related latency
+- [I/O Threads](io-threads.md) - throughput optimization to reduce I/O-bound latency
+- [Kubernetes Tuning](../kubernetes/tuning-k8s.md) - THP and kernel settings affecting latency in containers
 - [See valkey-dev: latency](../valkey-dev/reference/monitoring/latency.md) - latency monitor internals, event types, HdrHistogram integration
 - [See valkey-dev: commandlog](../valkey-dev/reference/monitoring/commandlog.md) - commandlog architecture, entry format
 - [See valkey-dev: debug](../valkey-dev/reference/monitoring/debug.md) - software watchdog, DEBUG commands

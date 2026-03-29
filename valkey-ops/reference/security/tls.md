@@ -210,6 +210,48 @@ library documentation for the specific parameter names.
 
 ---
 
+## Recommended Cipher Suites
+
+Based on OWASP TLS Cheat Sheet guidance. Only AEAD ciphers with forward
+secrecy - no CBC, RC4, DES, 3DES, MD5, SHA-1, EXPORT, NULL, or anonymous
+ciphers.
+
+**TLS 1.3 (preferred):**
+
+```
+tls-ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256
+```
+
+**TLS 1.2 (compatibility):**
+
+```
+tls-ciphers ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256
+```
+
+Enable server-side cipher preference:
+
+```
+tls-prefer-server-ciphers yes
+```
+
+PCI DSS requires TLS 1.2 minimum. Use `tls-protocols "TLSv1.2 TLSv1.3"`
+(this is already the default).
+
+---
+
+## TLS Material Validation
+
+Valkey validates all TLS materials on load and reload:
+
+- Files and directories are not empty or malformed
+- Certificates match their private keys
+- Certificates are within their validity period
+
+If validation fails, the reload is rejected and existing materials remain
+in use. This prevents a bad certificate push from taking down connections.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Likely Cause |
@@ -232,6 +274,10 @@ openssl s_client -connect valkey-host:6379 -CAfile ca.crt
 
 - [ACL Configuration](acl.md) - authentication and authorization
 - [Security Hardening](hardening.md) - defense in depth
+- [Command Restriction](rename-commands.md) - command restriction strategies
+- [Prometheus Setup](../monitoring/prometheus.md) - TLS flags for exporter mTLS connections
+- [Monitoring Metrics](../monitoring/metrics.md) - connection tracking and rejected connection metrics
+- [Alerting Rules](../monitoring/alerting.md) - alerts for connection failures and TLS handshake errors
 - [Replication Tuning](../replication/tuning.md) - TLS for replication connections
 - [Cluster Setup](../cluster/setup.md) - TLS for cluster bus
 - [See valkey-dev: tls](../valkey-dev/reference/security/tls.md) - SSL context architecture, OpenSSL integration internals

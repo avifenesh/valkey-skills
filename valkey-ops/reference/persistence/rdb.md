@@ -71,8 +71,14 @@ Note: `rdbchecksum` is IMMUTABLE - it cannot be changed at runtime via CONFIG SE
 |---------|----------|----------|
 | `BGSAVE` | Fork child process, write RDB in background | Production snapshots - non-blocking |
 | `SAVE` | Write RDB synchronously, blocks all clients | Emergency only - avoid in production |
+| `BGSAVE SCHEDULE` | Schedule BGSAVE when no AOF rewrite is running | Safe scheduling (since 3.2.2) |
+| `BGSAVE CANCEL` | Terminate in-progress RDB save or scheduled BGSAVE | Emergency fork termination (8.1+) |
 | `LASTSAVE` | Returns Unix timestamp of last successful save | Monitoring and backup verification |
 | `DEBUG RELOAD` | Save + quit + restart + load | Testing only |
+
+`BGSAVE CANCEL` (Valkey 8.1.0+) immediately terminates any in-progress RDB
+save, replication full sync, or scheduled save. Use for emergency stop when
+a fork is consuming too much memory.
 
 ## Operational Procedures
 
@@ -110,7 +116,29 @@ Fork time depends on dataset size and OS copy-on-write behavior. Monitor:
 valkey-cli INFO stats | grep latest_fork_usec
 ```
 
-Rule of thumb: ~10-20ms per GB of used memory on modern Linux with huge pages disabled. Transparent huge pages (THP) can cause severe latency spikes during fork - always disable THP.
+**Page table size formula** (from Valkey latency docs): Linux divides memory
+into 4KB pages. Each page requires an 8-byte pointer in the page table.
+
+```
+page_table_size = dataset_size / 4KB * 8 bytes
+```
+
+| Dataset Size | Page Table Size | Approx Fork Time |
+|-------------|-----------------|-------------------|
+| 1 GB | 2 MB | ~1-2 ms |
+| 10 GB | 20 MB | ~10-20 ms |
+| 24 GB | 48 MB | ~24-48 ms |
+| 64 GB | 128 MB | ~64-128 ms |
+| 128 GB | 256 MB | ~128-256 ms |
+
+**Fork rate quality thresholds** (from LATENCY DOCTOR):
+Fork rate = dataset_size / fork_time. < 10 GB/s terrible, < 25 GB/s poor,
+< 100 GB/s good, >= 100 GB/s excellent.
+
+**Copy-on-write memory overhead**: Write-heavy workloads during fork can
+use up to 2x memory (100% COW). Typical moderate writes: 10-30% additional.
+Read-heavy: near-zero. With THP enabled, COW granularity jumps from 4KB to
+2MB pages, causing near-total memory duplication - always disable THP.
 
 ### Disable RDB for Cache-Only Deployments
 
@@ -126,7 +154,7 @@ When `dbfilename` is empty, no RDB file is written and `BGSAVE` becomes a no-op.
 
 1. **Always combine with AOF** for durability - use RDB primarily for backups, not as sole persistence
 2. **Set `stop-writes-on-bgsave-error yes`** (the default) to detect disk issues early
-3. **Keep `rdbchecksum yes`** (the default) to detect corruption on load
+3. **Keep `rdbchecksum yes`** (the default) to detect corruption on load (~10% save/load overhead)
 4. **Keep `rdbcompression yes`** (the default) to reduce file size and I/O
 5. **Monitor `rdb_last_bgsave_status`** in your alerting system
 6. **Size memory to 2x dataset** to handle copy-on-write during fork
@@ -148,5 +176,8 @@ For full binary format details, see valkey-dev `reference/persistence/rdb.md`.
 - [AOF Persistence](aof.md) - write-ahead log for higher durability
 - [Backup and Recovery](backup-recovery.md) - automated backup procedures
 - [Durability vs Performance](../performance/durability.md) - persistence trade-off spectrum
+- [Replication Safety](../replication/safety.md) - replica-based backup and write safety
 - [Configuration Essentials](../configuration/essentials.md) - RDB config defaults
+- [Capacity Planning](../operations/capacity-planning.md) - memory sizing for fork overhead
+- [Production Checklist](../production-checklist.md) - pre-launch persistence verification
 - [See valkey-dev: rdb](../valkey-dev/reference/persistence/rdb.md) - RDB binary format internals

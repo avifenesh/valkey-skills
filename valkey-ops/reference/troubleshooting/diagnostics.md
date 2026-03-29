@@ -6,10 +6,42 @@ workflow for any production issue.
 
 ---
 
-## General Investigation Workflow
+## 7-Phase Diagnostic Runbook
 
-For any production issue, follow this sequence:
+When investigating a production issue, run this sequence:
 
+```bash
+# Phase 1: Quick assessment (< 30 seconds)
+valkey-cli PING                          # Is it responsive?
+valkey-cli INFO server | head -20        # Version, uptime, mode
+valkey-cli LATENCY LATEST                # Any recent spikes?
+valkey-cli SLOWLOG GET 5                 # Recent slow commands?
+
+# Phase 2: Memory health (< 1 minute)
+valkey-cli INFO memory                   # Full memory picture
+valkey-cli MEMORY DOCTOR                 # Automated memory diagnosis
+
+# Phase 3: Latency analysis (< 1 minute)
+valkey-cli LATENCY DOCTOR                # Automated latency diagnosis
+valkey-cli --intrinsic-latency 10        # 10s baseline test (run on server)
+
+# Phase 4: Replication health (if applicable)
+valkey-cli INFO replication              # Lag, link status, backlog
+
+# Phase 5: Client analysis (< 1 minute)
+valkey-cli INFO clients                  # Connection counts
+valkey-cli CLIENT LIST                   # Per-client details
+
+# Phase 6: Cluster health (if applicable)
+valkey-cli CLUSTER INFO                  # Cluster state
+valkey-cli CLUSTER NODES                 # Node health
+valkey-cli --cluster check <ip>:<port>   # Slot coverage
+
+# Phase 7: Persistence health
+valkey-cli INFO persistence              # RDB/AOF status, COW size, fork time
+```
+
+After gathering data, follow the general workflow:
 1. **Triage** - identify the symptom class (latency, errors, memory, replication)
 2. **Baseline** - compare current state against known-good metrics
 3. **Narrow** - use diagnostic commands to isolate the subsystem
@@ -37,7 +69,16 @@ valkey-cli LATENCY LATEST
 ```
 
 The fork latency is proportional to the size of the page tables, which grows
-with the dataset size and memory layout. Typical rates:
+with the dataset size. Formula: `page_table_size = (dataset / 4KB) * 8 bytes`.
+
+| Dataset | Page Table Copy | Typical Fork Time |
+|---------|----------------|-------------------|
+| 1 GB | 2 MB | 10-20 ms |
+| 8 GB | 16 MB | 80-160 ms |
+| 24 GB | 48 MB | 240-480 ms |
+| 64 GB | 128 MB | 640-1280 ms |
+
+Fork rate quality thresholds (used by LATENCY DOCTOR in `src/latency.c`):
 
 | Environment | Fork Rate | Quality |
 |-------------|-----------|---------|
@@ -45,9 +86,6 @@ with the dataset size and memory layout. Typical rates:
 | Good VM | 25-100 GB/s | Good |
 | Average VM | 10-25 GB/s | Poor |
 | Bad VM (Xen) | < 10 GB/s | Terrible |
-
-The LATENCY DOCTOR report (source: `src/latency.c`) uses these same thresholds
-to rate fork quality and advise on VM upgrades.
 
 ### Resolution
 
@@ -177,10 +215,7 @@ For thorough testing, use memtest86:
 | `OBJECT ENCODING <key>` | Internal encoding (listpack, hashtable, skiplist, etc.) |
 | `OBJECT FREQ <key>` | LFU frequency counter (requires LFU policy) |
 | `OBJECT IDLETIME <key>` | Seconds since last access (requires LRU policy) |
-| `OBJECT REFCOUNT <key>` | Reference count |
-| `OBJECT HELP` | List available OBJECT subcommands |
 | `TYPE <key>` | Data type (string, list, set, zset, hash, stream) |
-| `TTL <key>` | Remaining time to live in seconds |
 | `SCAN 0 MATCH <pattern> COUNT n` | Iterate keyspace without blocking |
 
 ### Cluster
@@ -193,34 +228,96 @@ For thorough testing, use memtest86:
 | `CLUSTER MYID` | Current node's ID |
 | `CLUSTER COUNTKEYSINSLOT <slot>` | Keys in a specific slot |
 
+## Real Incident Patterns
+
+### Mass Key Expiration Spike
+
+**Symptoms**: Periodic latency spikes every N seconds, `expire-cycle` events
+in latency monitor.
+
+**Root cause**: Application sets thousands of keys with identical TTL (e.g.,
+cache TTL aligned to clock boundaries). When the expiration second arrives,
+the active expiry cycle finds > 25% of sampled keys expired and loops
+aggressively, blocking the main thread.
+
+**Resolution**: Add jitter to TTLs:
+`EXPIRE key (base_ttl + random(0, jitter_seconds))`. Monitor with
+`LATENCY HISTORY expire-cycle`.
+
+### THP-Induced Latency After BGSAVE
+
+**Symptoms**: Periodic 500ms-2s latency spikes correlated with BGSAVE schedule.
+`latest_fork_usec` shows 50ms, but `rdb_last_cow_size` is nearly equal to
+`used_memory` (near-complete COW).
+
+**Root cause**: THP enabled. After fork, every page touched triggers a 2MB COW
+copy instead of 4KB.
+
+**Resolution**: `echo never > /sys/kernel/mm/transparent_hugepage/enabled`
+
+### Pub/Sub Subscriber OOM
+
+**Symptoms**: Memory usage growing unboundedly, eventually OOM kill.
+`CLIENT LIST` shows pub/sub clients with `omem` in the hundreds of MB.
+
+**Root cause**: Slow subscriber cannot consume messages fast enough. Output
+buffer grows without limit.
+
+**Resolution**: Set strict limits:
+`CONFIG SET client-output-buffer-limit pubsub 32mb 8mb 60`. Implement
+application-level backpressure. Use `maxmemory-clients` to cap aggregate
+client memory.
+
+### Replica Cascade Full Resync
+
+**Symptoms**: Repeated full resyncs (`sync_full` incrementing), spike in primary
+memory during BGSAVE, high I/O.
+
+**Root cause**: Replication backlog too small (default 10MB). Brief network glitch
+overflows the backlog, full resync fork causes latency spike, which disconnects
+other replicas.
+
+**Resolution**: Increase `repl-backlog-size` to >= 512MB. Enable
+`repl-diskless-sync yes`. Monitor `sync_partial_err`.
+
+### Swap-Induced Latency
+
+**Symptoms**: Sporadic 100ms+ latency spikes unrelated to commands.
+`--intrinsic-latency` shows normal baseline.
+
+**Root cause**: Some Valkey memory pages swapped to disk.
+
+**Diagnosis**:
+```bash
+REDIS_PID=$(valkey-cli INFO server | grep process_id | cut -d: -f2 | tr -d '\r')
+cat /proc/$REDIS_PID/smaps | grep '^Swap:' | grep -v '0 kB'
+# Any non-trivial swap entries indicate the problem
+```
+
+**Resolution**: Set `maxmemory` well below available RAM. Increase RAM or
+reduce dataset size.
+
+### Large Key Migration Blocked (Cluster)
+
+**Symptoms**: Slot migration hangs, slot stuck in `migrating`/`importing` state.
+
+**Root cause**: Very large key exceeds target node's buffer during migration.
+
+**Resolution (pre-9.0)**: Increase `proto-max-bulk-len` on target. Valkey 9.0
+fixes this with atomic slot-level migration.
+
 ## Quick Health Check Script
 
 ```bash
 #!/bin/bash
-HOST="${1:-127.0.0.1}"
-PORT="${2:-6379}"
-CLI="valkey-cli -h $HOST -p $PORT"
-
-echo "=== Server ==="
-$CLI INFO server | grep -E "valkey_version|uptime_in_days|connected_clients"
-
-echo "=== Memory ==="
-$CLI INFO memory | grep -E "used_memory_human|maxmemory_human|mem_fragmentation_ratio"
-
-echo "=== Persistence ==="
-$CLI INFO persistence | grep -E "rdb_last_bgsave_status|aof_last_bgrewrite_status|latest_fork_usec"
-
-echo "=== Replication ==="
-$CLI INFO replication | grep -E "role|connected_slaves|master_link_status"
-
-echo "=== Stats ==="
-$CLI INFO stats | grep -E "instantaneous_ops_per_sec|rejected_connections|expired_keys|evicted_keys"
-
-echo "=== Latency ==="
-$CLI LATENCY LATEST
-
-echo "=== Slow Commands (last 5) ==="
-$CLI SLOWLOG GET 5
+HOST="${1:-127.0.0.1}"; PORT="${2:-6379}"; CLI="valkey-cli -h $HOST -p $PORT"
+echo "=== Server ===";      $CLI INFO server | grep -E "valkey_version|uptime_in_days|connected_clients"
+echo "=== Memory ===";      $CLI INFO memory | grep -E "used_memory_human|maxmemory_human|mem_fragmentation_ratio"
+echo "=== Persistence ==="; $CLI INFO persistence | grep -E "rdb_last_bgsave_status|aof_last_bgrewrite_status|latest_fork_usec"
+echo "=== Replication ==="; $CLI INFO replication | grep -E "role|connected_slaves|master_link_status"
+echo "=== Stats ===";       $CLI INFO stats | grep -E "instantaneous_ops_per_sec|rejected_connections|expired_keys|evicted_keys"
+echo "=== Latency ===";     $CLI LATENCY LATEST
+echo "=== Slow Cmds ===";   $CLI SLOWLOG GET 5
 ```
 
 ---
@@ -228,9 +325,16 @@ $CLI SLOWLOG GET 5
 ## See Also
 
 - [Latency Diagnosis](../performance/latency.md) - full latency diagnosis workflow
-- [Troubleshooting OOM](oom.md) - out of memory diagnosis
-- [Slow Command Investigation](slow-commands.md) - slow command investigation
+- [Memory Optimization](../performance/memory.md) - encoding thresholds, memory-efficient modeling
+- [Defragmentation](../performance/defragmentation.md) - active defrag for fragmentation issues
+- [Troubleshooting OOM](oom.md) - out of memory diagnosis and resolution
+- [Slow Command Investigation](slow-commands.md) - slow command patterns and fixes
+- [Replication Lag](replication-lag.md) - replication lag diagnosis and resolution
+- [Cluster Partition Issues](cluster-partitions.md) - cluster state and failover diagnosis
 - [Monitoring Metrics](../monitoring/metrics.md) - INFO metric reference
+- [Monitoring Alerting](../monitoring/alerting.md) - alert rules for all diagnostic categories
+- [Security ACL](../security/acl.md) - ACL LOG for unauthorized access diagnosis
+- [Security Hardening](../security/hardening.md) - security checklist and defense-in-depth layers
 - [See valkey-dev: debug](../valkey-dev/reference/monitoring/debug.md) - DEBUG command internals, software watchdog
 - [See valkey-dev: latency](../valkey-dev/reference/monitoring/latency.md) - latency monitor internals
 - [See valkey-dev: commandlog](../valkey-dev/reference/monitoring/commandlog.md) - commandlog architecture

@@ -69,7 +69,7 @@ ping -c 100 <primary-host> | tail -3
 
 ```bash
 # On the replica - check if expensive commands are running
-valkey-cli SLOWLOG GET 10
+valkey-cli SLOWLOG GET 10          # or COMMANDLOG GET 10 slow
 valkey-cli CLIENT LIST
 
 # Check disk I/O (if replica is doing RDB loads)
@@ -102,7 +102,25 @@ valkey-cli CONFIG SET repl-backlog-size 600mb
 valkey-cli CONFIG REWRITE
 ```
 
-Default is 10MB, which is almost always too small for production.
+Default is 10MB (`repl-backlog-size`), which is almost always too small for
+production. A 512MB minimum is recommended for most workloads.
+
+### Cascade Full Resync Incident Pattern
+
+When the backlog is too small, any brief network glitch exceeds it, forcing
+a full resync. Full resync triggers BGSAVE fork on the primary, which causes
+a latency spike that can disconnect other replicas too - creating a cascade.
+
+Prevention: set `repl-backlog-size` to at least 512MB. Monitor
+`sync_partial_err` in `INFO stats` - any non-zero value means partial resync
+failures that fell back to expensive full resyncs.
+
+### Persistence Disabled on Primary - Data Loss Risk
+
+If persistence is off on the primary and it restarts (empty dataset), all
+replicas will sync with the empty primary and lose their data. With Sentinel,
+the primary may restart fast enough that Sentinel does not detect the failure.
+Always either enable persistence on the primary OR disable auto-restart.
 
 ### 2. Enable Diskless Replication
 
@@ -161,7 +179,16 @@ Source-verified: `repl-timeout` defaults to 60 in `src/config.c` line 3391.
 
 ## Monitoring
 
-Set up alerts for:
+### Production Thresholds
+
+| Metric | Healthy | Warning | Critical |
+|--------|---------|---------|----------|
+| `slave_lag` (seconds) | 0-1 | 1-10 | > 10 |
+| `master_link_status` | up | - | down |
+| `sync_full` (rate) | 0 | any increase | repeated |
+| Replica `omem` | < 64MB | 64-200MB | > 200MB |
+
+Alert rules:
 
 ```bash
 # Replication offset delta (bytes behind)
@@ -187,5 +214,9 @@ Set up alerts for:
 - [Replication Tuning](../replication/tuning.md) - backlog sizing, diskless sync
 - [Replication Safety](../replication/safety.md) - min-replicas write safety
 - [Troubleshooting OOM](oom.md) - OOM on primary can cause replica disconnection
+- [Diagnostics Reference](diagnostics.md) - 7-phase diagnostic runbook, fork latency from full resync
+- [Latency Diagnosis](../performance/latency.md) - replication-related latency spikes
+- [Durability vs Performance](../performance/durability.md) - persistence settings affecting replication
+- [Monitoring Metrics](../monitoring/metrics.md) - `master_repl_offset`, `slave_repl_offset` metrics
 - [Monitoring Alerting](../monitoring/alerting.md) - replication lag alert rules
 - [See valkey-dev: replication overview](../valkey-dev/reference/replication/overview.md) - replication protocol internals

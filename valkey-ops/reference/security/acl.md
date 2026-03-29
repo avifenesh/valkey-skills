@@ -127,10 +127,28 @@ ACL SETUSER cache_writer on >cachepass ~cached:* +get +set +del +expire
 ACL SETUSER replica on >replicapass +psync +replconf +ping
 ```
 
+### Pub/Sub only user
+
+```
+ACL SETUSER pubsub-client on >pubsubpass resetchannels &notifications:* -@all +subscribe +publish +ping
+```
+
+### Queue worker (list operations on job keys)
+
+```
+ACL SETUSER worker on >workerpass ~jobs:* -@all +@list +@connection +ping +del
+```
+
+### Monitoring/observability user (read-only system info)
+
+```
+ACL SETUSER monitor on >monitorpass -@all +info +ping +client|list +slowlog|get +latency|latest +dbsize +memory|usage +memory|stats +config|get
+```
+
 ### Sentinel user (minimal permissions)
 
 ```
-ACL SETUSER sentinel on >sentinelpass +multi +slaveof +ping +subscribe +config|rewrite +role +publish +info
+ACL SETUSER sentinel on >sentinelpass allchannels +multi +slaveof +ping +exec +subscribe +config|rewrite +role +publish +info +client|setname +client|kill +script|kill
 ```
 
 ---
@@ -155,6 +173,9 @@ Manage at runtime:
 ACL LOAD    # Reload ACL file from disk
 ACL SAVE    # Write current ACL state to disk
 ```
+
+`ACL LOAD` validates all users atomically - if any user definition is invalid,
+the entire load fails and the old configuration remains active.
 
 ### Option 2: Inline in valkey.conf
 
@@ -189,7 +210,7 @@ ACL GENPASS 128    # specify bit length
 
 # View the security log (access denials)
 ACL LOG
-ACL LOG COUNT 20   # last 20 entries
+ACL LOG 20         # last 20 entries
 ACL LOG RESET      # clear the log
 
 # Check which user current connection uses
@@ -217,9 +238,23 @@ ACLs are the preferred authentication mechanism over `requirepass`.
 
 ---
 
+## Key Permission Granularity
+
+- `%R~<pattern>` - Read-only: data from key is read, copied, or returned
+- `%W~<pattern>` - Write-only: data in key is updated or deleted
+- Full access: `~<pattern>` or `%RW~<pattern>`
+
+Metadata operations (STRLEN, TYPE, SISMEMBER, EXISTS) do not require read
+permission - only that the user has some key access matching the pattern.
+
 ## See Also
 
 - [Security Hardening](hardening.md) - defense in depth, network security
 - [TLS Configuration](tls.md) - certificate-based authentication
 - [Command Restriction](rename-commands.md) - rename-command vs ACL comparison
+- [Prometheus Setup](../monitoring/prometheus.md) - minimal-privilege ACL user for the exporter
+- [Monitoring Metrics](../monitoring/metrics.md) - ACL LOG for access denial auditing
+- [Alerting Rules](../monitoring/alerting.md) - alerts for rejected connections and anomalies
+- [Commandlog](../monitoring/commandlog.md) - audit command patterns alongside ACL LOG
+- [Troubleshooting Diagnostics](../troubleshooting/diagnostics.md) - 7-phase diagnostic runbook including ACL review
 - [See valkey-dev: acl](../valkey-dev/reference/security/acl.md) - user structs, selector evaluation, bitmap permission internals

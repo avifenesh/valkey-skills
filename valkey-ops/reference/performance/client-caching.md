@@ -167,6 +167,18 @@ either:
 - Switch hot-path clients to broadcasting mode with specific prefixes
 - Use OPTIN mode to track only the most valuable keys
 
+## Performance Impact
+
+- Local memory access is orders of magnitude faster than a network round-trip
+- Most beneficial for read-heavy workloads with power-law access patterns
+  (a small percentage of keys are accessed frequently)
+- Particularly effective for immutable or rarely-changed data (user profiles,
+  posts, configuration)
+- Broadcasting mode has zero server memory cost but generates more invalidation
+  messages than default mode
+- When the tracking table fills (`tracking-table-max-keys`), evicted entries
+  generate "phantom" invalidation messages - this is normal but increases traffic
+
 ## Operational Considerations
 
 - Tracking adds memory overhead on the server proportional to the number of
@@ -181,6 +193,8 @@ either:
 ## See Also
 
 - [Latency Diagnosis](latency.md) - latency optimization strategies
+- [Memory Optimization](memory.md) - memory impact of tracking table overhead
+- [Slow Command Investigation](../troubleshooting/slow-commands.md) - hot key detection and mitigation
 - [Configuration Essentials](../configuration/essentials.md) - client connection tuning
 - [Monitoring Metrics](../monitoring/metrics.md) - `tracking_clients`, `tracking_total_keys` metrics
 - [See valkey-dev: tracking](../valkey-dev/reference/monitoring/tracking.md) - radix tree structure, invalidation dispatch internals

@@ -204,6 +204,28 @@ user admin on >adminpassword +@all ~*
 
 ---
 
+## Full Dangerous Command Reference
+
+Commands that should be restricted to admin users only via ACLs:
+
+| Command | Risk |
+|---------|------|
+| FLUSHALL / FLUSHDB | Complete data loss |
+| CONFIG SET | Runtime reconfiguration |
+| DEBUG | Crash, memory dump, performance impact |
+| KEYS | Performance DoS on large datasets (use SCAN) |
+| SHUTDOWN | Service termination |
+| REPLICAOF / SLAVEOF | Replication hijacking |
+| MIGRATE | Data exfiltration |
+| RESTORE | Arbitrary data injection |
+| MODULE LOAD/UNLOAD | Arbitrary code execution |
+| SAVE / BGSAVE | Disk I/O spike |
+| ACL SETUSER / ACL DELUSER | Privilege escalation |
+| EVAL / EVALSHA | Lua code execution (RCE risk per CVE history) |
+| MONITOR | Performance impact, data exposure |
+
+---
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
@@ -213,8 +235,13 @@ user admin on >adminpassword +@all ~*
 | AOF replay fails | AOF contains original command names | Remove rename-command, replay AOF, re-add renames |
 | Monitoring tool errors | Tool uses disabled commands | Use ACL instead - grant monitoring user access |
 
+---
+
 ## See Also
 
 - [ACL Configuration](acl.md) - preferred alternative to rename-command
 - [Security Hardening](hardening.md) - defense in depth strategy
 - [TLS Configuration](tls.md) - encryption in transit
+- [Monitoring Metrics](../monitoring/metrics.md) - monitoring tools affected by renamed commands
+- [Alerting Rules](../monitoring/alerting.md) - alerts for connection rejections and operational anomalies
+- [Production Checklist](../production-checklist.md) - security and operations checklist

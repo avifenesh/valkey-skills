@@ -214,6 +214,36 @@ Use an odd number of primary nodes (3, 5, 7) to avoid even-split scenarios.
 Ensure each primary has at least one replica. Place replicas in different
 failure domains (racks, availability zones).
 
+## Large Key Migration Blocked (Cluster Incident Pattern)
+
+**Symptoms**: Slot migration hangs, `CLUSTER NODES` shows slot in
+`migrating`/`importing` state indefinitely, multi-key commands on the affected
+slot fail.
+
+**Root cause**: A very large key (e.g., sorted set with millions of members)
+exceeds the target node's input buffer limit during key-by-key migration.
+
+**Resolution (pre-Valkey 9.0)**: Increase `proto-max-bulk-len` on the target
+node, or delete the large key and re-create, or force slot assignment with
+`CLUSTER SETSLOT <slot> NODE <node-id>` (data loss for keys in that slot).
+
+**Valkey 9.0 fix**: Atomic slot migration replaces key-by-key migration. Entire
+slots are migrated atomically using AOF format for streaming, preventing
+large-key blocking and eliminating mini-outages for multi-key operations during
+migration. This also enables 4.6-9.5x faster cluster resharding.
+
+## Cluster Scaling Improvements (Valkey 8.1+)
+
+For large clusters (hundreds to thousands of nodes):
+
+- **Ranked failover elections** - Replicas are ranked by replication offset so
+  the most up-to-date replica always tries first, preventing vote collisions
+  during multi-primary failures.
+- **Reconnection throttling** - Prevents reconnect storms to failed nodes
+  (previously every 100ms per node).
+- **Optimized failure reports** - Radix tree storage grouped by second,
+  reducing overhead in large clusters.
+
 ---
 
 ## See Also
@@ -222,4 +252,10 @@ failure domains (racks, availability zones).
 - [Cluster Operations](../cluster/operations.md) - manual failover, health checks
 - [Cluster Consistency](../cluster/consistency.md) - write safety during partitions
 - [Troubleshooting Replication Lag](replication-lag.md) - replica-level lag that may precede cluster issues
+- [Diagnostics Reference](diagnostics.md) - 7-phase diagnostic runbook including cluster health
+- [Latency Diagnosis](../performance/latency.md) - latency spikes during failover events
+- [Monitoring Metrics](../monitoring/metrics.md) - cluster state and slot coverage metrics
+- [Monitoring Alerting](../monitoring/alerting.md) - cluster health alert rules
+- [Security Hardening](../security/hardening.md) - firewall rules for cluster client and bus ports
+- [Security TLS](../security/tls.md) - TLS for cluster bus encryption
 - [See valkey-dev: cluster/failover](../valkey-dev/reference/cluster/failover.md) - cluster protocol internals, gossip, failover election

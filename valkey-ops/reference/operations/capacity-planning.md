@@ -50,7 +50,7 @@ Use `MEMORY USAGE <key>` to measure actual per-key memory and
 
 ---
 
-## maxmemory vs System RAM
+## `maxmemory` vs System RAM
 
 ### The Core Rule
 
@@ -78,13 +78,34 @@ When Valkey forks for BGSAVE or AOF rewrite:
 - Worst case: fork doubles memory usage temporarily
 - `disable-thp yes` (default) helps reduce COW amplification
 
+**Page table overhead formula** (from official Valkey latency docs):
+
+```
+page_table_size = dataset_size / 4KB * 8 bytes
+```
+
+A 24 GB instance requires a 48 MB page table. This memory is allocated
+during fork and contributes to the fork latency.
+
+**COW memory ranges by write pattern:**
+
+| Write Pattern | Additional Memory During Fork | Example (8 GB dataset) |
+|---------------|------------------------------|------------------------|
+| Read-heavy | Near-zero | ~0 GB extra |
+| Moderate writes | 10-30% | 0.8-2.4 GB extra |
+| Write-heavy | Up to 100% | Up to 8 GB extra |
+
+With THP enabled, COW granularity jumps from 4KB to 2MB pages. A single
+byte change in a 2MB page causes the entire page to be copied, turning
+moderate COW overhead into near-total memory duplication.
+
 **Conservative sizing**: If `maxmemory` = 8GB on a 16GB host, a fork during
 heavy writes could temporarily need 16GB. This is why 60% is safer than 70%
 for write-heavy workloads.
 
 ### Sizing Examples
 
-| System RAM | Workload | Recommended maxmemory |
+| System RAM | Workload | Recommended `maxmemory` |
 |-----------|----------|----------------------|
 | 8 GB | Read-heavy cache | 5-5.5 GB (65-70%) |
 | 8 GB | Write-heavy + persistence | 4-4.8 GB (50-60%) |
@@ -135,7 +156,24 @@ Pub/sub buffers: 100 * 32MB  = 3200MB (worst case)
 Normal clients: monitor individually
 ```
 
-Factor these into your maxmemory calculation.
+Note: `client-query-buffer-limit` defaults to 1GB per client. A misbehaving
+client can consume significant memory with a single large pipeline. Use
+`maxmemory-clients 5%` to cap aggregate client buffer memory.
+
+Factor these into your `maxmemory` calculation.
+
+### Total Memory Accounting
+
+```
+Total required = maxmemory
+               + fork COW headroom (30-100% of `maxmemory`)
+               + replica output buffers (N * 256MB)
+               + pubsub output buffers (subscribers * 32MB)
+               + client query buffers (varies)
+               + replication backlog (default 10MB)
+               + fragmentation overhead (10-30%)
+               + OS/kernel (1-2 GB)
+```
 
 ---
 
@@ -150,11 +188,11 @@ Factor these into your maxmemory calculation.
 Source reference: line 3409, default `10000`.
 
 Valkey reserves 32 file descriptors for internal use. The actual limit is
-`min(maxclients, OS fd limit - 32)`.
+`min(maxclients, OS_fd_limit - 32)`.
 
 ### Sizing Guidelines
 
-| Deployment | Expected Connections | Recommended maxclients |
+| Deployment | Expected Connections | Recommended `maxclients` |
 |-----------|---------------------|----------------------|
 | Single app, connection pool | 10-50 | 1000 (comfortable margin) |
 | Multiple apps, pools | 50-500 | 2000-5000 |
@@ -211,7 +249,7 @@ Valkey Cluster has 16,384 hash slots distributed across primary nodes.
 
 | Signal | Threshold | Action |
 |--------|-----------|--------|
-| Memory per node | > 60% of maxmemory | Add nodes or increase instance size |
+| Memory per node | > 60% of `maxmemory` | Add nodes or increase instance size |
 | CPU usage | > 70% sustained | Add nodes to distribute load |
 | Network throughput | > 80% of NIC capacity | Add nodes |
 | Slot migration time | > 30 minutes for rebalance | Smaller nodes = faster migration |
@@ -248,7 +286,7 @@ Example: 6 primaries with 2 replicas each = 18 nodes.
 ## Capacity Planning Checklist
 
 1. **Estimate dataset size**: Key count * average memory per key (use MEMORY USAGE on samples)
-2. **Set maxmemory**: 60-70% of instance RAM (lower for write-heavy + persistence)
+2. **Set `maxmemory`**: 60-70% of instance RAM (lower for write-heavy + persistence)
 3. **Account for buffers**: Replica buffers + pub/sub buffers + client query buffers
 4. **Account for fork COW**: Reserve 30-50% headroom for BGSAVE/AOF rewrite
 5. **Size connections**: Sum all client pools, ensure well under maxclients
@@ -262,7 +300,14 @@ Example: 6 primaries with 2 replicas each = 18 nodes.
 
 - [Configuration Essentials](../configuration/essentials.md) - `maxmemory`, `maxclients`, buffer defaults
 - [Memory Optimization](../performance/memory.md) - encoding thresholds, data modeling
+- [I/O Threads](../performance/io-threads.md) - CPU core allocation for throughput planning
 - [Eviction Policies](../configuration/eviction.md) - choosing `maxmemory-policy`
+- [RDB Persistence](../persistence/rdb.md) - snapshot fork overhead
+- [AOF Persistence](../persistence/aof.md) - rewrite fork overhead
 - [Cluster Setup](../cluster/setup.md) - hash slot distribution and cluster topology
 - [Monitoring Metrics](../monitoring/metrics.md) - memory and connection metrics
+- [Monitoring Alerting](../monitoring/alerting.md) - alert thresholds for capacity monitoring
 - [Troubleshooting OOM](../troubleshooting/oom.md) - when capacity estimates fall short
+- [StatefulSet Patterns](../kubernetes/statefulset.md) - PVC and resource sizing in Kubernetes
+- [Kubernetes Tuning](../kubernetes/tuning-k8s.md) - storage class and kernel tuning in K8s
+- [Production Checklist](../production-checklist.md) - pre-launch capacity verification
