@@ -14,25 +14,25 @@
 | `valkey-glide/` | valkey-glide | GLIDE shared architecture, features, best practices | 32 |
 | `valkey-ecosystem/` | valkey-ecosystem | Ecosystem tools and services | 28 |
 
-### GLIDE Per-Language (7 skills, code-heavy)
+### GLIDE Per-Language (7 sub-skills under valkey-glide/)
 
 | Directory | Skill | Content |
 |-----------|-------|---------|
-| `valkey-glide-python/` | valkey-glide-python | Async (valkey-glide) / sync (valkey-glide-sync), all data types, OTel, redis-py migration |
-| `valkey-glide-java/` | valkey-glide-java | CompletableFuture, Spring Data Valkey, Jedis/Lettuce migration |
-| `valkey-glide-nodejs/` | valkey-glide-nodejs | TypeScript, ESM/CJS, ioredis migration |
-| `valkey-glide-go/` | valkey-glide-go | CGO, Result[T], go-redis migration |
-| `valkey-glide-csharp/` | valkey-glide-csharp | .NET 6.0+/8.0+ (preview), StackExchange.Redis migration |
-| `valkey-glide-php/` | valkey-glide-php | C extension (PHP 8.1+), PIE/Composer/PECL |
-| `valkey-glide-ruby/` | valkey-glide-ruby | valkey-rb gem (GA), redis-rb drop-in replacement |
+| `valkey-glide/python/` | valkey-glide-python | Async (valkey-glide) / sync (valkey-glide-sync), all data types, OTel, redis-py migration |
+| `valkey-glide/java/` | valkey-glide-java | CompletableFuture, Spring Data Valkey, Jedis/Lettuce migration |
+| `valkey-glide/nodejs/` | valkey-glide-nodejs | TypeScript, ESM/CJS, ioredis migration |
+| `valkey-glide/go/` | valkey-glide-go | CGO, Result[T], go-redis migration |
+| `valkey-glide/csharp/` | valkey-glide-csharp | .NET 6.0+/8.0+ (preview), StackExchange.Redis migration |
+| `valkey-glide/php/` | valkey-glide-php | C extension (PHP 8.1+), PIE/Composer/PECL |
+| `valkey-glide/ruby/` | valkey-glide-ruby | valkey-rb gem (GA), redis-rb drop-in replacement |
 
-### Glide-MQ (Valkey-Powered Message Queues, 3 skills)
+### Glide-MQ (3 skills under glide-mq/)
 
 | Directory | Skill | Purpose |
 |-----------|-------|---------|
 | `glide-mq/` | glide-mq | Greenfield queue development - queues, workers, producers, scheduling, workflows |
-| `glide-mq-migrate-bullmq/` | glide-mq-migrate-bullmq | Migrate from BullMQ - connection, API mapping, breaking changes |
-| `glide-mq-migrate-bee/` | glide-mq-migrate-bee | Migrate from Bee-Queue - chained builder to options, API mapping |
+| `glide-mq/migrate-bullmq/` | glide-mq-migrate-bullmq | Migrate from BullMQ - connection, API mapping, breaking changes |
+| `glide-mq/migrate-bee/` | glide-mq-migrate-bee | Migrate from Bee-Queue - chained builder to options, API mapping |
 
 ## Architecture
 

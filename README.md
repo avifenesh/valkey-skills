@@ -80,17 +80,17 @@ valkey-skills/
   valkey-dev/                # 59 reference docs - server internals (C source verified)
   valkey-ops/                # 52 reference docs - operations, monitoring, security
   valkey-glide/              # 32 reference docs - shared GLIDE architecture
+    python/                  #   Python API reference (async + sync)
+    java/                    #   Java API reference (Spring, CompletableFuture)
+    nodejs/                  #   Node.js/TypeScript API reference
+    go/                      #   Go API reference
+    csharp/                  #   C# API reference (.NET 6.0+)
+    php/                     #   PHP API reference (8.1+)
+    ruby/                    #   Ruby API reference (valkey-rb)
   valkey-ecosystem/          # 28 reference docs - modules, services, tools
-  valkey-glide-python/       # Single-file - complete Python API reference
-  valkey-glide-java/         # Single-file - complete Java API reference
-  valkey-glide-nodejs/       # Single-file - complete Node.js API reference
-  valkey-glide-go/           # Single-file - complete Go API reference
-  valkey-glide-csharp/       # Single-file - complete C# API reference
-  valkey-glide-php/          # Single-file - complete PHP API reference
-  valkey-glide-ruby/         # Single-file - complete Ruby API reference
-  glide-mq/                  # Single-file - queue development guide
-  glide-mq-migrate-bullmq/  # Single-file - BullMQ migration guide
-  glide-mq-migrate-bee/      # Single-file - Bee-Queue migration guide
+  glide-mq/                  # Queue development guide
+    migrate-bullmq/          #   BullMQ migration
+    migrate-bee/             #   Bee-Queue migration
 ```
 
 208 reference files across the 5 core skills. Every claim verified against actual source code - Valkey C source, GLIDE Rust core, and official documentation.
