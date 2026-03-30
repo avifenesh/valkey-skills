@@ -163,59 +163,42 @@ npx skills add avifenesh/valkey-skills
 
 Tested and validated on Claude Code, Codex, OpenCode, Cline, GitHub Copilot, Junie, and Amp. Also works with Cursor and Kiro via manual install.
 
-## Options
+## Next Steps
 
 ### Option A: Full adoption under valkey-io
 
 Move the entire repository to the Valkey organization. All 15 skills become official Valkey AI reference materials.
 
 **What Valkey gets:**
-- Immediate AI skills coverage across the full ecosystem
+- Immediate AI skills coverage across the full ecosystem - server, internals, operations, clients, modules, services
 - Parity with (and significantly beyond) Redis agent-skills
-- Version-watch CI already tracks Valkey/GLIDE releases
-- Community can contribute via PRs
-- Listed under the official org for discoverability
+- Version-watch CI already tracks Valkey and GLIDE releases and opens issues when updates are needed
+- Community can contribute improvements via PRs
+- Official org listing for discoverability (`npx skills add valkey-io/valkey-skills`)
 
-**Maintenance:** version-watch CI opens issues when upstream releases happen. Updates are targeted to the changed areas (not full rewrites).
+**Maintenance:** The version-watch CI runs weekly and opens a GitHub issue when an upstream component (Valkey, GLIDE, valkey-search) ships a new release. Updates are targeted to the changed areas - not full rewrites. I continue maintaining the content.
 
-### Option B: Core server skills under valkey-io, GLIDE skills separate
+### Option B: Adopt selected skills
 
-Move valkey, valkey-dev, valkey-ops, and valkey-ecosystem to valkey-io. GLIDE and glide-mq skills remain maintained separately.
+Move a subset of skills to valkey-io. The rest remain community-maintained and linked from the official set.
 
-**What Valkey gets:**
-- Covers server, internals, operations, and ecosystem
-- GLIDE skills evolve with their own release cadence
-- Cleaner ownership boundaries
+Possible subsets:
 
-**What stays separate:** GLIDE per-language skills (7), shared GLIDE skill, glide-mq skills (3)
+| Subset | Skills | Files | Covers |
+|--------|--------|-------|--------|
+| App developer focused | valkey, valkey-ecosystem | 67 | Commands, patterns, modules, services, tools |
+| App + contributor | valkey, valkey-dev, valkey-ecosystem | 126 | Above + server internals |
+| App + ops | valkey, valkey-ops, valkey-ecosystem | 119 | Above (no internals) + deployment, monitoring, upgrades |
+| Server focused | valkey, valkey-dev, valkey-ops, valkey-ecosystem | 178 | Full server coverage, no GLIDE per-language skills |
 
-### Option C: Application and ecosystem skills only
+GLIDE and glide-mq skills can remain separate and evolve with their own release cadence. They cross-reference the core skills but work independently.
 
-Move valkey and valkey-ecosystem to valkey-io. Server internals (valkey-dev) and operations (valkey-ops) remain community-maintained.
+### Option C: Link as community resource
 
-**What Valkey gets:**
-- Covers the primary developer audience (app developers and evaluators)
-- Lowest maintenance burden
-- 67 reference files (vs 204 total)
-
-**What stays separate:** valkey-dev (59 files), valkey-ops (52 files), all GLIDE skills
-
-### Option D: Reference as community resource
-
-Link to valkey-skills from valkey.io as a recommended community resource. No repository move.
+Link to valkey-skills from valkey.io as a recommended community resource. No repository move, no maintenance responsibility for the Valkey team.
 
 **What Valkey gets:**
-- Zero maintenance effort
-- Developers can still discover and install the skills
+- Zero effort
+- Developers discover the skills through valkey.io
 - Skills remain community-maintained and updated
-
-### Option E: Fork as a starting point
-
-Use the content as a base for official Valkey skills, adapting structure and voice to Valkey project standards.
-
-**What Valkey gets:**
-- Full control over content, structure, and presentation
-- Can integrate with valkey.io documentation pipeline
-- Can rename, reorganize, or extend as needed
-
-**Effort:** Initial adaptation + ongoing maintenance
+- Can upgrade to Option A or B later if adoption proves the value
