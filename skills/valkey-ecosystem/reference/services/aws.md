@@ -56,14 +56,16 @@ ElastiCache includes JSON and vector search as built-in features - no manual mod
 - **Vector search**: Built-in HNSW and FLAT algorithms, cosine/Euclidean/inner product metrics, hybrid search with tag and numeric filters
 - AWS claims "lowest latency vector search with highest throughput and best price-performance at 95%+ recall rate among popular vector databases on AWS"
 
-### Cost Savings vs Redis
+### AWS Pricing (Valkey vs Redis Engine)
 
-- **Serverless**: 33% cheaper than ElastiCache Serverless for Redis OSS, starting as low as $6/month
-- **Serverless minimum**: 100 MB per cache (vs 1 GB for Redis OSS/Memcached) - 90% lower minimum
-- **Node-based**: 20% cheaper than other node-based ElastiCache engines
-- **Data tiering**: Available on Graviton2-based R6gd nodes (Valkey 7.2+) - 5x more capacity, 60%+ savings
+These are AWS ElastiCache pricing differences between the Valkey and Redis OSS engine options. They reflect AWS's pricing decisions, not inherent cost differences between the software.
 
-These savings apply to equivalent configurations. Pricing is subject to change - check the AWS pricing page for current rates.
+- **Serverless**: 33% lower price than ElastiCache Serverless for Redis OSS, starting at $6/month
+- **Serverless minimum**: 100 MB per cache (vs 1 GB for Redis OSS/Memcached)
+- **Node-based**: 20% lower price than other node-based ElastiCache engines
+- **Data tiering**: Available on Graviton2-based R6gd nodes (Valkey 7.2+)
+
+Pricing is subject to change - check the AWS pricing page for current rates.
 
 ### Free Tier
 

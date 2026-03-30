@@ -35,7 +35,7 @@ valkey-go is notable - it is not a fork but a purpose-built client with auto-pip
 
 ### 2. Valkey GLIDE (Official Multi-Language Client)
 
-GLIDE (General Language Independent Driver for the Enterprise) is the official Valkey client, written in Rust with language-specific bindings. It ships pre-configured with production best practices from over a decade of operating Redis-compatible services.
+GLIDE (General Language Independent Driver for the Enterprise) is the official Valkey client, written in Rust with language-specific bindings. It ships with pre-configured defaults for connection management, timeouts, and reconnection.
 
 - **GA**: Python, Java, Node.js, Go, PHP, Ruby (`valkey-rb` gem)
 - **Preview**: C#
@@ -100,7 +100,7 @@ These clients are maintained by Redis Ltd. or the broader Redis community. They 
 
 **Choose GLIDE when:**
 - Running on AWS ElastiCache or MemoryDB for Valkey (AZ-affinity reduces cross-AZ costs)
-- You need production-hardened connection management out of the box
+- You need automatic reconnection, pre-configured timeouts, and AZ-affinity routing
 - You want a single client API pattern across multiple languages
 - Your Java project uses Jedis and you want zero-code migration via the Jedis compat layer
 

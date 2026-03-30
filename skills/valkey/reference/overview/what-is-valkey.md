@@ -29,7 +29,7 @@ The fork preserves full compatibility with Redis OSS through version 7.2 while a
 
 ### Open source license
 
-Valkey is BSD 3-clause - no usage restrictions, no source-available caveats. You can embed it, fork it, resell it, and modify it without permission. Redis 8+ uses RSALv2/SSPL, which restricts competitive use.
+Valkey is BSD 3-clause - no usage restrictions, no source-available caveats. You can embed it, fork it, resell it, and modify it without permission. Redis 8+ uses RSALv2/SSPL, which restricts offering Redis as a managed service or embedding it in competing products. It does not restrict end-user application development.
 
 ### Valkey-only features (not in Redis)
 
@@ -44,9 +44,9 @@ Valkey is BSD 3-clause - no usage restrictions, no source-available caveats. You
 | HGETDEL | 9.1+ | Get hash field values and delete them atomically |
 | COMMANDLOG | 8.1+ | Extended slow log tracking large requests and replies |
 
-### Performance leadership
+### Performance changes since fork
 
-Valkey 8.0 tripled throughput to 1.2M requests per second via enhanced I/O multithreading. Valkey 9.0 reaches 1 billion RPS across 2,000 cluster nodes. These gains come from architectural improvements in I/O threading, pipeline prefetch, zero-copy responses, and SIMD optimizations.
+Valkey 8.0 reached 1.2M requests per second on a single node in project benchmarks via enhanced I/O multithreading. Valkey 9.0 cluster benchmarks reached 1 billion aggregate RPS across 2,000 nodes. These gains come from architectural changes in I/O threading, pipeline prefetch, zero-copy responses, and SIMD optimizations. Workload and hardware details are in the linked performance summary.
 
 ---
 
@@ -77,7 +77,7 @@ If you need these capabilities, your options are:
 - You need the performance improvements in 8.x and 9.x
 - You want Linux Foundation governance and community-driven development
 
-## When Redis 8+ Might Be Better
+## When Redis 8+ May Be a Better Fit
 
 - You need built-in vector search or full-text search
 - You rely on Redis Stack modules (RedisSearch, RedisJSON, RedisTimeSeries) and cannot find Valkey equivalents

@@ -158,7 +158,7 @@ Choose Redisson over valkey-java or Jedis when you need:
 
 ## Valkey GLIDE for Java
 
-GLIDE Java provides a Rust-core client with production-hardened defaults, AZ-affinity, and a Jedis compatibility layer. Recent releases added Java 8 backward compatibility, uber JAR for multi-platform builds, mTLS support, read-only mode, and additional commands (`EVAL_RO`, `EVALSHA_RO`, ACL commands, `WAITAOF`).
+GLIDE Java provides a Rust-core client with automatic reconnection with backoff, pre-configured timeouts, AZ-affinity, and a Jedis compatibility layer. Recent releases added Java 8 backward compatibility, uber JAR for multi-platform builds, mTLS support, read-only mode, and additional commands (`EVAL_RO`, `EVALSHA_RO`, ACL commands, `WAITAOF`).
 
 ### Install (Maven)
 
@@ -223,7 +223,7 @@ Check Maven Central for the latest version.
 
 ### Note on Spring Data Redis
 
-Spring Data Redis also works with Valkey without any code changes - just point the connection at a Valkey server. Spring Data Valkey is the better choice for new projects or when you want Valkey-native features and observability.
+Spring Data Redis also works with Valkey without any code changes - just point the connection at a Valkey server. Spring Data Valkey is designed for teams starting new projects on Valkey or those who want Valkey-native features and observability.
 
 ## Migration Paths
 

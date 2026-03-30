@@ -22,9 +22,9 @@ GLIDE (General Language Independent Driver for the Enterprise) is the official V
 
 ### Key Advantages
 
-- **AZ Affinity routing**: Route reads to the closest availability zone replica - reduces latency by ~500us and cross-AZ transfer costs by up to 75%. GLIDE-only feature, not available in any other client.
-- **IAM authentication**: Native token-based auth for AWS ElastiCache/MemoryDB without managing passwords. GLIDE-only.
-- **Built-in OpenTelemetry**: Per-command tracing spans and metrics without wrapping calls. GLIDE-only.
+- **AZ Affinity routing**: Route reads to the closest availability zone replica - reduces latency by ~500us and cross-AZ transfer costs by up to 75%. Also available in valkey-go.
+- **IAM authentication**: Native token-based auth for AWS ElastiCache/MemoryDB without managing passwords.
+- **Built-in OpenTelemetry**: Per-command tracing spans and metrics without wrapping calls.
 - **Auto-pipelining**: Commands are automatically batched, reducing round-trips without explicit pipeline management
 - **Single connection per node**: Multiplexed design eliminates connection pool sizing decisions
 - **Rust core**: One implementation shared across all languages, reducing per-language bugs
@@ -125,7 +125,7 @@ Beyond GLIDE, several language-specific clients are maintained as first-party Va
 | Persistent Connection Pool | No | Yes | Yes | Yes | Yes | Yes | Yes |
 | Smart Backoff (Storm Prevention) | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
 
-**When to use GLIDE over traditional clients**: GLIDE is the only client with AZ Affinity routing (cloud cost optimization), IAM authentication (AWS managed services), and built-in OpenTelemetry. It also has the broadest cluster feature support (cluster scan, PubSub restoration). Use traditional clients when you need client-side caching (valkey-go, redisson) or persistent connection pools.
+**When to use GLIDE vs traditional clients**: GLIDE offers AZ Affinity routing (also available in valkey-go), IAM authentication (AWS managed services), and built-in OpenTelemetry. It also has broad cluster feature support (cluster scan, PubSub restoration). Use traditional clients when you need client-side caching (valkey-go, redisson), persistent connection pools, or have an existing codebase with established client usage.
 
 ---
 
@@ -133,7 +133,7 @@ Beyond GLIDE, several language-specific clients are maintained as first-party Va
 
 ### Choose GLIDE when:
 
-- You deploy on **AWS ElastiCache/MemoryDB** and want AZ Affinity (cross-AZ cost savings up to 75%) and IAM authentication - these are GLIDE-only features
+- You deploy on **AWS ElastiCache/MemoryDB** and want AZ Affinity (cross-AZ cost savings up to 75%) and IAM authentication
 - You need **built-in observability** - OpenTelemetry tracing and metrics without additional instrumentation
 - Starting a **new project** with no existing Redis client dependency
 - You need **first-class support for Valkey-specific features** (SET IFEQ, DELIFEQ, hash field TTL commands)

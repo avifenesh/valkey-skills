@@ -4,7 +4,9 @@ Use when evaluating Valkey's performance characteristics or understanding what v
 
 ---
 
-## Version-by-Version Performance Gains
+Performance figures below are from Valkey project benchmarks and release notes. Actual improvements depend on workload characteristics, hardware, and configuration. See the linked Valkey release notes for methodology details.
+
+## Version-by-Version Performance Changes
 
 ### Valkey 8.0
 

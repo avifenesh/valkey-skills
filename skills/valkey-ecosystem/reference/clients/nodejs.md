@@ -8,7 +8,7 @@ Use when building Node.js or TypeScript applications with Valkey, choosing betwe
 
 ## iovalkey (Official Valkey Fork)
 
-iovalkey is the official Node.js client for Valkey, forked from ioredis. It provides the same battle-tested API with Valkey-native awareness.
+iovalkey is the official Node.js client for Valkey, forked from ioredis. It provides the same API with Valkey-native awareness.
 
 ### Install
 
@@ -163,7 +163,7 @@ export default ClientClass;
 
 ## Valkey GLIDE for Node.js
 
-GLIDE provides a Rust-core Node.js client with production-hardened connection management and AZ-affinity routing.
+GLIDE provides a Rust-core Node.js client with automatic reconnection with backoff, pre-configured timeouts, and AZ-affinity routing.
 
 ```bash
 npm install @valkey/valkey-glide

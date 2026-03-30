@@ -21,13 +21,13 @@ Invoke this skill when:
 
 ## Why Migrate
 
-Bee-Queue (2.0.0, Dec 2025) uses Redis-based list polling. It lacks:
-- Cluster support and TLS
+Bee-Queue (2.0.0, Dec 2025) uses Redis-based list polling. It does not include:
+- Cluster support or TLS
 - Priority queues
-- TypeScript types (bundled)
+- Bundled TypeScript types
 - Workflow orchestration
 
-glide-mq is built natively on Valkey using FCALL with higher throughput, cluster support, and advanced features like workflows and scheduling.
+glide-mq is built on Valkey using FCALL and includes cluster support, workflows, and scheduling. Throughput characteristics differ due to the FCALL-based architecture - see benchmarks at the glide-mq documentation site.
 
 ## Install
 

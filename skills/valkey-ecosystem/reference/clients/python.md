@@ -141,7 +141,7 @@ client = Valkey.from_url("valkey://localhost:6379/0")
 
 ## Valkey GLIDE for Python
 
-GLIDE is the official multi-language Valkey client with a Rust core and Python bindings. It provides production-hardened connection management, AZ-affinity routing, and automatic best practices.
+GLIDE is the official multi-language Valkey client with a Rust core and Python bindings. It provides automatic reconnection with backoff, AZ-affinity routing, and pre-configured timeouts.
 
 ```bash
 pip install valkey-glide

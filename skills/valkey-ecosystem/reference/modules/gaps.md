@@ -131,7 +131,7 @@ These are niche data structures. Most applications do not need them, and reasona
 | Time series with downsampling | Add TimescaleDB/InfluxDB; or use Sorted Sets for simple cases |
 | Graph queries | Use FalkorDB, Neo4j, or Memgraph as a separate service |
 | Cuckoo/CMS/TopK/t-digest | Evaluate if you truly need these; workarounds exist |
-| Cost-sensitive, Redis-compatible | Valkey is BSD-licensed and 20-33% cheaper on AWS managed services |
+| Cost-sensitive, Redis-compatible | Valkey uses the BSD license. AWS ElastiCache pricing differs between Valkey and Redis engines - check current AWS pricing |
 
 ## Cross-References
 

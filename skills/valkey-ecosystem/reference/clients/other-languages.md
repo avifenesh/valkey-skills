@@ -10,7 +10,7 @@ Use when building Valkey applications in Go, Rust, .NET/C#, PHP, Swift, Scala, o
 
 ### valkey-go (Official, Native)
 
-valkey-go is purpose-built for Valkey - not a fork of an existing Redis client. It features auto-pipelining that automatically batches concurrent commands for higher throughput.
+valkey-go is purpose-built for Valkey - not a fork of an existing Redis client. It features auto-pipelining that automatically batches concurrent commands, reducing round-trips.
 
 | | |
 |---|---|
@@ -32,11 +32,11 @@ err = client.Do(ctx, client.B().Set().Key("key").Value("value").Build()).Error()
 result, err := client.Do(ctx, client.B().Get().Key("key").Build()).ToString()
 ```
 
-Key features: auto-pipelining (concurrent commands batched automatically - up to ~14x throughput vs go-redis in benchmarks), cluster and sentinel support, client-side caching, Pub/Sub, Streams, Lua scripting, TLS, RDMA, context-based cancellation, AZ-affinity routing.
+Key features: auto-pipelining (concurrent commands batched automatically, which can significantly improve throughput for concurrent workloads - see valkey-go benchmarks for methodology), cluster and sentinel support, client-side caching, Pub/Sub, Streams, Lua scripting, TLS, RDMA, context-based cancellation, AZ-affinity routing.
 
 Notable packages: `valkeycompat` (go-redis compatibility adapter), `valkeyaside` (cache-aside pattern with object mapping), `valkeylock` (distributed locks with client-side caching), `valkeyotel` (OpenTelemetry), `valkeyprob` (probabilistic data structures).
 
-With 609 GitHub stars (highest of any standalone Valkey-native client) and roughly monthly releases, valkey-go has strong momentum in the Go ecosystem.
+valkey-go has an active release cadence with roughly monthly releases.
 
 ### go-redis (Compatible)
 
@@ -54,7 +54,7 @@ go-redis is widely used and well-documented. It works with Valkey via RESP compa
 
 ### GLIDE Go (Official, GA)
 
-GLIDE Go reached GA status. It provides the same Rust-core benefits as other GLIDE clients - AZ-affinity, auto-reconnect, production-hardened defaults.
+GLIDE Go reached GA status. It provides the same Rust-core benefits as other GLIDE clients - AZ-affinity, auto-reconnect, automatic reconnection with backoff and pre-configured timeouts.
 
 See the **valkey-glide** skill for GLIDE Go API details and usage patterns.
 

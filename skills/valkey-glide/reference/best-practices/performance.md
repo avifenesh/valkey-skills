@@ -27,9 +27,9 @@ GLIDE is roughly 15-20% slower than native clients for sequential operations. Th
 
 Batched workloads are competitive. The FFI overhead is amortized across all commands in the batch - one crossing per batch instead of one per command. Pipelined approaches show 190-257% higher throughput compared to individual async requests.
 
-### Where GLIDE Wins
+### GLIDE Strengths in Production
 
-Raw throughput benchmarks do not capture GLIDE's advantages in real production conditions:
+Raw throughput benchmarks do not capture GLIDE's differences in real production conditions:
 
 - **Cluster failover**: GLIDE automatically detects topology changes, redirects MOVED/ASK errors, and re-routes commands without application intervention. Native clients often require manual handling or library-specific configuration.
 - **Reconnection**: Automatic exponential backoff with jitter. Native clients vary - some drop requests, some block, some require manual reconnection.
@@ -116,7 +116,7 @@ All keys must hash to the same slot in cluster mode. Use hash tags `{tag}` to en
 
 ---
 
-## Connection Model Advantages
+## Connection Model Differences
 
 GLIDE uses a single multiplexed connection per node. All requests pipeline through this connection using Valkey's built-in request pipelining.
 
@@ -173,4 +173,4 @@ The 15-20% sequential overhead disappears when you:
 2. Run in cluster mode (GLIDE's topology management prevents the latency spikes that native clients suffer during failover)
 3. Account for developer time saved by cross-language consistency
 
-For most production workloads - especially those using cluster mode or requiring high availability - GLIDE's reliability features outweigh the raw throughput difference.
+For production workloads using cluster mode or requiring high availability, GLIDE's reliability features may offset the sequential throughput difference. Evaluate based on your workload's sensitivity to failover latency vs steady-state throughput.

@@ -210,7 +210,7 @@ Vultr offers Valkey as part of their managed database platform alongside Postgre
 ### Strengths
 
 - **Simple infrastructure**: Part of Vultr's developer-friendly cloud platform
-- **Competitive pricing**: Vultr is known for cost-effective compute
+- **Pricing**: Check Vultr's current pricing page for Managed Valkey rates
 
 ### Considerations
 
@@ -244,7 +244,7 @@ Momento offers a Valkey-compatible managed cache service focused on zero-operati
 
 ### Profile
 
-NetApp Instaclustr for Valkey provides enterprise-grade managed platform features with 24x7 support.
+NetApp Instaclustr for Valkey provides a managed platform with 24x7 support, provisioning automation, and monitoring integration.
 
 ### Key Details
 

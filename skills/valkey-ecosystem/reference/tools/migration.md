@@ -96,7 +96,7 @@ Most Redis clients work with Valkey by changing only the connection endpoint. Fo
 | From | To | Effort | Notes |
 |------|----|--------|-------|
 | redis-py | valkey-py | Low | Change import from `redis` to `valkey`; `Redis` alias available in valkey-py |
-| redis-py | Valkey GLIDE (Python) | Medium | New API; better defaults and performance |
+| redis-py | Valkey GLIDE (Python) | Medium | New API; different connection model and defaults |
 | ioredis | iovalkey | Low | npm package swap; API fully compatible |
 | node-redis | iovalkey | Medium | Different API surface; migration guide available |
 | Jedis | valkey-java | Low | Drop-in replacement; fork of Jedis |
