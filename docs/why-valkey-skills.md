@@ -1,130 +1,221 @@
-# Why Valkey Needs AI Skills
+# AI Skills for Valkey - Why and What
 
-## The Problem
+## AI Skills: What They Are
 
-AI coding assistants are the primary interface for a growing number of developers. When a developer asks Claude, Cursor, Copilot, or Codex to "set up a caching layer with Valkey," the assistant draws from its training data - which is overwhelmingly Redis-centric.
+AI skills are structured reference files that get loaded into an AI coding assistant's context when a developer asks a relevant question. Instead of relying on the AI's training data (which may be outdated or wrong), skills provide verified, current information that the AI reads and uses to generate its response.
 
-### Training data imbalance
+Think of it as documentation written for AI consumption rather than human browsing.
 
-Redis has 15+ years of documentation, blog posts, Stack Overflow answers, tutorials, and books. AI models have deeply internalized Redis patterns, APIs, and conventions.
+**How traditional docs work**: Developer searches valkey.io, reads a page, writes code based on what they read.
 
-Valkey forked from Redis in March 2024. Its documentation (520 pages on valkey.io) is a fraction of what Redis has accumulated. Even when the answer is identical (most commands are compatible), AI assistants often:
+**How AI skills work**: Developer asks their AI assistant a question. The assistant loads the relevant skill file (100-300 lines, one topic), reads it, and generates a correct answer with working code.
 
-- Reference redis-py instead of valkey-glide
-- Suggest Redis Stack modules instead of valkey-search / valkey-json / valkey-bloom
-- Miss Valkey-specific features entirely (SET IFEQ, DELIFEQ, hash field TTL, atomic slot migration)
-- Use outdated patterns (SLOWLOG instead of COMMANDLOG, old encoding thresholds)
-- Default to ioredis/Jedis instead of the official GLIDE client
+The developer never sees the skill file. They just get better answers.
 
-### The GLIDE knowledge gap
+### The format
 
-Valkey GLIDE is a new client with no precedent in training data. AI models cannot generate correct GLIDE code without guidance because:
+A skill is a markdown file with:
+- A **trigger line** ("Use when building applications with Valkey") that tells the AI when to load it
+- **Focused content** - one topic per file, typically 100-300 lines
+- **Cross-references** to related skills for follow-up questions
 
-- The API differs from redis-py, ioredis, and Jedis (e.g., `exec()` not `run()`, `Batch` not `Transaction`, tuple-based xadd, message-first publish)
-- Each language has its own idioms (Python uses `List[Tuple]`, Java uses `CompletableFuture`, Go uses `Result[T]`)
-- Features like AZ Affinity, IAM auth, and OpenTelemetry have no equivalent in other clients
-- Connection model is fundamentally different (single multiplexed connection vs connection pools)
+Skills are installed once and work automatically across AI tools.
 
-Without skills, an AI asked to "use GLIDE with Python" will fabricate API calls based on redis-py patterns. The code will look plausible but won't compile.
+### Who is doing this
 
-### The operations gap
+The Agent Skills format is an emerging standard adopted by Redis, Vercel (Next.js/React), TanStack, OpenAI, ElectricSQL, and others. Libraries ship skills inside their packages so AI assistants can correctly use their APIs.
 
-Valkey 8.x and 9.x introduced significant operational changes:
+- **Redis** published `redis/agent-skills` in January 2026 (40 GitHub stars, 29 rules covering best practices)
+- **Vercel** published `vercel-labs/agent-skills` for Next.js and React
+- **TanStack** ships skills via their Intent CLI for TanStack Router, Query, etc.
+- The `npx skills add` CLI (1.4.6) discovers and installs skills across Claude Code, Cursor, Codex, Copilot, OpenCode, Cline, Kiro, Junie, and Amp
 
-- I/O threading model overhaul
-- Dual-channel replication
-- Atomic slot migration (replacing key-by-key)
-- New Sentinel ACL requirements (+failover)
-- Hash field expiration (11 new commands)
-- COMMANDLOG replacing SLOWLOG
+This is not a niche experiment. It is how library maintainers are addressing the fact that AI assistants generate incorrect code when they rely on training data alone.
 
-An operator asking an AI assistant "how do I upgrade from Redis to Valkey 9.0" gets generic advice that misses these changes. The Valkey-specific upgrade path, bug workarounds (9.0.0-9.0.1 hash field expiration issues), and new configuration options are absent from training data.
+## Why Valkey Needs This
 
-## What Exists Today
+### The training data problem
 
-| Resource | Scope | AI-Optimized? |
-|----------|-------|---------------|
-| valkey.io docs (520 pages) | Commands, topics, blog posts | No - web docs, not structured for RAG |
-| GLIDE repo READMEs | Installation, basic examples | No - per-language, no cross-reference |
-| GLIDE API docs (generated) | Method signatures | No - auto-generated, no patterns or migration guides |
-| Redis agent-skills (29 rules) | Redis best practices | Yes - but Redis-specific, no Valkey content |
-| Stack Overflow | Q&A | No - mostly Redis-tagged, Valkey questions sparse |
+AI models are trained on internet-scale text data. For Redis, that means 15+ years of:
+- Official documentation (2,000+ pages)
+- Stack Overflow answers (300,000+ Redis-tagged questions)
+- Blog posts, tutorials, courses, books
+- Source code examples across millions of repositories
 
-No AI skills exist for Valkey. There are no structured, RAG-optimized reference materials designed for AI assistants to use when helping developers build with Valkey.
+For Valkey, the training data is thin:
+- valkey.io documentation (520 pages, started 2024)
+- Stack Overflow (sparse - most questions still use the "redis" tag)
+- Limited blog/tutorial coverage compared to Redis
+
+The result: when a developer asks an AI assistant to help with Valkey, the assistant falls back to Redis knowledge. This creates real problems:
+
+| What the developer asks | What the AI does without Valkey skills |
+|------------------------|---------------------------------------|
+| "Set up caching with Valkey" | Generates redis-py code, not GLIDE |
+| "What modules does Valkey support?" | Describes Redis Stack, not valkey-search/valkey-json/valkey-bloom |
+| "Use SET IFEQ for conditional update" | Doesn't know the command exists (Valkey-only, not in Redis) |
+| "Upgrade from Redis to Valkey 9.0" | Generic advice, misses +failover ACL change, hash field expiration bugs, atomic slot migration |
+| "How does Valkey's eviction work?" | Describes Redis 7.x internals with wrong thresholds and pool sizes |
+| "Deploy Valkey on Kubernetes" | Suggests Redis Helm charts, not Valkey-specific operators |
+| "Use COMMANDLOG to find slow queries" | Doesn't know COMMANDLOG exists (Valkey 8.1+, replaces SLOWLOG) |
+
+These are not edge cases. These are the most common questions developers ask.
+
+### Web docs don't solve this
+
+valkey.io has solid documentation - 520 pages covering commands, topics, and guides. But web documentation and AI skills serve different purposes:
+
+| | Web docs (valkey.io) | AI skills |
+|---|---------------------|-----------|
+| **Consumed by** | Humans browsing a website | AI assistants loading context |
+| **Discovery** | Human clicks sidebar, uses search | AI matches trigger phrase to user query |
+| **Scope** | Full pages, multiple topics | One topic per file, 100-300 lines |
+| **Format** | HTML with navigation, images, links | Markdown with frontmatter triggers |
+| **Loading** | Human reads relevant parts | AI loads entire file into prompt window |
+| **Cross-referencing** | Hyperlinks to other pages | Relative paths AI can follow programmatically |
+| **Verification** | Editorial review | Verified against actual source code |
+| **Freshness** | Manual updates | CI watches upstream releases, opens issues when versions change |
+
+Web docs and AI skills are complementary. Web docs serve developers who browse. AI skills serve developers who ask their AI assistant.
+
+### Redis already invested in this
+
+Redis published `redis/agent-skills` in January 2026. It contains 29 rules covering best practices for data structures, connections, Redis Query Engine, vector search, and semantic caching.
+
+Valkey has no equivalent. This means when a developer's AI assistant needs to answer a Valkey question, it has:
+- Redis skills available (if installed) - wrong for Valkey-specific features
+- Redis training data - outdated for Valkey's diverged codebase
+- No Valkey skills - no way to provide correct answers
 
 ## What valkey-skills Provides
 
-### Coverage
+204 source-verified reference files organized into 15 skills, structured for AI consumption. Every claim verified against actual Valkey C source code, GLIDE Rust core, and official documentation.
 
-| Skill | Reference Files | Audience |
-|-------|----------------|----------|
-| valkey | 39 | Application developers - commands, patterns, best practices |
-| valkey-dev | 59 | Server contributors - C source internals, architecture |
-| valkey-ops | 52 | Operators - deployment, monitoring, security, upgrades |
-| valkey-glide | 26 | GLIDE shared architecture, features, migration |
-| valkey-ecosystem | 28 | Modules, managed services, tools |
-| 7 per-language GLIDE | 7 | Python, Java, Node.js, Go, C#, PHP, Ruby APIs |
-| glide-mq (3 skills) | 3 | Message queue development and migration |
+### Core coverage
 
-204 reference files, verified against actual source code (Valkey C source, GLIDE Rust core, official documentation).
+**valkey** (39 reference files) - for application developers:
+- All major command groups with syntax, complexity, and code examples
+- 9 application patterns: caching, sessions, locks, rate limiting, queues, leaderboards, counters, pub/sub, search/autocomplete
+- Best practices: keys, memory, performance, persistence, cluster, high availability
+- Valkey-specific features: SET IFEQ/DELIFEQ, hash field TTL, cluster enhancements, polygon geo queries
+- Module commands: JSON, Bloom, Search
+- Client overview with feature comparison across GLIDE, valkey-go, redis-py, ioredis, Jedis, Lettuce
+- Anti-patterns quick reference
+- Redis migration guide
 
-### What this means in practice
+**valkey-dev** (59 reference files) - for server contributors:
+- Architecture: event loop, command dispatch, networking, RESP protocol
+- Data structures: SDS, quicklist, listpack, skiplist, rax, hashtable (new), dict (legacy)
+- Memory: zmalloc, defragmentation, lazy-free, eviction internals
+- Threading: I/O threads, BIO, pipeline prefetch
+- Replication: overview, dual-channel replication
+- Cluster: overview, failover protocol, slot migration
+- Persistence: RDB and AOF internals
+- Modules API: overview, types/commands, Rust SDK
+- Valkey-specific: kvstore, object lifecycle, RDMA transport, vset
+- Testing: TCL tests, unit tests, CI pipeline
+- Contributing: workflow, governance
 
-**Without skills** - developer asks "how do I use Valkey streams with GLIDE in Python":
-- AI generates redis-py code (wrong client)
-- Or fabricates GLIDE API calls based on redis-py patterns (wrong API)
-- xadd uses dict format (wrong - GLIDE uses `List[Tuple]`)
-- publish uses channel-first (wrong - GLIDE uses message-first)
+**valkey-ops** (52 reference files) - for operators:
+- Deployment: install, Docker, bare-metal
+- Kubernetes: Helm, operators, StatefulSet, tuning
+- Sentinel: architecture, deployment runbook, split-brain
+- Cluster: setup, resharding, operations, consistency
+- Persistence: RDB, AOF, backup/recovery
+- Replication: setup, tuning, safety
+- Security: ACL, TLS, hardening, command renaming
+- Monitoring: Prometheus, Grafana, alerting, metrics, COMMANDLOG
+- Performance: I/O threads, memory, latency, defrag, durability, client-caching
+- Troubleshooting: OOM, replication lag, slow commands, cluster partitions, diagnostics
+- Upgrades: compatibility matrix, rolling upgrade procedure, Redis migration
+- Production checklist
 
-**With skills** - same question:
-- AI loads valkey-glide-python skill
-- Routes to the Streams section
-- Generates correct `xadd` with `List[Tuple[str, str]]` format
-- Correct `publish(message, channel)` order
-- Includes consumer group patterns with `xreadgroup`
+**valkey-ecosystem** (28 reference files) - for evaluators and integrators:
+- Client landscape: decision framework, per-language guides (Python, Java, Node.js, Go, others)
+- Modules: JSON, Bloom, Search (with feature comparison vs Redis), module gaps analysis
+- Managed services: AWS (ElastiCache, MemoryDB), GCP (Memorystore), Aiven, Percona, 10+ providers with comparison matrix
+- Monitoring: Prometheus/Grafana setup, GUI tools, monitoring platforms
+- Tools: Docker, Kubernetes, CI/CD, Infrastructure as Code, migration, security scanning, testing, AI/ML patterns, CLI/benchmarking, framework integrations (Spring, Django, Rails, Laravel, Sidekiq)
+- Community overview
 
-### Comparison with Redis agent-skills
+**GLIDE skills** (26 shared + 7 per-language) - for GLIDE users:
+- Shared architecture, connection model, cluster topology
+- Features: batching, PubSub, scripting, OpenTelemetry, AZ affinity, TLS, compression, streams, server modules
+- Per-language API reference: Python, Java, Node.js, Go, C#, PHP, Ruby
+- Migration guides: from redis-py, ioredis, Jedis, Lettuce, go-redis, StackExchange.Redis
+- Best practices: performance, error handling, production, Spring integration
 
-| Aspect | redis/agent-skills | valkey-skills |
-|--------|-------------------|---------------|
-| Skills | 1 | 15 |
-| Reference content | 29 rules (~50 lines each) | 204 docs (~250 lines each) |
-| Total content | ~1,500 lines | ~51,000 lines |
-| Server internals | None | 59 docs verified against C source |
-| Operations | None | 52 docs (k8s, monitoring, security, upgrades) |
-| Per-language APIs | Python + Java snippets | 7 dedicated per-language skills |
-| Client migration | None | 6 migration guides |
-| Managed services | None | AWS, GCP, Aiven, 10+ providers |
-| Source verification | Web docs | Actual C/Rust source code |
+### Quality controls
 
-Redis invested in AI skills for their developer community. Valkey developers currently have no equivalent.
-
-### Quality
-
-Every claim in valkey-skills is verified against actual source code - not just web documentation. The build process includes:
-
-- Multi-agent review (5 independent critics per skill)
-- Per-language API validation against GLIDE Rust FFI source
-- Cross-file link verification (204 cross-references validated)
-- Neutrality review (23 instances of competitive language identified and removed)
-- CI: agnix lint, link-check, version-watch for upstream releases
+- Source-verified against actual Valkey C source and GLIDE Rust core (not just web docs)
+- Multi-agent review: 5 independent critics per skill with fix-validation
+- Cross-file link verification: 204 internal cross-references validated
+- Neutrality: documents what each project offers without positioning against Redis
+- CI pipelines: agnix lint (0 errors), link-check, version-watch (weekly checks against upstream releases)
 
 ### Distribution
 
 Works with every major AI coding tool:
 
-| Method | Command |
-|--------|---------|
-| Agent Skills CLI | `npx skills add avifenesh/valkey-skills` |
-| Claude Code | `/plugin marketplace add avifenesh/valkey-skills` |
-| Manual | `git clone` + copy to tool's skills directory |
+```
+npx skills add avifenesh/valkey-skills
+```
 
-Supports Claude Code, Codex, OpenCode, Cursor, Kiro, Cline, GitHub Copilot, Junie, and Amp.
+Tested and validated on Claude Code, Codex, OpenCode, Cline, GitHub Copilot, Junie, and Amp. Also works with Cursor and Kiro via manual install.
 
-## The Opportunity
+## Options
 
-AI coding assistants are becoming the default way developers discover and learn APIs. When a developer asks their assistant about caching, queuing, or session management, the assistant's knowledge of Valkey directly influences whether they choose Valkey for their project.
+### Option A: Full adoption under valkey-io
 
-Redis recognized this - they published agent-skills in January 2026. Valkey currently has no equivalent, which means AI assistants default to recommending Redis patterns and clients.
+Move the entire repository to the Valkey organization. All 15 skills become official Valkey AI reference materials.
 
-valkey-skills closes this gap with significantly more depth and breadth than what Redis offers. It ensures that when developers ask AI assistants about Valkey, they get accurate, current, verified answers - not Redis approximations.
+**What Valkey gets:**
+- Immediate AI skills coverage across the full ecosystem
+- Parity with (and significantly beyond) Redis agent-skills
+- Version-watch CI already tracks Valkey/GLIDE releases
+- Community can contribute via PRs
+- Listed under the official org for discoverability
+
+**Maintenance:** version-watch CI opens issues when upstream releases happen. Updates are targeted to the changed areas (not full rewrites).
+
+### Option B: Core server skills under valkey-io, GLIDE skills separate
+
+Move valkey, valkey-dev, valkey-ops, and valkey-ecosystem to valkey-io. GLIDE and glide-mq skills remain maintained separately.
+
+**What Valkey gets:**
+- Covers server, internals, operations, and ecosystem
+- GLIDE skills evolve with their own release cadence
+- Cleaner ownership boundaries
+
+**What stays separate:** GLIDE per-language skills (7), shared GLIDE skill, glide-mq skills (3)
+
+### Option C: Application and ecosystem skills only
+
+Move valkey and valkey-ecosystem to valkey-io. Server internals (valkey-dev) and operations (valkey-ops) remain community-maintained.
+
+**What Valkey gets:**
+- Covers the primary developer audience (app developers and evaluators)
+- Lowest maintenance burden
+- 67 reference files (vs 204 total)
+
+**What stays separate:** valkey-dev (59 files), valkey-ops (52 files), all GLIDE skills
+
+### Option D: Reference as community resource
+
+Link to valkey-skills from valkey.io as a recommended community resource. No repository move.
+
+**What Valkey gets:**
+- Zero maintenance effort
+- Developers can still discover and install the skills
+- Skills remain community-maintained and updated
+
+### Option E: Fork as a starting point
+
+Use the content as a base for official Valkey skills, adapting structure and voice to Valkey project standards.
+
+**What Valkey gets:**
+- Full control over content, structure, and presentation
+- Can integrate with valkey.io documentation pipeline
+- Can rename, reorganize, or extend as needed
+
+**Effort:** Initial adaptation + ongoing maintenance
