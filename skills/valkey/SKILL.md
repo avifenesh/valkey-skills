@@ -118,7 +118,9 @@ Browse by topic below. Each link leads to a focused reference doc with syntax, c
 
 | Topic | Reference |
 |-------|-----------|
-| Server introspection, memory analysis, key scanning, client management; INFO, MEMORY USAGE, OBJECT, CLIENT, CONFIG GET, SCAN, WAIT, COPY, DBSIZE | [server](reference/commands/server.md) |
+| Server info, memory inspection, object introspection; INFO, DBSIZE, MEMORY USAGE, OBJECT ENCODING/IDLETIME/FREQ/REFCOUNT | [server](reference/commands/server.md) |
+| Client management, configuration, command logging; CLIENT ID/LIST/SETNAME/INFO/NO-EVICT/NO-TOUCH, CONFIG GET, COMMANDLOG GET, SLOWLOG GET | [server-client](reference/commands/server-client.md) |
+| Keyspace iteration, key copying, replication durability, debugging; SCAN, COPY, WAIT, WAITAOF, DEBUG OBJECT | [server-ops](reference/commands/server-ops.md) |
 
 
 ## Commands - Modules

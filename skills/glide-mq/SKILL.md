@@ -1,6 +1,6 @@
 ---
 name: glide-mq
-description: "Creates glide-mq message queue implementations. Use for new queue setup, producer/consumer patterns, job scheduling, workflows, batch processing, or any greenfield glide-mq development."
+description: "Use when building message queues with glide-mq. Covers queue setup, producer/consumer patterns, job scheduling, workflows, batch processing, and greenfield glide-mq development."
 version: 1.0.0
 argument-hint: "[task description]"
 ---

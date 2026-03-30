@@ -1,0 +1,34 @@
+# agnix configuration for valkey-skills
+# Skills-only plugin with nested reference directories
+
+[rules]
+# Suppress rules that conflict with our architecture:
+# - AS-013: We use nested reference paths (reference/commands/strings.md) by design
+# - AS-014: False positive on JSON escapes in Java code examples
+# - CC-SK-012: argument-hint is for user guidance, not referenced in body
+# - CC-SK-017: 'version' is a custom frontmatter field we use intentionally
+# - XP-SK-001: Same - 'version' is intentional cross-platform
+# - CDX-AG-005: Untranslated rule, not applicable
+# - VER-001: Informational, no action needed
+# Suppress rules that conflict with our architecture
+disabled_rules = [
+    "AGM-004",
+    "AS-012",
+    "AS-013",
+    "AS-014",
+    "AS-017",
+    "CC-SK-012",
+    "CC-SK-017",
+    "XP-SK-001",
+    "CDX-AG-005",
+    "VER-001",
+]
+# AS-012: Per-language GLIDE skills are intentionally >500 lines (self-contained)
+# AS-013: Nested reference paths (reference/commands/strings.md) by design
+# AS-014: False positive on JSON escapes in Java code examples
+# AS-017: Qualified skill names (valkey-glide-python) in short dirs (python/) for discoverability
+# CC-SK-012: argument-hint is for user guidance, not referenced in body
+# CC-SK-017: 'version' is a custom frontmatter field
+# XP-SK-001: Same - 'version' is intentional
+# CDX-AG-005: Untranslated rule
+# VER-001: Informational

@@ -1,0 +1,39 @@
+name: Link Check
+
+on:
+  push:
+    branches: [main]
+    paths: ['skills/**']
+  pull_request:
+    paths: ['skills/**']
+
+jobs:
+  check-links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check internal cross-references
+        run: |
+          errors=0
+
+          for file in $(find skills/ -name '*.md'); do
+            dir=$(dirname "$file")
+            # Extract markdown links to local .md files, skip URLs and anchors
+            grep -oP '\]\(\K(?!https?://|#)[^)]+\.md' "$file" 2>/dev/null | while IFS= read -r link; do
+              target="${link%%#*}"
+              if [ ! -f "$dir/$target" ]; then
+                echo "[ERROR] $file -> $target (not found)"
+                echo "BROKEN" >> /tmp/link-errors.txt
+              fi
+            done
+          done
+
+          if [ -f /tmp/link-errors.txt ]; then
+            count=$(wc -l < /tmp/link-errors.txt)
+            echo ""
+            echo "Found $count broken internal links"
+            exit 1
+          else
+            echo "All internal links valid"
+          fi

@@ -4,11 +4,11 @@
 
 ## Skills
 
-### Valkey Core (5 skills, 202 reference files)
+### Valkey Core (5 skills, 204 reference files)
 
 | Directory | Skill | Audience | Files |
 |-----------|-------|----------|-------|
-| `skills/valkey/` | valkey | Application developers using Valkey | 37 |
+| `skills/valkey/` | valkey | Application developers using Valkey | 39 |
 | `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 59 |
 | `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 52 |
 | `skills/valkey-glide/` | valkey-glide | GLIDE shared architecture, features, best practices | 26 |
