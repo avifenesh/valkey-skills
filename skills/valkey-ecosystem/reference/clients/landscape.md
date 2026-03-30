@@ -56,7 +56,7 @@ These clients are maintained by Redis Ltd. or the broader Redis community. They 
 |----------|--------|-------|
 | Python | redis-py | Endpoint swap only |
 | Node.js | node-redis | Endpoint swap only |
-| Node.js | ioredis | Community-maintained, endpoint swap; lacks AZ-affinity routing |
+| Node.js | ioredis | Community-maintained, endpoint swap |
 | Java | Jedis | AWS recommends for ElastiCache |
 | Java | Lettuce | 7.4.0; async/reactive, recommended for ElastiCache |
 | Go | go-redis | Endpoint swap |

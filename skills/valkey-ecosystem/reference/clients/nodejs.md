@@ -89,7 +89,7 @@ import Redis from "ioredis";
 const client = new Redis({ host: "valkey-server", port: 6379 });
 ```
 
-This works via RESP protocol compatibility. ioredis is community-maintained and has no native Valkey awareness, but it remains fully functional for standard operations. Key gap: ioredis lacks AZ-affinity routing - a feature available in iovalkey and GLIDE natively.
+This works via RESP protocol compatibility. ioredis is community-maintained and remains fully functional for standard operations. AZ-affinity routing is available in iovalkey and GLIDE.
 
 ## node-redis Compatibility
 

@@ -6,7 +6,7 @@ Use when understanding the Valkey module system, loading modules, checking compa
 
 ## Module System
 
-Valkey supports a module system compatible with Redis modules built for Redis 7.2. Modules are shared libraries (`.so` files) loaded at startup or runtime that extend Valkey with new data types and commands. The Valkey project maintains official BSD-licensed modules as open replacements for proprietary Redis Stack modules.
+Valkey supports a module system compatible with Redis modules built for Redis 7.2. Modules are shared libraries (`.so` files) loaded at startup or runtime that extend Valkey with new data types and commands. The Valkey project maintains official BSD-licensed modules that provide equivalent functionality to Redis Stack modules.
 
 Modules use the same API as Redis 7.2 modules. Both the `ValkeyModule_OnLoad` and legacy `RedisModule_OnLoad` entry points are supported. Existing Redis modules compiled against Redis 7.2 can run on Valkey without recompilation in most cases.
 

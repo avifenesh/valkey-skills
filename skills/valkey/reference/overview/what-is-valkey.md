@@ -25,13 +25,17 @@ The fork preserves full compatibility with Redis OSS through version 7.2 while a
 
 ---
 
-## What Valkey Has That Redis 8+ Does Not
+## Licensing
 
-### Open source license
+Valkey is BSD 3-clause - no usage restrictions. You can embed it, fork it, resell it, and modify it without permission.
 
-Valkey is BSD 3-clause - no usage restrictions, no source-available caveats. You can embed it, fork it, resell it, and modify it without permission. Redis 8+ uses RSALv2/SSPL, which restricts offering Redis as a managed service or embedding it in competing products. It does not restrict end-user application development.
+Redis 8+ uses RSALv2/SSPL, which restricts offering Redis as a managed service or embedding it in competing products. It does not restrict end-user application development.
 
-### Valkey-only features (not in Redis)
+---
+
+## What Valkey Brings
+
+### Features developed since the fork
 
 | Feature | Version | Description |
 |---------|---------|-------------|
@@ -44,15 +48,19 @@ Valkey is BSD 3-clause - no usage restrictions, no source-available caveats. You
 | HGETDEL | 9.1+ | Get hash field values and delete them atomically |
 | COMMANDLOG | 8.1+ | Extended slow log tracking large requests and replies |
 
-### Performance changes since fork
+### Performance work since the fork
 
-Valkey 8.0 reached 1.2M requests per second on a single node in project benchmarks via enhanced I/O multithreading. Valkey 9.0 cluster benchmarks reached 1 billion aggregate RPS across 2,000 nodes. These gains come from architectural changes in I/O threading, pipeline prefetch, zero-copy responses, and SIMD optimizations. Workload and hardware details are in the linked performance summary.
+Valkey 8.0 reached 1.2M requests per second on a single node in project benchmarks via enhanced I/O multithreading. Valkey 9.0 cluster benchmarks reached 1 billion aggregate RPS across 2,000 nodes. These come from architectural changes in I/O threading, pipeline prefetch, zero-copy responses, and SIMD optimizations. Workload and hardware details are in the linked performance summary.
+
+### Governance
+
+Linux Foundation project with open governance, community-driven development, and contributions from AWS, Google, Oracle, Ericsson, and others.
 
 ---
 
-## What Redis 8+ Has That Valkey Does Not
+## What Redis 8+ Brings
 
-Redis 8 added proprietary features that are not available in Valkey:
+Redis 8 developed its own feature set after the fork:
 
 | Feature | Description |
 |---------|-------------|
@@ -61,27 +69,21 @@ Redis 8 added proprietary features that are not available in Valkey:
 | Time series | Built-in time series data type |
 | Probabilistic data structures | Extended bloom filters, count-min sketch, top-k |
 
-If you need these capabilities, your options are:
-
-1. **Valkey modules** - the module API supports custom data types. Community modules may provide equivalents.
-2. **External tools** - pair Valkey with dedicated search (Meilisearch, Typesense), vector (pgvector, Qdrant), or time series (TimescaleDB) systems.
-3. **Lua scripting** - some lightweight use cases can be handled with Valkey Functions.
+Valkey covers some of these through modules (valkey-search for full-text and vector search, valkey-bloom for bloom filters, valkey-json for JSON). For time series and other gaps, see the valkey-ecosystem skill's module gaps reference.
 
 ---
 
-## When to Choose Valkey
+## Choosing Between Them
 
-- You need an open-source license with no restrictions
-- You are running Redis OSS 7.2 or earlier and want a supported upgrade path
-- You want features like conditional SET/DELETE, hash field TTL, or cluster database selection
-- You need the performance improvements in 8.x and 9.x
-- You want Linux Foundation governance and community-driven development
-
-## When Redis 8+ May Be a Better Fit
-
-- You need built-in vector search or full-text search
-- You rely on Redis Stack modules (RedisSearch, RedisJSON, RedisTimeSeries) and cannot find Valkey equivalents
-- Your organization has a Redis Enterprise agreement that covers these features
+| Consideration | Valkey | Redis 8+ |
+|---------------|--------|----------|
+| License | BSD 3-clause (unrestricted) | RSALv2/SSPL (managed service restrictions) |
+| Governance | Linux Foundation, community-driven | Redis Ltd |
+| Upgrade path from Redis OSS 7.2 | Direct compatible upgrade | License change for existing users |
+| Conditional SET/DELETE, hash field TTL | Available | Not available |
+| Built-in time series | Via external tools | Built-in |
+| Full-text search | Via valkey-search module | Built-in |
+| Vector search | Via valkey-search module | Built-in |
 
 ---
 
