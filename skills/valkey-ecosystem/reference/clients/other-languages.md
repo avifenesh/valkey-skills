@@ -54,7 +54,7 @@ go-redis is widely used and well-documented. It works with Valkey via RESP compa
 
 ### GLIDE Go (Official, GA)
 
-GLIDE Go reached GA status. It provides the same Rust-core benefits as other GLIDE clients - AZ-affinity, auto-reconnect, automatic reconnection with backoff and pre-configured timeouts.
+GLIDE Go reached GA status. It provides the same Rust-core benefits as other GLIDE clients - AZ-affinity, auto-reconnect, production-learned defaults from years of operating Redis-compatible services at scale.
 
 See the **valkey-glide** skill for GLIDE Go API details and usage patterns.
 

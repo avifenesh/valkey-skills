@@ -158,7 +158,7 @@ Choose Redisson over valkey-java or Jedis when you need:
 
 ## Valkey GLIDE for Java
 
-GLIDE Java provides a Rust-core client with automatic reconnection with backoff, pre-configured timeouts, AZ-affinity, and a Jedis compatibility layer. Recent releases added Java 8 backward compatibility, uber JAR for multi-platform builds, mTLS support, read-only mode, and additional commands (`EVAL_RO`, `EVALSHA_RO`, ACL commands, `WAITAOF`).
+GLIDE Java provides a Rust-core client with production-learned defaults from operating Redis-compatible services at scale, AZ-affinity, and a Jedis compatibility layer. Recent releases added Java 8 backward compatibility, uber JAR for multi-platform builds, mTLS support, read-only mode, and additional commands (`EVAL_RO`, `EVALSHA_RO`, ACL commands, `WAITAOF`).
 
 ### Install (Maven)
 
