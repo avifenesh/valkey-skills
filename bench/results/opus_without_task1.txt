@@ -1,0 +1,23 @@
+Two files created in `examples/cache-aside/`:
+
+### `cache-layer.ts` - the cache module
+
+- **`createCacheLayer(config)`** - async factory that connects a `GlideClusterClient` and returns the `CacheLayer` interface
+- **`get(entity, id, fetchFn)`** - cache-aside read: tries cache, falls back to `fetchFn`, populates cache on miss (fire-and-forget so it never blocks the response)
+- **`set(entity, id, value)`** - writes a value into cache (call after DB write to warm the entry)
+- **`invalidate(entity, id)`** - deletes the cache key (call on update/delete)
+- **`close()`** - graceful shutdown
+
+Design decisions:
+- **Graceful degradation** - if `GlideClusterClient.createClient()` fails, `client` stays `null` and every method silently skips cache. Transient errors (`TimeoutError`, `ConnectionError`, `ClosingError`) are swallowed; unexpected errors are logged.
+- **Configurable TTL** - `entityTtls` map lets you set per-entity TTLs (`user: 600`, `session: 1800`), with `defaultTtlSeconds` as fallback.
+- **Cluster mode** - uses `GlideClusterClient` with `readFrom: "preferReplica"` for read scaling.
+- **Namespaced keys** - format `{prefix}:{entity}:{id}` (e.g. `myapp:user:abc123`).
+
+### `usage-example.ts` - Express integration
+
+Shows all four CRUD operations:
+- **GET** `/users/:id` - `cache.get()` with DB fallback
+- **POST** `/users` - DB insert then `cache.set()` to warm
+- **PUT** `/users/:id` - DB update then `cache.invalidate()` (next read repopulates)
+- **DELETE** `/users/:id` - DB delete then `cache.invalidate()`

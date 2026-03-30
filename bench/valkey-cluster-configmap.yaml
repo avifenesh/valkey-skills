@@ -1,0 +1,70 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: valkey-config
+  namespace: valkey-cluster
+data:
+  valkey.conf: |
+    # Cluster
+    cluster-enabled yes
+    cluster-config-file /data/nodes.conf
+    cluster-node-timeout 15000
+    cluster-require-full-coverage yes
+    cluster-allow-reads-when-down no
+    cluster-migration-barrier 1
+    cluster-replica-validity-factor 10
+
+    # Network
+    bind 0.0.0.0
+    protected-mode no
+
+    # TLS - encrypt all traffic, disable plaintext
+    tls-port 6379
+    port 0
+    tls-cert-file /etc/valkey/tls/server.crt
+    tls-key-file /etc/valkey/tls/server.key
+    tls-ca-cert-file /etc/valkey/tls/ca.crt
+    tls-replication yes
+    tls-cluster yes
+    tls-auth-clients no
+    tls-protocols "TLSv1.2 TLSv1.3"
+    tls-ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256
+    tls-prefer-server-ciphers yes
+
+    # Search module
+    loadmodule /opt/valkey/modules/valkeysearch.so
+
+    # Persistence
+    appendonly yes
+    appendfsync everysec
+    dir /data
+
+    # Memory
+    maxmemory 1gb
+    maxmemory-policy noeviction
+
+    # Auth - same password for client and replication
+    requirepass valkeypassword123
+    masterauth valkeypassword123
+
+    # Replication
+    repl-diskless-sync no
+    repl-diskless-sync-delay 5
+
+    # Logging
+    loglevel notice
+    logfile ""
+
+    # Client buffers
+    client-output-buffer-limit normal 0 0 0
+    client-output-buffer-limit replica 256mb 64mb 60
+    client-output-buffer-limit pubsub 32mb 8mb 60
+
+    # Timeouts
+    timeout 300
+    tcp-keepalive 300
+
+    # Performance
+    hz 10
+    dynamic-hz yes

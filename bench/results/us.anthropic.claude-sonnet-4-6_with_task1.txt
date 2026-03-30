@@ -1,0 +1,40 @@
+Both files are clean. Here's a summary of what was built and what was fixed:
+
+---
+
+## `cache-layer.ts` - cache module
+
+**Types:**
+- `CacheConfig` - cluster addresses, `readFrom`, TLS, credentials, `requestTimeout`
+- `EntityConfig` - `ttlSeconds` + `keyPrefix` per entity type (the configurable TTL requirement)
+- `CacheResult<T>` - wraps `data` with a `source: "cache" | "database"` discriminant
+
+**`CacheLayer` class - key methods:**
+
+| Method | Pattern |
+|---|---|
+| `getWithFallback(entityType, id, fetchFromDb)` | Cache-aside read: cache hit returns immediately; miss calls `fetchFromDb()`, populates cache, returns data |
+| `setWithTtl(entityType, id, value)` | Explicit cache warm (used after create) with per-entity TTL via `set(..., { expiry: { type: TimeUnit.Seconds, count } })` |
+| `invalidate(entityType, id)` | `del([key])` - called after update/delete |
+| `invalidatePattern()` | Deliberate no-op with warning - SCAN on `GlideClusterClient` only covers one shard; per-key invalidation is the correct cluster pattern |
+
+All cache operations check `isHealthy()` first and are wrapped in try/catch - the app always falls back to the DB.
+
+**`createCacheLayer()` factory:** catches `initialize()` failures and returns a degraded-mode instance. App starts even if Valkey is down.
+
+---
+
+## `usage-example.ts` - Express integration
+
+**Bugs fixed from the original:**
+
+1. **`cache` undefined at request time** - was initialized inside `app.on("listening")` which fires asynchronously after routes are registered. Moved to `await initializeCacheLayer()` before route registration so it's guaranteed defined when any request arrives.
+
+2. **App startup crash when Valkey is down** - `createCacheLayer` previously propagated the `GlideClusterClient.createClient()` rejection. Now catches it and starts in degraded mode.
+
+3. **Phantom reconnect racing GLIDE's auto-reconnect** - `handleConnectionError` was calling `initialize()` (creating a new client) while GLIDE was already reconnecting the existing one. Removed entirely - `ConnectionError` means the in-flight command failed; GLIDE handles reconnection internally, so subsequent commands just work.
+
+**Cache invalidation strategy per operation:**
+- `POST /users` - warm cache immediately after DB write (`setWithTtl`)
+- `PUT /users/:id` - invalidate on update (next GET will re-populate from DB with fresh data)
+- `DELETE /users/:id` - invalidate on delete

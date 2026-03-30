@@ -1,0 +1,142 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: valkey
+  namespace: valkey-cluster
+  labels:
+    app: valkey
+spec:
+  serviceName: valkey-cluster
+  replicas: 6
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: valkey
+  template:
+    metadata:
+      labels:
+        app: valkey
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: valkey
+                topologyKey: kubernetes.io/hostname
+            - weight: 50
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: valkey
+                topologyKey: topology.kubernetes.io/zone
+
+      terminationGracePeriodSeconds: 60
+
+      containers:
+        - name: valkey
+          image: valkey/valkey-bundle:9
+          imagePullPolicy: IfNotPresent
+          command: ["valkey-server", "/etc/valkey/valkey.conf"]
+
+          env:
+            - name: VALKEY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: valkey-secret
+                  key: password
+
+          ports:
+            - name: client-tls
+              containerPort: 6379
+              protocol: TCP
+            - name: cluster-bus
+              containerPort: 16379
+              protocol: TCP
+
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              # No CPU limit - avoids CFS throttling latency spikes
+
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - valkey-cli --tls --cacert /etc/valkey/tls/ca.crt -a "$VALKEY_PASSWORD" PING
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - valkey-cli --tls --cacert /etc/valkey/tls/ca.crt -a "$VALKEY_PASSWORD" PING
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - >-
+                  valkey-cli --tls --cacert /etc/valkey/tls/ca.crt
+                  -a "$VALKEY_PASSWORD" CLUSTER INFO |
+                  grep -q "cluster_state:ok"
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          volumeMounts:
+            - name: valkey-data
+              mountPath: /data
+            - name: config
+              mountPath: /etc/valkey
+              readOnly: true
+            - name: tls
+              mountPath: /etc/valkey/tls
+              readOnly: true
+
+      volumes:
+        - name: config
+          configMap:
+            name: valkey-config
+            defaultMode: 0644
+        - name: tls
+          secret:
+            secretName: valkey-tls
+            defaultMode: 0400
+
+  volumeClaimTemplates:
+    - metadata:
+        name: valkey-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 10Gi
+
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0

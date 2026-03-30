@@ -1,0 +1,17 @@
+---
+# TLS secret template.
+# Do NOT apply this file directly - the certificates below are placeholders.
+# Use generate-tls.sh + deploy.sh to create real certificates and load them
+# into the cluster via: kubectl create secret generic valkey-tls ...
+#
+# This file exists as a reference for the expected secret structure.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: valkey-tls
+  namespace: valkey-cluster
+type: Opaque
+data:
+  ca.crt: ""    # base64-encoded CA certificate
+  server.crt: "" # base64-encoded server certificate (with SAN for *.valkey-cluster.valkey-cluster.svc.cluster.local)
+  server.key: "" # base64-encoded server private key

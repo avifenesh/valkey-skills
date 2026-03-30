@@ -1,0 +1,91 @@
+---
+# Cluster initialization Job.
+# Waits for all 6 Valkey pods to respond, then forms the cluster.
+# Idempotent - exits cleanly if the cluster is already initialized.
+# Apply at the same time as the StatefulSet; the retry loop handles timing.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: valkey-cluster-init
+  namespace: valkey-cluster
+spec:
+  backoffLimit: 5
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app: valkey-init
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init
+          image: valkey/valkey:9-alpine
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: VALKEY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: valkey-secret
+                  key: password
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+
+              NODES=""
+              for i in 0 1 2 3 4 5; do
+                NODES="$NODES valkey-${i}.valkey-cluster.valkey-cluster.svc.cluster.local:6379"
+              done
+
+              CLI="valkey-cli --tls --cacert /etc/valkey/tls/ca.crt -a $VALKEY_PASSWORD"
+
+              # Check if cluster already formed
+              CLUSTER_STATE=$($CLI \
+                -h valkey-0.valkey-cluster.valkey-cluster.svc.cluster.local \
+                CLUSTER INFO 2>/dev/null | grep cluster_state || echo "")
+              if echo "$CLUSTER_STATE" | grep -q "cluster_state:ok"; then
+                echo "[OK] Cluster already initialized, nothing to do"
+                exit 0
+              fi
+
+              # Wait for every node to respond to PING
+              echo "[INFO] Waiting for all 6 nodes..."
+              for i in 0 1 2 3 4 5; do
+                HOST="valkey-${i}.valkey-cluster.valkey-cluster.svc.cluster.local"
+                attempt=0
+                while [ $attempt -lt 120 ]; do
+                  if $CLI -h "$HOST" PING 2>/dev/null | grep -q PONG; then
+                    echo "  valkey-${i}: ready"
+                    break
+                  fi
+                  attempt=$((attempt + 1))
+                  sleep 1
+                done
+                if [ $attempt -ge 120 ]; then
+                  echo "[ERROR] valkey-${i} not ready after 120s"
+                  exit 1
+                fi
+              done
+
+              echo "[INFO] All nodes ready. Creating 3-primary 3-replica cluster..."
+              valkey-cli --cluster create $NODES \
+                --cluster-replicas 1 \
+                --tls --cacert /etc/valkey/tls/ca.crt \
+                -a "$VALKEY_PASSWORD" \
+                --cluster-yes
+
+              # Verify
+              $CLI -h valkey-0.valkey-cluster.valkey-cluster.svc.cluster.local \
+                CLUSTER INFO | grep "^cluster"
+
+              echo "[OK] Cluster initialized"
+          volumeMounts:
+            - name: tls
+              mountPath: /etc/valkey/tls
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: valkey-tls
+            defaultMode: 0400

@@ -1,0 +1,276 @@
+Here's the cache-aside layer and usage example.
+
+**Cache layer module:**
+
+```typescript
+// cache-layer.ts
+
+import {
+  GlideClusterClient,
+  TimeUnit,
+  TimeoutError,
+  ConnectionError,
+  RequestError,
+} from "@valkey/valkey-glide";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface CacheConfig {
+  /** Valkey cluster seed addresses */
+  addresses: Array<{ host: string; port: number }>;
+  /** Default TTL in seconds (used when no entity-specific TTL is set) */
+  defaultTtlSeconds: number;
+  /** Per-entity-type TTL overrides in seconds */
+  ttlByEntity?: Record<string, number>;
+  /** GLIDE request timeout in ms */
+  requestTimeout?: number;
+  /** Read preference */
+  readFrom?: "primary" | "preferReplica";
+}
+
+export interface CacheLayer {
+  /** Get a cached value, returns null on miss or cache failure */
+  get<T>(entity: string, id: string): Promise<T | null>;
+  /** Store a value in cache */
+  set<T>(entity: string, id: string, value: T): Promise<void>;
+  /** Remove a cached value */
+  invalidate(entity: string, id: string): Promise<void>;
+  /** Cache-aside: try cache, fallback to loader, populate on miss */
+  getOrLoad<T>(
+    entity: string,
+    id: string,
+    loader: () => Promise<T | null>,
+  ): Promise<T | null>;
+  /** Graceful shutdown */
+  close(): void;
+}
+
+// ---------------------------------------------------------------------------
+// Implementation
+// ---------------------------------------------------------------------------
+
+export async function createCacheLayer(config: CacheConfig): Promise<CacheLayer> {
+  let client: GlideClusterClient | null = null;
+
+  try {
+    client = await GlideClusterClient.createClient({
+      addresses: config.addresses,
+      requestTimeout: config.requestTimeout ?? 3000,
+      readFrom: config.readFrom ?? "preferReplica",
+    });
+  } catch (err) {
+    console.error("[WARN] Cache unavailable at startup - running without cache:", err);
+  }
+
+  function cacheKey(entity: string, id: string): string {
+    return `cache:${entity}:${id}`;
+  }
+
+  function ttlFor(entity: string): number {
+    return config.ttlByEntity?.[entity] ?? config.defaultTtlSeconds;
+  }
+
+  /** Returns true if the error is a transient cache failure we should swallow */
+  function isTransient(err: unknown): boolean {
+    return (
+      err instanceof TimeoutError ||
+      err instanceof ConnectionError ||
+      err instanceof RequestError
+    );
+  }
+
+  async function get<T>(entity: string, id: string): Promise<T | null> {
+    if (!client) return null;
+    try {
+      const raw = await client.get(cacheKey(entity, id));
+      if (raw === null) return null;
+      return JSON.parse(raw as string) as T;
+    } catch (err) {
+      if (isTransient(err)) {
+        console.error("[WARN] Cache get failed:", err);
+        return null;
+      }
+      throw err;
+    }
+  }
+
+  async function set<T>(entity: string, id: string, value: T): Promise<void> {
+    if (!client) return;
+    try {
+      await client.set(cacheKey(entity, id), JSON.stringify(value), {
+        expiry: { type: TimeUnit.Seconds, count: ttlFor(entity) },
+      });
+    } catch (err) {
+      if (isTransient(err)) {
+        console.error("[WARN] Cache set failed:", err);
+        return;
+      }
+      throw err;
+    }
+  }
+
+  async function invalidate(entity: string, id: string): Promise<void> {
+    if (!client) return;
+    try {
+      await client.del([cacheKey(entity, id)]);
+    } catch (err) {
+      if (isTransient(err)) {
+        console.error("[WARN] Cache invalidate failed:", err);
+        return;
+      }
+      throw err;
+    }
+  }
+
+  async function getOrLoad<T>(
+    entity: string,
+    id: string,
+    loader: () => Promise<T | null>,
+  ): Promise<T | null> {
+    // 1. Try cache
+    const cached = await get<T>(entity, id);
+    if (cached !== null) return cached;
+
+    // 2. Cache miss - load from source
+    const value = await loader();
+    if (value === null) return null;
+
+    // 3. Populate cache (fire-and-forget - don't block the response)
+    set(entity, id, value).catch((err) =>
+      console.error("[WARN] Background cache populate failed:", err),
+    );
+
+    return value;
+  }
+
+  function close(): void {
+    if (client) {
+      client.close();
+      client = null;
+    }
+  }
+
+  return { get, set, invalidate, getOrLoad, close };
+}
+```
+
+**Usage example with Express:**
+
+```typescript
+// routes/users.ts
+
+import { Router, Request, Response } from "express";
+import { CacheLayer, createCacheLayer } from "./cache-layer";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  bio: string;
+}
+
+// Placeholder - swap for your actual DB module
+const db = {
+  findUser: async (id: string): Promise<UserProfile | null> => { /* ... */ return null; },
+  createUser: async (data: Omit<UserProfile, "id">): Promise<UserProfile> => { /* ... */ return {} as UserProfile; },
+  updateUser: async (id: string, data: Partial<UserProfile>): Promise<UserProfile | null> => { /* ... */ return null; },
+  deleteUser: async (id: string): Promise<boolean> => { /* ... */ return false; },
+};
+
+// ---------------------------------------------------------------------------
+// Bootstrap
+// ---------------------------------------------------------------------------
+
+let cache: CacheLayer;
+
+export async function initCache(): Promise<void> {
+  cache = await createCacheLayer({
+    addresses: [
+      { host: "node1.example.com", port: 6379 },
+      { host: "node2.example.com", port: 6380 },
+    ],
+    defaultTtlSeconds: 300,
+    ttlByEntity: {
+      user: 600,    // user profiles: 10 min
+      session: 1800, // sessions: 30 min
+    },
+    requestTimeout: 2000,
+    readFrom: "preferReplica",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Routes
+// ---------------------------------------------------------------------------
+
+export const userRouter = Router();
+
+// READ - cache-aside
+userRouter.get("/:id", async (req: Request, res: Response) => {
+  const user = await cache.getOrLoad<UserProfile>("user", req.params.id, () =>
+    db.findUser(req.params.id),
+  );
+
+  if (!user) return res.status(404).json({ error: "User not found" });
+  res.json(user);
+});
+
+// CREATE - write to DB, populate cache
+userRouter.post("/", async (req: Request, res: Response) => {
+  const user = await db.createUser(req.body);
+  await cache.set("user", user.id, user);
+  res.status(201).json(user);
+});
+
+// UPDATE - write to DB, invalidate cache
+userRouter.put("/:id", async (req: Request, res: Response) => {
+  const user = await db.updateUser(req.params.id, req.body);
+  if (!user) return res.status(404).json({ error: "User not found" });
+  await cache.invalidate("user", req.params.id);
+  res.json(user);
+});
+
+// DELETE - delete from DB, invalidate cache
+userRouter.delete("/:id", async (req: Request, res: Response) => {
+  const deleted = await db.deleteUser(req.params.id);
+  if (!deleted) return res.status(404).json({ error: "User not found" });
+  await cache.invalidate("user", req.params.id);
+  res.status(204).end();
+});
+```
+
+**App entrypoint:**
+
+```typescript
+// app.ts
+
+import express from "express";
+import { userRouter, initCache } from "./routes/users";
+
+async function main() {
+  await initCache();
+
+  const app = express();
+  app.use(express.json());
+  app.use("/users", userRouter);
+
+  app.listen(3000, () => console.log("Listening on :3000"));
+}
+
+main();
+```
+
+**Key design decisions:**
+
+- **Graceful degradation** - every cache operation catches `TimeoutError`, `ConnectionError`, and `RequestError` and returns null/void instead of throwing. If the cluster is unreachable at startup, the app runs without cache entirely.
+- **Invalidate on write, not update** - UPDATE and DELETE invalidate (delete the key) rather than repopulating. This avoids a race where a stale read between DB write and cache write serves old data. The next read will reload from DB via `getOrLoad`.
+- **CREATE populates** - since the data just came from the write path, there's no staleness risk, so we warm the cache immediately.
+- **Fire-and-forget populate in getOrLoad** - the cache set on miss is non-blocking so the response isn't delayed by a slow cache write.
+- **Per-entity TTL** - `ttlByEntity` map lets you set different expiration for users (10 min), sessions (30 min), etc., with a fallback `defaultTtlSeconds`.
+- **Cluster mode** - uses `GlideClusterClient` with `preferReplica` reads for read-heavy workloads. GLIDE handles topology discovery and slot routing automatically.
