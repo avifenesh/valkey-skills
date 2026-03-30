@@ -26,13 +26,7 @@ npx skills add avifenesh/valkey-skills
 /plugin install valkey@valkey-skills
 ```
 
-### Cursor
-
-```
-/add-plugin valkey-skills
-```
-
-### Manual (Codex, OpenCode, Kiro, or any tool)
+### Manual (Cursor, Codex, OpenCode, Kiro, or any tool)
 
 ```bash
 git clone https://github.com/avifenesh/valkey-skills.git
