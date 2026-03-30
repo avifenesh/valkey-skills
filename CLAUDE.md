@@ -16,15 +16,15 @@
 
 ### GLIDE Per-Language (7 skills, code-heavy)
 
-| Directory | Skill | Lines | Content |
-|-----------|-------|-------|---------|
-| `valkey-glide-python/` | valkey-glide-python | 838 | Async/sync, all data types, OTel, redis-py migration |
-| `valkey-glide-java/` | valkey-glide-java | 772 | CompletableFuture, Spring, Jedis/Lettuce migration |
-| `valkey-glide-nodejs/` | valkey-glide-nodejs | 765 | TypeScript, ESM/CJS, ioredis migration |
-| `valkey-glide-go/` | valkey-glide-go | 581 | CGO, Result[T], go-redis migration |
-| `valkey-glide-csharp/` | valkey-glide-csharp | 396 | .NET 8.0+, StackExchange.Redis migration |
-| `valkey-glide-php/` | valkey-glide-php | 262 | C extension, PIE/Composer/PECL |
-| `valkey-glide-ruby/` | valkey-glide-ruby | 287 | redis-rb API, v1.0.0, full command surface |
+| Directory | Skill | Content |
+|-----------|-------|---------|
+| `valkey-glide-python/` | valkey-glide-python | Async (valkey-glide) / sync (valkey-glide-sync), all data types, OTel, redis-py migration |
+| `valkey-glide-java/` | valkey-glide-java | CompletableFuture, Spring Data Valkey, Jedis/Lettuce migration |
+| `valkey-glide-nodejs/` | valkey-glide-nodejs | TypeScript, ESM/CJS, ioredis migration |
+| `valkey-glide-go/` | valkey-glide-go | CGO, Result[T], go-redis migration |
+| `valkey-glide-csharp/` | valkey-glide-csharp | .NET 6.0+/8.0+ (preview), StackExchange.Redis migration |
+| `valkey-glide-php/` | valkey-glide-php | C extension (PHP 8.1+), PIE/Composer/PECL |
+| `valkey-glide-ruby/` | valkey-glide-ruby | valkey-rb gem (GA), redis-rb drop-in replacement |
 
 ### Glide-MQ (Valkey-Powered Message Queues, 3 skills)
 
