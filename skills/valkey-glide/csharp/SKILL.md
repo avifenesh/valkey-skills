@@ -7,7 +7,16 @@ argument-hint: "[topic]"
 
 # Valkey GLIDE C# Client Reference
 
-Async/await C# client for Valkey built on the GLIDE Rust core via native interop. Currently in **preview** - API may change before GA.
+Async/await C# client for Valkey built on the GLIDE Rust core via native interop. Currently in **preview** - API may change before GA. For architecture concepts shared across all languages, see the `valkey-glide` skill.
+
+## Routing
+
+- Install/setup -> Installation
+- Async API -> Client Classes, Basic Operations
+- TLS/auth -> TLS and Authentication
+- Streams -> Streams
+- Error handling -> Error Handling
+- StackExchange.Redis migration -> Migration from StackExchange.Redis
 
 **Separate repository:** [valkey-io/valkey-glide-csharp](https://github.com/valkey-io/valkey-glide-csharp)
 

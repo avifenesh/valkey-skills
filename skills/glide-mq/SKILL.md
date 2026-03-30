@@ -11,14 +11,6 @@ Provides guidance for greenfield glide-mq message queue development - queues, wo
 
 > This is a thin wrapper. For full API reference, advanced patterns, and deep documentation, see https://avifenesh.github.io/glide-mq.dev/
 
-## When to Use
-
-Invoke this skill when:
-- User is building a new message queue system with glide-mq
-- User needs queue, worker, producer, or job scheduling setup
-- User asks about glide-mq API, patterns, or configuration
-- User wants workflow orchestration (flows, DAGs, chains)
-
 ## Install
 
 ```bash

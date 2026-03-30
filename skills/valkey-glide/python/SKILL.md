@@ -7,7 +7,20 @@ argument-hint: "[topic]"
 
 # Valkey GLIDE Python Client
 
-Self-contained guide for building Python applications with Valkey GLIDE. Covers async and sync APIs, configuration, error handling, batching, PubSub, and migration from redis-py. For architecture concepts shared across all languages (connection model, topology discovery, protocol details), see the `valkey-glide` skill.
+Self-contained guide for building Python applications with Valkey GLIDE. For architecture concepts shared across all languages, see the `valkey-glide` skill.
+
+## Routing
+
+- Install/setup -> Installation
+- Async client -> Async API sections
+- Sync client -> Sync API section
+- TLS/auth -> TLS and Authentication
+- Streams/PubSub -> Streams, PubSub sections
+- Error handling -> Error Handling
+- Batching/transactions -> Batching
+- JSON/Search modules -> Server Modules
+- redis-py migration -> Migration from redis-py
+- OTel/tracing -> OpenTelemetry
 
 ## Installation
 

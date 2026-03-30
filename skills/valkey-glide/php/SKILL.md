@@ -1,13 +1,22 @@
 ---
 name: valkey-glide-php
-description: "Use when building PHP applications with Valkey GLIDE. Covers synchronous C extension API, installation methods (PIE/Composer/PECL), configuration, and basic operations."
+description: "Use when building PHP applications with Valkey GLIDE. Covers synchronous C extension API, installation (PIE/Composer/PECL), configuration, streams, error handling, batching, phpredis compatibility, and TLS."
 version: 1.0.0
 argument-hint: "[topic]"
 ---
 
 # Valkey GLIDE PHP Client Reference
 
-Synchronous PHP client for Valkey built on the GLIDE Rust core via native C extension. GA release (1.0).
+Synchronous PHP client for Valkey built on the GLIDE Rust core via native C extension. GA release (1.0). For architecture concepts shared across all languages, see the `valkey-glide` skill.
+
+## Routing
+
+- Install/setup -> Installation
+- TLS/auth -> TLS and Authentication
+- Streams -> Streams
+- Error handling -> Error Handling
+- Batching -> Batching
+- phpredis compatibility -> PHPRedis Compatibility
 
 **Separate repository:** [valkey-io/valkey-glide-php](https://github.com/valkey-io/valkey-glide-php)
 

@@ -1,13 +1,26 @@
 ---
 name: valkey-glide-nodejs
-description: "Use when building Node.js or TypeScript applications with Valkey GLIDE. Covers Promise API, GlideClient, TypeScript types, ESM/CJS support, TLS, authentication, OpenTelemetry, batching, PubSub, and migration from ioredis."
+description: "Use when building Node.js or TypeScript applications with Valkey GLIDE. Covers Promise API, GlideClient, TypeScript types, ESM/CJS, TLS, authentication, OpenTelemetry, batching, PubSub, streams, Lua scripting, server modules (JSON/Search), and migration from ioredis."
 version: 1.0.0
 argument-hint: "[topic]"
 ---
 
 # Valkey GLIDE Node.js Client
 
-Self-contained guide for building Node.js and TypeScript applications with Valkey GLIDE. Covers the Promise-based API, configuration, error handling, batching, Lua scripting, PubSub, and migration from ioredis. For architecture concepts shared across all languages (connection model, topology discovery, protocol details), see the `valkey-glide` skill.
+Self-contained guide for building Node.js and TypeScript applications with Valkey GLIDE. For architecture concepts shared across all languages, see the `valkey-glide` skill.
+
+## Routing
+
+- Install/setup -> Installation
+- TypeScript types -> Client Classes
+- TLS/auth -> TLS and Authentication
+- Streams/PubSub -> Streams, PubSub sections
+- Error handling -> Error Handling
+- Batching -> Batching
+- Lua scripting -> Lua Scripting
+- JSON/Search modules -> Server Modules
+- ioredis migration -> Migration from ioredis
+- OTel/tracing -> OpenTelemetry
 
 ## Installation
 

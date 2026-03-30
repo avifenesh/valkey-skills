@@ -7,7 +7,18 @@ argument-hint: "[topic]"
 
 # Valkey GLIDE Ruby Client Reference
 
-Synchronous Ruby client for Valkey built on the GLIDE Rust core via FFI. Designed as a drop-in replacement for redis-rb.
+Synchronous Ruby client for Valkey built on the GLIDE Rust core via FFI. Designed as a drop-in replacement for redis-rb. For architecture concepts shared across all languages, see the `valkey-glide` skill.
+
+## Routing
+
+- Install/setup -> Installation
+- Client classes -> Client Class
+- TLS/auth -> TLS and Authentication
+- Streams -> Streams
+- Error handling -> Error Handling
+- PubSub -> PubSub
+- redis-rb migration -> Migration from redis-rb
+- OTel/tracing -> OpenTelemetry
 
 **Repository:** [valkey-io/valkey-glide-ruby](https://github.com/valkey-io/valkey-glide-ruby)
 
@@ -228,8 +239,6 @@ ack_count = client.xack("mystream", "mygroup", "1234567890123-0")
 
 ## OpenTelemetry
 
-OTel integration is documented from source but should be verified for the current development stage.
-
 Built-in tracing support:
 
 ```ruby
@@ -254,8 +263,6 @@ client.get("key")
 ---
 
 ## Client Statistics
-
-Note: `client.statistics` availability should be verified against current source - may be aspirational.
 
 ```ruby
 client = Valkey.new

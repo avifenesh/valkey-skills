@@ -1,13 +1,27 @@
 ---
 name: valkey-glide-java
-description: "Use when building Java applications with Valkey GLIDE. Covers CompletableFuture API, GlideClient, configuration builders, TLS, authentication, OpenTelemetry, error handling, batching, Spring integration, and migration from Jedis/Lettuce."
+description: "Use when building Java applications with Valkey GLIDE. Covers CompletableFuture API, GlideClient, configuration builders, TLS, authentication, OpenTelemetry, error handling, batching, streams, Jedis compatibility layer, server modules (JSON/Search), Spring Data Valkey, and migration from Jedis/Lettuce."
 version: 1.0.0
 argument-hint: "[topic]"
 ---
 
 # Valkey GLIDE Java Client
 
-Self-contained guide for building Java/JVM applications with Valkey GLIDE. Covers the CompletableFuture-based API, configuration, error handling, batching, Spring Data Valkey integration, and migration from both Jedis and Lettuce. For architecture concepts shared across all languages (connection model, topology discovery, protocol details), see the `valkey-glide` skill.
+Self-contained guide for building Java/JVM applications with Valkey GLIDE. For architecture concepts shared across all languages, see the `valkey-glide` skill.
+
+## Routing
+
+- Install/setup -> Installation
+- CompletableFuture API -> Client Classes, Basic Operations
+- TLS/auth -> TLS and Authentication
+- Streams/PubSub -> Streams, PubSub sections
+- Error handling -> Error Handling
+- Batching -> Batching
+- JSON/Search modules -> Server Modules
+- Spring integration -> Spring Data Valkey
+- Jedis migration -> Migration from Jedis
+- Lettuce migration -> Migration from Lettuce
+- OTel/tracing -> OpenTelemetry
 
 ## Installation
 

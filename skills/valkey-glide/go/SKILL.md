@@ -1,13 +1,25 @@
 ---
 name: valkey-glide-go
-description: "Use when building Go applications with Valkey GLIDE. Covers synchronous API, Client/ClusterClient, CGO bridge, Result[T] types, error handling, batching, and migration from go-redis."
+description: "Use when building Go applications with Valkey GLIDE. Covers synchronous API, Client/ClusterClient, CGO bridge, Result[T] types, error handling, batching, streams, TLS, authentication, OpenTelemetry, and migration from go-redis."
 version: 1.0.0
 argument-hint: "[topic]"
 ---
 
 # Valkey GLIDE Go Client Reference
 
-Synchronous Go client for Valkey built on the GLIDE Rust core via CGO bridge. All command methods are goroutine-safe and accept `context.Context` as the first parameter.
+Synchronous Go client for Valkey built on the GLIDE Rust core via CGO bridge. For architecture concepts shared across all languages, see the `valkey-glide` skill.
+
+## Routing
+
+- Install/setup -> Installation
+- CGO/cross-compile -> Installation, Cross-Compilation
+- Result[T] types -> Result Types
+- TLS/auth -> TLS and Authentication
+- Streams -> Streams
+- Error handling -> Error Handling
+- Batching -> Batching
+- go-redis migration -> Migration from go-redis
+- OTel/tracing -> OpenTelemetry
 
 ## Installation
 

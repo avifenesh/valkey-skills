@@ -11,14 +11,6 @@ Provides guidance for migrating BullMQ applications to glide-mq - connection con
 
 > This is a thin wrapper. For the complete migration guide with advanced patterns, see https://avifenesh.github.io/glide-mq.dev/migration/from-bullmq
 
-## When to Use
-
-Invoke this skill when:
-- User wants to migrate from BullMQ to glide-mq
-- User asks about differences between BullMQ and glide-mq
-- User needs help converting BullMQ connection or job configs
-- User is evaluating BullMQ alternatives
-
 ## Install
 
 ```bash

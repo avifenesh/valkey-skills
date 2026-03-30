@@ -1,7 +1,7 @@
 {
   "name": "valkey-skills",
   "version": "1.0.0",
-  "description": "Domain-specific AI skills for the Valkey ecosystem - commands, patterns, operations, GLIDE client (7 languages), modules, and message queues",
+  "description": "Domain-specific AI skills for the Valkey ecosystem - application development, server internals, operations, GLIDE client (7 languages), ecosystem tools, and message queues",
   "author": {
     "name": "Avi Fenesh",
     "email": "avifenesh@gmail.com",

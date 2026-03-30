@@ -1,6 +1,6 @@
 # valkey-skills
 
-> Domain-specific AI skills for the Valkey ecosystem - 15 skills covering application development, server internals, operations, GLIDE client (7 languages), ecosystem tools, and message queues
+> Domain-specific AI skills for the Valkey ecosystem - application development, server internals, operations, GLIDE client (7 languages), ecosystem tools, and message queues
 
 ## Skills
 

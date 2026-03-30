@@ -126,36 +126,11 @@ Never use `KEYS` in production. Period. Use `SCAN` with a cursor. Accept that SC
 
 ## See Also
 
-**Best Practices**:
 - [Performance Best Practices](../best-practices/performance.md) - SCAN vs KEYS, UNLINK vs DEL, pipelining
 - [Memory Best Practices](../best-practices/memory.md) - `maxmemory`, TTL strategies, encoding thresholds
 - [Key Best Practices](../best-practices/keys.md) - key naming, big key mitigation
-- [Cluster Best Practices](../best-practices/cluster.md) - hash tags, hot key sharding, and multi-key operations
-- [High Availability Best Practices](../best-practices/high-availability.md) - retry strategies, idempotency for non-retryable commands
-- [Persistence Best Practices](../best-practices/persistence.md) - durability gaps and crash recovery
-
-**Patterns**:
 - [Caching Patterns](../patterns/caching.md) - TTL strategies and cache invalidation
 - [Counter Patterns](../patterns/counters.md) - sharded counters for hot key mitigation
 - [Lock Patterns](../patterns/locks.md) - lock without TTL and DEL without value check solutions
-- [Queue Patterns](../patterns/queues.md) - stream-based queues as alternative to pub/sub for durable messaging
-- [Pub/Sub Patterns](../patterns/pubsub-patterns.md) - when to use pub/sub vs streams
-- [Session Patterns](../patterns/sessions.md) - session TTL patterns for memory management
-- [Rate Limiting Patterns](../patterns/rate-limiting.md) - rate limit key TTL strategies
-- [Leaderboard Patterns](../patterns/leaderboards.md) - sorted set sizing and pagination
-- [Search and Autocomplete Patterns](../patterns/search-autocomplete.md) - SINTER vs SSCAN for large set operations
-
-**Security**:
-- [Security: Auth and ACL](../security/auth-and-acl.md) - authentication and permission patterns
-
-**Clients**:
-- [Clients Overview](../clients/overview.md) - GLIDE auto-pipelining, connection pooling, and multiplexed connections
-
-**Valkey Features**:
-- [Performance Summary](../valkey-features/performance-summary.md) - pipelining and I/O threading benefits
+- [Queue Patterns](../patterns/queues.md) - stream-based queues as alternative to pub/sub
 - [Conditional Operations](../valkey-features/conditional-ops.md) - SET IFEQ and DELIFEQ as alternatives to Lua
-
-**Commands**:
-- [Scripting and Functions](../commands/scripting.md) - Lua scripts and server-side Functions
-- [Transaction Commands](../commands/transactions.md) - MULTI/EXEC and WATCH
-- [Stream Commands](../commands/streams.md) - durable messaging alternative to Pub/Sub
