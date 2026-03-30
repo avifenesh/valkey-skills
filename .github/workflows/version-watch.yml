@@ -1,0 +1,113 @@
+name: Version Watch
+
+on:
+  schedule:
+    - cron: '0 8 * * 1' # Every Monday at 8:00 UTC
+  workflow_dispatch: # Manual trigger
+
+permissions:
+  issues: write
+
+jobs:
+  check-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check upstream versions
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Baseline versions from CLAUDE.md
+          declare -A BASELINE=(
+            [valkey]="9.0.3"
+            [valkey-glide]="2.3.0"
+            [valkey-search]="1.2.0"
+            [glide-mq]="0.14.0"
+          )
+
+          # Upstream repos to check
+          declare -A REPOS=(
+            [valkey]="valkey-io/valkey"
+            [valkey-glide]="valkey-io/valkey-glide"
+            [valkey-search]="valkey-io/valkey-search"
+            [glide-mq]="avifenesh/glide-mq"
+          )
+
+          # Skills affected by each component
+          declare -A AFFECTED=(
+            [valkey]="valkey, valkey-dev, valkey-ops"
+            [valkey-glide]="valkey-glide, all per-language GLIDE skills"
+            [valkey-search]="valkey-ecosystem (modules/search)"
+            [glide-mq]="glide-mq, migrate-bullmq, migrate-bee"
+          )
+
+          UPDATES=""
+
+          for component in "${!REPOS[@]}"; do
+            repo="${REPOS[$component]}"
+            baseline="${BASELINE[$component]}"
+
+            # Get latest release tag
+            latest=$(gh api "repos/${repo}/releases/latest" --jq '.tag_name' 2>/dev/null || echo "")
+            # Strip leading 'v' if present
+            latest="${latest#v}"
+
+            if [ -z "$latest" ]; then
+              echo "[WARN] Could not fetch latest release for ${repo}"
+              continue
+            fi
+
+            echo "${component}: baseline=${baseline} latest=${latest}"
+
+            if [ "$latest" != "$baseline" ]; then
+              # Compare versions (simple string compare works for semver)
+              UPDATES="${UPDATES}\n- **${component}**: ${baseline} -> ${latest} (affects: ${AFFECTED[$component]})"
+            fi
+          done
+
+          if [ -n "$UPDATES" ]; then
+            echo "has_updates=true" >> "$GITHUB_OUTPUT"
+            # Write to file to preserve newlines
+            printf "%b" "$UPDATES" > /tmp/updates.txt
+          else
+            echo "has_updates=false" >> "$GITHUB_OUTPUT"
+            echo "All components are up to date."
+          fi
+
+      - name: Check for existing open issue
+        if: steps.check.outputs.has_updates == 'true'
+        id: existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          count=$(gh issue list --label "version-update" --state open --json number --jq 'length')
+          echo "open_issues=${count}" >> "$GITHUB_OUTPUT"
+
+      - name: Open issue
+        if: steps.check.outputs.has_updates == 'true' && steps.existing.outputs.open_issues == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          UPDATES=$(cat /tmp/updates.txt)
+          gh issue create \
+            --title "Upstream version updates detected" \
+            --label "version-update" \
+            --body "$(cat <<EOF
+          ## New upstream releases
+
+          The following components have new releases since the skills were last verified:
+
+          ${UPDATES}
+
+          ## What to do
+
+          1. Review release notes for breaking changes or new features
+          2. Update affected skills with new API details
+          3. Update the Version Baseline table in CLAUDE.md
+          4. Close this issue when done
+
+          Current baseline is in [CLAUDE.md](https://github.com/avifenesh/valkey-skills/blob/main/CLAUDE.md#version-baseline).
+          EOF
+          )"
