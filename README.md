@@ -13,18 +13,24 @@ Each skill is a focused knowledge package:
 
 ## Install
 
-Clone into your Claude Code skills directory:
+### Claude Code (marketplace)
 
-```bash
-git clone https://github.com/avifenesh/valkey-skills.git ~/.claude/skills/valkey-skills
+```
+/plugin marketplace add avifenesh/valkey-skills
+/plugin install valkey@valkey-skills
+/plugin install valkey-glide@valkey-skills
 ```
 
-Or add individual skills to your project's `.claude/settings.json`:
+### npm (all platforms)
 
-```json
-{
-  "skills": ["~/.claude/skills/valkey-skills/valkey"]
-}
+```bash
+npm install -g valkey-skills
+```
+
+### Manual
+
+```bash
+git clone https://github.com/avifenesh/valkey-skills.git
 ```
 
 ## Skills Overview
@@ -76,21 +82,23 @@ Example: asking "how do I set up a reliable task queue?" triggers the **valkey**
 
 ```
 valkey-skills/
-  valkey/                    # 37 reference docs - commands, patterns, best practices
-  valkey-dev/                # 59 reference docs - server internals (C source verified)
-  valkey-ops/                # 52 reference docs - operations, monitoring, security
-  valkey-glide/              # 32 reference docs - shared GLIDE architecture
-    python/                  #   Python API reference (async + sync)
-    java/                    #   Java API reference (Spring, CompletableFuture)
-    nodejs/                  #   Node.js/TypeScript API reference
-    go/                      #   Go API reference
-    csharp/                  #   C# API reference (.NET 6.0+)
-    php/                     #   PHP API reference (8.1+)
-    ruby/                    #   Ruby API reference (valkey-rb)
-  valkey-ecosystem/          # 28 reference docs - modules, services, tools
-  glide-mq/                  # Queue development guide
-    migrate-bullmq/          #   BullMQ migration
-    migrate-bee/             #   Bee-Queue migration
+  .claude-plugin/            # Plugin manifest
+  skills/
+    valkey/                  # 37 reference docs - commands, patterns, best practices
+    valkey-dev/              # 59 reference docs - server internals (C source verified)
+    valkey-ops/              # 52 reference docs - operations, monitoring, security
+    valkey-glide/            # 32 reference docs - shared GLIDE architecture
+      python/                #   Python API reference (async + sync)
+      java/                  #   Java API reference (Spring, CompletableFuture)
+      nodejs/                #   Node.js/TypeScript API reference
+      go/                    #   Go API reference
+      csharp/                #   C# API reference (.NET 6.0+)
+      php/                   #   PHP API reference (8.1+)
+      ruby/                  #   Ruby API reference (valkey-rb)
+    valkey-ecosystem/        # 28 reference docs - modules, services, tools
+    glide-mq/                # Queue development guide
+      migrate-bullmq/        #   BullMQ migration
+      migrate-bee/           #   Bee-Queue migration
 ```
 
 208 reference files across the 5 core skills. Every claim verified against actual source code - Valkey C source, GLIDE Rust core, and official documentation.

@@ -8,31 +8,31 @@
 
 | Directory | Skill | Audience | Files |
 |-----------|-------|----------|-------|
-| `valkey/` | valkey | Application developers using Valkey | 37 |
-| `valkey-dev/` | valkey-dev | Valkey server contributors | 59 |
-| `valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 52 |
-| `valkey-glide/` | valkey-glide | GLIDE shared architecture, features, best practices | 32 |
-| `valkey-ecosystem/` | valkey-ecosystem | Ecosystem tools and services | 28 |
+| `skills/valkey/` | valkey | Application developers using Valkey | 37 |
+| `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 59 |
+| `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 52 |
+| `skills/valkey-glide/` | valkey-glide | GLIDE shared architecture, features, best practices | 32 |
+| `skills/valkey-ecosystem/` | valkey-ecosystem | Ecosystem tools and services | 28 |
 
 ### GLIDE Per-Language (7 sub-skills under valkey-glide/)
 
 | Directory | Skill | Content |
 |-----------|-------|---------|
-| `valkey-glide/python/` | valkey-glide-python | Async (valkey-glide) / sync (valkey-glide-sync), all data types, OTel, redis-py migration |
-| `valkey-glide/java/` | valkey-glide-java | CompletableFuture, Spring Data Valkey, Jedis/Lettuce migration |
-| `valkey-glide/nodejs/` | valkey-glide-nodejs | TypeScript, ESM/CJS, ioredis migration |
-| `valkey-glide/go/` | valkey-glide-go | CGO, Result[T], go-redis migration |
-| `valkey-glide/csharp/` | valkey-glide-csharp | .NET 6.0+/8.0+ (preview), StackExchange.Redis migration |
-| `valkey-glide/php/` | valkey-glide-php | C extension (PHP 8.1+), PIE/Composer/PECL |
-| `valkey-glide/ruby/` | valkey-glide-ruby | valkey-rb gem (GA), redis-rb drop-in replacement |
+| `skills/valkey-glide/python/` | valkey-glide-python | Async (valkey-glide) / sync (valkey-glide-sync), all data types, OTel, redis-py migration |
+| `skills/valkey-glide/java/` | valkey-glide-java | CompletableFuture, Spring Data Valkey, Jedis/Lettuce migration |
+| `skills/valkey-glide/nodejs/` | valkey-glide-nodejs | TypeScript, ESM/CJS, ioredis migration |
+| `skills/valkey-glide/go/` | valkey-glide-go | CGO, Result[T], go-redis migration |
+| `skills/valkey-glide/csharp/` | valkey-glide-csharp | .NET 6.0+/8.0+ (preview), StackExchange.Redis migration |
+| `skills/valkey-glide/php/` | valkey-glide-php | C extension (PHP 8.1+), PIE/Composer/PECL |
+| `skills/valkey-glide/ruby/` | valkey-glide-ruby | valkey-rb gem (GA), redis-rb drop-in replacement |
 
 ### Glide-MQ (3 skills under glide-mq/)
 
 | Directory | Skill | Purpose |
 |-----------|-------|---------|
-| `glide-mq/` | glide-mq | Greenfield queue development - queues, workers, producers, scheduling, workflows |
-| `glide-mq/migrate-bullmq/` | glide-mq-migrate-bullmq | Migrate from BullMQ - connection, API mapping, breaking changes |
-| `glide-mq/migrate-bee/` | glide-mq-migrate-bee | Migrate from Bee-Queue - chained builder to options, API mapping |
+| `skills/glide-mq/` | glide-mq | Greenfield queue development - queues, workers, producers, scheduling, workflows |
+| `skills/glide-mq/migrate-bullmq/` | glide-mq-migrate-bullmq | Migrate from BullMQ - connection, API mapping, breaking changes |
+| `skills/glide-mq/migrate-bee/` | glide-mq-migrate-bee | Migrate from Bee-Queue - chained builder to options, API mapping |
 
 ## Architecture
 
