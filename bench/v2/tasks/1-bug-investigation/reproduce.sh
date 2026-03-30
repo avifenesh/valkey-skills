@@ -31,8 +31,17 @@ echo "Wrote 100 keys"
 echo ""
 echo "=== Simulating network partition ==="
 echo "Disconnecting valkey-1 (primary) from the network..."
-docker network disconnect 1-bug-investigation_cluster-net 1-bug-investigation-valkey-1-1 2>/dev/null || \
-docker network disconnect bench-v2-tasks-1-bug-investigation_cluster-net bench-v2-tasks-1-bug-investigation-valkey-1-1
+
+# Get the actual container ID and network name dynamically
+CONTAINER=$(docker compose ps -q valkey-1)
+NETWORK=$(docker network ls --filter "label=com.docker.compose.project=$(docker compose config --format json | jq -r '.name // empty' 2>/dev/null || basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')" --format '{{.Name}}' | grep cluster || docker network ls --format '{{.Name}}' | grep "$(basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | tr -d '-' | head -c 20)" | head -1)
+
+# Fallback: find the network by inspecting the container
+if [ -z "$NETWORK" ]; then
+  NETWORK=$(docker inspect "$CONTAINER" --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -1)
+fi
+
+docker network disconnect "$NETWORK" "$CONTAINER"
 
 echo "=== Waiting for failover (15 seconds) ==="
 sleep 15
@@ -45,8 +54,7 @@ docker compose exec valkey-2 valkey-cli -p 7002 CLUSTER NODES
 echo ""
 echo "=== Healing partition ==="
 echo "Reconnecting valkey-1..."
-docker network connect 1-bug-investigation_cluster-net 1-bug-investigation-valkey-1-1 2>/dev/null || \
-docker network connect bench-v2-tasks-1-bug-investigation_cluster-net bench-v2-tasks-1-bug-investigation-valkey-1-1
+docker network connect "$NETWORK" "$CONTAINER"
 
 echo "=== Waiting for gossip convergence (10 seconds) ==="
 sleep 10
