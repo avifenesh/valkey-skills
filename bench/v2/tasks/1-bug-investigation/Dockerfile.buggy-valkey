@@ -9,9 +9,12 @@ RUN git clone --branch 9.0.3 --depth 1 https://github.com/valkey-io/valkey.git /
 # This causes split-brain because the replica requesting failover
 # never advances the currentEpoch, so after failover both the old
 # primary and new primary have the same epoch and both claim slots.
-RUN sed -i '/failover_auth_sent == 0/,/return;/{
-  s|server.cluster->currentEpoch++;|/* server.cluster->currentEpoch++; */|
-}' /valkey/src/cluster_legacy.c
+# Comment out ONLY the epoch increment in the failover auth block
+# (the one preceded by failover_auth_sent == 0 check)
+RUN LINE=$(grep -n 'failover_auth_sent == 0' /valkey/src/cluster_legacy.c | tail -1 | cut -d: -f1) && \
+    TARGET=$((LINE + 1)) && \
+    sed -i "${TARGET}s|server.cluster->currentEpoch++;|/* server.cluster->currentEpoch++; */|" /valkey/src/cluster_legacy.c && \
+    echo "Patched line $TARGET:" && sed -n "${TARGET}p" /valkey/src/cluster_legacy.c
 
 # Build
 WORKDIR /valkey

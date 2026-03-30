@@ -12,7 +12,7 @@ TESTS_DIR="$BENCH_DIR/tests"
 RESULTS_FILE="$RUNS_DIR/results.md"
 SONNET="us.anthropic.claude-sonnet-4-6"
 OPUS="us.anthropic.claude-opus-4-6"
-TMP="/tmp/bench-v2"
+TMP="${TMPDIR:-/tmp}/bench-v2"
 
 mkdir -p "$RUNS_DIR"
 
@@ -73,9 +73,7 @@ cd "$BENCH_DIR/tasks/1-bug-investigation"
 docker build -t buggy-valkey:latest -f Dockerfile.buggy-valkey . 2>&1 | tail -3
 cd "$BENCH_DIR"
 
-# Update docker-compose to use pre-built image
-sed -i 's|build:.*|image: buggy-valkey:latest|; /context:/d; /dockerfile:/d' \
-  "$BENCH_DIR/tasks/1-bug-investigation/docker-compose.yml" 2>/dev/null || true
+# docker-compose.yml already references buggy-valkey:latest
 
 echo ""
 echo "=== RUNNING BENCHMARK ==="
