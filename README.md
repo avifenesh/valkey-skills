@@ -13,18 +13,18 @@ Each skill is a focused knowledge package:
 
 ## Install
 
-### Claude Code
-
-```bash
-claude mcp add-skill avifenesh/valkey-skills
-```
-
-### Manual (any tool)
-
-Clone and point your AI tool's skill/rules config at the repo:
+Clone into your Claude Code skills directory:
 
 ```bash
 git clone https://github.com/avifenesh/valkey-skills.git ~/.claude/skills/valkey-skills
+```
+
+Or add individual skills to your project's `.claude/settings.json`:
+
+```json
+{
+  "skills": ["~/.claude/skills/valkey-skills/valkey"]
+}
 ```
 
 ## Skills Overview
