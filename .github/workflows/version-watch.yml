@@ -19,57 +19,46 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Baseline versions from CLAUDE.md
-          declare -A BASELINE=(
-            [valkey]="9.0.3"
-            [valkey-glide]="2.3.0"
-            [valkey-search]="1.2.0"
-            [glide-mq]="0.14.0"
-          )
+          # Semver comparison: returns 0 if $1 > $2
+          version_gt() {
+            test "$(printf '%s\n' "$1" "$2" | sort -V | tail -1)" != "$2"
+          }
 
-          # Upstream repos to check
-          declare -A REPOS=(
-            [valkey]="valkey-io/valkey"
-            [valkey-glide]="valkey-io/valkey-glide"
-            [valkey-search]="valkey-io/valkey-search"
-            [glide-mq]="avifenesh/glide-mq"
-          )
-
-          # Skills affected by each component
-          declare -A AFFECTED=(
-            [valkey]="valkey, valkey-dev, valkey-ops"
-            [valkey-glide]="valkey-glide, all per-language GLIDE skills"
-            [valkey-search]="valkey-ecosystem (modules/search)"
-            [glide-mq]="glide-mq, migrate-bullmq, migrate-bee"
+          # Component configs: repo|baseline|affected|source
+          COMPONENTS=(
+            "valkey|valkey-io/valkey|9.0.3|valkey, valkey-dev, valkey-ops|github"
+            "valkey-glide|valkey-io/valkey-glide|2.3.0|valkey-glide, all per-language GLIDE skills|github"
+            "valkey-search|valkey-io/valkey-search|1.2.0|valkey-ecosystem (modules/search)|github"
+            "glide-mq|avifenesh/glide-mq|0.14.0|glide-mq, migrate-bullmq, migrate-bee|npm:glide-mq"
           )
 
           UPDATES=""
 
-          for component in "${!REPOS[@]}"; do
-            repo="${REPOS[$component]}"
-            baseline="${BASELINE[$component]}"
+          for entry in "${COMPONENTS[@]}"; do
+            IFS='|' read -r name repo baseline affected source <<< "$entry"
 
-            # Get latest release tag
-            latest=$(gh api "repos/${repo}/releases/latest" --jq '.tag_name' 2>/dev/null || echo "")
-            # Strip leading 'v' if present
-            latest="${latest#v}"
+            if [[ "$source" == npm:* ]]; then
+              pkg="${source#npm:}"
+              latest=$(curl -sf "https://registry.npmjs.org/${pkg}/latest" | jq -r '.version // empty' 2>/dev/null || echo "")
+            else
+              latest=$(gh api "repos/${repo}/releases/latest" --jq '.tag_name' 2>/dev/null || echo "")
+              latest="${latest#v}"
+            fi
 
             if [ -z "$latest" ]; then
-              echo "[WARN] Could not fetch latest release for ${repo}"
+              echo "[WARN] Could not fetch latest version for ${name}"
               continue
             fi
 
-            echo "${component}: baseline=${baseline} latest=${latest}"
+            echo "${name}: baseline=${baseline} latest=${latest}"
 
-            if [ "$latest" != "$baseline" ]; then
-              # Compare versions (simple string compare works for semver)
-              UPDATES="${UPDATES}\n- **${component}**: ${baseline} -> ${latest} (affects: ${AFFECTED[$component]})"
+            if [ "$latest" != "$baseline" ] && version_gt "$latest" "$baseline"; then
+              UPDATES="${UPDATES}\n- **${name}**: ${baseline} -> ${latest} (affects: ${affected})"
             fi
           done
 
           if [ -n "$UPDATES" ]; then
             echo "has_updates=true" >> "$GITHUB_OUTPUT"
-            # Write to file to preserve newlines
             printf "%b" "$UPDATES" > /tmp/updates.txt
           else
             echo "has_updates=false" >> "$GITHUB_OUTPUT"
