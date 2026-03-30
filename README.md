@@ -13,50 +13,39 @@ Each skill is a focused knowledge package:
 
 ## Install
 
+### Agent Skills CLI (any tool)
+
+```bash
+npx skills add avifenesh/valkey-skills
+```
+
 ### Claude Code
 
-```bash
-# Add as a plugin marketplace source
+```
 /plugin marketplace add avifenesh/valkey-skills
-
-# Install individual skills
 /plugin install valkey@valkey-skills
-/plugin install valkey-glide@valkey-skills
-```
-
-Or clone directly into the plugins directory:
-
-```bash
-git clone https://github.com/avifenesh/valkey-skills.git ~/.claude/plugins/valkey-skills
-```
-
-### Codex CLI
-
-```bash
-git clone https://github.com/avifenesh/valkey-skills.git
-cp -r valkey-skills/skills/* ~/.codex/skills/
-```
-
-### OpenCode
-
-```bash
-git clone https://github.com/avifenesh/valkey-skills.git
-cp -r valkey-skills/skills/* ~/.config/opencode/skills/
 ```
 
 ### Cursor
 
-```bash
-git clone https://github.com/avifenesh/valkey-skills.git
-cp -r valkey-skills/skills/* .cursor/skills/
+```
+/add-plugin valkey-skills
 ```
 
-### Kiro
+### Manual (Codex, OpenCode, Kiro, or any tool)
 
 ```bash
 git clone https://github.com/avifenesh/valkey-skills.git
-cp -r valkey-skills/skills/* .kiro/skills/
 ```
+
+Then copy to your tool's skills directory:
+
+| Tool | Skills Directory |
+|------|-----------------|
+| Codex CLI | `~/.codex/skills/` |
+| OpenCode | `~/.config/opencode/skills/` |
+| Cursor | `.cursor/skills/` |
+| Kiro | `.kiro/skills/` |
 
 ## Skills Overview
 
