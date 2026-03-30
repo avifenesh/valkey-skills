@@ -2,7 +2,6 @@
 name: valkey-glide-csharp
 description: "Use when building C#/.NET applications with Valkey GLIDE. Covers async/await API, .NET 6.0+/8.0+, configuration builders, and migration from StackExchange.Redis. Preview status."
 version: 1.0.0
-last-verified: 2026-03-30
 argument-hint: "[API, config, or migration question]"
 ---
 

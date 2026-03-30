@@ -2,7 +2,6 @@
 name: valkey-glide-java
 description: "Use when building Java applications with Valkey GLIDE. Covers CompletableFuture API, GlideClient, configuration builders, TLS, authentication, OpenTelemetry, error handling, batching, streams, Jedis compatibility layer, server modules (JSON/Search), Spring Data Valkey, and migration from Jedis/Lettuce."
 version: 1.0.0
-last-verified: 2026-03-30
 argument-hint: "[API, config, or migration question]"
 ---
 

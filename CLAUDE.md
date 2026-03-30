@@ -58,6 +58,22 @@ Skills are auto-discovered from the `skills/` directory tree - no registration i
 - Start each reference doc with a "Use when" trigger line
 - Update the SKILL.md router table to include the new file
 
+## Version Baseline
+
+Skills were written and verified against these versions. Update when new releases ship.
+
+| Component | Version | Skills Affected |
+|-----------|---------|----------------|
+| Valkey server | 9.0.3 | valkey, valkey-dev, valkey-ops |
+| Valkey GLIDE | 2.3.0 | valkey-glide, all per-language skills |
+| valkey-search | 1.2.0 | valkey-ecosystem (modules/search) |
+| valkey-json | GA | valkey-ecosystem (modules/json) |
+| valkey-bloom | GA | valkey-ecosystem (modules/bloom) |
+| glide-mq | 0.14.0 | glide-mq, migrate-bullmq, migrate-bee |
+| Spring Data Valkey | 1.0 | valkey-glide-java (Spring section) |
+
+Last full review: 2026-03-30
+
 ## Critical Rules
 
 1. **Plain text output** - No emojis, no ASCII art.

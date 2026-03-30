@@ -2,7 +2,6 @@
 name: valkey-glide-php
 description: "Use when building PHP applications with Valkey GLIDE. Covers synchronous C extension API, installation (PIE/Composer/PECL), configuration, streams, error handling, batching, phpredis compatibility, and TLS."
 version: 1.0.0
-last-verified: 2026-03-30
 argument-hint: "[API, config, or migration question]"
 ---
 

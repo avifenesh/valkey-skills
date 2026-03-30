@@ -2,7 +2,6 @@
 name: valkey-glide
 description: "Use when building applications with Valkey GLIDE - the official multi-language client. Covers Python, Java, Node.js, Go, PHP, C# APIs, cluster mode, batching, PubSub, Lua scripting, OpenTelemetry, AZ affinity, TLS, compression, migration from redis-py/ioredis/Jedis/go-redis/Lettuce, and production tuning."
 version: 1.0.0
-last-verified: 2026-03-30
 argument-hint: "[feature, language, or migration target]"
 ---
 

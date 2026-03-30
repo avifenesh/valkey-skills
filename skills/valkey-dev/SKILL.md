@@ -2,7 +2,6 @@
 name: valkey-dev
 description: "Use when contributing to the Valkey server codebase, understanding Valkey architecture or internals, building from source, writing tests, navigating the C code, writing modules, reviewing PRs in valkey-io/valkey, debugging Valkey, or working with Valkey cluster, replication, or data structures."
 version: 1.0.0
-last-verified: 2026-03-30
 argument-hint: "[subsystem or source file]"
 ---
 

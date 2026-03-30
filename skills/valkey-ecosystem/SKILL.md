@@ -2,7 +2,6 @@
 name: valkey-ecosystem
 description: "Use when evaluating the Valkey ecosystem - client libraries, modules (JSON, Bloom, Search), managed services (AWS, GCP, Aiven), monitoring tools, frameworks (Spring, Django, Rails), Docker/Kubernetes deployment, CI/CD patterns, migration from Redis, and developer tooling."
 version: 1.0.0
-last-verified: 2026-03-30
 argument-hint: "[tool, service, or module name]"
 ---
 
