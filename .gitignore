@@ -1,0 +1,6 @@
+# Skills install artifacts
+.agents/
+.claude/
+.junie/
+skills-lock.json
+node_modules/
