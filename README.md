@@ -13,24 +13,49 @@ Each skill is a focused knowledge package:
 
 ## Install
 
-### Claude Code (marketplace)
+### Claude Code
 
-```
+```bash
+# Add as a plugin marketplace source
 /plugin marketplace add avifenesh/valkey-skills
+
+# Install individual skills
 /plugin install valkey@valkey-skills
 /plugin install valkey-glide@valkey-skills
 ```
 
-### npm (all platforms)
+Or clone directly into the plugins directory:
 
 ```bash
-npm install -g valkey-skills
+git clone https://github.com/avifenesh/valkey-skills.git ~/.claude/plugins/valkey-skills
 ```
 
-### Manual
+### Codex CLI
 
 ```bash
 git clone https://github.com/avifenesh/valkey-skills.git
+cp -r valkey-skills/skills/* ~/.codex/skills/
+```
+
+### OpenCode
+
+```bash
+git clone https://github.com/avifenesh/valkey-skills.git
+cp -r valkey-skills/skills/* ~/.config/opencode/skills/
+```
+
+### Cursor
+
+```bash
+git clone https://github.com/avifenesh/valkey-skills.git
+cp -r valkey-skills/skills/* .cursor/skills/
+```
+
+### Kiro
+
+```bash
+git clone https://github.com/avifenesh/valkey-skills.git
+cp -r valkey-skills/skills/* .kiro/skills/
 ```
 
 ## Skills Overview
