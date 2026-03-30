@@ -1,0 +1,26 @@
+FROM ubuntu:24.04 AS builder
+
+RUN apt-get update && apt-get install -y build-essential git
+
+# Clone Valkey 9.0.3
+RUN git clone --branch 9.0.3 --depth 1 https://github.com/valkey-io/valkey.git /valkey
+
+# Inject bug: skip epoch increment during failover auth request.
+# This causes split-brain because the replica requesting failover
+# never advances the currentEpoch, so after failover both the old
+# primary and new primary have the same epoch and both claim slots.
+RUN sed -i '/failover_auth_sent == 0/,/return;/{
+  s|server.cluster->currentEpoch++;|/* server.cluster->currentEpoch++; */|
+}' /valkey/src/cluster_legacy.c
+
+# Build
+WORKDIR /valkey
+RUN make -j$(nproc) BUILD_TLS=no
+
+FROM ubuntu:24.04
+RUN apt-get update && apt-get install -y libssl3t64 && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /valkey/src/valkey-server /usr/local/bin/
+COPY --from=builder /valkey/src/valkey-cli /usr/local/bin/
+
+EXPOSE 6379 16379
+ENTRYPOINT ["valkey-server"]
