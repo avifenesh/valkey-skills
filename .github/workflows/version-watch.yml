@@ -26,10 +26,10 @@ jobs:
 
           # Component configs: repo|baseline|affected|source
           COMPONENTS=(
-            "valkey|valkey-io/valkey|9.0.3|valkey, valkey-dev, valkey-ops|github"
-            "valkey-glide|valkey-io/valkey-glide|2.3.0|valkey-glide, all per-language GLIDE skills|github"
-            "valkey-search|valkey-io/valkey-search|1.2.0|valkey-ecosystem (modules/search)|github"
-            "glide-mq|avifenesh/glide-mq|0.14.0|glide-mq, migrate-bullmq, migrate-bee|npm:glide-mq"
+            "valkey|valkey-io/valkey|9.0.2|valkey, valkey-dev, valkey-ops|github"
+            "valkey-glide|valkey-io/valkey-glide|2.2.0|valkey-glide, all per-language GLIDE skills|github"
+            "valkey-search|valkey-io/valkey-search|1.1.0|valkey-ecosystem (modules/search)|github"
+            "glide-mq|avifenesh/glide-mq|0.13.0|glide-mq, migrate-bullmq, migrate-bee|npm:glide-mq"
           )
 
           UPDATES=""
