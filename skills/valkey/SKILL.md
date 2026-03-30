@@ -2,7 +2,8 @@
 name: valkey
 description: "Use when building applications with Valkey, choosing commands and data types, implementing caching/sessions/queuing/locking/rate-limiting/leaderboard/counter/search patterns, using streams/pub-sub/scripting/transactions, optimizing performance and memory, configuring cluster/HA/persistence, securing with ACLs/TLS, selecting client libraries, using modules (Bloom/JSON/Search), leveraging Valkey-specific features (conditional ops, hash field TTL, geospatial), or migrating from Redis."
 version: 1.0.0
-argument-hint: "[topic]"
+last-verified: 2026-03-30
+argument-hint: "[command, pattern, or data type]"
 ---
 
 # Valkey Application Developer Reference

@@ -2,7 +2,8 @@
 name: valkey-glide-nodejs
 description: "Use when building Node.js or TypeScript applications with Valkey GLIDE. Covers Promise API, GlideClient, TypeScript types, ESM/CJS, TLS, authentication, OpenTelemetry, batching, PubSub, streams, Lua scripting, server modules (JSON/Search), and migration from ioredis."
 version: 1.0.0
-argument-hint: "[topic]"
+last-verified: 2026-03-30
+argument-hint: "[API, config, or migration question]"
 ---
 
 # Valkey GLIDE Node.js Client

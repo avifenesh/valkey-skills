@@ -2,7 +2,8 @@
 name: valkey-glide-python
 description: "Use when building Python applications with Valkey GLIDE. Covers async/sync APIs, GlideClient, GlideClusterClient, configuration, TLS, authentication, OpenTelemetry, error handling, batching, PubSub, and migration from redis-py."
 version: 1.0.0
-argument-hint: "[topic]"
+last-verified: 2026-03-30
+argument-hint: "[API, config, or migration question]"
 ---
 
 # Valkey GLIDE Python Client

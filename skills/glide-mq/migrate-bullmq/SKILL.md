@@ -2,6 +2,7 @@
 name: glide-mq-migrate-bullmq
 description: "Migrates BullMQ applications to glide-mq. Use when user wants to convert, migrate, replace, or switch from BullMQ to glide-mq, or asks about BullMQ vs glide-mq differences."
 version: 1.0.0
+last-verified: 2026-03-30
 argument-hint: "[migration scope or question]"
 ---
 

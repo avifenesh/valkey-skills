@@ -2,7 +2,8 @@
 name: valkey-glide-ruby
 description: "Use when building Ruby applications with Valkey GLIDE. Covers the Ruby client (valkey-rb gem), installation, API reference, and redis-rb migration."
 version: 1.0.0
-argument-hint: "[topic]"
+last-verified: 2026-03-30
+argument-hint: "[API, config, or migration question]"
 ---
 
 # Valkey GLIDE Ruby Client Reference
