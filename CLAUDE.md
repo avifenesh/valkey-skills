@@ -4,14 +4,14 @@
 
 ## Skills
 
-### Valkey Core (5 skills, 208 reference files)
+### Valkey Core (5 skills, 202 reference files)
 
 | Directory | Skill | Audience | Files |
 |-----------|-------|----------|-------|
 | `skills/valkey/` | valkey | Application developers using Valkey | 37 |
 | `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 59 |
 | `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 52 |
-| `skills/valkey-glide/` | valkey-glide | GLIDE shared architecture, features, best practices | 32 |
+| `skills/valkey-glide/` | valkey-glide | GLIDE shared architecture, features, best practices | 26 |
 | `skills/valkey-ecosystem/` | valkey-ecosystem | Ecosystem tools and services | 28 |
 
 ### GLIDE Per-Language (7 sub-skills under valkey-glide/)
@@ -38,21 +38,25 @@
 
 Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-ecosystem) follow the router pattern:
 - `SKILL.md` - concise router (<500 lines) with trigger phrases and reference tables
-- `reference/` - deep RAG library of focused docs (100-300 lines each)
+- `reference/` - deep RAG library of focused docs (most under 300 lines)
 
 Per-language GLIDE skills and Glide-MQ skills are self-contained single-file SKILL.md documents.
 
 The AI loads SKILL.md into context, scans the tables, and reads only the specific reference file needed. No context bloat.
 
-## Quality
+## Dev Commands
 
-208 reference files across 5 Valkey core skills + 7 per-language GLIDE skills + 3 Glide-MQ skills. Every skill built with the full 13-phase pipeline: wave 1 writers, gap analysis, wave 2 fill, deep research, enrichment, enhance (5 groups), merge-sort (2 pairs), unification, validate (3 per subject), fix, SKILL.md write, SKILL.md enhance, commit.
+Skills-only plugin - no build step, no runtime code. `npm test` exits with a message.
 
-valkey-dev is the reference implementation:
-- 59 reference files
-- Every claim verified against actual Valkey C source code
-- 1,440 claims validated by 15 independent review agents
-- 29 errors found and fixed (2% initial error rate -> 0%)
+Skills are auto-discovered from the `skills/` directory tree - no registration in plugin.json needed.
+
+## Editing Skills
+
+- New reference docs go in the relevant `skills/{skill}/reference/` subdirectory
+- Follow existing subdirectory grouping (e.g., `commands/`, `patterns/`, `architecture/`)
+- Keep reference files focused on one topic, under 300 lines when possible
+- Start each reference doc with a "Use when" trigger line
+- Update the SKILL.md router table to include the new file
 
 ## Critical Rules
 

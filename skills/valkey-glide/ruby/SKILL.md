@@ -295,10 +295,6 @@ The Ruby client is designed as a drop-in replacement for redis-rb. The API follo
 
 ## Limitations
 
-- No published gem on RubyGems yet - install from source
-- No Windows support (depends on native Rust library)
-- Cluster mode available via `cluster_mode: true` option but less tested than standalone
-- Some advanced features may not be available yet
 - No official framework integrations (Rails, Sidekiq) documented
 
 ---

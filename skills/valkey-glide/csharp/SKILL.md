@@ -1,6 +1,6 @@
 ---
 name: valkey-glide-csharp
-description: "Use when building C#/.NET applications with Valkey GLIDE. Covers async/await API, .NET 8.0+, configuration builders, and migration from StackExchange.Redis. Preview status."
+description: "Use when building C#/.NET applications with Valkey GLIDE. Covers async/await API, .NET 6.0+/8.0+, configuration builders, and migration from StackExchange.Redis. Preview status."
 version: 1.0.0
 argument-hint: "[topic]"
 ---
@@ -388,7 +388,7 @@ await using var client = await GlideClusterClient.CreateClient(config);
 
 5. **No fire-and-forget.** All commands are awaitable. Use batching for throughput optimization.
 
-6. **.NET 8.0+ required.** Earlier .NET versions are not supported.
+6. **.NET 6.0+ or .NET 8.0+ required.** Targets both `net6.0` and `net8.0` frameworks.
 
 7. **Batch/transaction API not yet available.** Being developed for the C# client.
 

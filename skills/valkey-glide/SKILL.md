@@ -7,7 +7,7 @@ argument-hint: "[topic]"
 
 # Valkey GLIDE Client Reference
 
-32 source-verified reference docs for the official Valkey GLIDE multi-language client. Per-language client API details live in the dedicated per-language skills (valkey-glide-python, valkey-glide-java, etc.). All API names, defaults, and config fields verified against actual glide-core Rust source and language wrapper code.
+26 source-verified reference docs for the official Valkey GLIDE multi-language client. Per-language client API details live in the dedicated per-language skills (valkey-glide-python, valkey-glide-java, etc.). All API names, defaults, and config fields verified against actual glide-core Rust source and language wrapper code.
 
 Browse by topic below. Each link leads to a focused reference with code examples, configuration tables, and verified API details.
 
