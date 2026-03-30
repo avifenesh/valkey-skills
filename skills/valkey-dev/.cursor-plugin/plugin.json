@@ -1,0 +1,12 @@
+{
+  "name": "valkey-dev",
+  "version": "1.0.0",
+  "description": "Valkey server internals for contributors - C source, architecture, data structures, threading",
+  "author": {
+    "name": "Avi Fenesh",
+    "email": "avifenesh@gmail.com"
+  },
+  "license": "BSD-3-Clause",
+  "keywords": ["valkey","internals","c-source","contributing"],
+  "skills": ["SKILL.md"]
+}

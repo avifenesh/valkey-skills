@@ -1,0 +1,12 @@
+{
+  "name": "valkey-glide",
+  "version": "1.0.0",
+  "description": "Valkey GLIDE official client - shared architecture, features, per-language APIs, migration guides",
+  "author": {
+    "name": "Avi Fenesh",
+    "email": "avifenesh@gmail.com"
+  },
+  "license": "BSD-3-Clause",
+  "keywords": ["valkey","glide","client","python","java","nodejs","go","csharp","php","ruby"],
+  "skills": ["SKILL.md"]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "glide-mq",
+  "version": "1.0.0",
+  "description": "Valkey-native message queues with glide-mq - queues, workers, scheduling, workflows, migration from BullMQ/Bee-Queue",
+  "author": {
+    "name": "Avi Fenesh",
+    "email": "avifenesh@gmail.com"
+  },
+  "license": "BSD-3-Clause",
+  "keywords": ["valkey","glide-mq","message-queue","bullmq","bee-queue"],
+  "skills": ["SKILL.md"]
+}
