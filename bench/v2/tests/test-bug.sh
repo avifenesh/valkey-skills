@@ -6,7 +6,7 @@
 DIR="$1"
 PASS=0
 FAIL=0
-TOTAL=10
+TOTAL=12
 
 check() {
   local desc="$1"
@@ -71,6 +71,39 @@ else
   check "Epoch collision handler preserved" 0
 fi
 
+# --- Build and runtime checks ---
+
+cd "$DIR"
+
+# Check 3: Does it build? (docker compose build)
+echo "  Building fixed Valkey..."
+build_ok=0
+docker compose build --quiet 2>/dev/null && build_ok=1
+check "Fixed source compiles (docker compose build)" "$build_ok"
+
+# Check 4: Does the cluster start and work after fix?
+if [ "$build_ok" -eq 1 ]; then
+  echo "  Starting cluster..."
+  docker compose up -d 2>/dev/null
+  sleep 5
+
+  # Try to create cluster
+  docker compose exec -T valkey-1 valkey-cli --cluster create \
+    172.30.0.11:7001 172.30.0.12:7002 172.30.0.13:7003 \
+    172.30.0.14:7004 172.30.0.15:7005 172.30.0.16:7006 \
+    --cluster-replicas 1 --cluster-yes 2>/dev/null
+
+  sleep 3
+  cluster_ok=$(docker compose exec -T valkey-1 valkey-cli -p 7001 CLUSTER INFO 2>/dev/null | grep -c "cluster_state:ok" || true)
+  check "Cluster starts and is healthy" "$([ "$cluster_ok" -gt 0 ] && echo 1 || echo 0)"
+
+  docker compose down -v 2>/dev/null
+else
+  check "Cluster starts and is healthy" 0
+fi
+
+cd - > /dev/null
+
 # --- Analysis checks ---
 
 if [ -z "$RESPONSE" ]; then
@@ -84,7 +117,7 @@ if [ -z "$RESPONSE" ]; then
   exit 0
 fi
 
-# Check 3: Identifies clusterHandleConfigEpochCollision as the affected function
+# Check 5: Identifies clusterHandleConfigEpochCollision as the affected function
 found_func=$(echo "$ALL" | grep -ci "clusterHandleConfigEpochCollision\|HandleConfigEpochCollision\|epoch.*collision" || true)
 check "Identifies epoch collision handler" "$([ "$found_func" -gt 0 ] && echo 1 || echo 0)"
 
