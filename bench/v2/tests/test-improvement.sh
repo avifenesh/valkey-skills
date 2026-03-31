@@ -1,12 +1,12 @@
 #!/bin/bash
 # Validates Task 4 (Valkey usage review) answers
-# Each scenario has a specific correct improvement
+# Questions marked [VALKEY-SPECIFIC] require Valkey knowledge beyond Redis
 # Input: $1 = directory containing ANSWERS.md
 
 DIR="$1"
 PASS=0
 FAIL=0
-TOTAL=10
+TOTAL=12
 
 check() {
   local desc="$1"
@@ -38,50 +38,58 @@ if [ -z "$ANSWER" ]; then
   exit 0
 fi
 
-# Q1 Session: KEYS is bad, use TTL with EXPIRETIME/PERSIST for retroactive extension
-q1_keys=$(echo "$ANSWER" | grep -ci "KEYS.*bad\|don.*use KEYS\|SCAN.*instead\|KEYS.*anti.pattern\|avoid.*KEYS" || true)
-q1_ttl=$(echo "$ANSWER" | grep -ci "TTL\|EXPIRE\|EXPIRETIME\|PERSIST\|EX\b" || true)
-check "Q1 Sessions: identify KEYS problem + TTL with PERSIST/EXPIRETIME" "$([ "$q1_keys" -gt 0 ] && [ "$q1_ttl" -gt 0 ] && echo 1 || echo 0)"
+# Q1 [VALKEY-SPECIFIC] Sessions: KEYS bad + TTL with EXPIRETIME/PERSIST for extension
+q1_keys=$(echo "$ANSWER" | grep -ci "KEYS.*bad\|don.*use KEYS\|SCAN.*instead\|avoid.*KEYS" || true)
+q1_ttl=$(echo "$ANSWER" | grep -ci "EXPIRETIME\|PERSIST\|TTL.*extend\|extend.*TTL" || true)
+check "Q1 Sessions: KEYS problem + EXPIRETIME/PERSIST [VALKEY]" "$([ "$q1_keys" -gt 0 ] && [ "$q1_ttl" -gt 0 ] && echo 1 || echo 0)"
 
-# Q2 Cache invalidation: DEL -> UNLINK for non-blocking delete
+# Q2 Cache: DEL -> UNLINK
 q2=$(echo "$ANSWER" | grep -ci "UNLINK\|unlink\|non.blocking\|async.*delet" || true)
-check "Q2 Cache: DEL -> UNLINK for non-blocking delete" "$([ "$q2" -gt 0 ] && echo 1 || echo 0)"
+check "Q2 Cache: DEL -> UNLINK" "$([ "$q2" -gt 0 ] && echo 1 || echo 0)"
 
-# Q3 Inventory: KEYS+GET -> use Hash (HSET/HGETALL) or MGET, not KEYS per page load
-q3_hash=$(echo "$ANSWER" | grep -ci "HSET\|HGETALL\|HINCRBY\|hash\|Hash" || true)
-q3_mget=$(echo "$ANSWER" | grep -ci "MGET\|SCAN" || true)
-check "Q3 Inventory: Hash or MGET instead of KEYS+GET per page" "$([ "$q3_hash" -gt 0 ] || [ "$q3_mget" -gt 0 ] && echo 1 || echo 0)"
+# Q3 [VALKEY-SPECIFIC] Hash field TTL: use HEXPIRE/HPEXPIRE (Valkey 8+)
+q3=$(echo "$ANSWER" | grep -ci "HEXPIRE\|HPEXPIRE\|HTTL\|hash.*field.*expir\|field.*level.*TTL\|per.field.*expir" || true)
+check "Q3 Hash field TTL: HEXPIRE/HPEXPIRE [VALKEY]" "$([ "$q3" -gt 0 ] && echo 1 || echo 0)"
 
-# Q4 Rate limiting: member should be timestamp-based or use simpler counter, trim window
-# Good answer: remove unique request ID member (wastes memory), use timestamp+counter or token bucket
-q4=$(echo "$ANSWER" | grep -ci "memory.*member\|unique.*ID.*waste\|token.bucket\|fixed.window\|member.*redundant\|ZRANGEBYSCORE\|trim\|memory" || true)
-check "Q4 Rate limit: identify memory waste from unique members" "$([ "$q4" -gt 0 ] && echo 1 || echo 0)"
+# Q4 Rate limiting: memory waste from unique members
+q4=$(echo "$ANSWER" | grep -ci "memory.*member\|unique.*ID.*waste\|token.bucket\|fixed.window\|member.*redundant" || true)
+check "Q4 Rate limit: identify memory waste" "$([ "$q4" -gt 0 ] && echo 1 || echo 0)"
 
-# Q5 Leaderboard: dual sorted set is fine, or use ZRANGEBYLEX / single set with composite scores
-q5=$(echo "$ANSWER" | grep -ci "fine\|correct\|acceptable\|good approach\|reasonable\|works.*well\|dual.*set.*ok\|composite.*score\|ZUNIONSTORE\|ZINTERSTORE" || true)
-check "Q5 Leaderboard: recognize dual sets is valid or suggest composite" "$([ "$q5" -gt 0 ] && echo 1 || echo 0)"
+# Q5 [VALKEY-SPECIFIC] Lock: GET-then-DEL race -> SET IFEQ (Valkey) or Lua
+q5_ifeq=$(echo "$ANSWER" | grep -ci "IFEQ\|SET.*IFEQ\|IFEQ.*conditional" || true)
+q5_lua=$(echo "$ANSWER" | grep -ci "lua\|EVAL\|atomic.*script" || true)
+check "Q5 Lock: SET IFEQ or Lua for atomic release [VALKEY]" "$([ "$q5_ifeq" -gt 0 ] && echo 1 || echo 0)"
+# Note: Lua also valid but IFEQ is the Valkey-specific answer
 
-# Q6 Job queue: LIST -> Streams (XADD/XREADGROUP) for reliable ordering + exactly-once
-q6=$(echo "$ANSWER" | grep -ci "stream\|XADD\|XREADGROUP\|XACK\|consumer.group\|Stream" || true)
-check "Q6 Job queue: recommend Streams over LIST" "$([ "$q6" -gt 0 ] && echo 1 || echo 0)"
+# Q6 Inventory: KEYS+GET -> Hash (HSET/HGETALL) or MGET
+q6_hash=$(echo "$ANSWER" | grep -ci "HSET\|HGETALL\|HINCRBY\|hash\|Hash" || true)
+q6_mget=$(echo "$ANSWER" | grep -ci "MGET\|SCAN" || true)
+check "Q6 Inventory: Hash or MGET instead of KEYS+GET" "$([ "$q6_hash" -gt 0 ] || [ "$q6_mget" -gt 0 ] && echo 1 || echo 0)"
 
-# Q7 Lock: GET-then-DEL race -> use Lua script or SET IFEQ (Valkey 8+) for atomic release
-q7_lua=$(echo "$ANSWER" | grep -ci "lua\|EVAL\|atomic\|script\|compare.and.delete" || true)
-q7_ifeq=$(echo "$ANSWER" | grep -ci "IFEQ\|SET.*IFEQ\|conditional" || true)
-check "Q7 Lock: atomic release via Lua or SET IFEQ" "$([ "$q7_lua" -gt 0 ] || [ "$q7_ifeq" -gt 0 ] && echo 1 || echo 0)"
+# Q7 Job queue: LIST -> Streams
+q7=$(echo "$ANSWER" | grep -ci "stream\|XADD\|XREADGROUP\|XACK\|consumer.group\|Stream" || true)
+check "Q7 Job queue: Streams over LIST" "$([ "$q7" -gt 0 ] && echo 1 || echo 0)"
 
-# Q8 Analytics: KEYS for collection -> SCAN, or better: use Hash per day (HINCRBY)
-q8_scan=$(echo "$ANSWER" | grep -ci "SCAN\|HSCAN" || true)
-q8_hash=$(echo "$ANSWER" | grep -ci "HINCRBY\|hash.*per.*day\|Hash\|HGETALL" || true)
-check "Q8 Analytics: SCAN or Hash-per-day instead of KEYS" "$([ "$q8_scan" -gt 0 ] || [ "$q8_hash" -gt 0 ] && echo 1 || echo 0)"
+# Q8 [VALKEY-SPECIFIC] Conditional updates: WATCH/MULTI -> SET IFEQ/IFGT
+q8_ifeq=$(echo "$ANSWER" | grep -ci "IFEQ\|IFGT\|SET.*IFEQ\|SET.*IFGT\|conditional.*set" || true)
+q8_lua=$(echo "$ANSWER" | grep -ci "lua\|EVAL\|CAS.*script" || true)
+check "Q8 Conditional updates: SET IFEQ/IFGT [VALKEY]" "$([ "$q8_ifeq" -gt 0 ] && echo 1 || echo 0)"
 
-# Q9 Search: app-side search -> use valkey-search module (FT.CREATE/FT.SEARCH)
+# Q9 Search: app-side -> valkey-search module
 q9=$(echo "$ANSWER" | grep -ci "FT\.CREATE\|FT\.SEARCH\|valkey.search\|RediSearch\|search.*module\|full.text.*index" || true)
-check "Q9 Search: recommend valkey-search module" "$([ "$q9" -gt 0 ] && echo 1 || echo 0)"
+check "Q9 Search: valkey-search module" "$([ "$q9" -gt 0 ] && echo 1 || echo 0)"
 
-# Q10 Pub/Sub: missed messages -> Streams for persistent messaging, or Pub/Sub + Stream hybrid
-q10=$(echo "$ANSWER" | grep -ci "stream\|XADD\|XREADGROUP\|persistent\|Stream.*instead\|durable\|at.least.once" || true)
-check "Q10 Pub/Sub: Streams for persistent messaging" "$([ "$q10" -gt 0 ] && echo 1 || echo 0)"
+# Q10 Pub/Sub: missed messages -> Streams
+q10=$(echo "$ANSWER" | grep -ci "stream\|XADD\|XREADGROUP\|persistent\|durable\|at.least.once" || true)
+check "Q10 Pub/Sub: Streams for persistence" "$([ "$q10" -gt 0 ] && echo 1 || echo 0)"
+
+# Q11 [VALKEY-SPECIFIC] Monitoring: SLOWLOG -> COMMANDLOG (Valkey 8.1+)
+q11=$(echo "$ANSWER" | grep -ci "COMMANDLOG\|command.log\|COMMAND.*LOG" || true)
+check "Q11 Monitoring: COMMANDLOG replaces SLOWLOG [VALKEY]" "$([ "$q11" -gt 0 ] && echo 1 || echo 0)"
+
+# Q12 Leaderboard TTL: you CAN set TTL on sorted sets (EXPIRE works on any key type)
+q12=$(echo "$ANSWER" | grep -ci "EXPIRE.*sorted\|EXPIRE.*zset\|EXPIRE.*leaderboard\|TTL.*work.*any\|TTL.*any.*key\|can.*set.*TTL\|EXPIRE.*key" || true)
+check "Q12 Leaderboard: EXPIRE works on sorted sets" "$([ "$q12" -gt 0 ] && echo 1 || echo 0)"
 
 echo ""
 echo "Result: $PASS/$TOTAL passed"

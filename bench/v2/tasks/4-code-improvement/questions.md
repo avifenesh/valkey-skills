@@ -16,9 +16,9 @@ Our catalog service caches product data. When a product is updated, we delete al
 
 ---
 
-## 3. Real-time Inventory
+## 3. User Profiles with Field-Level TTL
 
-Each warehouse reports stock levels. We use a simple `SET inventory:{sku}:{warehouse} <count>` pattern. To get total inventory for a SKU across all warehouses, we run `KEYS inventory:{sku}:*` then `GET` each key and sum the values in the application. This runs on every product page load.
+We store user profiles as hashes: `HSET user:{id} name "Alice" email "a@b.com" prefs "{...}" verification_token "abc123"`. The verification token should expire after 24 hours, but we can't set TTL on individual hash fields. So we store the token as a separate key `verification:{id}` with `SETEX`. This means user data is split across two keys and we need to check both on every profile load.
 
 ---
 
@@ -28,27 +28,27 @@ We implemented sliding window rate limiting. For each API key, we use a sorted s
 
 ---
 
-## 5. Leaderboard
+## 5. Distributed Lock
 
-We have a gaming leaderboard with millions of users. Scores are stored in a sorted set. To display the leaderboard page, we fetch the top 100 with ZREVRANGE. When a user wants to see their rank, we use ZREVRANK. This all works well. However, we also need to show "leaderboard by region" - currently we maintain a separate sorted set per region and update both the global and regional sets on every score change.
+We implement locks with `SET lock:{resource} {owner} NX EX 30`. To release, we GET the lock, check if we own it, then DEL it. In high contention scenarios, we sometimes see a race where the lock is released by the wrong owner because between the GET and DEL, the lock expired and was acquired by someone else.
 
 ---
 
-## 6. Job Queue
+## 6. Real-time Inventory
+
+Each warehouse reports stock levels. We use a simple `SET inventory:{sku}:{warehouse} <count>` pattern. To get total inventory for a SKU across all warehouses, we run `KEYS inventory:{sku}:*` then `GET` each key and sum the values in the application. This runs on every product page load.
+
+---
+
+## 7. Job Queue
 
 We built a job queue using LIST. Producers LPUSH jobs, consumers RPOP them. For reliability we switched to BRPOPLPUSH to move jobs to a processing list, and return them if the worker crashes. Works fine, but we recently started getting ordering issues - jobs processed out of order and some seem to be duplicated after worker restarts.
 
 ---
 
-## 7. Distributed Lock
+## 8. Conditional Updates
 
-We implement locks with `SET lock:{resource} {owner} NX EX 30`. To release, we GET the lock, check if we own it, then DEL it. In high contention scenarios, we sometimes see a race where the lock is released by the wrong owner.
-
----
-
-## 8. Analytics Counters
-
-We track page views, clicks, and conversions per product per day. Each counter is a separate key: `counter:{event}:{productId}:{date}`. We increment with INCR. At the end of each day, a batch job collects all counters by running `KEYS counter:*:{today}`, reads each value, writes to the database, then deletes them all. We have about 500K counter keys per day.
+Our pricing service needs to update product prices, but only if the current price matches what the service expects (optimistic locking). Currently we use WATCH/MULTI/EXEC transactions: WATCH the key, GET the current price, compare in app code, then MULTI SET new price EXEC. Under high contention the WATCH fails frequently and we retry in a loop, which causes latency spikes.
 
 ---
 
@@ -64,4 +64,16 @@ We use Pub/Sub to notify services of events (order placed, inventory changed, et
 
 ---
 
-Provide your assessment for each of the 10 scenarios. For each one, state whether the current approach is correct, what the specific problem is (if any), and what the concrete improvement should be.
+## 11. Monitoring and Slow Commands
+
+We monitor slow commands using `SLOWLOG GET 100` and parse the results to find performance bottlenecks. We've noticed the slowlog doesn't capture some commands we expected to be slow. We're also missing information about which client issued the slow command.
+
+---
+
+## 12. Leaderboard with Expiring Scores
+
+We have a daily leaderboard that resets each day. Currently we use a sorted set `leaderboard:{date}` and ZADD scores. To show "top 100 today", we use ZREVRANGE. The problem: old leaderboards accumulate forever. We run a weekly cleanup job that SCAN+DEL old leaderboard keys. We wish we could just set a TTL on the whole sorted set, but we heard you can't set TTL on sorted sets.
+
+---
+
+Provide your assessment for each of the 12 scenarios. For each one, state whether the current approach is correct, what the specific problem is (if any), and what the concrete improvement should be.
