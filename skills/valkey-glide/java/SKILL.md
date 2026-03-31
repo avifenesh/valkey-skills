@@ -7,7 +7,7 @@ argument-hint: "[API, config, or migration question]"
 
 # Valkey GLIDE Java Client
 
-Self-contained guide for building Java/JVM applications with Valkey GLIDE. For architecture concepts shared across all languages, see the `valkey-glide` skill.
+Self-contained guide for building Java/JVM applications with Valkey GLIDE.
 
 ## Routing
 
@@ -772,7 +772,7 @@ GlideClusterClientConfiguration config = GlideClusterClientConfiguration.builder
     .build();
 ```
 
-Requires Valkey 8.0+. See the `valkey-glide` skill for cross-language AZ Affinity details.
+Requires Valkey 8.0+. See the AZ Affinity reference for cross-language details.
 
 ### IAM Authentication for AWS
 
@@ -830,7 +830,55 @@ GlideClientConfiguration config = GlideClientConfiguration.builder()
 
 ---
 
+<!-- SHARED-GLIDE-SECTION: keep in sync with valkey-glide/SKILL.md -->
+
+## Architecture
+
+| Topic | Reference |
+|-------|-----------|
+| Three-layer design: Rust core, Protobuf IPC, language FFI bridges | [overview](reference/architecture/overview.md) |
+| Multiplexed connections, inflight limits, request timeout, reconnect logic | [connection-model](reference/architecture/connection-model.md) |
+| Cluster slot routing, MOVED/ASK handling, multi-slot splitting, ReadFrom | [cluster-topology](reference/architecture/cluster-topology.md) |
+
+
+## Features
+
+| Topic | Reference |
+|-------|-----------|
+| Batch API: atomic (MULTI/EXEC) and non-atomic (pipeline) modes | [batching](reference/features/batching.md) |
+| PubSub: exact, pattern, and sharded subscriptions, dynamic callbacks | [pubsub](reference/features/pubsub.md) |
+| Scripting: Lua EVAL/EVALSHA with SHA1 caching, FCALL Functions | [scripting](reference/features/scripting.md) |
+| OpenTelemetry: per-command tracing spans, metrics export | [opentelemetry](reference/features/opentelemetry.md) |
+| AZ affinity: availability-zone-aware read routing, cross-zone savings | [az-affinity](reference/features/az-affinity.md) |
+| TLS, mTLS, custom CA certificates, password auth, IAM tokens | [tls-auth](reference/features/tls-auth.md) |
+| Compression: transparent Zstd/LZ4 for large values (SET/GET) | [compression](reference/features/compression.md) |
+| Streams: XADD, XREAD, XREADGROUP, consumer groups, XCLAIM, XAUTOCLAIM | [streams](reference/features/streams.md) |
+| Server modules: GlideJson (JSON), GlideFt (Search/Vector) | [server-modules](reference/features/server-modules.md) |
+| Logging: log levels, file rotation, GLIDE_LOG_DIR, debug output | [logging](reference/features/logging.md) |
+| Geospatial: GEOADD, GEOSEARCH, GEODIST, proximity queries | [geospatial](reference/features/geospatial.md) |
+| Bitmaps and HyperLogLog: BITCOUNT, BITFIELD, PFADD, PFCOUNT | [bitmaps-hyperloglog](reference/features/bitmaps-hyperloglog.md) |
+| Hash field expiration: HSETEX, HGETEX, HEXPIRE (Valkey 9.0+) | [hash-field-expiration](reference/features/hash-field-expiration.md) |
+
+
+## Migration
+
+| Topic | Reference |
+|-------|-----------|
+| From Jedis (Java) | [from-jedis](reference/migration/from-jedis.md) |
+| From Lettuce (Java) | [from-lettuce](reference/migration/from-lettuce.md) |
+
+
+## Best Practices
+
+| Topic | Reference |
+|-------|-----------|
+| Performance: benchmarks, GLIDE vs native clients, batching throughput | [performance](reference/best-practices/performance.md) |
+| Error handling: exception types, reconnection, retry, batch errors | [error-handling](reference/best-practices/error-handling.md) |
+| Production: timeout config, connection management, cloud defaults | [production](reference/best-practices/production.md) |
+| Spring: Spring Data Valkey, Boot auto-config, Actuator health, drivers | [spring-integration](reference/best-practices/spring-integration.md) |
+
+<!-- END SHARED-GLIDE-SECTION -->
+
 ## Cross-References
 
-- `valkey-glide` skill - architecture, connection model, features shared across all languages
 - `valkey` skill - Valkey server commands, data types, patterns
