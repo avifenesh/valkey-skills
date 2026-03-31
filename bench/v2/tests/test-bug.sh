@@ -6,7 +6,7 @@
 DIR="$1"
 PASS=0
 FAIL=0
-TOTAL=12
+TOTAL=13
 
 check() {
   local desc="$1"
@@ -96,6 +96,44 @@ if [ "$build_ok" -eq 1 ]; then
   sleep 3
   cluster_ok=$(docker compose exec -T valkey-1 valkey-cli -p 7001 CLUSTER INFO 2>/dev/null | grep -c "cluster_state:ok" || true)
   check "Cluster starts and is healthy" "$([ "$cluster_ok" -gt 0 ] && echo 1 || echo 0)"
+
+  # Check 5: Re-run partition test - verify split-brain is actually fixed
+  split_brain_fixed=0
+  if [ "$cluster_ok" -gt 0 ]; then
+    echo "  Running partition test to verify fix..."
+
+    # Write test data
+    for i in $(seq 1 20); do
+      docker compose exec -T valkey-1 valkey-cli -p 7001 -c SET "test:$i" "val:$i" 2>/dev/null || true
+    done
+
+    # Get container and network for partition
+    CONTAINER=$(docker compose ps -q valkey-1)
+    NETWORK=$(docker inspect "$CONTAINER" --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null | head -1)
+
+    if [ -n "$CONTAINER" ] && [ -n "$NETWORK" ]; then
+      # Partition
+      docker network disconnect "$NETWORK" "$CONTAINER" 2>/dev/null
+
+      # Wait for failover
+      sleep 15
+
+      # Heal
+      docker network connect "$NETWORK" "$CONTAINER" 2>/dev/null
+
+      # Wait for convergence
+      sleep 10
+
+      # Check: should NOT have two masters for same slots
+      nodes_output=$(docker compose exec -T valkey-2 valkey-cli -p 7002 CLUSTER NODES 2>/dev/null)
+      master_count=$(echo "$nodes_output" | grep -c "master" || true)
+      # In a healthy 3+3 cluster, exactly 3 masters
+      if [ "$master_count" -eq 3 ]; then
+        split_brain_fixed=1
+      fi
+    fi
+  fi
+  check "No split-brain after partition test (3 masters)" "$split_brain_fixed"
 
   docker compose down -v 2>/dev/null
 else
