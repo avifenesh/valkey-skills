@@ -3,13 +3,13 @@ services:
     image: valkey/valkey:9
     command: >
       valkey-server
-      --port 7001
+      --port 7101
       --cluster-enabled yes
       --cluster-config-file nodes.conf
       --cluster-node-timeout 5000
       --protected-mode no
     ports:
-      - "7001:7001"
+      - "7101:7101"
     networks:
       cluster-net:
         ipv4_address: 172.31.0.11
@@ -18,13 +18,13 @@ services:
     image: valkey/valkey:9
     command: >
       valkey-server
-      --port 7002
+      --port 7102
       --cluster-enabled yes
       --cluster-config-file nodes.conf
       --cluster-node-timeout 5000
       --protected-mode no
     ports:
-      - "7002:7002"
+      - "7102:7102"
     networks:
       cluster-net:
         ipv4_address: 172.31.0.12
@@ -33,13 +33,13 @@ services:
     image: valkey/valkey:9
     command: >
       valkey-server
-      --port 7003
+      --port 7103
       --cluster-enabled yes
       --cluster-config-file nodes.conf
       --cluster-node-timeout 5000
       --protected-mode no
     ports:
-      - "7003:7003"
+      - "7103:7103"
     networks:
       cluster-net:
         ipv4_address: 172.31.0.13
@@ -52,7 +52,7 @@ services:
       - valkey-3
     command: >
       bash -c "sleep 3 && valkey-cli --cluster create
-      172.31.0.11:7001 172.31.0.12:7002 172.31.0.13:7003
+      172.31.0.11:7101 172.31.0.12:7102 172.31.0.13:7103
       --cluster-replicas 0 --cluster-yes &&
       echo 'Cluster ready'"
     networks:

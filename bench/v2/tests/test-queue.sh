@@ -58,7 +58,7 @@ docker compose up -d --build 2>/dev/null
 
 # Wait for cluster to be ready
 for i in $(seq 1 30); do
-  cluster_ok=$(docker compose exec -T valkey-1 valkey-cli -p 7001 CLUSTER INFO 2>/dev/null | grep -c "cluster_state:ok" || true)
+  cluster_ok=$(docker compose exec -T valkey-1 valkey-cli -p 7101 CLUSTER INFO 2>/dev/null | grep -c "cluster_state:ok" || true)
   [ "$cluster_ok" -gt 0 ] && break
   sleep 2
 done
@@ -88,23 +88,23 @@ done
 check "App completed without fatal errors" "$([ "$app_done" -gt 0 ] && [ "$app_error" -eq 0 ] && echo 1 || echo 0)"
 
 # Check 5: Cache data written
-cache_exists=$(docker compose exec -T valkey-1 valkey-cli -p 7001 -c EXISTS {cache}:user:1 2>/dev/null | tr -d '[:space:]' || echo "0")
+cache_exists=$(docker compose exec -T valkey-1 valkey-cli -p 7101 -c EXISTS {cache}:user:1 2>/dev/null | tr -d '[:space:]' || echo "0")
 check "Cache data written ({cache}:user:1)" "$([ "$cache_exists" = "1" ] && echo 1 || echo 0)"
 
 # Check 6: Products batch-written (check a few)
-product_exists=$(docker compose exec -T valkey-1 valkey-cli -p 7001 -c HGET {product}:0 name 2>/dev/null | tr -d '[:space:]' || echo "")
+product_exists=$(docker compose exec -T valkey-1 valkey-cli -p 7101 -c HGET {product}:0 name 2>/dev/null | tr -d '[:space:]' || echo "")
 check "Batch products written ({product}:0)" "$([ -n "$product_exists" ] && [ "$product_exists" != "" ] && echo 1 || echo 0)"
 
 # Check 7: Stream exists with messages
-stream_len=$(docker compose exec -T valkey-1 valkey-cli -p 7001 -c XLEN "{stream}:tasks" 2>/dev/null | tr -d '[:space:]' || echo "0")
+stream_len=$(docker compose exec -T valkey-1 valkey-cli -p 7101 -c XLEN "{stream}:tasks" 2>/dev/null | tr -d '[:space:]' || echo "0")
 check "Stream has messages (XLEN > 0)" "$([ "$stream_len" -gt 0 ] && echo 1 || echo 0)"
 
 # Check 8: Consumer group exists
-group_exists=$(docker compose exec -T valkey-1 valkey-cli -p 7001 -c XINFO GROUPS "{stream}:tasks" 2>/dev/null | grep -c "workers" || true)
+group_exists=$(docker compose exec -T valkey-1 valkey-cli -p 7101 -c XINFO GROUPS "{stream}:tasks" 2>/dev/null | grep -c "workers" || true)
 check "Consumer group created" "$([ "$group_exists" -gt 0 ] && echo 1 || echo 0)"
 
 # Check 9: Sorted set populated
-zcard=$(docker compose exec -T valkey-1 valkey-cli -p 7001 -c ZCARD leaderboard:daily 2>/dev/null | tr -d '[:space:]' || echo "0")
+zcard=$(docker compose exec -T valkey-1 valkey-cli -p 7101 -c ZCARD leaderboard:daily 2>/dev/null | tr -d '[:space:]' || echo "0")
 check "Sorted set populated ($zcard members)" "$([ "$zcard" -gt 0 ] && echo 1 || echo 0)"
 
 # Cleanup

@@ -1,0 +1,12 @@
+=== Task 1: Bug Investigation Validation ===
+  [FAIL] Source fixed: buggy deferral still active
+  [PASS] Epoch collision handler preserved with bump
+  Building fixed Valkey...
+  [PASS] Fixed source compiles (docker compose build)
+  Starting cluster...
+  [FAIL] Cluster starts and is healthy
+  [FAIL] No split-brain after partition test (3 masters)
+  [WARN] No ANALYSIS.md found - checking source fix only
+
+Result: 2/13 passed
+SCORE=2/13

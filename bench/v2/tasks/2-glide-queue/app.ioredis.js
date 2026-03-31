@@ -5,9 +5,9 @@
 import Redis from "ioredis";
 
 const cluster = new Redis.Cluster([
-  { host: "valkey-1", port: 7001 },
-  { host: "valkey-2", port: 7002 },
-  { host: "valkey-3", port: 7003 },
+  { host: "valkey-1", port: 7101 },
+  { host: "valkey-2", port: 7102 },
+  { host: "valkey-3", port: 7103 },
 ]);
 
 // === Feature 1: Cache with TTL ===

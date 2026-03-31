@@ -1,0 +1,16 @@
+`ANSWERS.md` written. Here's a summary of the findings:
+
+| # | Scenario | Status | Core Fix |
+|---|----------|--------|----------|
+| 1 | Session Management | **Problematic** | Replace nightly `KEYS` scan + JSON parsing with native `EXPIRE`/`EXPIREAT`; use `SCAN` if iteration is needed |
+| 2 | Product Catalog Cache | **Minor issue** | Replace per-key `DEL` loop with variadic `DEL key1 key2 ...` or `UNLINK` for async deletion |
+| 3 | Field-Level TTL | **Outdated workaround** | On Valkey 9.0.3, use `HEXPIRE user:{id} 86400 FIELDS 1 verification_token` — no split key needed |
+| 4 | Rate Limiting | **Correct but memory-heavy** | Pipeline the 3 operations; use timestamp as member (not a separate UUID); or use `INCR`+`EXPIRE` fixed window |
+| 5 | Distributed Lock | **Race condition bug** | Replace GET+DEL with atomic Lua: `if get(key)==owner then del(key)` |
+| 6 | Real-time Inventory | **Critically broken** | Replace `KEYS`-per-page-load with a hash per SKU: `HSET inventory:{sku} warehouse_A 150`; `HVALS` to sum |
+| 7 | Job Queue | **Problematic** | `BRPOPLPUSH` is deprecated — use `LMOVE`/`BLMOVE`; better: switch to Streams with `XREADGROUP`/`XACK` |
+| 8 | Conditional Updates | **Correct but inefficient** | Replace WATCH/MULTI/EXEC retry loop with a single atomic Lua compare-and-set |
+| 9 | Full-text Search | **Critically wrong** | Build an inverted index with `SADD`/`SINTER`, or use the `valkey-search` module with `FT.CREATE`/`FT.SEARCH` |
+| 10 | Pub/Sub | **Wrong tool** | Switch to Streams (`XADD`/`XREADGROUP`/`XACK`) for persistence, consumer groups, and replay on reconnect |
+| 11 | Monitoring | **Incomplete** | Lower `slowlog-log-slower-than` to 1000µs; have clients call `CLIENT SETNAME`; use `LATENCY LATEST` for spike tracking |
+| 12 | Leaderboard TTL | **False premise** | `EXPIRE`/`EXPIREAT` works on sorted sets — just set TTL at creation time and remove the cleanup job |
