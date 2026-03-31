@@ -20,7 +20,7 @@ TASK_TESTS=("test-bug.sh" "test-lock.sh" "test-ops.sh" "test-improvement.sh")
 TASK_SKILLS=("valkey-dev" "valkey-glide/java" "valkey-ops:valkey-ecosystem" "valkey")
 
 TASK_PROMPTS=(
-  'This cluster has a bug that causes split-brain after network partition recovery. The reproduce.sh script demonstrates it - run it to see the symptoms. Investigate the root cause in the Valkey server source code and explain what went wrong. Provide a fix or workaround. Write your analysis to ANALYSIS.md.'
+  'This Valkey cluster has a bug that causes split-brain after network partition recovery. Run reproduce.sh to see the symptoms. The cluster uses a custom Valkey 9.0.3 build with a bug in the server source code. You do not have the Dockerfile or build files - only the running containers and the symptoms. Investigate the root cause by analyzing the Valkey server source code (clone it if needed). Identify the exact function and line where the bug is. Write a concrete patch (diff or sed command) that fixes the server code. Write your analysis and fix to ANALYSIS.md. The fix must be a code change to the Valkey C source, not a Docker or config workaround.'
   'Implement the distributed lock in this Java project using Valkey GLIDE. Read README.md for requirements. The lock must support TTL-based expiration, owner identification, retry with backoff, and safe release (compare-and-delete). Use GLIDE APIs correctly - not Jedis or Lettuce. Start Valkey with docker compose up -d first.'
   'Create all Kubernetes manifests and configuration files per requirements.md. Use kind for the local cluster. Include a deploy.sh script and a test.sh that validates the deployment works.'
   'Review app.js and improve it. Focus on Valkey-specific best practices, performance patterns, and production readiness. Fix all anti-patterns you find. Start Valkey with docker compose up -d first. The improved code must work - test it.'
@@ -138,6 +138,9 @@ for task_idx in 0 1 2 3; do
       mkdir -p "$TMP"
       cp -r "$BENCH_DIR/tasks/$task_dir" "$run_dir"
       rm -rf "$run_dir/.git" 2>/dev/null
+
+      # Task 1: remove Dockerfile so agents can't just read the injected bug
+      [ "$task_idx" -eq 0 ] && rm -f "$run_dir/Dockerfile.buggy-valkey" 2>/dev/null
 
       if [ "$skills" = "skill" ]; then
         install_skills "$run_dir" "$skill_spec"

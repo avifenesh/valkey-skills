@@ -3,7 +3,7 @@
 ## Environment
 
 - Valkey cluster: 6 nodes (3 primaries, 3 replicas)
-- Version: 9.0.3 (custom build from source)
+- Version: 9.0.3 (modified build - the bug is in the server code)
 - Mode: cluster-enabled, appendonly, node-timeout 5000ms
 
 ## Steps to Reproduce
