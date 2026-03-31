@@ -7,8 +7,8 @@ Use when working on query parsing, filter evaluation, hybrid search, the FT.SEAR
 - FT.SEARCH Pipeline (line 13)
 - FT.AGGREGATE Pipeline (line 97)
 - Filter Evaluation (line 129)
-- FT._DEBUG TEXTINFO (`src/indexes/text/textinfocmd.cc`) (line 146)
-- Cancellation (`src/utils/cancel.h`) (line 159)
+- FT._DEBUG TEXTINFO (`src/indexes/text/textinfocmd.cc`) (line 144)
+- Cancellation (`src/utils/cancel.h`) (line 157)
 
 ## FT.SEARCH Pipeline
 
@@ -20,7 +20,7 @@ Command parse -> Filter parse -> Query planner -> Search execution -> Content re
 
 `SearchCommand` inherits `QueryCommand` -> `SearchParameters`. Parses arguments: index name, query string, LIMIT, NOCONTENT, RETURN, PARAMS, DIALECT, TIMEOUT, SORTBY, LOCALONLY, ALLSHARDS, CONSISTENT, SLOP, INORDER, VERBATIM.
 
-Key constants: `kTimeoutMS` = 50000ms default, `kMaxTimeoutMs` = 60000ms, `kDialect` = 2.
+Key constants (in `src/query/search.h`): `kTimeoutMS` = 50000ms default, `kMaxTimeoutMs` = 60000ms, `kDialect` = 2.
 
 ### 2. Filter Parsing (`src/commands/filter_parser.h`)
 
@@ -128,20 +128,18 @@ Generic expression compiler/evaluator. `Expression::Compile()` parses string int
 
 ## Filter Evaluation
 
-Two evaluator implementations:
+### Evaluator Interface (`src/query/predicate.h`)
+
+`query::Evaluator` defines the interface: `EvaluateTags()`, `EvaluateNumeric()`, `EvaluateText()`.
 
 ### PrefilterEvaluator (`src/indexes/vector_base.h`)
 
-Used in pre-filtering path. Evaluates predicates against per-key data in the index structures:
+The sole concrete implementation. Used in the pre-filtering path to evaluate predicates against per-key data in the index structures:
 - Tags: looks up key in `Tag` index
 - Numeric: looks up key in `Numeric` index
 - Text: looks up key in per-key `TextIndex`
 
-### PostfilterEvaluator
-
-Used during content resolution. Evaluates predicates against actual key data fetched from Valkey.
-
-Both implement `query::Evaluator` interface with `EvaluateTags()`, `EvaluateNumeric()`, `EvaluateText()`.
+Post-filtering uses inline predicate evaluation during content resolution rather than a separate evaluator class.
 
 ## FT._DEBUG TEXTINFO (`src/indexes/text/textinfocmd.cc`)
 
@@ -151,7 +149,7 @@ Debug subcommand for inspecting text index internals:
 FT._DEBUG TEXTINFO <index_name> PREFIX <word> [WITHKEYS [WITHPOSITIONS]]
 FT._DEBUG TEXTINFO <index_name> SUFFIX <word> [WITHKEYS [WITHPOSITIONS]]
 FT._DEBUG TEXTINFO <index_name> STEM <word>
-FT._DEBUG TEXTINFO <index_name> LEXER <string>
+FT._DEBUG TEXTINFO <index_name> LEXER <string> [<stemsize>]
 ```
 
 Dumps prefix/suffix tree entries, stem mappings, and lexer tokenization results. Only available when debug mode is enabled.

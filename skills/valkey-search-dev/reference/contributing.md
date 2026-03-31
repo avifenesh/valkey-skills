@@ -16,7 +16,7 @@ Use when navigating the codebase, adding new index types, adding query features,
 
 ```
 src/
-  module_loader.cc          # Entry point - ValkeyModule_OnLoad, command registration
+  module_loader.cc          # Entry point - vmsdk options, command registration (ValkeyModule_OnLoad in vmsdk)
   valkey_search.cc/h        # ValkeySearch singleton - startup, thread pools, cluster
   schema_manager.cc/h       # IndexSchema registry (db_num, name) -> IndexSchema
   index_schema.cc/h         # Core IndexSchema - attributes, mutations, backfill, RDB
@@ -154,7 +154,7 @@ src/
 
 ### Error Handling
 
-Uses `absl::Status` and `absl::StatusOr<T>` throughout. Propagate errors with `RETURN_IF_ERROR` macro. Never throw exceptions.
+Uses `absl::Status` and `absl::StatusOr<T>` throughout. Propagate errors with `VMSDK_RETURN_IF_ERROR` macro. Never throw exceptions.
 
 ### Thread Safety
 

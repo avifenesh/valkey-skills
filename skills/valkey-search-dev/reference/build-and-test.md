@@ -53,7 +53,7 @@ Build output goes to `.build-release/` or `.build-debug/`.
 
 ### Submodules
 
-Dependencies are vendored as git submodules in `submodules/`: gRPC, Protobuf, GTest, Abseil. First build clones and builds these (slow). ICU is built from `third_party/icu/source` into the build directory.
+Dependencies are fetched via CMake (shallow git clone) and built from `submodules/`: gRPC (includes Protobuf and Abseil as sub-dependencies), GTest, highwayhash, and optionally Google Benchmark. First build fetches and builds these (slow). ICU is built from `third_party/icu/source` into the build directory. Snowball stemmer and SimSIMD are in `third_party/` and built directly.
 
 ### Manual CMake
 
@@ -69,7 +69,7 @@ ninja
 valkey-server --loadmodule .build-release/libsearch.so
 ```
 
-In cluster mode, the gRPC coordinator port is auto-derived (`valkey_port + 20294`). The `use-coordinator` module config controls whether the coordinator starts. No `--coordinator-port` CLI argument needed.
+In cluster mode, set `use-coordinator true` at startup to enable the gRPC coordinator. The coordinator port is auto-derived (`valkey_port + 20294`). No `--coordinator-port` CLI argument needed.
 
 ## Unit Tests
 
@@ -139,7 +139,7 @@ Test binaries are in `.build-release/tests/`. Each `*_test.cc` compiles to a sep
 
 Two integration test suites:
 
-### C++ Integration Tests (`testing/integration/`)
+### Abseil Integration Tests (`testing/integration/`)
 
 Python-based tests that start a real Valkey server with the module loaded.
 

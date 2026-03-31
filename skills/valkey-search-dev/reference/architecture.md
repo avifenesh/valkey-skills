@@ -19,7 +19,7 @@ Source: `src/`, `src/indexes/`, `src/coordinator/`, `src/query/`, `vmsdk/`
 
 ## Module Overview
 
-valkey-search is a C++20 Valkey module (`libsearch.so`) built with CMake/Ninja. It loads via `ValkeyModule_OnLoad` in `src/module_loader.cc`, which initializes `KeyspaceEventManager`, `ValkeySearch` singleton, thread pools (reader, writer, utility), and optionally a gRPC coordinator for cluster mode.
+valkey-search is a C++20 Valkey module (`libsearch.so`) built with CMake/Ninja. The vmsdk framework generates the `ValkeyModule_OnLoad` entry point (via macro in `vmsdk/src/module.h`), which delegates to `src/module_loader.cc`. This initializes `KeyspaceEventManager`, `ValkeySearch` singleton, thread pools (reader, writer, utility), and optionally a gRPC coordinator for cluster mode.
 
 Namespace: `valkey_search`. All code under `src/`.
 
@@ -129,7 +129,7 @@ In cluster mode, valkey-search runs a gRPC sidecar for cross-shard communication
 
 ### Coordinator Port (`src/coordinator/util.h`)
 
-The gRPC coordinator port is auto-derived: `valkey_port + 20294`. For default port 6379 this yields 26673 (COORD on a telephone keypad). Not configurable via CLI argument - derived automatically. The `use-coordinator` module config (default true in cluster mode) enables/disables the coordinator.
+The gRPC coordinator port is auto-derived: `valkey_port + 20294`. For default port 6379 this yields 26673 (COORD on a telephone keypad). Not configurable via CLI argument - derived automatically. The `use-coordinator` module config (default false, hidden, startup-only) enables the coordinator. When true AND in cluster mode, the gRPC server and MetadataManager are initialized.
 
 ### Fan-out Architecture (`src/query/`)
 
@@ -147,7 +147,7 @@ Error types tracked per-request: `INDEX_NAME_ERROR`, `INCONSISTENT_STATE_ERROR`,
 
 ### Replication (`src/commands/ft_internal_update.cc`)
 
-Index metadata replicates to replicas via the `FT.INTERNAL_UPDATE` command. When the primary creates/modifies an index, `MetadataManager::ReplicateFTInternalUpdate()` calls `ValkeyModule_ReplicateVerbatim()` to propagate protobuf-serialized `GlobalMetadataEntry` to replicas. On replicas, `CreateEntryOnReplica()` processes the update. Handles corrupted AOF entries with the `skip-corrupted-internal-update-entries` config.
+Index metadata replicates to replicas via the `FT.INTERNAL_UPDATE` command. When the primary creates/modifies an index, `MetadataManager::ReplicateFTInternalUpdate()` calls `ValkeyModule_Replicate()` to propagate protobuf-serialized `GlobalMetadataEntry` to replicas. On replicas, `CreateEntryOnReplica()` processes the update. Handles corrupted AOF entries with the `skip-corrupted-internal-update-entries` config.
 
 ### Metadata Versioning (`src/version.h`)
 
@@ -180,4 +180,5 @@ Index data saved as protobuf-serialized `RDBSection` chunks in Valkey's aux data
 | ICU (third_party) | Unicode normalization for text indexing |
 | Snowball (third_party/snowball) | English stemmer for full-text search |
 | HdrHistogram_c (third_party) | Latency histogram sampling for metrics |
+| highwayhash (submodules) | Metadata fingerprinting for coordinator consistency |
 | vmsdk | Valkey Module SDK wrapper (thread pools, cluster map, blocked clients, config, info fields) |
