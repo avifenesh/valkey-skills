@@ -6,24 +6,151 @@ Use when deploying Valkey via a Kubernetes operator, comparing operator options,
 
 ## Operator Comparison
 
-| Feature | Hyperspike Operator | SAP Operator |
-|---------|-------------------|--------------|
-| **API version** | `hyperspike.io/v1` | **v1alpha1** |
-| Modes | Standalone, Sentinel, Cluster | Sentinel, Static primary |
-| CRD name | `Valkey` (shortName: `vk`) | `Redis` |
-| API group | `hyperspike.io` | `cache.cs.sap.com` |
-| TLS | Yes (cert-manager integration) | Yes (cert-manager integration) |
-| Prometheus integration | ServiceMonitor | ServiceMonitor + PrometheusRule |
-| External access | Envoy proxy or per-shard LB | No |
-| OpenShift | Yes (`platformManagedSecurityContext`) | No |
-| Underlying deployment | Custom StatefulSets | Bitnami Helm chart |
-| Install method | Helm or kubectl | Helm or kubectl |
-| Maturity | Pre-1.0 (community) | Enterprise (SAP) |
+| Feature | Valkey Official Operator | Hyperspike Operator | SAP Operator |
+|---------|-------------------------|-------------------|--------------|
+| **API version** | `valkey.io/v1alpha1` | `hyperspike.io/v1` | **v1alpha1** |
+| Modes | Cluster only | Standalone, Sentinel, Cluster | Sentinel, Static primary |
+| CRD name | `ValkeyCluster` | `Valkey` (shortName: `vk`) | `Valkey` |
+| API group | `valkey.io` | `hyperspike.io` | `cache.cs.sap.com` |
+| TLS | Not yet | Yes (cert-manager integration) | Yes (cert-manager integration) |
+| Prometheus integration | Exporter sidecar (enabled by default) | ServiceMonitor | ServiceMonitor + PrometheusRule |
+| External access | Not yet | Envoy proxy or per-shard LB | No |
+| OpenShift | Not yet | Yes (`platformManagedSecurityContext`) | No |
+| Underlying deployment | StatefulSet or Deployment | Custom StatefulSets | Bitnami Helm chart |
+| ACL / Users | Declarative `users` spec with fine-grained ACL | No | No |
+| Install method | make deploy (no Helm yet) | Helm or kubectl | Helm or kubectl |
+| Maturity | Early development (WIP) | Pre-1.0 (community) | Enterprise (SAP) |
 
 ### When to Use an Operator vs Helm
 
 - **Operator**: automated day-2 operations (failover, scaling, backup), declarative desired state, CRD-based GitOps
 - **Helm**: simpler deployments, one-time setup, full control over templates, lower abstraction
+
+## Valkey Official Operator (valkey-io/valkey-operator)
+
+The official Kubernetes operator from the Valkey project. Written in Go, built with kubebuilder. In active early development - not yet production-ready. Contributions and feedback welcome via the repo's [Discussions](https://github.com/valkey-io/valkey-operator/discussions).
+
+- **Repo**: https://github.com/valkey-io/valkey-operator
+- **License**: Apache 2.0
+- **Status**: Work in progress - API and features are evolving
+
+### Installation
+
+No Helm chart yet. Deploy from source using the Makefile:
+
+```bash
+# Clone and build
+git clone https://github.com/valkey-io/valkey-operator.git
+cd valkey-operator
+
+# Install CRDs
+make install
+
+# Build and push operator image, then deploy
+make docker-build docker-push IMG=<your-registry>/valkey-operator:latest
+make deploy IMG=<your-registry>/valkey-operator:latest
+```
+
+### CRD: Cluster with StatefulSet (Default)
+
+```yaml
+apiVersion: valkey.io/v1alpha1
+kind: ValkeyCluster
+metadata:
+  name: cluster-sample
+spec:
+  shards: 3
+  replicas: 1
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+```
+
+### CRD: Cluster with Deployment Workload
+
+```yaml
+apiVersion: valkey.io/v1alpha1
+kind: ValkeyCluster
+metadata:
+  name: cluster-sample-deployment
+spec:
+  shards: 3
+  replicas: 1
+  workloadType: Deployment
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+```
+
+The `workloadType` field is immutable after creation. Defaults to `StatefulSet`.
+
+### CRD: Cluster with Declarative ACL Users
+
+```yaml
+apiVersion: valkey.io/v1alpha1
+kind: ValkeyCluster
+metadata:
+  name: cluster-with-users
+spec:
+  shards: 3
+  replicas: 1
+  users:
+    - name: alice
+      enabled: true
+      passwordSecret:
+        name: my-user-secrets
+        keys: [alicepw]
+      commands:
+        allow: ["@read", "@write", "@connection"]
+        deny: ["@admin", "@dangerous"]
+      keys:
+        readWrite: ["app:*", "cache:*"]
+        readOnly: ["shared:*"]
+        writeOnly: ["logs:*"]
+      channels:
+        patterns: ["notifications:*"]
+    - name: readonly-user
+      nopass: true
+      enabled: true
+      permissions: "+@read ~* &*"
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+```
+
+### Official Operator Features
+
+- Cluster mode with configurable shards and replicas per shard
+- StatefulSet or Deployment workload types (immutable after creation)
+- Declarative ACL user management with fine-grained permissions (commands, keys, channels)
+- Password references via Kubernetes Secrets
+- Metrics exporter sidecar (enabled by default)
+- Pod scheduling: tolerations, nodeSelector, affinity (anti-affinity rules applied by default)
+- Custom container overrides via strategic merge patch
+- Cluster state tracking: Initializing, Reconciling, Ready, Degraded, Failed
+- Conditions: Ready, Progressing, Degraded, ClusterFormed, SlotsAssigned
+
+### Current Limitations (WIP)
+
+- Cluster mode only - no Standalone or Sentinel mode yet
+- No TLS support yet
+- No external access (no LoadBalancer or proxy support)
+- No Helm chart for operator installation
+- No persistence/storage configuration yet
+- No backup/restore
+- API is v1alpha1 - expect breaking changes
 
 ## Hyperspike Valkey Operator
 
@@ -220,6 +347,11 @@ Without Sentinel, the first pod is always the primary. No automatic failover occ
 ### Scaling
 
 ```bash
+# Valkey Official - edit the CRD
+kubectl patch valkeycluster cluster-sample --type merge \
+  -p '{"spec":{"shards":6,"replicas":2}}'
+# Operator rebalances slots across new shards
+
 # Hyperspike - edit the CRD
 kubectl patch valkey my-cluster --type merge \
   -p '{"spec":{"replicas":9}}'
@@ -254,10 +386,12 @@ kubectl describe valkey my-cluster
 
 | Scenario | Recommendation |
 |----------|---------------|
-| Valkey Cluster with sharding | Hyperspike |
-| Sentinel HA without sharding | Either (SAP simpler) |
+| Official Valkey project alignment | Valkey Official (once stable) |
+| Valkey Cluster with sharding (production today) | Hyperspike |
+| Sentinel HA without sharding | Hyperspike or SAP (SAP simpler) |
 | Enterprise support needed | SAP |
-| GitOps with ArgoCD/Flux | Either (CRD-based) |
+| Declarative ACL user management | Valkey Official |
+| GitOps with ArgoCD/Flux | Any (all CRD-based) |
 | Need Bitnami image hardening | SAP (uses Bitnami) |
 | Full cluster lifecycle automation | Hyperspike |
 

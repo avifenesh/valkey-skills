@@ -311,8 +311,8 @@ async def enforce_session_limit(user_id: int, max_sessions: int = 5):
 
 ## See Also
 
-- [Hash Commands](../commands/hashes.md) - HSET, HMGET, HGETALL for session storage
-- [Set Commands](../commands/sets.md) - SADD, SCARD, SMEMBERS for session tracking per user
+- [Hash Commands](../basics/data-types.md) - HSET, HMGET, HGETALL for session storage
+- [Set Commands](../basics/data-types.md) - SADD, SCARD, SMEMBERS for session tracking per user
 - [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL for session tokens (Valkey 9.0+)
 - [Pub/Sub Patterns](pubsub-patterns.md) - keyspace notifications for session expiration events
 - [Caching Patterns](caching.md) - cache-aside pattern for session-adjacent data
@@ -325,5 +325,5 @@ async def enforce_session_limit(user_id: int, max_sessions: int = 5):
 - [High Availability Best Practices](../best-practices/high-availability.md) - session durability during failover
 - [Persistence Best Practices](../best-practices/persistence.md) - AOF durability for session data
 - [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions for session key access
-- [Clients Overview](../clients/overview.md) - connection patterns for session middleware
+- Clients Overview (see valkey-glide skill) - connection patterns for session middleware
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - missing TTL, no authentication, HGETALL on large session hashes

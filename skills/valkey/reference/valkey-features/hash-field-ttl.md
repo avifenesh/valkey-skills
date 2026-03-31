@@ -173,8 +173,8 @@ Fields without TTL incur no additional overhead - the cost only applies to field
 - [Cluster Enhancements](cluster-enhancements.md) - numbered databases in cluster mode
 - [Polygon Geospatial Queries](geospatial.md) - GEOSEARCH BYPOLYGON (also 9.0)
 - [Performance Summary](performance-summary.md) - version-by-version throughput and latency gains
-- [Hash Commands](../commands/hashes.md) - HEXPIRE, HSETEX, HGETEX, HGETDEL command details
-- [String Commands](../commands/strings.md) - GETEX for key-level read-and-refresh TTL (analogous to HGETEX)
+- [Hash Commands](../basics/data-types.md) - HEXPIRE, HSETEX, HGETEX, HGETDEL command details
+- [String Commands](../basics/data-types.md) - GETEX for key-level read-and-refresh TTL (analogous to HGETEX)
 - [Session Patterns](../patterns/sessions.md) - per-field TTL for session tokens
 - [Caching Patterns](../patterns/caching.md) - per-field freshness for cached API responses
 - [Memory Best Practices](../best-practices/memory.md) - hash field expiration memory overhead

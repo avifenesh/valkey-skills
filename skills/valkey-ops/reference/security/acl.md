@@ -8,6 +8,37 @@ Source-verified against `src/acl.c` and `src/server.h` in valkey-io/valkey.
 
 ---
 
+## Tested Example: ACL User Creation
+
+```bash
+# Start Valkey
+docker run -d --name valkey-acl -p 6379:6379 valkey/valkey:9
+
+# Create an app user with key-restricted access
+valkey-cli ACL SETUSER appuser on '>mypassword' ~app:* +get +mget +set +del +ping
+
+# Test authentication and access (--user and --pass authenticate the connection)
+valkey-cli --user appuser --pass mypassword SET app:name "hello"
+# Expected: OK (key matches ~app:*)
+valkey-cli --user appuser --pass mypassword GET app:name
+# Expected: "hello"
+valkey-cli --user appuser --pass mypassword SET other:key "fail"
+# Expected: NOPERM - key does not match ~app:*
+
+# Create a monitoring user (read-only, info only)
+valkey-cli ACL SETUSER monitor on '>monpass' -@all +info +ping +dbsize ~*
+
+# Verify users
+valkey-cli ACL LIST
+# Expected: lists default, appuser, and monitor with their rules
+
+# Persist ACL changes
+valkey-cli CONFIG SET aclfile /data/users.acl
+valkey-cli ACL SAVE
+```
+
+---
+
 ## ACL SETUSER Syntax
 
 ```

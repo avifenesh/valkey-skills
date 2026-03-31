@@ -188,7 +188,7 @@ All major Redis clients work with Valkey out of the box:
 | Go | rueidis | Works unchanged |
 | .NET | StackExchange.Redis | Works unchanged |
 
-For new projects or when upgrading, consider Valkey GLIDE - see [clients overview](../clients/overview.md).
+For new projects or when upgrading, consider Valkey GLIDE - see clients overview (see valkey-glide skill).
 
 ---
 
@@ -206,15 +206,15 @@ All data structures, commands, scripting, and patterns work identically.
 ## See Also
 
 - [What is Valkey](what-is-valkey.md) - overview, version history, and feature comparison
-- [Clients Overview](../clients/overview.md) - GLIDE and existing Redis client compatibility
+- Clients Overview (see valkey-glide skill) - GLIDE and existing Redis client compatibility
 - [Conditional Operations](../valkey-features/conditional-ops.md) - Valkey-only SET IFEQ and DELIFEQ commands
 - [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - Valkey-only per-field TTL on hash entries
 - [Cluster Enhancements](../valkey-features/cluster-enhancements.md) - Valkey-only numbered databases and atomic slot migration
 - [Polygon Geospatial Queries](../valkey-features/geospatial.md) - Valkey-only GEOSEARCH BYPOLYGON
 - [Performance Summary](../valkey-features/performance-summary.md) - version-by-version throughput and latency gains
-- [String Commands](../commands/strings.md) - all Redis OSS string commands work unchanged; SET IFEQ is Valkey-only
-- [Hash Commands](../commands/hashes.md) - all Redis OSS hash commands work unchanged; field TTL commands are Valkey-only
-- [Scripting and Functions](../commands/scripting.md) - Lua scripts and Functions work unchanged after migration
-- [Server Commands](../commands/server.md) - INFO, CONFIG GET, and extended-redis-compatibility mode
-- [Module Commands](../commands/modules.md) - Redis modules load in Valkey via the compatible module API
+- [String Commands](../basics/data-types.md) - all Redis OSS string commands work unchanged; SET IFEQ is Valkey-only
+- [Hash Commands](../basics/data-types.md) - all Redis OSS hash commands work unchanged; field TTL commands are Valkey-only
+- [Scripting and Functions](../basics/server-and-scripting.md) - Lua scripts and Functions work unchanged after migration
+- [Server Commands](../basics/server-and-scripting.md) - INFO, CONFIG GET, and extended-redis-compatibility mode
+- Module Commands (see valkey-modules skill) - Redis modules load in Valkey via the compatible module API
 - For operational migration procedures: see valkey-ops `reference/upgrades/migration.md`

@@ -95,6 +95,40 @@ Key Bitnami env vars beyond `VALKEY_PASSWORD`:
 | `VALKEY_EXTRA_FLAGS` | (none) | Additional server arguments |
 
 
+## Tested Example: 3-Node Cluster via Docker Compose
+
+Save as `docker-compose-cluster.yml` and run `docker compose -f docker-compose-cluster.yml up -d`:
+
+```yaml
+services:
+  node1:
+    image: valkey/valkey:9
+    network_mode: host
+    command: valkey-server --port 7000 --cluster-enabled yes
+      --cluster-config-file nodes.conf --appendonly yes --save ""
+  node2:
+    image: valkey/valkey:9
+    network_mode: host
+    command: valkey-server --port 7001 --cluster-enabled yes
+      --cluster-config-file nodes.conf --appendonly yes --save ""
+  node3:
+    image: valkey/valkey:9
+    network_mode: host
+    command: valkey-server --port 7002 --cluster-enabled yes
+      --cluster-config-file nodes.conf --appendonly yes --save ""
+```
+
+After all three containers are running, create the cluster:
+
+```bash
+valkey-cli --cluster create 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 \
+  --cluster-replicas 0 --cluster-yes
+# Verify: valkey-cli -c -p 7000 CLUSTER INFO | grep cluster_state
+# Expected: cluster_state:ok
+```
+
+---
+
 ## Docker Compose Patterns
 
 ### Single Instance with Persistence

@@ -1,202 +1,122 @@
 # Error Handling
 
-Use when implementing error handling for GLIDE operations, configuring reconnection strategies, or dealing with batch error semantics. For timeout tuning and deployment configuration, see `production.md`.
+Use when implementing error handling, retry logic, or batch error semantics in the GLIDE Python client.
 
 ---
 
-## Error Type Hierarchy
+## Error Types
 
-GLIDE defines a consistent error hierarchy across all languages. The Rust core (`glide-core/src/errors.rs`) classifies errors into four internal types, and each language wrapper maps these to idiomatic exception/error types.
-
-### Core Error Types (Rust)
-
-```rust
-pub enum RequestErrorType {
-    Unspecified = 0,   // General request failures
-    ExecAbort = 1,     // Transaction aborted (WATCH key changed)
-    Timeout = 2,       // Request exceeded timeout
-    Disconnect = 3,    // Connection lost
-}
-```
-
-### Language-Level Error Types
-
-| Error | Description | When It Occurs |
-|-------|-------------|----------------|
-| `RequestError` | Base class for all GLIDE request failures | Any server-side or protocol error |
-| `TimeoutError` | Request exceeded `request_timeout` | Slow server, network latency, overloaded node |
-| `ConnectionError` | Connection to server was lost | Network partition, server restart, node failure |
-| `ExecAbortError` | Atomic batch (transaction) was aborted | WATCH key was modified by another client |
-| `ConfigurationError` | Invalid client configuration | Bad addresses, incompatible options, missing params |
-
-The `Disconnect` error type in Rust maps to `ConnectionError` in wrappers. When a disconnect is detected, the Rust core appends "Will attempt to reconnect" to the error message and triggers the automatic reconnection process.
-
----
-
-## Error Handling Patterns by Language
-
-### Python
+GLIDE defines its own `TimeoutError` and `ConnectionError` classes that shadow Python built-ins when imported directly. Always import with explicit aliases:
 
 ```python
 from glide import (
     GlideClient,
+    GlideError,
     TimeoutError as GlideTimeoutError,
     ConnectionError as GlideConnectionError,
     RequestError,
     ExecAbortError,
+    ConfigurationError,
+    ClosingError,
+)
+```
+
+| Error | Parent | When It Occurs |
+|-------|--------|---------------|
+| `GlideError` | `Exception` | Base class for all GLIDE errors |
+| `RequestError` | `GlideError` | Base class for server/protocol errors |
+| `GlideTimeoutError` | `RequestError` | Request exceeded `request_timeout` (default 250ms) |
+| `GlideConnectionError` | `RequestError` | Connection lost (auto-reconnects) |
+| `ExecAbortError` | `RequestError` | Atomic batch aborted by server (e.g., command error in MULTI) |
+| `ConfigurationError` | `RequestError` | Invalid configuration (TLS, PubSub, compression) |
+| `ClosingError` | `GlideError` | Client was closed while requests pending |
+
+## Basic Error Handling
+
+```python
+from glide import (
+    TimeoutError as GlideTimeoutError,
+    ConnectionError as GlideConnectionError,
+    RequestError,
 )
 
 try:
     value = await client.get("key")
 except GlideTimeoutError:
-    # Request took longer than request_timeout (default 250ms)
-    # Consider increasing timeout or investigating server load
+    # Request exceeded request_timeout - check server load or increase timeout
     pass
 except GlideConnectionError:
-    # Connection lost - GLIDE is already reconnecting automatically
+    # Connection lost - GLIDE is already reconnecting
     # Retry the operation after a brief delay
     pass
-except ExecAbortError:
-    # Only occurs with atomic batches (transactions)
-    # A watched key was modified - retry the transaction
-    pass
 except RequestError as e:
-    # Catch-all for other request failures
+    # General request failure (WRONGTYPE, auth errors, etc.)
     print(f"Request failed: {e}")
 ```
 
-Note: GLIDE aliases `TimeoutError` and `ConnectionError` to avoid shadowing Python built-in names. Import them with explicit aliases.
-
-### Java
-
-```java
-try {
-    String value = client.get("key").get();
-} catch (ExecutionException e) {
-    Throwable cause = e.getCause();
-    if (cause instanceof RequestException) {
-        RequestException re = (RequestException) cause;
-        System.err.println("Request failed: " + re.getMessage());
-    }
-}
-```
-
-Java wraps all errors in `ExecutionException` because operations return `CompletableFuture`. Always unwrap with `getCause()` to access the actual GLIDE error.
-
-### Node.js
-
-```javascript
-import {
-    GlideClient,
-    RequestError,
-    TimeoutError,
-    ConnectionError,
-} from "@valkey/valkey-glide";
-
-try {
-    const value = await client.get("key");
-} catch (error) {
-    if (error instanceof TimeoutError) {
-        // Request exceeded timeout
-    } else if (error instanceof ConnectionError) {
-        // Connection lost, auto-reconnecting
-    } else if (error instanceof RequestError) {
-        // General request failure
-    }
-}
-```
-
-### Go
-
-Go uses the standard `errors.As` pattern for type-checking GLIDE errors:
-
-```go
-val, err := client.Get(ctx, "key")
-if err != nil {
-    var connErr *glide.ConnectionError
-    var timeoutErr *glide.TimeoutError
-    if errors.As(err, &connErr) {
-        // Connection lost - client is auto-reconnecting
-        fmt.Println("Connection error:", connErr)
-    } else if errors.As(err, &timeoutErr) {
-        // Request timed out
-        fmt.Println("Timeout:", timeoutErr)
-    } else {
-        // General error
-        fmt.Println("Error:", err)
-    }
-    return
-}
-if val.IsNil() {
-    fmt.Println("Key does not exist")
-}
-```
-
-Go separates nil-check from error-check. A nil result (key not found) is not an error - check `val.IsNil()` after confirming `err == nil`.
+`RequestError` covers most command-level failures - catch it after specific subtypes. For the broadest catch-all (including `ClosingError`), use `GlideError`.
 
 ---
 
 ## Batch Error Handling
 
-The `raise_on_error` parameter controls how errors in batches (pipelines and transactions) are surfaced.
+The `raise_on_error` parameter on `client.exec()` controls how batch errors surface:
 
-### raise_on_error = true (Default for Atomic Batches)
+### raise_on_error = True
 
-Throws/raises on the first error encountered. The entire batch result is discarded.
+Raises `RequestError` on the first error. Use when all commands must succeed.
 
 ```python
+from glide import Batch, RequestError
+
+batch = Batch(is_atomic=True)
+batch.set("key", "val")
+batch.get("key")
 try:
     result = await client.exec(batch, raise_on_error=True)
 except RequestError as e:
     print(f"Batch failed: {e}")
 ```
 
-Use this when all commands in the batch must succeed (transactions, atomic operations).
+### raise_on_error = False
 
-### raise_on_error = false (Default for Non-Atomic Batches)
-
-Returns errors inline in the response array. Each position corresponds to the command at that index.
+Errors appear inline in the result list. Use for partial-success workloads.
 
 ```python
+from glide import Batch, RequestError
+
+batch = Batch(is_atomic=False)
+batch.set("key", "value")
+batch.lpush("key", ["oops"])  # WRONGTYPE error
+batch.get("key")
+
 result = await client.exec(batch, raise_on_error=False)
 for i, item in enumerate(result):
     if isinstance(item, RequestError):
         print(f"Command {i} failed: {item}")
     else:
-        print(f"Command {i} succeeded: {item}")
+        print(f"Command {i} OK: {item}")
 ```
 
-Use this when partial success is acceptable (bulk operations, cache warming).
+### WATCH Conflicts
 
-### Go Batch Error Handling
+Atomic batches with WATCH return `None` from `exec()` if a watched key was modified before EXEC. This is not an exception - check the return value:
 
-Go batch error handling follows the same pattern - check the top-level error for total batch failure, then inspect individual results for per-command errors. Consult the Go client API reference for the exact `Exec` signature and result types.
+```python
+for attempt in range(3):
+    result = await client.exec(batch, raise_on_error=True)
+    if result is not None:
+        break
+    # result is None - WATCH conflict, rebuild the batch and retry
+```
+
+`ExecAbortError` is separate - it occurs when the server aborts a transaction due to command errors (e.g., type mismatch inside MULTI/EXEC).
 
 ---
 
 ## Reconnection Behavior
 
-GLIDE automatically reconnects on connection loss. No application code is needed to trigger reconnection.
-
-### Automatic Reconnection Process
-
-1. Connection loss is detected (via disconnect notifier or failed request)
-2. The connection state transitions to `Reconnecting`
-3. Exponential backoff with jitter begins
-4. Permanent errors (auth failures, invalid config, NOAUTH, WRONGPASS) are not retried
-5. Transient errors are retried with increasing delays
-6. On successful reconnect, the connection state transitions to `Connected`
-7. PubSub channels are automatically resubscribed
-
-### BackoffStrategy Configuration
-
-The reconnection delay follows this formula:
-
-```
-delay = rand(0 .. factor * (exponent_base ^ attempt))
-```
-
-Once the maximum delay is reached (after `num_of_retries` increasing steps), the delay stays at that ceiling until reconnection succeeds.
+GLIDE reconnects automatically on connection loss with exponential backoff:
 
 ```python
 from glide import BackoffStrategy, GlideClientConfiguration, NodeAddress
@@ -204,83 +124,31 @@ from glide import BackoffStrategy, GlideClientConfiguration, NodeAddress
 config = GlideClientConfiguration(
     addresses=[NodeAddress("localhost", 6379)],
     reconnect_strategy=BackoffStrategy(
-        num_of_retries=5,      # Number of increasing-duration retries
-        factor=100,            # Base factor in milliseconds
-        exponent_base=2,       # Exponential base
+        num_of_retries=5,
+        factor=100,          # 100ms base delay
+        exponent_base=2,
     ),
 )
-# Delays: rand(0..100), rand(0..200), rand(0..400), rand(0..800), rand(0..1600)
-# After 5 retries: stays at rand(0..1600) until reconnection succeeds
 ```
 
-The Rust core `ConnectionRetryStrategy` struct also supports a `jitter_percent` field as part of the rand() calculation for additional randomization.
-
-### Default Behavior
-
-When no `BackoffStrategy` is configured, GLIDE uses `RetryStrategy::default()` from the underlying redis crate. The defaults provide reasonable reconnection behavior for most workloads.
-
----
-
-## PubSub Auto-Resubscription
-
-When a PubSub subscriber reconnects, GLIDE automatically resubscribes to all configured channels:
-
-- Exact subscriptions (SUBSCRIBE)
-- Pattern subscriptions (PSUBSCRIBE)
-- Sharded subscriptions (SSUBSCRIBE)
-
-This applies to both static subscriptions (configured at client creation) and dynamic subscriptions (added via `subscribe()`/`unsubscribe()` in GLIDE 2.3+).
-
-The reconnection check interval is 3 seconds (`CONNECTION_CHECKS_INTERVAL` in `glide-core/src/client/mod.rs`). This interval is not user-configurable to prevent misconfiguration that could degrade PubSub resiliency.
+- Delay formula: `rand(0 ... factor * (exponent_base ^ attempt))`
+- After `num_of_retries`, delay stays at the ceiling indefinitely
+- PubSub channels are automatically resubscribed on reconnect
+- Permanent errors (NOAUTH, WRONGPASS) are not retried
 
 ---
 
-## Java Best Practice: Timed Gets
+## Failover and Timeout
 
-Always use `.get(timeout, TimeUnit.MILLISECONDS)` in Java - never bare `.get()`. This prevents indefinite blocking if the connection encounters issues. Wrap with exponential backoff and jitter for production resilience.
+During cluster failover, expect `GlideConnectionError` bursts for 1-5 seconds. GLIDE refreshes the slot map and re-routes automatically. Application code should retry failed operations.
 
-### Additional Error Types
-
-| Error | Recovery |
-|-------|----------|
-| `ClosingError` | Create new client |
-| `RequestException: inflight requests` | Back off, reduce concurrency |
-| `AllConnectionsUnavailable` | Check cluster health, increase connectionTimeout |
-
----
-
-## Common Error Scenarios
-
-### Timeout Tuning
-
-The default request timeout is 250ms. For timeout configuration, workload-specific recommendations, and blocking command timeout extension, see the Timeout Configuration section in `production.md`.
-
-If you see frequent `TimeoutError`:
-
-1. Check if the server is overloaded (`INFO` command, `commandstats`)
-2. Check network latency between client and server
-3. Increase `request_timeout` in client configuration for operations that legitimately take longer
-
-### Connection Errors During Failover
-
-During cluster failover, you may see a burst of `ConnectionError` exceptions. This is expected. GLIDE will:
-1. Detect the topology change
-2. Refresh the slot map
-3. Re-route commands to the new primary
-
-Application code should retry failed operations. The retry window during failover is typically 1-5 seconds.
-
-### ExecAbortError in Transactions
-
-Atomic batches with `WATCH` will fail with `ExecAbortError` if the watched key is modified between WATCH and EXEC. Implement retry logic:
+If you see frequent `GlideTimeoutError`, check server load before increasing:
 
 ```python
-for attempt in range(3):
-    try:
-        result = await client.exec(tx, raise_on_error=True)
-        break
-    except ExecAbortError:
-        if attempt == 2:
-            raise
-        # Rebuild the transaction and retry
+config = GlideClientConfiguration(
+    addresses=[NodeAddress("localhost", 6379)],
+    request_timeout=1000,  # ms, default 250
+)
 ```
+
+GLIDE auto-extends timeouts for blocking commands (BLPOP, XREADGROUP BLOCK) by 500ms beyond the block duration.

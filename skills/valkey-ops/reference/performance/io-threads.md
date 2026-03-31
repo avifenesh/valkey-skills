@@ -5,6 +5,32 @@ enable I/O threads, or choosing the right thread count for your workload.
 
 ---
 
+## Tested Example: Enable I/O Threads
+
+```bash
+# Start Valkey with 4 I/O threads (3 workers + 1 main)
+docker run -d --name valkey-io -p 6379:6379 valkey/valkey:9 \
+  valkey-server --io-threads 4 --save ""
+
+# Verify the setting
+valkey-cli CONFIG GET io-threads
+# Expected: io-threads = 4
+
+# Quick benchmark to exercise I/O threads
+docker exec valkey-io valkey-benchmark -t set,get -c 100 -n 100000 -q
+
+# Check if I/O threads activated under load
+valkey-cli INFO server | grep io_threads_active
+# Expected: io_threads_active:1 (under load)
+
+# Adjust at runtime (no restart needed)
+valkey-cli CONFIG SET io-threads 2
+valkey-cli CONFIG GET io-threads
+# Expected: io-threads = 2
+```
+
+---
+
 ## How It Works
 
 Valkey keeps command execution single-threaded on the main thread. I/O threads

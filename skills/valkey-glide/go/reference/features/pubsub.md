@@ -1,210 +1,236 @@
 # Pub/Sub
 
-Use when you need real-time message broadcasting between clients - chat, notifications, event distribution, or live data feeds. For durable message processing with consumer groups and replay, see [Streams](streams.md) instead.
+Use when you need real-time message broadcasting between Go clients - chat, notifications, event distribution, or live data feeds. For durable message processing with consumer groups and replay, see [Streams](streams.md) instead.
 
 GLIDE supports Valkey's publish/subscribe messaging with three subscription modes, automatic reconnection with resubscription, and a synchronizer that continuously reconciles desired vs actual subscription state. Sharded subscriptions require Valkey 7.0+. Dynamic subscribe/unsubscribe requires GLIDE 2.3+.
 
 ## Subscription Modes
 
-| Mode | Command | Description | Cluster Requirement |
-|------|---------|-------------|---------------------|
-| Exact | SUBSCRIBE / UNSUBSCRIBE | Subscribe to specific channel names | All modes |
-| Pattern | PSUBSCRIBE / PUNSUBSCRIBE | Subscribe using glob patterns (e.g., `news.*`) | All modes |
-| Sharded | SSUBSCRIBE / SUNSUBSCRIBE | Slot-scoped channels routed by hash slot | Cluster mode, Valkey 7.0+ |
+| Mode | Subscribe/Unsubscribe | Description |
+|------|----------------------|-------------|
+| Exact | `Subscribe` / `Unsubscribe` | Specific channel names |
+| Pattern | `PSubscribe` / `PUnsubscribe` | Glob patterns (e.g., `news.*`) |
+| Sharded | `SSubscribe` / `SUnsubscribe` | Slot-scoped, cluster-only (Valkey 7.0+) |
 
-In cluster mode, sharded subscriptions are slot-deterministic - the subscription is managed by the node owning the channel's hash slot. GLIDE handles slot migration automatically.
+Sharded subscriptions are `ClusterClient`-only. They route by hash slot so the subscription is managed by the node owning the channel's slot.
 
-## Subscription Models
+## Configuration-Time Subscriptions (Immutable)
 
-### Historical: Immutable Subscriptions (pre-2.3)
+Set subscriptions at client creation. These are active for the client's lifetime and restored on reconnect.
 
-Subscriptions were configured at client creation time and could not be changed. The configuration was passed through the client configuration object as initial subscriptions.
+### Standalone
 
-### Dynamic Subscriptions (GLIDE 2.3+)
-
-Runtime `subscribe()` and `unsubscribe()` methods allow modifying subscriptions after client creation. The synchronizer manages the desired-vs-actual state and reconciles differences.
-
-Two operation modes are available:
-- **Non-blocking (lazy)**: Returns immediately, reconciliation happens asynchronously
-- **Blocking**: Waits until the subscription change is confirmed on the server (with configurable timeout)
-
-## Architecture: PubSub Synchronizer
-
-The Rust core implements a `GlidePubSubSynchronizer` that uses an observer pattern:
-
-- `desired_subscriptions` - what the user wants to be subscribed to (modified by API calls)
-- `current_subscriptions_by_address` - what the client is actually subscribed to (updated by server push notifications)
-
-A background reconciliation task runs at a configurable interval (default: 3 seconds) to align current subscriptions with desired subscriptions. The interval is configurable via `pubsub_reconciliation_interval` in the advanced client configuration.
-
-The synchronizer handles:
-- Subscribing to channels the user wants but the client is not subscribed to
-- Unsubscribing from channels the client is subscribed to but the user no longer wants
-- Topology changes - when slots migrate to new nodes, subscriptions are moved accordingly
-- Node disconnections - cleared subscriptions are automatically resubscribed
-
-## Message Kinds
-
-Messages received from PubSub carry a kind that indicates how they were matched:
-
-| Kind | Description |
-|------|-------------|
-| Message | Received via exact channel subscription (SUBSCRIBE) |
-| PMessage | Received via pattern subscription (PSUBSCRIBE) |
-| SMessage | Received via sharded subscription (SSUBSCRIBE) |
-
-## Message Receiving Methods
-
-Three approaches for consuming messages:
-
-1. **Polling** (`tryGetMessage` / `try_get_pubsub_message`) - non-blocking, returns next message or nothing
-2. **Async** (`getMessage` / `get_pubsub_message`) - returns Future/Promise, waits for next message
-3. **Callback** - user-provided function invoked on message arrival (must be thread-safe)
-
-Extract messages promptly when using async/polling mode - the internal buffer is unbounded and will grow indefinitely if not drained.
-
-## Message Reception (Python)
-
-```python
-# Blocking - waits for a message
-msg = await subscriber.get_pubsub_message()
-
-# Non-blocking - returns None if no message available
-msg = subscriber.try_get_pubsub_message()
-
-# Callback-driven (set during client configuration)
-def on_message(msg, context):
-    print(f"Channel: {msg.channel}, Message: {msg.message}")
-```
-
-## Python Example
-
-```python
-from glide import (
-    GlideClient,
-    GlideClientConfiguration,
-    GlideClusterClientConfiguration,
-    NodeAddress,
+```go
+import (
+    glide "github.com/valkey-io/valkey-glide/go/v2"
+    "github.com/valkey-io/valkey-glide/go/v2/config"
 )
 
-# Subscriber client - standalone
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("localhost", 6379)],
-)
-subscriber = await GlideClient.create(config)
+subCfg := config.NewStandaloneSubscriptionConfig().
+    WithSubscription(config.ExactChannelMode, "news").
+    WithSubscription(config.ExactChannelMode, "events").
+    WithSubscription(config.PatternChannelMode, "user:*").
+    WithCallback(func(msg *models.PubSubMessage, ctx any) {
+        fmt.Printf("Channel: %s, Message: %s\n", msg.Channel, msg.Message)
+    }, nil)
 
-# Dynamic subscribe (GLIDE 2.3+)
-await subscriber.subscribe(["news", "events"])
-await subscriber.psubscribe(["user:*"])
+cfg := config.NewClientConfiguration().
+    WithAddress(&config.NodeAddress{Host: "localhost", Port: 6379}).
+    WithSubscriptionConfig(subCfg)
 
-# Receive messages
-msg = await subscriber.get_pubsub_message()
-print(f"Channel: {msg.channel}, Message: {msg.message}")
-
-# Unsubscribe
-await subscriber.unsubscribe(["news"])
-
-# Publisher client - separate instance
-publisher = await GlideClient.create(config)
-await publisher.publish("events", "Hello subscribers!")
+subscriber, err := glide.NewClient(cfg)
 ```
 
-## Java Example
+### Cluster
 
-```java
-import glide.api.GlideClient;
-import glide.api.GlideClusterClient;
+```go
+subCfg := config.NewClusterSubscriptionConfig().
+    WithSubscription(config.ExactClusterChannelMode, "news").
+    WithSubscription(config.PatternClusterChannelMode, "user:*").
+    WithSubscription(config.ShardedClusterChannelMode, "orders")
 
-// Create subscriber and publisher as separate clients
-GlideClient subscriber = GlideClient.createClient(config).get();
-GlideClient publisher = GlideClient.createClient(config).get();
+cfg := config.NewClusterClientConfiguration().
+    WithAddress(&config.NodeAddress{Host: "node1.example.com", Port: 6379}).
+    WithSubscriptionConfig(subCfg)
 
-// Subscribe
-subscriber.subscribe(new String[]{"news", "events"}).get();
-
-// Publish
-publisher.publish("events", "Hello subscribers!").get();
+subscriber, err := glide.NewClusterClient(cfg)
 ```
 
-## Node.js Example
+Channel mode constants:
 
-```javascript
-import { GlideClient } from "@valkey/valkey-glide";
+| Standalone | Cluster |
+|-----------|---------|
+| `config.ExactChannelMode` | `config.ExactClusterChannelMode` |
+| `config.PatternChannelMode` | `config.PatternClusterChannelMode` |
+| - | `config.ShardedClusterChannelMode` |
 
-// Subscriber - separate client instance
-const subscriber = await GlideClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-});
+## Dynamic Subscriptions (GLIDE 2.3+)
 
-// Publisher
-const publisher = await GlideClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-});
+Runtime subscribe/unsubscribe after client creation. Two variants per method:
 
-await subscriber.subscribe(["news", "events"]);
-await publisher.publish("events", "Hello!");
+| Method | Behavior |
+|--------|----------|
+| `Subscribe(ctx, channels)` | Non-blocking (lazy), returns immediately |
+| `SubscribeBlocking(ctx, channels, timeoutMs)` | Waits for server confirmation |
+
+### Subscribe (Non-Blocking)
+
+```go
+err := client.Subscribe(ctx, []string{"channel1", "channel2"})
+err = client.PSubscribe(ctx, []string{"news.*", "updates.*"})
+
+// Cluster-only: sharded channels
+err = clusterClient.SSubscribe(ctx, []string{"orders"})
+```
+
+### Subscribe (Blocking)
+
+```go
+// Wait up to 5 seconds for confirmation
+err := client.SubscribeBlocking(ctx, []string{"channel1"}, 5000)
+err = client.PSubscribeBlocking(ctx, []string{"news.*"}, 5000)
+```
+
+### Unsubscribe
+
+```go
+err := client.Unsubscribe(ctx, []string{"channel1"})
+err = client.PUnsubscribe(ctx, []string{"news.*"})
+
+// Unsubscribe from ALL exact channels
+err = client.UnsubscribeAll(ctx)
+err = client.PUnsubscribeAll(ctx)
+
+// Cluster-only: sharded unsubscribe
+err = clusterClient.SUnsubscribe(ctx, []string{"orders"})
+err = clusterClient.SUnsubscribeAll(ctx)
+```
+
+Blocking variants: `UnsubscribeBlocking`, `PUnsubscribeBlocking`, `SUnsubscribeBlocking`, `SUnsubscribeAllBlocking`.
+
+## Receiving Messages
+
+Two approaches: callback or queue.
+
+### Callback
+
+Set during subscription configuration. Called for every message. Must be thread-safe.
+
+```go
+callback := func(msg *models.PubSubMessage, ctx any) {
+    fmt.Printf("[%s] %s\n", msg.Channel, msg.Message)
+    if !msg.Pattern.IsNil() {
+        fmt.Printf("  matched pattern: %s\n", msg.Pattern.Value())
+    }
+}
+
+subCfg := config.NewStandaloneSubscriptionConfig().
+    WithSubscription(config.ExactChannelMode, "news").
+    WithCallback(callback, nil)
+```
+
+### Queue (Polling)
+
+When no callback is set, messages go to an internal queue.
+
+```go
+queue, err := client.GetQueue()
+if err != nil {
+    // No subscriptions configured
+}
+
+// Non-blocking poll
+msg := queue.Pop()
+if msg != nil {
+    fmt.Printf("Got: %s on %s\n", msg.Message, msg.Channel)
+}
+
+// Blocking wait (returns a channel)
+msgCh := queue.WaitForMessage()
+msg = <-msgCh
+
+// Signal channel for select-based consumption
+signalCh := make(chan struct{}, 1)
+queue.RegisterSignalChannel(signalCh)
+defer queue.UnregisterSignalChannel(signalCh)
+
+select {
+case <-signalCh:
+    msg := queue.Pop()
+    // process msg
+case <-ctx.Done():
+    return
+}
+```
+
+Drain the queue promptly - the internal buffer is unbounded and grows indefinitely if not consumed.
+
+## PubSubMessage Type
+
+```go
+type PubSubMessage struct {
+    Message string
+    Channel string
+    Pattern Result[string]  // non-nil for pattern-matched messages
+}
+```
+
+## Publishing
+
+```go
+// Standalone: returns number of receivers
+count, err := client.Publish(ctx, "news", "breaking update")
+
+// Cluster: set sharded=true for SPUBLISH, false for PUBLISH
+count, err := clusterClient.Publish(ctx, "news", "update", false)
+count, err = clusterClient.Publish(ctx, "orders", "new-order", true) // sharded
 ```
 
 ## Dedicated Subscriber Client
 
-A subscriber client is dedicated to listening - it enters a special mode where most regular commands are unavailable. Always use separate clients for publishing and subscribing:
+Always use separate clients for subscribing and regular commands - PubSub clients enter a special mode where most commands are unavailable.
 
-```python
-# Correct: separate clients
-subscriber = await GlideClient.create(config)
-publisher = await GlideClient.create(config)
+## Introspection
 
-# Incorrect: same client for both pub and sub
-# client.subscribe(...)  # Now client is in subscriber mode
-# client.set(...)        # This will fail
+Query active PubSub state without subscribing:
+
+```go
+// List active channels (exact subscriptions across all clients)
+channels, err := client.PubSubChannels(ctx)
+
+// Filter by glob pattern
+channels, err = client.PubSubChannelsWithPattern(ctx, "news.*")
+
+// Count pattern subscriptions (PUBSUB NUMPAT)
+patCount, err := client.PubSubNumPat(ctx)
+
+// Subscriber count per channel (PUBSUB NUMSUB)
+subs, err := client.PubSubNumSub(ctx, "channel1", "channel2")
+// subs: map[string]int64{"channel1": 3, "channel2": 1}
+
+// Cluster-only: sharded channel introspection
+shardChannels, err := clusterClient.PubSubShardChannels(ctx)
+shardChannels, err = clusterClient.PubSubShardChannelsWithPattern(ctx, "orders.*")
+shardSubs, err := clusterClient.PubSubShardNumSub(ctx, "orders")
 ```
 
-## Automatic Reconnection
+## Subscription State
 
-When a connection drops, GLIDE:
+Query the client's own subscription state:
 
-1. Reconnects using the configured backoff strategy (see [connection-model](../architecture/connection-model.md) for reconnection details)
-2. Clears the `current_subscriptions_by_address` for the disconnected node
-3. Triggers reconciliation, which resubscribes to all desired channels
-4. For sharded subscriptions, handles slot migration - resubscribing to new slot owners
-
-This is managed by the `GlidePubSubSynchronizer` in the Rust core, which uses `Weak` references to avoid memory leaks and `Notify` primitives for efficient wake-up.
-
-## Topology Change Handling
-
-When cluster topology changes (slot migrations, node additions/removals):
-
-1. The synchronizer receives the new slot map via `handle_topology_refresh`
-2. For each current subscription, it checks if the owning node has changed
-3. Migrated subscriptions are queued for unsubscribe from the old node
-4. The reconciliation loop then resubscribes on the new correct node
-5. For removed nodes, all their subscriptions are cleared and resubscribed elsewhere
-
-## Configuration
-
-```python
-from glide import AdvancedGlideClientConfiguration
-
-# Configure reconciliation interval (milliseconds)
-advanced = AdvancedGlideClientConfiguration(
-    pubsub_reconciliation_interval=5000,  # 5 seconds
-)
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("localhost", 6379)],
-    advanced_config=advanced,
-)
+```go
+state, err := client.GetSubscriptions(ctx)
+// state.DesiredSubscriptions - what the client wants to be subscribed to
+// state.ActualSubscriptions - what the server confirms
+if _, ok := state.ActualSubscriptions[models.Exact]["channel1"]; ok {
+    fmt.Println("Subscribed to channel1")
+}
 ```
 
-## Message Loss Caveat
+## Reconciliation and Reconnection
 
-During automatic reconnection and resubscription, messages can be lost. This is inherent to the RESP protocol's at-most-once delivery semantics. Applications requiring stronger guarantees should implement application-level acknowledgment using Valkey Streams instead of PubSub.
+The PubSub synchronizer reconciles desired vs actual subscriptions at a configurable interval (default: 3 seconds). Configure via `config.NewAdvancedClientConfiguration().WithPubSubReconciliationIntervalMs(5000)`.
 
-## Subscription State Introspection
+When a connection drops, GLIDE reconnects, clears actual subscriptions for the disconnected node, and the reconciler resubscribes to all desired channels. For sharded subscriptions, slot migration is handled automatically.
 
-GLIDE provides `get_subscriptions()` that returns both desired and actual subscription state, organized by kind (Exact, Pattern, Sharded). This is useful for debugging synchronization issues - comparing desired vs actual reveals whether the synchronizer has caught up after topology changes or reconnections.
-
-## Related Features
-
-- [Streams](streams.md) - durable, ordered message processing with consumer groups and replay capability; use Streams when you need at-least-once delivery guarantees
-- [Logging](logging.md) - enable Debug level to see subscription state changes and reconciliation activity
-- [OpenTelemetry](opentelemetry.md) - PubSub synchronization state is reported as OTel metrics (out-of-sync events, last sync timestamp)
+Monitor sync health: `client.GetStatistics()["subscription_out_of_sync_count"]`. During reconnection, messages can be lost (RESP at-most-once delivery). Use Valkey Streams for stronger guarantees.

@@ -335,8 +335,8 @@ async def cluster_scan(client, pattern: str):
 - [Persistence Best Practices](persistence.md) - RDB/AOF behavior across cluster nodes
 
 **Commands**:
-- [Scripting and Functions](../commands/scripting.md) - Lua scripts in cluster require all keys in one slot
-- [Server Commands](../commands/server.md) - CLUSTER INFO, CLUSTER KEYSLOT for debugging
+- [Scripting and Functions](../basics/server-and-scripting.md) - Lua scripts in cluster require all keys in one slot
+- [Server Commands](../basics/server-and-scripting.md) - CLUSTER INFO, CLUSTER KEYSLOT for debugging
 
 **Patterns**:
 - [Counter Patterns](../patterns/counters.md) - sharded counters to spread hot keys across nodes
@@ -351,7 +351,7 @@ async def cluster_scan(client, pattern: str):
 - [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions per cluster node
 
 **Clients**:
-- [Clients Overview](../clients/overview.md) - cluster-aware client behavior, redirect handling, and replica reads
+- Clients Overview (see valkey-glide skill) - cluster-aware client behavior, redirect handling, and replica reads
 
 **Valkey Features**: [Cluster Enhancements](../valkey-features/cluster-enhancements.md) - Valkey 9.0 atomic slot migration and numbered databases
 

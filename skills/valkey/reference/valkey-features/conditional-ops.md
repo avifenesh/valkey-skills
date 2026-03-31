@@ -1,6 +1,6 @@
 # Conditional Operations: SET IFEQ and DELIFEQ
 
-Use when implementing compare-and-swap patterns, safe distributed lock release, or any scenario where you need to update or delete a key only if its current value matches an expected value.
+Use when implementing compare-and-swap patterns, safe distributed lock release, or any scenario where you need to conditionally update or delete a key based on its current value.
 
 ---
 
@@ -166,9 +166,9 @@ Benefits of native commands: lower latency (no Lua VM), simpler code, no script 
 - [Cluster Enhancements](cluster-enhancements.md) - numbered databases and atomic slot migration
 - [Polygon Geospatial Queries](geospatial.md) - GEOSEARCH BYPOLYGON
 - [Performance Summary](performance-summary.md) - version-by-version throughput and latency gains
-- [String Commands](../commands/strings.md) - SET command with IFEQ option
-- [Hash Commands](../commands/hashes.md) - HSETEX FNX/FXX for conditional hash field writes
-- [Transaction Commands](../commands/transactions.md) - WATCH/MULTI/EXEC optimistic locking replaced by IFEQ for simple CAS
+- [String Commands](../basics/data-types.md) - SET command with IFEQ option
+- [Hash Commands](../basics/data-types.md) - HSETEX FNX/FXX for conditional hash field writes
+- [Transaction Commands](../basics/server-and-scripting.md) - WATCH/MULTI/EXEC optimistic locking replaced by IFEQ for simple CAS
 - [Lock Patterns](../patterns/locks.md) - distributed locks using SET NX and DELIFEQ
-- [Scripting and Functions](../commands/scripting.md) - Lua scripts replaced by IFEQ/DELIFEQ
+- [Scripting and Functions](../basics/server-and-scripting.md) - Lua scripts replaced by IFEQ/DELIFEQ
 - [Anti-Patterns](../anti-patterns/quick-reference.md) - distributed lock anti-patterns

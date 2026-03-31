@@ -1,6 +1,6 @@
 ---
 name: migrate-jedis
-description: "Use when migrating Java applications from Jedis to Valkey GLIDE. Covers API mapping, configuration changes, connection setup, error handling differences, and common migration gotchas."
+description: "Use when migrating Java applications from Jedis to Valkey GLIDE. Covers two migration paths (Jedis compatibility layer for zero-code-change, or full native migration), Spring Data Valkey alternative, API mapping, CompletableFuture async model, PubSub (static and dynamic), and common gotchas."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
@@ -277,6 +277,76 @@ Object[] results2 = client.exec(tx, false).get();
 ```
 
 The second parameter to exec() is raiseOnError - when true, throws on the first error; when false, returns errors inline in the result array.
+
+---
+
+## Pub/Sub
+
+**Jedis:**
+```java
+JedisPubSub listener = new JedisPubSub() {
+    @Override
+    public void onMessage(String channel, String message) {
+        System.out.println(channel + ": " + message);
+    }
+    @Override
+    public void onPMessage(String pattern, String channel, String message) {
+        System.out.println("[" + pattern + "] " + channel + ": " + message);
+    }
+};
+
+// Blocking call - runs in a separate thread
+new Thread(() -> jedis.psubscribe(listener, "events.*")).start();
+```
+
+**GLIDE (static subscriptions - at client creation):**
+```java
+import glide.api.models.configuration.*;
+import glide.api.models.configuration.StandaloneSubscriptionConfiguration.PubSubChannelMode;
+
+BaseSubscriptionConfiguration.MessageCallback callback = (msg, ctx) -> {
+    System.out.println("Channel: " + msg.getChannel());
+    System.out.println("Message: " + msg.getMessage());
+    msg.getPattern().ifPresent(p -> System.out.println("Pattern: " + p));
+};
+
+StandaloneSubscriptionConfiguration subConfig =
+    StandaloneSubscriptionConfiguration.builder()
+        .subscription(PubSubChannelMode.EXACT, "channel")
+        .subscription(PubSubChannelMode.PATTERN, "events.*")
+        .callback(callback)
+        .build();
+
+GlideClientConfiguration config = GlideClientConfiguration.builder()
+    .address(NodeAddress.builder().port(6379).build())
+    .subscriptionConfiguration(subConfig)
+    .build();
+
+GlideClient subscriber = GlideClient.createClient(config).get();
+```
+
+**GLIDE (dynamic subscriptions - GLIDE 2.3+):**
+```java
+// Subscribe (non-blocking)
+client.subscribe(Set.of("news", "events")).get();
+client.psubscribe(Set.of("events.*")).get();
+
+// Subscribe with timeout (blocking, waits for server confirmation)
+client.subscribe(Set.of("alerts"), 5000).get();
+client.psubscribe(Set.of("logs.*"), 5000).get();
+
+// Receive via polling (when no callback configured)
+PubSubMessage msg = client.tryGetPubSubMessage();      // non-blocking, returns null
+CompletableFuture<PubSubMessage> future = client.getPubSubMessage();  // async wait
+
+// Unsubscribe
+client.unsubscribe(Set.of("news")).get();
+client.punsubscribe(Set.of("events.*")).get();
+client.unsubscribe();     // all channels
+client.punsubscribe();    // all patterns
+```
+
+Use a dedicated client for subscriptions - a subscribing client enters a special mode where most regular commands are unavailable. GLIDE automatically resubscribes on reconnection. Callback and polling modes are mutually exclusive on the same client.
 
 ---
 

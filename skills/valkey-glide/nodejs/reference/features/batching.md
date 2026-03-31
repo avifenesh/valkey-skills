@@ -1,233 +1,199 @@
-# Batching - Pipelines and Transactions
+# Batching - Pipelines and Transactions (Node.js)
 
 Use when you need to send multiple commands in a single round-trip for throughput or atomicity - pipelines for bulk operations, transactions for atomic multi-command blocks.
 
-Requires: GLIDE 2.0+.
+Requires: `@valkey/valkey-glide` 2.0+.
 
-GLIDE unified the separate Transaction and Pipeline APIs into a single Batch/ClusterBatch class hierarchy with an `is_atomic` flag. This replaced the older `Transaction` class (which is now a thin alias for backwards compatibility).
+## How Batching Differs from ioredis pipeline()
 
-## Core Concepts
+In ioredis you call `client.pipeline()` to get a chainable pipeline, then `.exec()`. In GLIDE, you construct a `Batch` or `ClusterBatch` object with an `isAtomic` flag, chain commands on it, then pass it to `client.exec()`. The same class handles both pipelines and transactions - the `isAtomic` constructor argument controls the mode.
 
-| Mode | Flag | Protocol | Slot Constraint |
-|------|------|----------|-----------------|
-| Atomic batch (transaction) | `is_atomic=True` | MULTI/EXEC | All keys must map to the same hash slot in cluster mode |
-| Non-atomic batch (pipeline) | `is_atomic=False` | Pipelined commands | Can span multiple slots and nodes in cluster mode |
+| ioredis | GLIDE equivalent |
+|---------|-----------------|
+| `client.pipeline().set("k","v").get("k").exec()` | `client.exec(new Batch(false).set("k","v").get("k"), true)` |
+| `client.multi().set("k","v").get("k").exec()` | `client.exec(new Batch(true).set("k","v").get("k"), true)` |
 
-Atomic batches guarantee that all commands run as a single unit - no other client command can interleave. Non-atomic batches send commands without atomic guarantees but can route across the full cluster.
+Key differences:
 
-## Class Hierarchy
+- GLIDE batches are standalone objects - you construct them, add commands, then hand them to the client.
+- The `raiseOnError` parameter on `exec()` controls whether errors throw or appear inline in the results array.
+- `Transaction` and `ClusterTransaction` still exist as deprecated aliases. Prefer `Batch` and `ClusterBatch`.
 
-| Language | Standalone | Cluster | Legacy Alias |
-|----------|-----------|---------|--------------|
-| Python | `Batch(is_atomic)` | `ClusterBatch(is_atomic)` | `Transaction(Batch)` |
-| Java | `Batch(boolean isAtomic)` | `ClusterBatch(boolean isAtomic)` | `Transaction(Batch)` |
-| Node.js | `Batch` | `ClusterBatch` | `Transaction(Batch)` |
-| Go | `pipeline.NewStandaloneBatch(isAtomic)` | `pipeline.NewClusterBatch(isAtomic)` | - |
+## Batch vs ClusterBatch vs Transaction vs ClusterTransaction
 
-All classes extend a common `BaseBatch` base that provides the full command set.
+| Class | Client | isAtomic | Notes |
+|-------|--------|----------|-------|
+| `Batch` | `GlideClient` (standalone) | Constructor arg | Has `select()` for DB switching |
+| `ClusterBatch` | `GlideClusterClient` | Constructor arg | Has `publish()` with sharded mode, `pubsubShardChannels()` |
+| `Transaction` | `GlideClient` | Always `true` | **Deprecated** - alias for `new Batch(true)` |
+| `ClusterTransaction` | `GlideClusterClient` | Always `true` | **Deprecated** - alias for `new ClusterBatch(true)` |
 
-## Python
+All four extend `BaseBatch<T>` which provides the full command set (GET, SET, HSET, LPUSH, ZADD, etc.) with fluent chaining - every command method returns `this`.
 
-```python
-from glide import Batch, ClusterBatch
+## Creating a Batch, Adding Commands, Executing
 
-# Atomic transaction (standalone)
-tx = Batch(is_atomic=True)
-tx.set("account:src", "100")
-tx.set("account:dst", "0")
-tx.incrby("account:dst", 50)
-tx.decrby("account:src", 50)
-result = await client.exec(tx, raise_on_error=True)
-# ['OK', 'OK', 50, 50]
+```typescript
+import { GlideClient, Batch } from "@valkey/valkey-glide";
 
-# Non-atomic pipeline (cluster)
-pipe = ClusterBatch(is_atomic=False)
-pipe.set("user:1:name", "Alice")
-pipe.set("user:2:name", "Bob")
-pipe.get("user:1:name")
-pipe.get("user:2:name")
-result = await client.exec(pipe, raise_on_error=False)
-# ['OK', 'OK', b'Alice', b'Bob']
-```
-
-### Batch Options (Python)
-
-```python
-from glide import BatchOptions, ClusterBatchOptions
-
-# Standalone batch with options
-opts = BatchOptions(timeout=5000)
-result = await client.exec(batch, options=opts)
-
-# Cluster batch with retry strategy
-opts = ClusterBatchOptions(timeout=5000)
-result = await client.exec(batch, options=opts)
-```
-
-## Java
-
-```java
-import glide.api.models.Batch;
-import glide.api.models.ClusterBatch;
-
-// Atomic transaction
-Batch transaction = new Batch(true);
-transaction.set("key", "value");
-transaction.incr("counter");
-transaction.get("key");
-Object[] result = client.exec(transaction).get();
+const client = await GlideClient.createClient({ addresses: [{ host: "localhost", port: 6379 }] });
 
 // Non-atomic pipeline
-Batch pipeline = new Batch(false);
-pipeline.set("key1", "value1");
-pipeline.set("key2", "value2");
-pipeline.get("key1");
-pipeline.get("key2");
-Object[] result = client.exec(pipeline, false).get();
+const result = await client.exec(
+    new Batch(false).set("key1", "value1").set("key2", "value2").get("key1").get("key2"),
+    true,
+);
 // result: ["OK", "OK", "value1", "value2"]
-```
-
-Java also provides `BatchOptions` and `ClusterBatchOptions` for configuration, and `ClusterBatchRetryStrategy` for controlling retry behavior on server and connection errors.
-
-## Node.js
-
-```javascript
-import { Batch, ClusterBatch, Transaction } from "@valkey/valkey-glide";
-
-// Atomic (Transaction is an alias for Batch)
-const tx = new Transaction()
-    .set("key", "value")
-    .get("key");
-const result = await client.exec(tx);
-// ['OK', 'value']
-
-// Non-atomic pipeline - cluster
-const pipe = new ClusterBatch()
-    .set("k1", "v1")
-    .set("k2", "v2")
-    .get("k1");
-const result = await client.exec(pipe);
-```
-
-Node.js `Batch` and `ClusterBatch` extend `BaseBatch`. `Transaction` is exported as an alias for `Batch`.
-
-## Go
-
-```go
-import "github.com/valkey-io/valkey-glide/go/v2/pipeline"
 
 // Atomic transaction
-tx := pipeline.NewStandaloneBatch(true)
-tx.Set("key", "value")
-tx.Incr("counter")
-tx.Get("key")
-results, err := client.Exec(ctx, *tx, true)
-
-// Non-atomic pipeline (cluster)
-pipe := pipeline.NewClusterBatch(false)
-pipe.Set("k1", "v1")
-pipe.Set("k2", "v2")
-pipe.Get("k1")
-results, err := client.Exec(ctx, *pipe, false)
+const txResult = await client.exec(
+    new Batch(true).set("account:src", "100").incrBy("account:src", 50),
+    true,
+);
+// txResult: ["OK", 150]
 ```
 
-Go provides `StandaloneBatchOptions` and `ClusterBatchOptions` for configuration. `ClusterBatchRetryStrategy` controls retry behavior:
+### Cluster mode
 
-```go
-retryStrategy := pipeline.NewClusterBatchRetryStrategy().
-    WithRetryServerError(true).
-    WithRetryConnectionError(true)
-opts := pipeline.NewClusterBatchOptions().
-    WithRetryStrategy(retryStrategy)
+```typescript
+import { GlideClusterClient, ClusterBatch } from "@valkey/valkey-glide";
+
+const clusterClient = await GlideClusterClient.createClient({
+    addresses: [{ host: "localhost", port: 7000 }],
+});
+
+// Non-atomic - keys can span different hash slots
+const result = await clusterClient.exec(
+    new ClusterBatch(false).set("user:1:name", "Alice").set("user:2:name", "Bob").get("user:1:name"),
+    true,
+);
+// result: ["OK", "OK", "Alice"]
 ```
 
-## Error Handling
+### exec() signature
 
-The `raise_on_error` parameter (Python) or equivalent controls batch error behavior:
-
-| Setting | Behavior |
-|---------|----------|
-| `True` / `true` | Raises/throws on the first error encountered in the batch results |
-| `False` / `false` | Returns errors inline as `RequestError` objects in the results array |
-
-```python
-# Inline error handling
-result = await client.exec(batch, raise_on_error=False)
-for item in result:
-    if isinstance(item, RequestError):
-        print(f"Command failed: {item}")
-    else:
-        print(f"Success: {item}")
+```typescript
+// GlideClient
+client.exec(batch: Batch, raiseOnError: boolean, options?: BatchOptions): Promise<GlideReturnType[] | null>
+// GlideClusterClient
+clusterClient.exec(batch: ClusterBatch, raiseOnError: boolean, options?: ClusterBatchOptions): Promise<GlideReturnType[] | null>
 ```
 
-## Performance
+`BatchOptions` has a `timeout` field (milliseconds). `ClusterBatchOptions` adds `route` (single-node routing) and `retryStrategy`. If an atomic batch fails due to a `WATCH` command, `exec()` returns `null`.
 
-Batching provides significant throughput gains by reducing round-trip overhead. Benchmarks show 190-257% higher throughput with pipelined batches compared to individual async requests.
+## Error Handling in Batch Results
 
-For batched operations (100 SETs per batch), GLIDE performs comparably to native clients:
+The `raiseOnError` parameter controls error behavior:
 
-| Client | ops/s | avg latency |
-|--------|-------|-------------|
-| redis (RESP3) multi | 3,615 | 0.277ms |
-| valkey-glide atomic | 3,458 | 0.289ms |
-| ioredis pipeline | 3,334 | 0.300ms |
+| Value | Behavior |
+|-------|----------|
+| `true` | Throws `RequestError` on the first error encountered in the batch |
+| `false` | Errors appear as `RequestError` instances in the results array |
 
-## Multi-Node Pipeline Execution
+```typescript
+import { RequestError, Batch } from "@valkey/valkey-glide";
 
-For non-atomic cluster batches, GLIDE splits commands across nodes:
+const batch = new Batch(false)
+    .set("key", "value")
+    .lpush("key", ["oops"])  // WRONGTYPE - key holds a string
+    .get("key");
 
-1. Computes hash slots for each key-based command
-2. Groups commands by target node into sub-pipelines
-3. Dispatches sub-pipelines independently to target nodes
-4. Reassembles responses in original command order
+// raiseOnError = false: errors inline
+const results = await client.exec(batch, false);
+for (const item of results!) {
+    if (item instanceof RequestError) {
+        console.log(`Command failed: ${item.message}`);
+    } else {
+        console.log(`Success: ${item}`);
+    }
+}
+// Success: OK
+// Command failed: WRONGTYPE Operation against a key holding the wrong kind of value
+// Success: value
 
-This means a single `ClusterBatch` with keys spanning 3 nodes produces 3 parallel sub-pipelines, maximizing throughput while preserving the response ordering the caller expects.
-
-## Retry Strategies (Non-Atomic Cluster Batches)
-
-Non-atomic cluster batches support configurable retry behavior via `ClusterBatchRetryStrategy`:
-
-| Strategy | Behavior | Caveat |
-|----------|----------|--------|
-| `retryServerError` | Retry on TRYAGAIN errors | May cause out-of-order execution |
-| `retryConnectionError` | Retry entire batch on connection failure | May cause duplicate executions |
-
-Redirection errors (MOVED, ASK) are always handled automatically regardless of retry configuration.
-
-```python
-from glide import ClusterBatchOptions, BatchRetryStrategy
-
-options = ClusterBatchOptions(
-    retry_strategy=BatchRetryStrategy(retry_server_error=True, retry_connection_error=False),
-    timeout=2000
-)
-result = await client.exec(batch, raise_on_error=False, options=options)
+// raiseOnError = true: throws on first error
+try { await client.exec(batch, true); }
+catch (err) { if (err instanceof RequestError) console.log(err.message); }
 ```
 
-## Inflight Limits and Optimal Batch Sizes
+### Cluster retry strategy (non-atomic only)
 
-GLIDE uses multiplexed connections with automatic pipelining - all requests go through a single connection per node. The default inflight request limit is 1000 per client (configurable). Based on Little's Law: at 50K req/s with 1ms avg response = 50 inflight, so 1000 gives roughly 20x headroom for bursts. For the full inflight limiting mechanism, see [connection-model](../architecture/connection-model.md).
+```typescript
+const result = await clusterClient.exec(
+    new ClusterBatch(false).set("k1", "v1").set("k2", "v2"), true,
+    {
+        timeout: 5000, route: "randomNode",
+        retryStrategy: { retryServerError: true, retryConnectionError: false },
+    },
+);
+```
 
-Practical sizing guidance:
-- **Latency-sensitive workloads**: 10-50 commands per batch
-- **Throughput-focused bulk operations**: 100-500 commands per batch
-- The 1000 default inflight limit applies to concurrent requests (each batch counts as one inflight request regardless of how many commands it contains). Beyond 1000 concurrent inflight requests, excess requests are immediately rejected
+## Complete Example: Batch Write 50 Products
 
-## Cluster Mode Considerations
+```typescript
+import { GlideClusterClient, ClusterBatch, RequestError } from "@valkey/valkey-glide";
 
-- Atomic batches require all keys to hash to the same slot. Use hash tags `{tag}` to co-locate keys.
-- Non-atomic batches can span multiple slots and nodes - GLIDE automatically splits and routes per-slot.
-- `ClusterBatch` is the cluster-mode variant; `Batch`/`StandaloneBatch` is for standalone mode.
+interface Product {
+    id: number;
+    name: string;
+    price: number;
+    category: string;
+    stock: number;
+}
 
-## Standalone-Only Commands in Batch
+async function batchWriteProducts(
+    client: GlideClusterClient,
+    products: Product[],
+): Promise<void> {
+    // Use non-atomic batch - products have different hash slots
+    const batch = new ClusterBatch(false);
 
-The standalone `Batch` class supports commands not available in `ClusterBatch`:
+    for (const p of products) {
+        const key = `product:{catalog}:${p.id}`;
+        batch.hset(key, {
+            name: p.name,
+            price: String(p.price),
+            category: p.category,
+            stock: String(p.stock),
+        });
+        // Add to category set for lookups
+        batch.sadd(`category:{catalog}:${p.category}`, [key]);
+    }
 
-- `select(index)` - change database within the batch
-- `copy(source, destination, destinationDB, replace)` - copy with cross-database support
+    const results = await client.exec(batch, false, { timeout: 10000 });
 
-## Related Features
+    if (!results) {
+        throw new Error("Batch returned null");
+    }
 
-- [Streams](streams.md) - all stream commands support batch execution for pipelined or transactional usage
-- [Scripting](scripting.md) - `invoke_script` is NOT supported in batches; use `custom_command(["EVAL", ...])` instead
-- [Compression](compression.md) - compressed SET/GET commands work within batches
+    let errors = 0;
+    for (const r of results) {
+        if (r instanceof RequestError) errors++;
+    }
+
+    if (errors > 0) {
+        console.log(`[WARN] ${errors} commands failed out of ${results.length}`);
+    } else {
+        console.log(`[OK] Wrote ${products.length} products (${results.length} commands)`);
+    }
+}
+
+// Usage
+const products: Product[] = Array.from({ length: 50 }, (_, i) => ({
+    id: i + 1, name: `Widget ${i + 1}`, price: 9.99 + i,
+    category: ["electronics", "clothing", "home"][i % 3], stock: 100 + i * 10,
+}));
+await batchWriteProducts(client, products);
+// [OK] Wrote 50 products (100 commands)
+```
+
+Note: The `{catalog}` hash tag ensures HSET and SADD for each product route to the same slot, which matters if you later wrap them in an atomic batch. For non-atomic batches, hash tags are optional - GLIDE auto-splits commands across nodes.
+
+## Cluster Routing Behavior
+
+- **Atomic (transaction)**: routed to the slot owner of the first key. All keys must share the same slot or the transaction fails.
+- **Non-atomic (pipeline)**: each command routes independently by key slot. Multi-node commands are split across nodes and responses are reassembled in order.
+- MOVED/ASK redirections are handled automatically. Non-atomic batches redirect only the affected commands; atomic batches redirect the entire transaction.
+
+## Standalone-Only Commands
+
+`Batch` (standalone) exposes `select(index)` for switching databases within a batch. This is not available on `ClusterBatch`.

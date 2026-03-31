@@ -1,6 +1,6 @@
 ---
 name: valkey-dev
-description: "Use when contributing to the Valkey server codebase, understanding Valkey architecture or internals, building from source, writing tests, navigating the C code, writing modules, reviewing PRs in valkey-io/valkey, debugging Valkey, or working with Valkey cluster, replication, or data structures."
+description: "Use when contributing to the Valkey server codebase, understanding Valkey architecture or internals, building from source, writing tests, navigating the C code, writing modules, reviewing PRs in valkey-io/valkey, debugging Valkey, working with Valkey cluster, replication, data structures, persistence (RDB/AOF), scripting (Lua/functions), pub/sub internals, transactions, networking/RESP, memory management, RDMA transport, CI pipeline, or coding style."
 version: 1.0.0
 argument-hint: "[subsystem or source file]"
 ---
@@ -13,15 +13,31 @@ Browse by subsystem below or ask about a specific topic. Each link leads to a fo
 
 ## Routing
 
-- Building/compiling -> Build & Test
+- Building/compiling -> Build & Test (building, sanitizers)
 - Crash/hang investigation -> Architecture (event-loop), Threading, Monitoring (debug)
-- Data type behavior -> Data Structures (encoding-transitions), Config
+- Data type behavior -> Data Structures (encoding-transitions), Config (db-management)
 - Eviction/maxmemory/LRU/LFU -> Memory (eviction)
-- Performance work -> Threading, Memory, Monitoring (latency)
-- New command implementation -> Architecture (command-dispatch), Modules
-- Test writing -> Build & Test (tcl-tests, unit-tests)
+- Memory fragmentation/allocation -> Memory (defragmentation, zmalloc, lazy-free)
+- Performance work -> Threading (io-threads, prefetch), Memory, Monitoring (latency)
+- New command implementation -> Architecture (command-dispatch), Modules (api-overview)
+- Test writing -> Build & Test (tcl-tests, unit-tests), Testing (ci-pipeline)
+- CI failures -> Testing (ci-pipeline), Build (sanitizers)
 - Security/auth -> Security (acl, tls)
-- Replication/HA -> Replication, Cluster, Sentinel
+- Replication/HA -> Replication, Cluster (failover), Sentinel
+- Slot migration -> Cluster (slot-migration)
+- Persistence/snapshots/durability -> Persistence (rdb, aof)
+- Lua scripting/EVAL -> Scripting (eval, functions, scripting-engine)
+- Pub/Sub internals -> Pub/Sub (pubsub, notifications)
+- MULTI/EXEC/blocking commands -> Transactions (multi-exec, blocking)
+- Networking/RESP/client connections -> Architecture (networking, resp-protocol)
+- Key expiration/TTL -> Config (expiry)
+- CONFIG system/runtime settings -> Config (config-system)
+- Client-side caching -> Monitoring (tracking)
+- Logging/commandlog -> Monitoring (commandlog)
+- Module development -> Modules (api-overview, types-and-commands, rust-sdk)
+- RDMA/transport -> Valkey-Specific (rdma, transport-layer)
+- KVStore/object internals -> Valkey-Specific (kvstore, object-lifecycle, vset)
+- Contributing/PR process -> Contributing (workflow, governance)
 
 ## Quick Start
 

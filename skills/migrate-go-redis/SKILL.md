@@ -1,6 +1,6 @@
 ---
 name: migrate-go-redis
-description: "Use when migrating Go applications from go-redis to Valkey GLIDE. Covers API mapping, configuration changes, connection setup, error handling differences, and common migration gotchas."
+description: "Use when migrating Go applications from go-redis to Valkey GLIDE. Covers Result[T] nil handling (replaces redis.Nil sentinel), CGO dependency, slice args, SetWithOptions, PubSub (static and dynamic with queue-based polling), and common gotchas including Alpine/MUSL and cross-compilation."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
@@ -297,6 +297,67 @@ pipe.Set("k1", "v1")
 pipe.Set("k2", "v2")
 results, err := client.Exec(ctx, *pipe, false)
 ```
+
+---
+
+## Pub/Sub
+
+**go-redis:**
+```go
+pubsub := rdb.Subscribe(ctx, "channel")
+pubsub.PSubscribe(ctx, "events:*")
+ch := pubsub.Channel()
+for msg := range ch {
+    fmt.Printf("[%s] %s\n", msg.Channel, msg.Payload)
+}
+```
+
+**GLIDE (static subscriptions - at client creation):**
+```go
+import (
+    glide "github.com/valkey-io/valkey-glide/go/v2"
+    "github.com/valkey-io/valkey-glide/go/v2/config"
+    "github.com/valkey-io/valkey-glide/go/v2/models"
+)
+
+subCfg := config.NewStandaloneSubscriptionConfig().
+    WithSubscription(config.ExactChannelMode, "channel").
+    WithSubscription(config.PatternChannelMode, "events:*").
+    WithCallback(func(msg *models.PubSubMessage, ctx any) {
+        fmt.Printf("[%s] %s\n", msg.Channel, msg.Message)
+    }, nil)
+
+cfg := config.NewClientConfiguration().
+    WithAddress(&config.NodeAddress{Host: "localhost", Port: 6379}).
+    WithSubscriptionConfig(subCfg)
+
+subscriber, err := glide.NewClient(cfg)
+```
+
+**GLIDE (dynamic subscriptions - GLIDE 2.3+):**
+```go
+// Non-blocking subscribe (lazy)
+err := client.Subscribe(ctx, []string{"channel"})
+err = client.PSubscribe(ctx, []string{"events:*"})
+
+// Blocking subscribe - waits for server confirmation
+err = client.SubscribeBlocking(ctx, []string{"channel"}, 5000)
+err = client.PSubscribeBlocking(ctx, []string{"events:*"}, 5000)
+
+// Receive via queue (when no callback configured)
+queue, err := client.GetQueue()
+msg := queue.Pop()                    // non-blocking, returns nil if empty
+msgCh := queue.WaitForMessage()       // blocking, returns a channel
+msg = <-msgCh
+
+// Unsubscribe
+err = client.Unsubscribe(ctx, []string{"channel"})
+err = client.PUnsubscribe(ctx, []string{"events:*"})
+err = client.UnsubscribeAll(ctx)      // all exact channels
+err = client.PUnsubscribeAll(ctx)     // all patterns
+```
+
+go-redis uses a Go channel-based approach (`pubsub.Channel()`). GLIDE uses either callbacks (set at creation time) or queue-based polling (`GetQueue` + `Pop` / `WaitForMessage`). Use a dedicated client for subscriptions. GLIDE automatically resubscribes on reconnection.
 
 ---
 

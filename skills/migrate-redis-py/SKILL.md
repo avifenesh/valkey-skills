@@ -1,6 +1,6 @@
 ---
 name: migrate-redis-py
-description: "Use when migrating Python applications from redis-py to Valkey GLIDE. Covers API mapping, configuration changes, connection setup, error handling differences, and common migration gotchas."
+description: "Use when migrating Python applications from redis-py to Valkey GLIDE. Covers async-first API (sync wrapper available), bytes return types (no decode_responses), list args instead of varargs, PubSub (static and dynamic), ExpirySet/ConditionalChange options, and common gotchas."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
@@ -232,22 +232,54 @@ GLIDE discovers the full cluster topology from seed nodes automatically. No need
 ```python
 p = r.pubsub()
 p.subscribe("channel")
+p.psubscribe("events:*")
 for message in p.listen():
     print(message["data"])
 ```
 
-**GLIDE:**
+**GLIDE (static subscriptions - at client creation):**
 ```python
-# Subscriptions configured at client creation or via dynamic subscribe (GLIDE 2.3+)
-msg = await subscriber.get_pubsub_message()       # blocking
-msg = subscriber.try_get_pubsub_message()          # non-blocking
+from glide import GlideClientConfiguration, NodeAddress, PubSubMsg
 
-# Or callback-driven (set during config)
-def on_message(msg, context):
-    print(f"{msg.channel}: {msg.message}")
+def on_message(msg: PubSubMsg, context):
+    print(f"[{msg.channel}] {msg.message} (pattern={msg.pattern})")
+
+config = GlideClientConfiguration(
+    addresses=[NodeAddress("localhost", 6379)],
+    pubsub_subscriptions=GlideClientConfiguration.PubSubSubscriptions(
+        channels_and_patterns={
+            GlideClientConfiguration.PubSubChannelModes.Exact: {"channel"},
+            GlideClientConfiguration.PubSubChannelModes.Pattern: {"events:*"},
+        },
+        callback=on_message,
+    ),
+)
+subscriber = await GlideClient.create(config)
 ```
 
-GLIDE automatically resubscribes on reconnection. Use a dedicated client for subscriptions.
+**GLIDE (dynamic subscriptions - GLIDE 2.3+):**
+```python
+subscriber = await GlideClient.create(config)
+
+# Blocking - waits for server confirmation
+await subscriber.subscribe({"channel"}, timeout_ms=5000)
+await subscriber.psubscribe({"events:*"}, timeout_ms=5000)
+
+# Non-blocking - returns immediately, reconciliation happens async
+await subscriber.subscribe_lazy({"channel"})
+await subscriber.psubscribe_lazy({"events:*"})
+
+# Receive messages via polling
+msg = await subscriber.get_pubsub_message()       # async, blocks until message
+msg = subscriber.try_get_pubsub_message()          # non-blocking, returns None if empty
+
+# Unsubscribe
+await subscriber.unsubscribe({"channel"})
+await subscriber.punsubscribe({"events:*"})
+await subscriber.unsubscribe()                     # all exact channels
+```
+
+GLIDE automatically resubscribes on reconnection. Use a dedicated client for subscriptions - a subscribing client enters a special mode where most regular commands are unavailable. Callback and polling modes are mutually exclusive on the same client.
 
 ---
 

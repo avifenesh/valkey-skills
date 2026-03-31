@@ -384,9 +384,9 @@ BF.EXISTS dedup:events "evt-never-seen"
 
 ## See Also
 
-- [String Commands](../commands/strings.md) - INCR, INCRBY, SET NX EX for atomic counters
-- [Specialized Types](../commands/specialized.md) - HyperLogLog, Bitmaps, BITFIELD
-- [Scripting and Functions](../commands/scripting.md) - Lua scripts for bounded counters
+- [String Commands](../basics/data-types.md) - INCR, INCRBY, SET NX EX for atomic counters
+- [Specialized Types](../basics/data-types.md) - HyperLogLog, Bitmaps, BITFIELD
+- [Scripting and Functions](../basics/server-and-scripting.md) - Lua scripts for bounded counters
 - [Conditional Operations](../valkey-features/conditional-ops.md) - DELIFEQ for safe idempotency key cleanup (Valkey 9.0+)
 - [Rate Limiting Patterns](rate-limiting.md) - windowed counters for rate limiting
 - [Lock Patterns](locks.md) - SET NX for mutual exclusion (related to idempotency keys)

@@ -1,21 +1,21 @@
 #!/bin/bash
-# Benchmark: 16 parallel agents, one per task/model/skill combo
-# Then run tests + judges for each
+# Benchmark: 3 rounds x 16 parallel agents
+# Round-numbered output: {label}_r{1,2,3}.json
 
 BENCH_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILLS_DIR="$BENCH_DIR/../../skills"
 RUNS_DIR="$BENCH_DIR/runs"
 TESTS_DIR="$BENCH_DIR/tests"
 TMP="${TMPDIR:-/tmp}/bench-v2-parallel"
-SONNET="claude-sonnet-4-6"
-OPUS="opus"
+SONNET="us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+OPUS="us.anthropic.claude-opus-4-6-v1[1m]"
 
-mkdir -p "$RUNS_DIR" "$TMP"
+mkdir -p "$RUNS_DIR"
 
 TASK_DIRS=("1-bug-investigation" "2-glide-queue" "3-ops-cluster" "4-code-improvement")
 TASK_LABELS=("1-bug" "2-queue" "3-ops" "4-improve")
 TASK_TESTS=("test-bug.sh" "test-queue.sh" "test-ops.sh" "test-improvement.sh")
-TASK_SKILLS=("valkey-dev" "valkey-glide/nodejs" "valkey-ops:valkey-ecosystem" "valkey")
+TASK_SKILLS=("valkey-dev" "valkey-glide/nodejs" "valkey-ops:valkey-modules" "valkey")
 TASK_TURNS=(50 30 30 30)
 
 TASK_PROMPTS=(
@@ -45,7 +45,7 @@ SETTINGS
 }
 
 run_one() {
-  local task_idx="$1" model="$2" skills="$3"
+  local task_idx="$1" model="$2" skills="$3" round="$4"
   local task_dir="${TASK_DIRS[$task_idx]}"
   local task_label="${TASK_LABELS[$task_idx]}"
   local prompt="${TASK_PROMPTS[$task_idx]}"
@@ -53,22 +53,32 @@ run_one() {
   local max_turns="${TASK_TURNS[$task_idx]}"
   local model_short=$([ "$model" = "$SONNET" ] && echo "sonnet" || echo "opus")
   local label="${task_label}_${model_short}_${skills}"
-  local run_dir="$TMP/${label}"
-  local out_json="$RUNS_DIR/${label}.json"
+  local run_dir="$TMP/r${round}/${label}"
+  local out_json="$RUNS_DIR/${label}_r${round}.json"
 
-  # Setup
+  # Skip if already done
+  if [ -f "$out_json" ] && [ -s "$out_json" ]; then
+    local prev_cost=$(jq -r '.total_cost_usd // 0' "$out_json" 2>/dev/null)
+    if [ "$prev_cost" != "0" ]; then
+      echo "[R$round SKIP] $label"
+      return
+    fi
+  fi
+
+  # Setup fresh dir
   rm -r "$run_dir" 2>/dev/null
+  mkdir -p "$TMP/r${round}"
   cp -r "$BENCH_DIR/tasks/$task_dir" "$run_dir"
 
   if [ "$skills" = "skill" ]; then
     install_skills "$run_dir" "$skill_spec"
   fi
 
-  # Clear Claude project cache
+  # Clear Claude cache
   find "$HOME/.claude/projects" -maxdepth 1 -name "*bench-v2*" -type d -exec rm -r {} + 2>/dev/null || true
 
   # Run agent
-  echo "[START] $label"
+  echo "[R$round START] $label"
   cd "$run_dir"
   claude -p "$prompt" \
     --model "$model" \
@@ -79,21 +89,27 @@ run_one() {
     > "$out_json" 2>/dev/null || true
   cd "$BENCH_DIR"
 
-  jq -r '.result // ""' "$out_json" > "$RUNS_DIR/${label}.txt" 2>/dev/null
-  local dur=$(jq -r '.duration_ms // 0' "$out_json" 2>/dev/null)
+  # Check for model errors
+  local is_err=$(jq -r '.is_error // false' "$out_json" 2>/dev/null)
   local cost=$(jq -r '.total_cost_usd // 0' "$out_json" 2>/dev/null)
+  local dur=$(jq -r '.duration_ms // 0' "$out_json" 2>/dev/null)
   local turns=$(jq -r '.num_turns // 0' "$out_json" 2>/dev/null)
-  echo "[DONE] $label - $((dur/1000))s, \$$cost, $turns turns"
+
+  if [ "$cost" = "0" ] && [ "$turns" = "1" ]; then
+    echo "[R$round ERROR] $label - model failed, 0 cost"
+    return
+  fi
+
+  jq -r '.result // ""' "$out_json" > "$RUNS_DIR/${label}_r${round}.txt" 2>/dev/null
+  echo "[R$round DONE] $label - $((dur/1000))s, \$$cost, $turns turns"
 
   # Cleanup Docker
   (cd "$run_dir" && docker compose down -v 2>/dev/null) || true
 
   # Run test
-  echo "[TEST] $label"
-  bash "$TESTS_DIR/${TASK_TESTS[$task_idx]}" "$run_dir" 2>&1 | tee "$RUNS_DIR/${label}_test.txt"
+  bash "$TESTS_DIR/${TASK_TESTS[$task_idx]}" "$run_dir" 2>&1 | tee "$RUNS_DIR/${label}_r${round}_test.txt"
 
   # Run 3 judges
-  echo "[JUDGE] $label"
   local task=$(echo "$label" | cut -d_ -f1)
   local input=""
   case "$task" in
@@ -105,7 +121,7 @@ run_one() {
 
   if [ -n "$input" ] && [ ${#input} -gt 30 ]; then
     for j in 1 2 3; do
-      local jout="$RUNS_DIR/judge_${label}_j${j}.json"
+      local jout="$RUNS_DIR/judge_${label}_r${round}_j${j}.json"
       local tmpfile=$(mktemp)
       cat > "$tmpfile" << 'CRITERIA'
 You are a code review judge. Score this AI-generated output on 5 criteria, each 1-10. Return ONLY valid JSON.
@@ -117,11 +133,12 @@ CRITERIA
     done
   fi
 
-  echo "[COMPLETE] $label"
+  echo "[R$round COMPLETE] $label"
 }
 
 echo "============================================"
-echo "  Benchmark - 16 Parallel Agents - $(date)"
+echo "  Benchmark - 3 Rounds x 16 Parallel"
+echo "  $(date)"
 echo "============================================"
 
 # Pre-build buggy Valkey image
@@ -130,47 +147,70 @@ docker build -t buggy-valkey:latest \
   -f "$BENCH_DIR/tasks/1-bug-investigation/Dockerfile.buggy-valkey" \
   "$BENCH_DIR/tasks/1-bug-investigation/" 2>&1 | tail -3
 
-# Clear all old results
-rm -f "$RUNS_DIR"/*.json "$RUNS_DIR"/*.txt 2>/dev/null
+for round in 1 2 3; do
+  echo ""
+  echo "========================================="
+  echo "  ROUND $round / 3 - $(date)"
+  echo "========================================="
 
-# Launch all 16 in parallel
-echo ""
-echo "=== LAUNCHING 16 AGENTS ==="
-PIDS=()
-
-for task_idx in 0 1 2 3; do
-  for model in "$SONNET" "$OPUS"; do
-    for skills in "noskill" "skill"; do
-      run_one "$task_idx" "$model" "$skills" &
-      PIDS+=($!)
+  PIDS=()
+  for task_idx in 0 1 2 3; do
+    for model in "$SONNET" "$OPUS"; do
+      for skills in "noskill" "skill"; do
+        run_one "$task_idx" "$model" "$skills" "$round" &
+        PIDS+=($!)
+      done
     done
   done
-done
 
-echo "Launched ${#PIDS[@]} agents, waiting..."
-for pid in "${PIDS[@]}"; do
-  wait "$pid" 2>/dev/null
+  echo "  Launched ${#PIDS[@]} agents for round $round"
+  for pid in "${PIDS[@]}"; do wait "$pid" 2>/dev/null; done
+
+  # Count results
+  done_count=$(ls "$RUNS_DIR"/*_r${round}.json 2>/dev/null | while read f; do
+    cost=$(jq -r '.total_cost_usd // 0' "$f" 2>/dev/null)
+    [ "$cost" != "0" ] && echo "1"
+  done | wc -l)
+  echo "[ROUND $round] $done_count/16 completed"
 done
 
 echo ""
-echo "=== ALL COMPLETE ==="
+echo "========================================="
+echo "  FINAL RESULTS - MEDIAN OF 3"
+echo "========================================="
 
-# Summary table
-echo ""
-printf "%-30s | %6s | %8s | %5s | %5s\n" "Run" "Time" "Cost" "Turns" "Score"
-echo "-------------------------------+--------+----------+-------+------"
+printf "%-30s | %5s %5s %5s | %6s | %8s | median\n" "Run" "R1" "R2" "R3" "Time" "Cost"
+echo "-------------------------------+-------------------+--------+----------+-------"
 
 for task_idx in 0 1 2 3; do
   for model_short in "sonnet" "opus"; do
     for skills in "noskill" "skill"; do
       label="${TASK_LABELS[$task_idx]}_${model_short}_${skills}"
-      f="$RUNS_DIR/${label}.json"
-      [ ! -f "$f" ] && continue
-      dur=$(jq -r '.duration_ms // 0' "$f" 2>/dev/null)
-      cost=$(jq -r '.total_cost_usd // 0' "$f" 2>/dev/null)
-      turns=$(jq -r '.num_turns // 0' "$f" 2>/dev/null)
-      score=$(grep "^SCORE=" "$RUNS_DIR/${label}_test.txt" 2>/dev/null | tail -1 | cut -d= -f2)
-      printf "%-30s | %5ss | \$%-7s | %5s | %s\n" "$label" "$((dur/1000))" "$cost" "$turns" "$score"
+      scores=() times=() costs=()
+
+      for r in 1 2 3; do
+        f="$RUNS_DIR/${label}_r${r}.json"
+        tf="$RUNS_DIR/${label}_r${r}_test.txt"
+        if [ -f "$f" ] && [ -s "$f" ]; then
+          cost=$(jq -r '.total_cost_usd // 0' "$f" 2>/dev/null)
+          [ "$cost" = "0" ] && scores+=("-") && times+=("-") && costs+=("-") && continue
+          dur=$(jq -r '.duration_ms // 0' "$f" 2>/dev/null)
+          score=$(grep "^SCORE=" "$tf" 2>/dev/null | tail -1 | cut -d= -f2 | cut -d/ -f1)
+          scores+=("${score:-0}")
+          times+=("$((dur/1000))")
+          costs+=("$cost")
+        else
+          scores+=("-") && times+=("-") && costs+=("-")
+        fi
+      done
+
+      med_score=$(printf '%s\n' "${scores[@]}" | grep -v "^-$" | sort -n | sed -n '2p')
+      med_time=$(printf '%s\n' "${times[@]}" | grep -v "^-$" | sort -n | sed -n '2p')
+      med_cost=$(printf '%s\n' "${costs[@]}" | grep -v "^-$" | sort -n | sed -n '2p')
+
+      printf "%-30s | %5s %5s %5s | %5ss | \$%-7s | med=%s\n" \
+        "$label" "${scores[0]}" "${scores[1]}" "${scores[2]}" \
+        "${med_time:-?}" "${med_cost:-?}" "${med_score:-?}"
     done
   done
 done

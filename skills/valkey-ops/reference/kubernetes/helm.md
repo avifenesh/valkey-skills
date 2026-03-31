@@ -4,6 +4,36 @@ Use when deploying Valkey on Kubernetes via Helm, choosing between the official 
 
 ---
 
+## Tested Example: kind + Helm Deployment
+
+```bash
+# Create a local K8s cluster with kind
+kind create cluster --name valkey-test
+
+# Add the Valkey Helm repo and install (standalone by default)
+helm repo add valkey https://valkey.io/valkey-helm/
+helm repo update
+helm install my-valkey valkey/valkey
+
+# Wait for the pod to be ready
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=valkey \
+  --timeout=120s
+
+# Connect and verify
+kubectl exec -it svc/my-valkey -- valkey-cli PING
+# Expected: PONG
+
+kubectl exec -it svc/my-valkey -- valkey-cli SET test "helm works"
+kubectl exec -it svc/my-valkey -- valkey-cli GET test
+# Expected: "helm works"
+
+# Cleanup
+helm uninstall my-valkey
+kind delete cluster --name valkey-test
+```
+
+---
+
 ## Chart Comparison
 
 | Feature | Official Valkey Chart | Bitnami Chart |
@@ -44,7 +74,7 @@ helm install my-valkey valkey/valkey
 
 # Replication (1 primary + N replicas)
 helm install my-valkey valkey/valkey \
-  --set architecture=replication \
+  --set replica.enabled=true \
   --set replica.replicas=3 \
   --set auth.enabled=true \
   --set auth.password=secretpassword
@@ -53,9 +83,6 @@ helm install my-valkey valkey/valkey \
 ### Key Values
 
 ```yaml
-# Architecture: standalone or replication
-architecture: replication
-
 # Authentication
 auth:
   enabled: true
@@ -63,21 +90,18 @@ auth:
   existingSecret: ""     # name of a Kubernetes Secret
   aclUsers: []           # additional ACL users
 
-# Replica configuration
+# Replica configuration (standalone when replica.enabled is false)
 replica:
   enabled: true
   replicas: 3
   persistence:
-    enabled: true
     size: 8Gi
     storageClass: ""     # use cluster default if empty
 
 # TLS
 tls:
   enabled: false
-  certFile: ""
-  keyFile: ""
-  caFile: ""
+  existingSecret: ""     # Secret with server.crt, server.key, ca.crt
 
 # Metrics (redis_exporter sidecar)
 metrics:
@@ -97,11 +121,11 @@ After deployment, connect from within the cluster:
 
 ```bash
 # Standalone
-valkey-cli -h my-valkey-master -p 6379 -a <password>
+valkey-cli -h my-valkey -p 6379 -a <password>
 
 # Replication - write to primary, read from replicas
-valkey-cli -h my-valkey-master -p 6379 -a <password>        # writes
-valkey-cli -h my-valkey-replicas -p 6379 -a <password>      # reads
+valkey-cli -h my-valkey -p 6379 -a <password>               # writes
+valkey-cli -h my-valkey-read -p 6379 -a <password>           # reads
 ```
 
 ## Bitnami Helm Chart

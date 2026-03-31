@@ -5,6 +5,35 @@ scrape configuration, metric naming, and multi-instance setups.
 
 ---
 
+## Tested Example: Valkey + Exporter via Docker
+
+```bash
+# Start Valkey
+docker run -d --name valkey -p 6379:6379 valkey/valkey:9
+
+# Start redis_exporter pointed at Valkey
+docker run -d --name valkey-exporter -p 9121:9121 \
+  -e REDIS_ADDR=valkey://host.docker.internal:6379 \
+  oliver006/redis_exporter
+
+# Generate some traffic
+valkey-cli SET test:key "hello"
+valkey-cli GET test:key
+
+# Verify exporter is scraping
+curl -s http://localhost:9121/metrics | grep redis_up
+# Expected: redis_up 1
+
+curl -s http://localhost:9121/metrics | grep redis_connected_clients
+# Expected: redis_connected_clients <N>
+
+# For Linux (no host.docker.internal), use --net=host instead:
+# docker run -d --name valkey-exporter --net=host \
+#   -e REDIS_ADDR=valkey://127.0.0.1:6379 oliver006/redis_exporter
+```
+
+---
+
 ## Exporter: oliver006/redis_exporter
 
 The `oliver006/redis_exporter` is the standard

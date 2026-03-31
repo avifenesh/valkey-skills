@@ -250,9 +250,9 @@ data = json.loads(zlib.decompress(raw))
 - [High Availability Best Practices](high-availability.md) - eviction and memory pressure during failover
 
 **Commands**:
-- [Hash Commands](../commands/hashes.md) - HSET, HMGET, hash bucketing for compact encoding
-- [Specialized Data Types](../commands/specialized.md) - HyperLogLog (12 KB cardinality), bitmaps (compact boolean flags)
-- [Server Commands](../commands/server.md) - MEMORY USAGE, MEMORY DOCTOR, INFO memory
+- [Hash Commands](../basics/data-types.md) - HSET, HMGET, hash bucketing for compact encoding
+- [Specialized Data Types](../basics/data-types.md) - HyperLogLog (12 KB cardinality), bitmaps (compact boolean flags)
+- [Server Commands](../basics/server-and-scripting.md) - MEMORY USAGE, MEMORY DOCTOR, INFO memory
 
 **Valkey Features**:
 - [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL to avoid splitting hashes for expiration
@@ -268,7 +268,7 @@ data = json.loads(zlib.decompress(raw))
 - [Security: Auth and ACL](../security/auth-and-acl.md) - ACL-restricted namespaces limit memory blast radius
 
 **Clients**:
-- [Clients Overview](../clients/overview.md) - client-side caching to reduce server memory pressure
+- Clients Overview (see valkey-glide skill) - client-side caching to reduce server memory pressure
 
 **Anti-Patterns**:
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - no `maxmemory`, missing TTL, values over 1 MB, and more

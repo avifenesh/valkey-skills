@@ -109,9 +109,9 @@ Atomic slot migration is enabled automatically in Valkey 9.0+ when using the clu
 - [Hash Field Expiration](hash-field-ttl.md) - per-field TTL on hash entries
 - [Polygon Geospatial Queries](geospatial.md) - GEOSEARCH BYPOLYGON (also 9.0)
 - [Performance Summary](performance-summary.md) - atomic slot migration performance context
-- [Server Commands](../commands/server.md) - SELECT, DBSIZE, and CONFIG GET for cluster-databases
-- [Transaction Commands](../commands/transactions.md) - all keys in a transaction must share the same hash slot
-- [Pub/Sub Commands](../commands/pubsub.md) - sharded pub/sub routes within the owning shard
+- [Server Commands](../basics/server-and-scripting.md) - SELECT, DBSIZE, and CONFIG GET for cluster-databases
+- [Transaction Commands](../basics/server-and-scripting.md) - all keys in a transaction must share the same hash slot
+- [Pub/Sub Commands](../basics/data-types.md) - sharded pub/sub routes within the owning shard
 - [Key Best Practices](../best-practices/keys.md) - cluster hash tags for key co-location
 - [Security: Auth and ACL](../security/auth-and-acl.md) - ACL database restrictions in cluster mode
 - For cluster operations: see valkey-ops `reference/cluster/resharding.md` and `reference/cluster/operations.md`

@@ -337,8 +337,8 @@ SET cache:stable:product_details "..." EX 86400   # 1 day
 
 ## See Also
 
-- [String Commands](../commands/strings.md) - SET with EX/PX, GET, GETEX for cache operations
-- [Hash Commands](../commands/hashes.md) - HSET, HGETALL for structured cached objects
+- [String Commands](../basics/data-types.md) - SET with EX/PX, GET, GETEX for cache operations
+- [Hash Commands](../basics/data-types.md) - HSET, HGETALL for structured cached objects
 - [Pub/Sub Patterns](pubsub-patterns.md) - keyspace notifications for cache invalidation events
 - [Lock Patterns](locks.md) - lock-based cache stampede prevention
 - [Session Patterns](sessions.md) - session storage with hashes and TTL (cache-adjacent)
@@ -351,7 +351,7 @@ SET cache:stable:product_details "..." EX 86400   # 1 day
 - [High Availability Best Practices](../best-practices/high-availability.md) - retry strategies for cache reads during failover
 - [Persistence Best Practices](../best-practices/persistence.md) - durability trade-offs for cache-backed data
 - [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions for cache key namespaces
-- [Clients Overview](../clients/overview.md) - client-side caching support and connection patterns
+- Clients Overview (see valkey-glide skill) - client-side caching support and connection patterns
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - missing TTL, no `maxmemory`, and cache-related mistakes
 - valkey-ops [performance/client-caching](../../../valkey-ops/reference/performance/client-caching.md) - CLIENT TRACKING server configuration
 - valkey-ops [configuration/eviction](../../../valkey-ops/reference/configuration/eviction.md) - eviction policy selection for caches

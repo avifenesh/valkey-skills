@@ -277,8 +277,8 @@ SSUBSCRIBE {user:1000}:presence
 
 ## See Also
 
-- [Pub/Sub Commands](../commands/pubsub.md) - SUBSCRIBE, PUBLISH, SSUBSCRIBE, SPUBLISH reference
-- [Stream Commands](../commands/streams.md) - durable messaging alternative to pub/sub
+- [Pub/Sub Commands](../basics/data-types.md) - SUBSCRIBE, PUBLISH, SSUBSCRIBE, SPUBLISH reference
+- [Stream Commands](../basics/data-types.md) - durable messaging alternative to pub/sub
 - [Queue Patterns](queues.md) - stream-based queues for reliable message processing
 - [Session Patterns](sessions.md) - keyspace notifications for session expiration handling
 - [Caching Patterns](caching.md) - client-side caching with server-assisted invalidation
@@ -289,7 +289,7 @@ SSUBSCRIBE {user:1000}:presence
 - [High Availability Best Practices](../best-practices/high-availability.md) - reconnection and resubscription during failover
 - [Memory Best Practices](../best-practices/memory.md) - subscriber output buffer memory impact
 - [Security: Auth and ACL](../security/auth-and-acl.md) - channel-level ACL restrictions for pub/sub
-- [Clients Overview](../clients/overview.md) - dedicated subscriber connections and PubSub state restoration
+- Clients Overview (see valkey-glide skill) - dedicated subscriber connections and PubSub state restoration
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - pub/sub for durable messaging, blocking commands on shared connections
 - valkey-ops [configuration/pubsub](../../../valkey-ops/reference/configuration/pubsub.md) - buffer limits, sharded pub/sub config, pattern performance
 - valkey-ops [performance/client-caching](../../../valkey-ops/reference/performance/client-caching.md) - CLIENT TRACKING configuration

@@ -6,6 +6,34 @@ Source: `src/config.c`, `src/aof.c` (Valkey source). Cross-ref: valkey-dev `refe
 
 ---
 
+## Tested Example: AOF with Hybrid Persistence
+
+```bash
+# Start Valkey with recommended AOF settings
+docker run -d --name valkey-aof -p 6379:6379 \
+  -v valkey-aof-data:/data valkey/valkey:9 \
+  valkey-server --appendonly yes --appendfsync everysec \
+  --aof-use-rdb-preamble yes --save ""
+
+# Write test data
+valkey-cli SET test:aof "persistence works"
+
+# Verify AOF is active
+valkey-cli INFO persistence | grep aof_enabled
+# Expected: aof_enabled:1
+
+# Trigger a manual rewrite and check
+valkey-cli BGREWRITEAOF
+valkey-cli INFO persistence | grep aof_rewrite_in_progress
+
+# Restart and verify data survived
+docker restart valkey-aof
+valkey-cli GET test:aof
+# Expected: "persistence works"
+```
+
+---
+
 ## When to Use AOF
 
 - You need higher durability than RDB alone

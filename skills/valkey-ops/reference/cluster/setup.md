@@ -4,6 +4,36 @@ Use when deploying a new Valkey Cluster, configuring cluster parameters, or unde
 
 ---
 
+## Tested Example: 6-Node Cluster on Localhost
+
+Start 6 nodes (3 primaries + 3 replicas) and create the cluster:
+
+```bash
+# Start 6 nodes on ports 7000-7005
+for port in 7000 7001 7002 7003 7004 7005; do
+  mkdir -p /tmp/valkey-cluster/${port}
+  valkey-server --port ${port} --cluster-enabled yes \
+    --cluster-config-file /tmp/valkey-cluster/${port}/nodes.conf \
+    --dir /tmp/valkey-cluster/${port} --daemonize yes --save ""
+done
+
+# Create cluster: first 3 are primaries, next 3 are replicas
+valkey-cli --cluster create \
+  127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 \
+  127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005 \
+  --cluster-replicas 1 --cluster-yes
+
+# Verify
+valkey-cli -c -p 7000 CLUSTER INFO
+# Expected: cluster_state:ok, cluster_slots_assigned:16384, cluster_size:3
+
+# Test write + redirect
+valkey-cli -c -p 7000 SET hello world
+valkey-cli -c -p 7001 GET hello
+```
+
+---
+
 ## Network Requirements
 
 Each cluster node requires two TCP ports, both reachable between all cluster nodes:

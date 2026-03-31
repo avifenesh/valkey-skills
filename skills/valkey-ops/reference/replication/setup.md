@@ -6,6 +6,32 @@ Source: `src/config.c`, `src/replication.c` (Valkey source).
 
 ---
 
+## Tested Example: Primary + Replica via Docker
+
+```bash
+# Start primary
+docker run -d --name vk-primary --net=host valkey/valkey:9 \
+  valkey-server --port 6379 --requirepass secret
+
+# Start replica
+docker run -d --name vk-replica --net=host valkey/valkey:9 \
+  valkey-server --port 6380 --replicaof 127.0.0.1 6379 \
+  --masterauth secret --requirepass secret
+
+# Write on primary, read on replica
+valkey-cli -p 6379 -a secret SET hello "replication works"
+valkey-cli -p 6380 -a secret GET hello
+# Expected: "replication works"
+
+# Verify replication status
+valkey-cli -p 6379 -a secret INFO replication | grep connected_slaves
+# Expected: connected_slaves:1
+valkey-cli -p 6380 -a secret INFO replication | grep master_link_status
+# Expected: master_link_status:up
+```
+
+---
+
 ## When to Use Replication
 
 - You need read scaling across multiple nodes

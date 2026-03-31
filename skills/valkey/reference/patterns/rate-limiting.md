@@ -322,10 +322,10 @@ HGETEX rate:user:42 EX 60 FIELDS 1 /api/orders
 
 ## See Also
 
-- [String Commands](../commands/strings.md) - INCR, EXPIRE for fixed window counters
-- [Hash Commands](../commands/hashes.md) - HSETEX, HINCRBY for per-field rate limiting
-- [Sorted Set Commands](../commands/sorted-sets.md) - ZADD, ZREMRANGEBYSCORE for sliding window log
-- [Scripting and Functions](../commands/scripting.md) - Lua scripts for token bucket
+- [String Commands](../basics/data-types.md) - INCR, EXPIRE for fixed window counters
+- [Hash Commands](../basics/data-types.md) - HSETEX, HINCRBY for per-field rate limiting
+- [Sorted Set Commands](../basics/data-types.md) - ZADD, ZREMRANGEBYSCORE for sliding window log
+- [Scripting and Functions](../basics/server-and-scripting.md) - Lua scripts for token bucket
 - [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL for hash-based rate limiting (Valkey 9.0+)
 - [Counter Patterns](counters.md) - sharded counters for high-throughput rate limit keys
 - [Lock Patterns](locks.md) - distributed locks for related concurrency control
@@ -336,5 +336,5 @@ HGETEX rate:user:42 EX 60 FIELDS 1 /api/orders
 - [Memory Best Practices](../best-practices/memory.md) - encoding thresholds for sorted set and hash-based rate limits
 - [High Availability Best Practices](../best-practices/high-availability.md) - rate limit behavior during failover
 - [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions for rate limit key namespaces
-- [Clients Overview](../clients/overview.md) - connection patterns for rate limit middleware
+- Clients Overview (see valkey-glide skill) - connection patterns for rate limit middleware
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - missing TTL on rate limit keys, hot key bottlenecks

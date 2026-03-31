@@ -312,9 +312,9 @@ Valkey 8.0+ uses I/O multithreading to parallelize network read/write while keep
 - [High Availability Best Practices](high-availability.md) - retry strategies, connection drop handling
 
 **Commands**:
-- [Scripting and Functions](../commands/scripting.md) - Lua scripts for atomic read-compute-write (vs pipelining)
-- [Transaction Commands](../commands/transactions.md) - MULTI/EXEC atomicity (vs pipeline batching)
-- [Server Commands](../commands/server.md) - SLOWLOG, LATENCY, INFO stats for diagnosis
+- [Scripting and Functions](../basics/server-and-scripting.md) - Lua scripts for atomic read-compute-write (vs pipelining)
+- [Transaction Commands](../basics/server-and-scripting.md) - MULTI/EXEC atomicity (vs pipeline batching)
+- [Server Commands](../basics/server-and-scripting.md) - SLOWLOG, LATENCY, INFO stats for diagnosis
 
 **Patterns**:
 - [Caching Patterns](../patterns/caching.md) - client-side caching to eliminate server round-trips
@@ -328,7 +328,7 @@ Valkey 8.0+ uses I/O multithreading to parallelize network read/write while keep
 - [Security: Auth and ACL](../security/auth-and-acl.md) - TLS I/O threading performance and connection setup
 
 **Clients**:
-- [Clients Overview](../clients/overview.md) - GLIDE auto-pipelining, connection pooling guidance
+- Clients Overview (see valkey-glide skill) - GLIDE auto-pipelining, connection pooling guidance
 
 **Valkey Features**:
 - [Performance Improvements Summary](../valkey-features/performance-summary.md) - I/O threading, dual-channel replication, per-version gains

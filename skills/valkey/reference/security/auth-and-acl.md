@@ -144,7 +144,7 @@ When requesting an ACL user, specify:
 | `@dangerous` | Potentially destructive commands (FLUSHALL, KEYS, DEBUG) |
 | `@scripting` | Lua scripting and Functions |
 
-View all categories at runtime: `ACL CAT` (see [Server Commands](../commands/server.md) for ACL introspection)
+View all categories at runtime: `ACL CAT` (see [Server Commands](../basics/server-and-scripting.md) for ACL introspection)
 
 ---
 
@@ -233,7 +233,7 @@ r = redis.Redis(
 | Rotate passwords regularly | Coordinate with ops for password rotation |
 | Do not use the default user in production | Create a named ACL user for each application |
 | Avoid `@admin` and `@dangerous` | Your application should not need FLUSHALL, KEYS, or CONFIG (see [Anti-Patterns](../anti-patterns/quick-reference.md)) |
-| Separate pub/sub connections | Subscriber connections are monopolized - use separate auth if needed (see [Pub/Sub Commands](../commands/pubsub.md)) |
+| Separate pub/sub connections | Subscriber connections are monopolized - use separate auth if needed (see [Pub/Sub Commands](../basics/data-types.md)) |
 
 ---
 
@@ -256,14 +256,14 @@ r = redis.Redis(
 - [Rate Limiting Patterns](../patterns/rate-limiting.md) - ACL restrictions for rate limit key namespaces
 
 **Commands**:
-- [Server Commands](../commands/server.md) - ACL LIST, ACL CAT, and runtime introspection
-- [Pub/Sub Commands](../commands/pubsub.md) - channel-level ACL restrictions and dedicated connections
+- [Server Commands](../basics/server-and-scripting.md) - ACL LIST, ACL CAT, and runtime introspection
+- [Pub/Sub Commands](../basics/data-types.md) - channel-level ACL restrictions and dedicated connections
 
 **Valkey Features**:
 - [Cluster Enhancements](../valkey-features/cluster-enhancements.md) - numbered databases and ACL database restrictions
 
 **Clients**:
-- [Clients Overview](../clients/overview.md) - TLS configuration per client library
+- Clients Overview (see valkey-glide skill) - TLS configuration per client library
 
 **Anti-Patterns**:
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - security anti-patterns (no auth, FLUSHALL accessible)

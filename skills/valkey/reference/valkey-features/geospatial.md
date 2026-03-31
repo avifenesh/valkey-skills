@@ -150,5 +150,5 @@ GEOADD key longitude latitude member [longitude latitude member ...]
 - [Hash Field Expiration](hash-field-ttl.md) - per-field TTL on hash entries (also 9.0)
 - [Conditional Operations](conditional-ops.md) - SET IFEQ and DELIFEQ
 - [Performance Summary](performance-summary.md) - version-by-version throughput and latency gains
-- [Specialized Data Types](../commands/specialized.md) - GEOADD, GEOSEARCH, GEODIST, GEOSEARCHSTORE command reference
-- [Sorted Set Commands](../commands/sorted-sets.md) - geospatial indexes are stored as sorted sets internally
+- [Specialized Data Types](../basics/data-types.md) - GEOADD, GEOSEARCH, GEODIST, GEOSEARCHSTORE command reference
+- [Sorted Set Commands](../basics/data-types.md) - geospatial indexes are stored as sorted sets internally

@@ -252,8 +252,8 @@ MEMORY DOCTOR
 - [High Availability Best Practices](high-availability.md) - retry strategies, failover impact on keys
 
 **Commands**:
-- [Hash Commands](../commands/hashes.md) - HSET, HMGET, HSCAN for hash-based key patterns
-- [Server Commands](../commands/server.md) - SCAN, OBJECT, MEMORY USAGE, INFO keyspace
+- [Hash Commands](../basics/data-types.md) - HSET, HMGET, HSCAN for hash-based key patterns
+- [Server Commands](../basics/server-and-scripting.md) - SCAN, OBJECT, MEMORY USAGE, INFO keyspace
 
 **Patterns**:
 - [Caching Patterns](../patterns/caching.md) - client-side caching for hot key mitigation
@@ -269,7 +269,7 @@ MEMORY DOCTOR
 - [Security: Auth and ACL](../security/auth-and-acl.md) - ACL key patterns for namespace-based access control
 
 **Clients**:
-- [Clients Overview](../clients/overview.md) - client-side key slot verification with CLUSTER KEYSLOT
+- Clients Overview (see valkey-glide skill) - client-side key slot verification with CLUSTER KEYSLOT
 
 **Valkey Features**:
 - [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL instead of per-key expiration

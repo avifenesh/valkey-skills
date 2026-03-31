@@ -1,210 +1,140 @@
-# Pub/Sub
+# Pub/Sub (Ruby)
 
-Use when you need real-time message broadcasting between clients - chat, notifications, event distribution, or live data feeds. For durable message processing with consumer groups and replay, see [Streams](streams.md) instead.
+Use when implementing real-time message broadcasting in Ruby - chat, notifications, event distribution, or inter-process messaging. For durable message processing with consumer groups, use Streams instead.
 
-GLIDE supports Valkey's publish/subscribe messaging with three subscription modes, automatic reconnection with resubscription, and a synchronizer that continuously reconciles desired vs actual subscription state. Sharded subscriptions require Valkey 7.0+. Dynamic subscribe/unsubscribe requires GLIDE 2.3+.
+GLIDE Ruby supports all three PubSub subscription modes (exact, pattern, sharded) plus introspection commands. The API follows redis-rb conventions.
 
 ## Subscription Modes
 
-| Mode | Command | Description | Cluster Requirement |
-|------|---------|-------------|---------------------|
-| Exact | SUBSCRIBE / UNSUBSCRIBE | Subscribe to specific channel names | All modes |
-| Pattern | PSUBSCRIBE / PUNSUBSCRIBE | Subscribe using glob patterns (e.g., `news.*`) | All modes |
-| Sharded | SSUBSCRIBE / SUNSUBSCRIBE | Slot-scoped channels routed by hash slot | Cluster mode, Valkey 7.0+ |
+| Mode | Subscribe | Unsubscribe | Publish | Cluster Only |
+|------|-----------|-------------|---------|--------------|
+| Exact | `subscribe` | `unsubscribe` | `publish` | No |
+| Pattern | `psubscribe` | `punsubscribe` | `publish` | No |
+| Sharded | `ssubscribe` | `sunsubscribe` | `spublish` | Yes (Valkey 7.0+) |
 
-In cluster mode, sharded subscriptions are slot-deterministic - the subscription is managed by the node owning the channel's hash slot. GLIDE handles slot migration automatically.
+## Subscribe and Publish
 
-## Subscription Models
+```ruby
+require "valkey"
 
-### Historical: Immutable Subscriptions (pre-2.3)
+# Subscriber - dedicated client
+subscriber = Valkey.new(host: "localhost", port: 6379)
+subscriber.subscribe("news", "events")
 
-Subscriptions were configured at client creation time and could not be changed. The configuration was passed through the client configuration object as initial subscriptions.
-
-### Dynamic Subscriptions (GLIDE 2.3+)
-
-Runtime `subscribe()` and `unsubscribe()` methods allow modifying subscriptions after client creation. The synchronizer manages the desired-vs-actual state and reconciles differences.
-
-Two operation modes are available:
-- **Non-blocking (lazy)**: Returns immediately, reconciliation happens asynchronously
-- **Blocking**: Waits until the subscription change is confirmed on the server (with configurable timeout)
-
-## Architecture: PubSub Synchronizer
-
-The Rust core implements a `GlidePubSubSynchronizer` that uses an observer pattern:
-
-- `desired_subscriptions` - what the user wants to be subscribed to (modified by API calls)
-- `current_subscriptions_by_address` - what the client is actually subscribed to (updated by server push notifications)
-
-A background reconciliation task runs at a configurable interval (default: 3 seconds) to align current subscriptions with desired subscriptions. The interval is configurable via `pubsub_reconciliation_interval` in the advanced client configuration.
-
-The synchronizer handles:
-- Subscribing to channels the user wants but the client is not subscribed to
-- Unsubscribing from channels the client is subscribed to but the user no longer wants
-- Topology changes - when slots migrate to new nodes, subscriptions are moved accordingly
-- Node disconnections - cleared subscriptions are automatically resubscribed
-
-## Message Kinds
-
-Messages received from PubSub carry a kind that indicates how they were matched:
-
-| Kind | Description |
-|------|-------------|
-| Message | Received via exact channel subscription (SUBSCRIBE) |
-| PMessage | Received via pattern subscription (PSUBSCRIBE) |
-| SMessage | Received via sharded subscription (SSUBSCRIBE) |
-
-## Message Receiving Methods
-
-Three approaches for consuming messages:
-
-1. **Polling** (`tryGetMessage` / `try_get_pubsub_message`) - non-blocking, returns next message or nothing
-2. **Async** (`getMessage` / `get_pubsub_message`) - returns Future/Promise, waits for next message
-3. **Callback** - user-provided function invoked on message arrival (must be thread-safe)
-
-Extract messages promptly when using async/polling mode - the internal buffer is unbounded and will grow indefinitely if not drained.
-
-## Message Reception (Python)
-
-```python
-# Blocking - waits for a message
-msg = await subscriber.get_pubsub_message()
-
-# Non-blocking - returns None if no message available
-msg = subscriber.try_get_pubsub_message()
-
-# Callback-driven (set during client configuration)
-def on_message(msg, context):
-    print(f"Channel: {msg.channel}, Message: {msg.message}")
+# Publisher - separate client
+publisher = Valkey.new(host: "localhost", port: 6379)
+count = publisher.publish("events", "Hello subscribers!")
+puts "Delivered to #{count} subscribers"
 ```
 
-## Python Example
+## Pattern Subscriptions
 
-```python
-from glide import (
-    GlideClient,
-    GlideClientConfiguration,
-    GlideClusterClientConfiguration,
-    NodeAddress,
+```ruby
+subscriber = Valkey.new
+subscriber.psubscribe("news.*", "events:*")
+
+# Unsubscribe from specific patterns
+subscriber.punsubscribe("news.*")
+
+# Unsubscribe from all patterns
+subscriber.punsubscribe
+```
+
+## Sharded PubSub (Cluster Mode)
+
+Sharded channels are routed by hash slot. Requires Valkey 7.0+ and cluster mode.
+
+```ruby
+client = Valkey.new(
+  nodes: [{ host: "node1.example.com", port: 6379 }],
+  cluster_mode: true
 )
 
-# Subscriber client - standalone
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("localhost", 6379)],
-)
-subscriber = await GlideClient.create(config)
+# Subscribe to sharded channels
+client.ssubscribe("shard-news", "shard-updates")
 
-# Dynamic subscribe (GLIDE 2.3+)
-await subscriber.subscribe(["news", "events"])
-await subscriber.psubscribe(["user:*"])
-
-# Receive messages
-msg = await subscriber.get_pubsub_message()
-print(f"Channel: {msg.channel}, Message: {msg.message}")
+# Publish to sharded channel
+client.spublish("shard-news", "Breaking news!")
 
 # Unsubscribe
-await subscriber.unsubscribe(["news"])
-
-# Publisher client - separate instance
-publisher = await GlideClient.create(config)
-await publisher.publish("events", "Hello subscribers!")
+client.sunsubscribe("shard-news")
+client.sunsubscribe  # all sharded channels
 ```
 
-## Java Example
+## PubSub Introspection
 
-```java
-import glide.api.GlideClient;
-import glide.api.GlideClusterClient;
+Query active channels and subscriber counts without entering subscriber mode:
 
-// Create subscriber and publisher as separate clients
-GlideClient subscriber = GlideClient.createClient(config).get();
-GlideClient publisher = GlideClient.createClient(config).get();
+```ruby
+client = Valkey.new
 
-// Subscribe
-subscriber.subscribe(new String[]{"news", "events"}).get();
+# List active channels
+channels = client.pubsub_channels
+# => ["news", "events"]
 
-// Publish
-publisher.publish("events", "Hello subscribers!").get();
+# Filter by pattern
+channels = client.pubsub_channels("news.*")
+# => ["news.sports", "news.tech"]
+
+# Subscriber counts for specific channels
+counts = client.pubsub_numsub("news", "events")
+# => ["news", 5, "events", 3]
+
+# Number of active pattern subscriptions
+pat_count = client.pubsub_numpat
+# => 2
+
+# Sharded channel introspection (cluster only)
+sharded = client.pubsub_shardchannels
+shard_counts = client.pubsub_shardnumsub("shard1", "shard2")
 ```
 
-## Node.js Example
+### Convenience Method
 
-```javascript
-import { GlideClient } from "@valkey/valkey-glide";
-
-// Subscriber - separate client instance
-const subscriber = await GlideClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-});
-
-// Publisher
-const publisher = await GlideClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-});
-
-await subscriber.subscribe(["news", "events"]);
-await publisher.publish("events", "Hello!");
+```ruby
+# All introspection via pubsub() helper
+client.pubsub(:channels)
+client.pubsub(:channels, "news.*")
+client.pubsub(:numsub, "ch1", "ch2")
+client.pubsub(:numpat)
+client.pubsub(:shardchannels)
+client.pubsub(:shardnumsub, "shard1")
 ```
 
-## Dedicated Subscriber Client
+## PubSub Callback
 
-A subscriber client is dedicated to listening - it enters a special mode where most regular commands are unavailable. Always use separate clients for publishing and subscribing:
+Messages arrive via a callback at the FFI layer. The callback receives:
 
-```python
-# Correct: separate clients
-subscriber = await GlideClient.create(config)
-publisher = await GlideClient.create(config)
+| Field | Type | Description |
+|-------|------|-------------|
+| `kind` | Integer | Message kind (exact, pattern, sharded) |
+| `message` | String | The published payload |
+| `channel` | String | Channel the message was published to |
+| `pattern` | String | Matching pattern (pattern subscriptions only) |
 
-# Incorrect: same client for both pub and sub
-# client.subscribe(...)  # Now client is in subscriber mode
-# client.set(...)        # This will fail
+## redis-rb Migration
+
+The PubSub API follows redis-rb conventions:
+
+```ruby
+# redis-rb
+redis = Redis.new
+redis.subscribe("channel") do |on|
+  on.message { |ch, msg| puts "#{ch}: #{msg}" }
+end
+
+# valkey-rb
+valkey = Valkey.new
+valkey.subscribe("channel")
+# Messages delivered via callback mechanism
 ```
 
-## Automatic Reconnection
+The subscribe/unsubscribe method signatures are identical. Message delivery mechanism differs - valkey-rb uses FFI callbacks through the Rust core rather than redis-rb's Ruby-level event loop.
 
-When a connection drops, GLIDE:
+## Important Notes
 
-1. Reconnects using the configured backoff strategy (see [connection-model](../architecture/connection-model.md) for reconnection details)
-2. Clears the `current_subscriptions_by_address` for the disconnected node
-3. Triggers reconciliation, which resubscribes to all desired channels
-4. For sharded subscriptions, handles slot migration - resubscribing to new slot owners
-
-This is managed by the `GlidePubSubSynchronizer` in the Rust core, which uses `Weak` references to avoid memory leaks and `Notify` primitives for efficient wake-up.
-
-## Topology Change Handling
-
-When cluster topology changes (slot migrations, node additions/removals):
-
-1. The synchronizer receives the new slot map via `handle_topology_refresh`
-2. For each current subscription, it checks if the owning node has changed
-3. Migrated subscriptions are queued for unsubscribe from the old node
-4. The reconciliation loop then resubscribes on the new correct node
-5. For removed nodes, all their subscriptions are cleared and resubscribed elsewhere
-
-## Configuration
-
-```python
-from glide import AdvancedGlideClientConfiguration
-
-# Configure reconciliation interval (milliseconds)
-advanced = AdvancedGlideClientConfiguration(
-    pubsub_reconciliation_interval=5000,  # 5 seconds
-)
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("localhost", 6379)],
-    advanced_config=advanced,
-)
-```
-
-## Message Loss Caveat
-
-During automatic reconnection and resubscription, messages can be lost. This is inherent to the RESP protocol's at-most-once delivery semantics. Applications requiring stronger guarantees should implement application-level acknowledgment using Valkey Streams instead of PubSub.
-
-## Subscription State Introspection
-
-GLIDE provides `get_subscriptions()` that returns both desired and actual subscription state, organized by kind (Exact, Pattern, Sharded). This is useful for debugging synchronization issues - comparing desired vs actual reveals whether the synchronizer has caught up after topology changes or reconnections.
-
-## Related Features
-
-- [Streams](streams.md) - durable, ordered message processing with consumer groups and replay capability; use Streams when you need at-least-once delivery guarantees
-- [Logging](logging.md) - enable Debug level to see subscription state changes and reconciliation activity
-- [OpenTelemetry](opentelemetry.md) - PubSub synchronization state is reported as OTel metrics (out-of-sync events, last sync timestamp)
+1. **Separate clients for pub and sub.** A subscribing client enters a special mode where regular commands are unavailable.
+2. **Synchronous API.** Subscribe calls block the current thread in subscriber mode.
+3. **Automatic reconnection.** On disconnect, GLIDE resubscribes to all channels automatically via the Rust core.
+4. **Message loss during reconnect.** PubSub is at-most-once delivery. Use Streams for durability.
+5. **Full sharded PubSub.** Unlike redis-rb, valkey-rb supports sharded subscribe/publish out of the box.

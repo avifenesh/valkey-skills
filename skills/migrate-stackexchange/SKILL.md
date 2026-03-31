@@ -1,6 +1,6 @@
 ---
 name: migrate-stackexchange
-description: "Use when migrating C#/.NET applications from StackExchange.Redis to Valkey GLIDE. Covers API mapping, configuration changes, connection setup, error handling differences, and common migration gotchas."
+description: "Use when migrating C#/.NET applications from StackExchange.Redis to Valkey GLIDE (preview, .NET 8.0+). Covers API mapping, separate GlideClient/GlideClusterClient types, no IDatabase layer, no fire-and-forget, PubSub (static and dynamic), Batch API for transactions, and common gotchas."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
@@ -263,8 +263,40 @@ await sub.SubscribeAsync("channel", (channel, message) => {
 await sub.PublishAsync("channel", "hello");
 ```
 
-**GLIDE:**
-Pub/Sub in the GLIDE C# client follows the same pattern as other GLIDE languages - subscriptions are configured at client creation time or via dynamic `subscribe()` (GLIDE 2.3+). Message reception uses either callback or queue-based approaches.
+**GLIDE (static subscriptions - at client creation):**
+```csharp
+var config = new StandaloneClientConfigurationBuilder()
+    .WithAddress("localhost", 6379)
+    .WithPubSubSubscriptionConfig(new StandalonePubSubSubscriptionConfig()
+        .WithChannel("channel")
+        .WithPattern("events:*")
+        .WithCallback((msg, ctx) => {
+            Console.WriteLine($"[{msg.Channel}] {msg.Message}");
+        }))
+    .Build();
+
+await using var subscriber = await GlideClient.CreateClient(config);
+```
+
+**GLIDE (dynamic subscriptions - GLIDE 2.3+):**
+```csharp
+// Blocking subscribe - waits for confirmation
+await subscriber.SubscribeAsync("channel", TimeSpan.FromSeconds(5));
+await subscriber.PSubscribeAsync("events:*", TimeSpan.FromSeconds(5));
+
+// Lazy subscribe - returns immediately
+await subscriber.SubscribeLazyAsync("updates");
+await subscriber.PSubscribeLazyAsync("logs:*");
+
+// Unsubscribe
+await subscriber.UnsubscribeAsync("channel", TimeSpan.FromSeconds(5));
+await subscriber.UnsubscribeLazyAsync(); // all channels
+
+// Publish (use a separate client)
+await publisher.PublishAsync("channel", "hello");
+```
+
+Use a dedicated client for subscriptions - a subscribing client enters a special mode where most regular commands are unavailable. GLIDE automatically resubscribes on reconnection.
 
 ---
 

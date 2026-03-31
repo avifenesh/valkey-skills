@@ -138,11 +138,11 @@ Use `CLIENT TRACKING` to cache frequently-read keys locally. The server sends in
 - [Conditional Operations](conditional-ops.md) - SET IFEQ and DELIFEQ
 - [Polygon Geospatial Queries](geospatial.md) - GEOSEARCH BYPOLYGON in 9.0
 - [Performance Best Practices](../best-practices/performance.md) - pipelining, connection pooling, SCAN vs KEYS
-- [Clients Overview](../clients/overview.md) - GLIDE's built-in auto-pipelining
-- [String Commands](../commands/strings.md) - SET/GET operations benefit from pipeline prefetch and zero-copy
-- [Hash Commands](../commands/hashes.md) - HGETALL and HSCAN benefit from iterator prefetch (3.5x faster)
-- [Sorted Set Commands](../commands/sorted-sets.md) - ZRANK optimization (45% faster in 8.1+)
-- [Specialized Data Types](../commands/specialized.md) - BITCOUNT and PFMERGE SIMD optimizations
-- [Server Commands](../commands/server.md) - SCAN iterator prefetch and COMMANDLOG for performance diagnosis
+- Clients Overview (see valkey-glide skill) - GLIDE's built-in auto-pipelining
+- [String Commands](../basics/data-types.md) - SET/GET operations benefit from pipeline prefetch and zero-copy
+- [Hash Commands](../basics/data-types.md) - HGETALL and HSCAN benefit from iterator prefetch (3.5x faster)
+- [Sorted Set Commands](../basics/data-types.md) - ZRANK optimization (45% faster in 8.1+)
+- [Specialized Data Types](../basics/data-types.md) - BITCOUNT and PFMERGE SIMD optimizations
+- [Server Commands](../basics/server-and-scripting.md) - SCAN iterator prefetch and COMMANDLOG for performance diagnosis
 - For I/O thread configuration: see valkey-ops `reference/performance/io-threads.md`
 - For memory tuning: see valkey-ops `reference/performance/memory.md`

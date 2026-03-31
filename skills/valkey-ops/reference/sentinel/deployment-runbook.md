@@ -4,6 +4,42 @@ Use when deploying Sentinel for the first time, configuring Sentinel directives,
 
 ---
 
+## Tested Example: Minimal Sentinel Setup (Docker)
+
+One primary, two replicas, three Sentinels - all on localhost using host networking:
+
+```bash
+# Start data nodes
+docker run -d --name vk-primary --net=host valkey/valkey:9 \
+  valkey-server --port 6379 --requirepass secret --masterauth secret
+docker run -d --name vk-replica1 --net=host valkey/valkey:9 \
+  valkey-server --port 6380 --replicaof 127.0.0.1 6379 \
+  --requirepass secret --masterauth secret
+docker run -d --name vk-replica2 --net=host valkey/valkey:9 \
+  valkey-server --port 6381 --replicaof 127.0.0.1 6379 \
+  --requirepass secret --masterauth secret
+
+# Start 3 Sentinels (each needs a writable config file)
+for port in 26379 26380 26381; do
+  cat > /tmp/sentinel-${port}.conf <<EOF
+port ${port}
+sentinel monitor mymaster 127.0.0.1 6379 2
+sentinel down-after-milliseconds mymaster 5000
+sentinel failover-timeout mymaster 10000
+sentinel auth-pass mymaster secret
+EOF
+  docker run -d --name sentinel-${port} --net=host \
+    -v /tmp/sentinel-${port}.conf:/etc/sentinel.conf \
+    valkey/valkey:9 valkey-sentinel /etc/sentinel.conf
+done
+
+# Verify
+valkey-cli -p 26379 SENTINEL ckquorum mymaster
+# Expected: OK 3 usable Sentinels. Quorum and failover authorization is possible.
+```
+
+---
+
 ## Step-by-Step Deployment
 
 ### Prerequisites

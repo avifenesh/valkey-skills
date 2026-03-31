@@ -1,176 +1,127 @@
 # Performance Tuning
 
-Use when optimizing GLIDE throughput and latency, choosing between GLIDE and native clients, or tuning inflight request limits and batching strategies. For deployment configuration and timeout tuning, see `production.md`. For error recovery patterns, see `error-handling.md`.
+Use when optimizing GLIDE Java throughput and latency, tuning inflight limits, or choosing batching strategies.
 
 ---
 
-## Benchmarks: GLIDE vs Native Clients
+## Batching Is the Top Optimization
 
-### Sequential Operations (Single-Threaded, Node.js)
+Batching amortizes the JNI FFI overhead across all commands - one crossing per batch instead of one per command. Batched workloads are competitive with Jedis and Lettuce.
 
-| Operation | redis (RESP3) | ioredis | valkey-glide |
-|-----------|--------------|---------|--------------|
-| SET (ops/s) | 8,385 | 8,158 | 6,585 |
-| GET (ops/s) | 7,793 | 8,727 | 7,193 |
-| HSET (ops/s) | 7,860 | 7,304 | 6,754 |
-| HGET (ops/s) | 8,675 | 8,618 | 6,660 |
+### Non-Atomic Pipeline
 
-GLIDE is roughly 15-20% slower than native clients for sequential operations. This overhead comes from the FFI bridge between the language wrapper and the Rust core. Every command crosses the boundary (napi-rs for Node.js, PyO3 as the FFI bridge for Python with Protobuf used for ConnectionRequest serialization, JNI for Java, CGO for Go), adding fixed per-call latency.
+```java
+import glide.api.models.Batch;
 
-### Batched Operations (100 SETs per Batch, Node.js)
-
-| Client | ops/s | avg latency |
-|--------|-------|-------------|
-| redis (RESP3) multi | 3,615 | 0.277ms |
-| valkey-glide atomic | 3,458 | 0.289ms |
-| ioredis pipeline | 3,334 | 0.300ms |
-
-Batched workloads are competitive. The FFI overhead is amortized across all commands in the batch - one crossing per batch instead of one per command. Pipelined approaches show 190-257% higher throughput compared to individual async requests.
-
-### GLIDE Strengths in Production
-
-Raw throughput benchmarks do not capture GLIDE's differences in real production conditions:
-
-- **Cluster failover**: GLIDE automatically detects topology changes, redirects MOVED/ASK errors, and re-routes commands without application intervention. Native clients often require manual handling or library-specific configuration.
-- **Reconnection**: Automatic exponential backoff with jitter. Native clients vary - some drop requests, some block, some require manual reconnection.
-- **Topology changes**: Proactive background monitoring with consensus-based resolution. GLIDE queries multiple nodes and picks the view with highest agreement.
-- **Multi-slot commands**: MGET, MSET, DEL, EXISTS are automatically split across slots, dispatched, and reassembled.
-
----
-
-## Inflight Request Limiting
-
-GLIDE caps concurrent inflight requests at **1000 per client** (constant `DEFAULT_MAX_INFLIGHT_REQUESTS` in `glide-core/src/client/mod.rs`).
-
-### Little's Law Reasoning
-
-The default is derived from Little's Law in queuing theory:
-
-```
-L = lambda * W
-
-Expected max request rate: 50,000 requests/second
-Expected response time:    1 millisecond
-Required inflight:         50,000 * 0.001 = 50 requests
+Batch pipeline = new Batch(false);
+for (int i = 0; i < 100; i++) {
+    pipeline.set("key:" + i, "value:" + i);
+}
+Object[] results = client.exec(pipeline, true).get(10000, TimeUnit.MILLISECONDS);
+// One round-trip for 100 commands
 ```
 
-The value of 1000 provides a 20x buffer for bursts while still preventing resource exhaustion. Requests beyond the limit are rejected immediately.
+### Atomic Transaction
 
-### When You Hit the Limit
-
-If requests are being rejected due to inflight limits:
-
-1. **Batch commands** - combine multiple commands into a single Batch/pipeline. One batch counts as one inflight request regardless of how many commands it contains.
-2. **Create additional client instances** - each client gets its own connection(s) and its own 1000-request budget.
-3. **Review your concurrency** - if you genuinely need 1000+ concurrent requests to a single node, the bottleneck is likely server-side.
-
-### Custom Limits
-
-All languages expose an `inflight_requests_limit` configuration option. Lowering it can protect a Valkey node from overload. Raising it above 1000 is rarely necessary.
-
-```python
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("localhost", 6379)],
-    inflight_requests_limit=500,  # Lower for constrained servers
-)
+```java
+Batch tx = new Batch(true)
+    .set("{account}:src", "100")
+    .set("{account}:dst", "0")
+    .incrBy("{account}:dst", 50)
+    .decrBy("{account}:src", 50);
+Object[] results = client.exec(tx, true).get(5000, TimeUnit.MILLISECONDS);
 ```
 
----
-
-## Batching for Throughput
-
-Batching is the single most effective optimization. Use non-atomic batches (pipelines) for throughput; use atomic batches (transactions) only when you need MULTI/EXEC guarantees.
-
-### Non-Atomic (Pipeline) - Throughput Optimized
-
-```python
-pipe = Batch(is_atomic=False)
-for i in range(100):
-    pipe.set(f"key:{i}", f"value:{i}")
-result = await client.exec(pipe)
-```
-
-One FFI crossing, one round trip for 100 commands. Cross-slot operations are automatically split in cluster mode.
-
-### Atomic (Transaction) - Consistency Optimized
-
-```python
-tx = Batch(is_atomic=True)
-tx.set("{account}:src", "100")
-tx.set("{account}:dst", "0")
-tx.incrby("{account}:dst", 50)
-tx.decrby("{account}:src", 50)
-result = await client.exec(tx, raise_on_error=True)
-```
-
-All keys must hash to the same slot in cluster mode. Use hash tags `{tag}` to ensure co-location.
+All keys must share a hash slot in cluster mode. Use `{tag}` hash tags.
 
 ### Batch Size Guidelines
 
 | Batch Size | Trade-off |
 |------------|-----------|
-| 10-50 | Good default. Low latency, good throughput improvement |
+| 10-50 | Good default. Low latency, solid throughput gain |
 | 50-200 | Best throughput. Slight increase in per-batch latency |
 | 200-1000 | Diminishing returns. Risk of large response buffers |
-| 1000+ | Avoid. Memory pressure, long response parsing time |
+| 1000+ | Avoid. Memory pressure and long parsing time |
 
 ---
 
-## Connection Model Differences
+## CompletableFuture Best Practices
 
-GLIDE uses a single multiplexed connection per node. All requests pipeline through this connection using Valkey's built-in request pipelining.
+Always use timed gets. Never call bare `.get()`:
 
-### No Pool Overhead
+```java
+// Good: bounded wait
+String value = client.get("key").get(500, TimeUnit.MILLISECONDS);
 
-Traditional clients maintain connection pools (typically 10-50 connections). This means:
-- Memory overhead per connection (kernel buffers, TLS state)
-- Pool management complexity (sizing, health checks, idle timeout)
-- Contention under high concurrency (pool exhaustion, queue wait)
+// Bad: blocks forever if connection stalls
+String value = client.get("key").get();
+```
 
-GLIDE eliminates all of this. One connection handles all traffic to a given node.
+For parallel operations, use `CompletableFuture.allOf()`:
 
-### When You Need Multiple Clients
-
-Create separate GLIDE client instances only for:
-- **Blocking commands** (BLPOP, BRPOP, BLMOVE, XREADGROUP with BLOCK) - these tie up the connection
-- **WATCH/UNWATCH** - requires connection-level isolation for optimistic locking
-- **Large value transfers** - prevents head-of-line blocking for other operations
-- **PubSub subscribers** - dedicated listener that cannot share with command traffic
-
----
-
-## TCP Tuning
-
-GLIDE enables TCP_NODELAY by default (`tcp_nodelay` defaults to `true` in `types.rs`). This disables Nagle's algorithm, ensuring commands are sent immediately rather than buffered. This is the correct setting for latency-sensitive Valkey workloads.
-
-Do not disable TCP_NODELAY unless you have measured and confirmed that batching at the TCP level helps your specific workload.
+```java
+CompletableFuture<String> f1 = client.get("key1");
+CompletableFuture<String> f2 = client.get("key2");
+CompletableFuture<String> f3 = client.get("key3");
+CompletableFuture.allOf(f1, f2, f3).get(2000, TimeUnit.MILLISECONDS);
+```
 
 ---
 
-## When to Choose GLIDE
+## Inflight Request Limit
 
-### Choose GLIDE When
+GLIDE caps concurrent inflight requests at 1000 per client. Requests beyond the limit are rejected immediately.
 
-- You run Valkey Cluster and need automatic topology handling, failover, and slot-aware routing
-- You operate across multiple languages and want consistent behavior
-- You deploy in cloud environments and benefit from AZ Affinity (Valkey 8.0+)
-- You need built-in OpenTelemetry without wrapping every call
-- You want automatic PubSub resubscription on reconnect
-- Reliability matters more than squeezing the last 15% of sequential throughput
+```java
+GlideClientConfiguration config = GlideClientConfiguration.builder()
+    .address(NodeAddress.builder().host("localhost").port(6379).build())
+    .inflightRequestsLimit(500)  // lower for constrained servers
+    .build();
+```
 
-### Stick with Native Clients When
+If hitting the limit:
+1. Batch commands - one batch counts as one inflight request
+2. Create additional client instances - each gets its own 1000-request budget
+3. Review concurrency - 1000+ concurrent requests usually means the bottleneck is server-side
 
-- Maximum raw sequential throughput for a single language is critical
-- Your deployment is simple (single standalone node, no cluster)
-- You have deep operational expertise with your existing client
-- You want minimal binary dependencies (GLIDE ships a native Rust library)
-- Your application is mostly pipelining already and you do not need cluster features
+---
 
-### Migration Cost-Benefit
+## Connection Model
 
-The 15-20% sequential overhead disappears when you:
-1. Use batching (competitive or faster)
-2. Run in cluster mode (GLIDE's topology management prevents the latency spikes that native clients suffer during failover)
-3. Account for developer time saved by cross-language consistency
+GLIDE uses a single multiplexed connection per node. No connection pools to size or manage. All requests pipeline through one connection using Valkey's built-in pipelining.
 
-For production workloads using cluster mode or requiring high availability, GLIDE's reliability features may offset the sequential throughput difference. Evaluate based on your workload's sensitivity to failover latency vs steady-state throughput.
+### When to Create Multiple Clients
+
+- Blocking commands (BLPOP, BRPOP, XREADGROUP with BLOCK) - tie up the connection
+- WATCH/UNWATCH - requires connection-level isolation
+- Large value transfers - prevents head-of-line blocking
+- PubSub subscribers - dedicated listener, cannot share with command traffic
+
+---
+
+## Resource Management
+
+GlideClient implements `AutoCloseable`. Use try-with-resources:
+
+```java
+try (GlideClient client = GlideClient.createClient(config).get()) {
+    client.set("key", "value").get(500, TimeUnit.MILLISECONDS);
+}
+```
+
+---
+
+## When to Choose GLIDE over Jedis / Lettuce
+
+GLIDE has ~15-20% lower throughput for sequential single-command operations due to JNI overhead. This gap disappears with batching.
+
+Choose GLIDE when:
+- Running Valkey Cluster (automatic topology, failover, slot routing)
+- Needing built-in OpenTelemetry without wrapping every call
+- Wanting automatic PubSub resubscription on reconnect
+- Operating across multiple languages with consistent behavior
+
+Stick with native clients when:
+- Maximum raw sequential throughput is critical
+- Simple standalone deployment with no cluster
+- Deep existing operational expertise with Jedis/Lettuce

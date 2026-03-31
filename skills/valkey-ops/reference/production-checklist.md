@@ -4,6 +4,34 @@ Use when preparing a Valkey deployment for production, auditing an existing setu
 
 ---
 
+## Quick-Verify Script
+
+Run against a live instance to check the most critical production settings:
+
+```bash
+#!/usr/bin/env bash
+# Usage: ./verify-valkey.sh [host] [port] [password]
+H=${1:-127.0.0.1}; P=${2:-6379}; A=${3:+"-a $3"}
+CLI="valkey-cli -h $H -p $P $A --no-auth-warning"
+echo "=== Valkey Production Verify ==="
+echo "maxmemory:        $($CLI CONFIG GET maxmemory | tail -1)"
+echo "maxmemory-policy: $($CLI CONFIG GET maxmemory-policy | tail -1)"
+echo "appendonly:        $($CLI CONFIG GET appendonly | tail -1)"
+echo "tcp-keepalive:     $($CLI CONFIG GET tcp-keepalive | tail -1)"
+echo "protected-mode:    $($CLI CONFIG GET protected-mode | tail -1)"
+echo "connected_slaves:  $($CLI INFO replication | grep connected_slaves)"
+echo "cluster_enabled:   $($CLI INFO cluster | grep cluster_enabled)"
+echo "io_threads:        $($CLI CONFIG GET io-threads | tail -1)"
+echo "used_memory_human: $($CLI INFO memory | grep used_memory_human:)"
+echo "uptime_in_days:    $($CLI INFO server | grep uptime_in_days)"
+# [WARN] if maxmemory is 0 (unlimited)
+MM=$($CLI CONFIG GET maxmemory | tail -1)
+[ "$MM" = "0" ] && echo "[WARN] maxmemory is unlimited - set it explicitly"
+echo "=== Done ==="
+```
+
+---
+
 ## System
 
 - [ ] **vm.overcommit_memory = 1** - prevents BGSAVE/BGREWRITEAOF fork failures. Set in `/etc/sysctl.d/99-valkey.conf` or via init container in Kubernetes.

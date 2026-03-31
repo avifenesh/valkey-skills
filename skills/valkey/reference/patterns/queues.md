@@ -358,9 +358,9 @@ BZPOPMIN queue:priority 30
 
 ## See Also
 
-- [List Commands](../commands/lists.md) - LPUSH, BRPOP, LMOVE for list-based queues
-- [Stream Commands](../commands/streams.md) - XADD, XREADGROUP, XACK for stream queues
-- [Sorted Set Commands](../commands/sorted-sets.md) - ZADD, ZPOPMIN for priority queues
+- [List Commands](../basics/data-types.md) - LPUSH, BRPOP, LMOVE for list-based queues
+- [Stream Commands](../basics/data-types.md) - XADD, XREADGROUP, XACK for stream queues
+- [Sorted Set Commands](../basics/data-types.md) - ZADD, ZPOPMIN for priority queues
 - [Pub/Sub Patterns](pubsub-patterns.md) - fan-out messaging (alternative to point-to-point queues)
 - [Lock Patterns](locks.md) - coordinating access to shared resources
 - [Counter Patterns](counters.md) - idempotency keys for deduplicating queue messages
@@ -372,5 +372,5 @@ BZPOPMIN queue:priority 30
 - [Persistence Best Practices](../best-practices/persistence.md) - AOF durability for queue messages
 - [Cluster Best Practices](../best-practices/cluster.md) - hash tags for queue keys in cluster mode
 - [Security: Auth and ACL](../security/auth-and-acl.md) - ACL permissions for queue workers
-- [Clients Overview](../clients/overview.md) - dedicated connections for blocking queue consumers
+- Clients Overview (see valkey-glide skill) - dedicated connections for blocking queue consumers
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - unbounded list/stream growth, blocking commands on shared connections

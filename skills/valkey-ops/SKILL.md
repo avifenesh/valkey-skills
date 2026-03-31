@@ -7,23 +7,24 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 
 # Valkey Operations Reference
 
-52 source-verified reference docs for deploying and operating self-hosted Valkey. All config defaults verified against actual Valkey source code.
-
-Browse by topic below. Each link leads to a focused reference with config tables, runbooks, and operational procedures.
+53 source-verified reference docs for deploying and operating self-hosted Valkey. All config defaults verified against actual Valkey source code.
 
 ## Routing
 
-- Installing/deploying -> Deployment
-- Config tuning -> Configuration
-- High availability -> Sentinel, Cluster
-- Data safety -> Persistence, Replication
-- Lockdown -> Security
-- Observability -> Monitoring
-- Slow/high latency -> Performance, Troubleshooting
-- Crashes/OOM -> Troubleshooting
-- Version upgrades -> Upgrades
-- K8s deployment -> Kubernetes
-- Pre-launch check -> Production Checklist
+- Install, build from source, package manager, Docker, Compose, systemd, bare metal, multi-instance -> Deployment
+- Config tuning, maxmemory, eviction, encoding thresholds, lazyfree, logging, CPU pinning, workload presets, pubsub buffers -> Configuration
+- High availability, Sentinel, failover detection, quorum, split-brain, min-replicas -> Sentinel
+- Cluster setup, hash slots, resharding, node add/remove, atomic migration, replica migration, consistency -> Cluster
+- Persistence, RDB, AOF, hybrid, fsync, BGSAVE, backup, restore, disaster recovery -> Persistence
+- Replication, primary-replica, REPLICAOF, backlog, diskless sync, dual-channel, replication lag -> Replication
+- ACL, TLS, certificates, mutual TLS, protected mode, rename-command, hardening, network security -> Security
+- Monitoring, INFO, metrics, Prometheus, Grafana, alerting, commandlog, slow log -> Monitoring
+- Performance, I/O threads, memory fragmentation, defragmentation, latency, durability, client-side caching, CLIENT TRACKING, benchmarking -> Performance
+- OOM, out of memory, crashes, slow commands, replication lag diagnosis, cluster partitions, network splits, diagnostics -> Troubleshooting
+- Version upgrades, compatibility, Redis to Valkey migration, rolling upgrade -> Upgrades
+- Kubernetes, Helm, operators, StatefulSet, PVC, probes, resource sizing, kernel tuning -> Kubernetes
+- Capacity planning, memory sizing, connection planning, cluster sizing -> Operations
+- Pre-launch check, production readiness, go-live checklist -> Production Checklist
 
 
 ## Deployment
@@ -116,6 +117,7 @@ Browse by topic below. Each link leads to a focused reference with config tables
 | Durability vs performance spectrum, TCP tuning | [durability](reference/performance/durability.md) |
 | Active defragmentation config and monitoring | [defragmentation](reference/performance/defragmentation.md) |
 | Client-side caching (CLIENT TRACKING) | [client-caching](reference/performance/client-caching.md) |
+| valkey-benchmark, valkey-perf-benchmark, best practices | [benchmarking](reference/performance/benchmarking.md) |
 
 
 ## Troubleshooting
@@ -143,7 +145,7 @@ Browse by topic below. Each link leads to a focused reference with config tables
 | Topic | Reference |
 |-------|-----------|
 | Official and Bitnami Helm charts, key values | [helm](reference/kubernetes/helm.md) |
-| Hyperspike and SAP operators, CRD examples | [operators](reference/kubernetes/operators.md) |
+| Official, Hyperspike, and SAP operators, CRD examples | [operators](reference/kubernetes/operators.md) |
 | StatefulSet patterns, PVCs, probes, resource sizing, PDB | [statefulset](reference/kubernetes/statefulset.md) |
 | Kernel tuning, Docker/NAT, monitoring sidecars | [tuning-k8s](reference/kubernetes/tuning-k8s.md) |
 

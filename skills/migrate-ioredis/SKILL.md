@@ -1,6 +1,6 @@
 ---
 name: migrate-ioredis
-description: "Use when migrating Node.js applications from ioredis to Valkey GLIDE. Covers API mapping, configuration changes, connection setup, error handling differences, and common migration gotchas."
+description: "Use when migrating Node.js applications from ioredis to Valkey GLIDE. Covers API mapping, configuration, connection setup, error handling, PubSub (creation-time only - no runtime subscribe), reversed publish arg order, Batch API for pipelines/transactions, and common gotchas."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
@@ -283,6 +283,70 @@ Note: GLIDE returns flat result arrays, not the [error, result] tuple format tha
 
 ---
 
+## Pub/Sub
+
+**ioredis:**
+```javascript
+const sub = redis.duplicate();
+sub.subscribe("channel");
+sub.psubscribe("events:*");
+sub.on("message", (channel, message) => {
+    console.log(`${channel}: ${message}`);
+});
+sub.on("pmessage", (pattern, channel, message) => {
+    console.log(`[${pattern}] ${channel}: ${message}`);
+});
+```
+
+**GLIDE (static subscriptions - at client creation):**
+```javascript
+import { GlideClusterClient, GlideClusterClientConfiguration } from "@valkey/valkey-glide";
+
+const subscriber = await GlideClusterClient.createClient({
+    addresses: [{ host: "localhost", port: 6379 }],
+    pubsubSubscriptions: {
+        channelsAndPatterns: {
+            [GlideClusterClientConfiguration.PubSubChannelModes.Exact]: new Set(["channel"]),
+            [GlideClusterClientConfiguration.PubSubChannelModes.Pattern]: new Set(["events:*"]),
+        },
+        callback: (msg) => {
+            console.log(`[${msg.channel}] ${msg.message} (pattern: ${msg.pattern ?? "none"})`);
+        },
+    },
+});
+```
+
+**GLIDE (polling - no callback):**
+```javascript
+const subscriber = await GlideClusterClient.createClient({
+    addresses,
+    pubsubSubscriptions: {
+        channelsAndPatterns: {
+            [GlideClusterClientConfiguration.PubSubChannelModes.Exact]: new Set(["channel"]),
+        },
+        // No callback - use polling
+    },
+});
+
+const msg = await subscriber.getPubSubMessage();    // awaits until message arrives
+const next = subscriber.tryGetPubSubMessage();       // returns null if no message
+```
+
+**Publishing - argument order is reversed:**
+```javascript
+// ioredis: channel first, message second
+await cluster.publish("events:order", JSON.stringify({ id: 1, status: "created" }));
+
+// GLIDE: message first, channel second
+await publisher.publish(JSON.stringify({ id: 1, status: "created" }), "events:order");
+```
+
+The publisher must be a separate client from the subscriber. Any standard `GlideClusterClient` (without `pubsubSubscriptions`) can publish.
+
+Node.js GLIDE has NO runtime `subscribe()` / `psubscribe()` methods. All subscriptions must be declared at client creation time. To change subscriptions, close and recreate the client. Use callbacks (set at creation time) or polling (`getPubSubMessage` / `tryGetPubSubMessage`). Callback and polling are mutually exclusive. RESP3 required for PubSub.
+
+---
+
 ## Event Handling
 
 **ioredis:**
@@ -350,7 +414,7 @@ No drop-in compatibility layer exists for Node.js. The recommended approach:
 
 ## Additional Notes
 
-1. **Dynamic PubSub requires GLIDE 2.3+.** Before 2.3, GLIDE required all subscriptions to be defined at connection time. GLIDE 2.3 added dynamic subscribe/unsubscribe after client creation.
+1. **Node.js PubSub is creation-time only.** Unlike Java/Python/Go (which have runtime subscribe/unsubscribe in GLIDE 2.3+), the Node.js client requires all subscriptions to be defined at connection time. To change subscriptions, close and recreate the client.
 
 2. **protobufjs bundle size.** GLIDE's Node.js client depends on protobufjs, which adds approximately 19KB gzipped (6.5KB with tree shaking). This can be significant for serverless deployments where bundle size affects cold start times.
 

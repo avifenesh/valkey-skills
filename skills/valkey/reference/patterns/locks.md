@@ -274,9 +274,9 @@ async function acquireWithRetry(redis, resource, maxRetries = 5) {
 
 ## See Also
 
-- [String Commands](../commands/strings.md) - SET NX PX for lock acquisition
+- [String Commands](../basics/data-types.md) - SET NX PX for lock acquisition
 - [Conditional Operations](../valkey-features/conditional-ops.md) - DELIFEQ for safe lock release, SET IFEQ for lock extension
-- [Scripting and Functions](../commands/scripting.md) - Lua-based lock release (pre-9.0)
+- [Scripting and Functions](../basics/server-and-scripting.md) - Lua-based lock release (pre-9.0)
 - [Counter Patterns](counters.md) - INCR for fencing tokens, idempotency keys as lock alternatives
 - [Rate Limiting Patterns](rate-limiting.md) - related concurrency control patterns
 - [Queue Patterns](queues.md) - reliable processing with acknowledgment (alternative to locking)
@@ -287,5 +287,5 @@ async function acquireWithRetry(redis, resource, maxRetries = 5) {
 - [Key Best Practices](../best-practices/keys.md) - key naming and TTL strategies for lock keys
 - [Persistence Best Practices](../best-practices/persistence.md) - lock safety during crash recovery with AOF
 - [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions for lock key namespaces
-- [Clients Overview](../clients/overview.md) - connection patterns for lock acquisition and Redlock libraries
+- Clients Overview (see valkey-glide skill) - connection patterns for lock acquisition and Redlock libraries
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - lock without TTL, DEL without value check

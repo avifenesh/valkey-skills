@@ -1,18 +1,19 @@
 # valkey-skills
 
-> Domain-specific AI skills for the Valkey ecosystem - application development, server internals, operations, GLIDE client (7 languages), ecosystem tools, and message queues
+> Domain-specific AI skills for the Valkey ecosystem - application development, server internals, operations, GLIDE client (7 languages), GLIDE and module contributor skills, and message queues
 
 ## Skills
 
-### Valkey Core (5 skills, 204 reference files)
+### Valkey Core (7 skills)
 
 | Directory | Skill | Audience | Files |
 |-----------|-------|----------|-------|
-| `skills/valkey/` | valkey | Application developers using Valkey | 39 |
-| `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 59 |
-| `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 52 |
-| `skills/valkey-glide/` | valkey-glide | GLIDE shared architecture, features, best practices | 26 |
-| `skills/valkey-ecosystem/` | valkey-ecosystem | Ecosystem tools and services | 28 |
+| `skills/valkey/` | valkey | Application developers - Valkey-specific features, patterns, best practices | 29 |
+| `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 60 |
+| `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 54 |
+| `skills/valkey-modules/` | valkey-modules | Module usage: search, JSON, bloom | 6 |
+| `skills/glide-dev/` | glide-dev | GLIDE client library contributors - Rust core, language bindings, build system | 6 |
+| `skills/valkey-module-dev/` | valkey-module-dev | Custom Valkey module developers - ValkeyModule_* C API | 5 |
 
 ### GLIDE Per-Language (7 sub-skills under valkey-glide/)
 
@@ -48,11 +49,11 @@
 
 ## Architecture
 
-Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-ecosystem) follow the router pattern:
+Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-modules, glide-dev, valkey-module-dev) follow the router pattern:
 - `SKILL.md` - concise router (<500 lines) with trigger phrases and reference tables
 - `reference/` - deep RAG library of focused docs (most under 300 lines)
 
-Per-language GLIDE skills and Glide-MQ skills are self-contained single-file SKILL.md documents.
+Per-language GLIDE skills are fully language-specific - each contains its own complete API reference, patterns, and examples with no shared reference files. Glide-MQ skills are also self-contained single-file SKILL.md documents.
 
 The AI loads SKILL.md into context, scans the tables, and reads only the specific reference file needed. No context bloat.
 
@@ -78,9 +79,10 @@ Skills were written and verified against these versions. Update when new release
 |-----------|---------|----------------|
 | Valkey server | 9.0.3 | valkey, valkey-dev, valkey-ops |
 | Valkey GLIDE | 2.3.0 | valkey-glide, all per-language skills |
-| valkey-search | 1.2.0 | valkey-ecosystem (modules/search) |
-| valkey-json | GA | valkey-ecosystem (modules/json) |
-| valkey-bloom | GA | valkey-ecosystem (modules/bloom) |
+| valkey-search | 1.2.0 | valkey-modules (search), valkey-module-dev |
+| valkey-json | GA | valkey-modules (json) |
+| valkey-bloom | GA | valkey-modules (bloom) |
+| Valkey GLIDE (source) | 2.3.0 | glide-dev |
 | glide-mq | 0.14.0 | glide-mq, migrate-bullmq, migrate-bee |
 | Spring Data Valkey | 1.0 | spring-data-valkey |
 

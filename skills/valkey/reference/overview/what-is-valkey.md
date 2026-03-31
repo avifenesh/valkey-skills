@@ -117,9 +117,9 @@ Valkey covers some of these through modules (valkey-search for full-text and vec
 - [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL on hash entries
 - [Cluster Enhancements](../valkey-features/cluster-enhancements.md) - numbered databases and atomic slot migration
 - [Polygon Geospatial Queries](../valkey-features/geospatial.md) - GEOSEARCH BYPOLYGON
-- [String Commands](../commands/strings.md) - SET IFEQ syntax and compare-and-swap patterns
-- [Hash Commands](../commands/hashes.md) - HEXPIRE, HSETEX, HGETEX, HGETDEL command details
-- [Specialized Data Types](../commands/specialized.md) - GEOSEARCH BYPOLYGON and SIMD-optimized HyperLogLog/bitmap commands
-- [Module Commands](../commands/modules.md) - Bloom, JSON, and Search modules via the Valkey module API
-- [Clients Overview](../clients/overview.md) - GLIDE and existing Redis client compatibility
+- [String Commands](../basics/data-types.md) - SET IFEQ syntax and compare-and-swap patterns
+- [Hash Commands](../basics/data-types.md) - HEXPIRE, HSETEX, HGETEX, HGETDEL command details
+- [Specialized Data Types](../basics/data-types.md) - GEOSEARCH BYPOLYGON and SIMD-optimized HyperLogLog/bitmap commands
+- Module Commands (see valkey-modules skill) - Bloom, JSON, and Search modules via the Valkey module API
+- Clients Overview (see valkey-glide skill) - GLIDE and existing Redis client compatibility
 - For operational deployment: see valkey-ops skill (deployment, configuration, monitoring)

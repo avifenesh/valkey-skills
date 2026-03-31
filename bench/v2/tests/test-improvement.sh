@@ -70,10 +70,10 @@ check "Q6 Inventory: Hash or MGET instead of KEYS+GET" "$([ "$q6_hash" -gt 0 ] |
 q7=$(echo "$ANSWER" | grep -ci "stream\|XADD\|XREADGROUP\|XACK\|consumer.group\|Stream" || true)
 check "Q7 Job queue: Streams over LIST" "$([ "$q7" -gt 0 ] && echo 1 || echo 0)"
 
-# Q8 [VALKEY-SPECIFIC] Conditional updates: WATCH/MULTI -> SET IFEQ/IFGT
-q8_ifeq=$(echo "$ANSWER" | grep -ci "IFEQ\|IFGT\|SET.*IFEQ\|SET.*IFGT\|conditional.*set" || true)
+# Q8 [VALKEY-SPECIFIC] Conditional updates: WATCH/MULTI -> SET IFEQ/DELIFEQ
+q8_ifeq=$(echo "$ANSWER" | grep -ci "IFEQ\|DELIFEQ\|SET.*IFEQ\|conditional.*set" || true)
 q8_lua=$(echo "$ANSWER" | grep -ci "lua\|EVAL\|CAS.*script" || true)
-check "Q8 Conditional updates: SET IFEQ/IFGT [VALKEY]" "$([ "$q8_ifeq" -gt 0 ] && echo 1 || echo 0)"
+check "Q8 Conditional updates: SET IFEQ/DELIFEQ [VALKEY]" "$([ "$q8_ifeq" -gt 0 ] && echo 1 || echo 0)"
 
 # Q9 Search: app-side -> valkey-search module
 q9=$(echo "$ANSWER" | grep -ci "FT\.CREATE\|FT\.SEARCH\|valkey.search\|RediSearch\|search.*module\|full.text.*index" || true)

@@ -1,6 +1,6 @@
 ---
 name: migrate-lettuce
-description: "Use when migrating Java applications from Lettuce to Valkey GLIDE. Covers API mapping, configuration changes, connection setup, error handling differences, and common migration gotchas."
+description: "Use when migrating Java applications from Lettuce to Valkey GLIDE. Covers three migration paths (Spring Data Valkey, future compatibility layer, native rewrite), no reactive API equivalent, PubSub (static and dynamic), and common gotchas including codec system and ClientResources gaps."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
@@ -283,6 +283,81 @@ pipe.set("k1", "v1");
 pipe.get("k1");
 Object[] result2 = client.exec(pipe, false).get();
 ```
+
+---
+
+## Pub/Sub
+
+**Lettuce:**
+```java
+import io.lettuce.core.pubsub.RedisPubSubAdapter;
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
+import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
+
+StatefulRedisPubSubConnection<String, String> pubSubConn = redisClient.connectPubSub();
+pubSubConn.addListener(new RedisPubSubAdapter<>() {
+    @Override
+    public void message(String channel, String message) {
+        System.out.println(channel + ": " + message);
+    }
+    @Override
+    public void message(String pattern, String channel, String message) {
+        System.out.println("[" + pattern + "] " + channel + ": " + message);
+    }
+});
+RedisPubSubAsyncCommands<String, String> pubSubCmds = pubSubConn.async();
+pubSubCmds.subscribe("channel").get();
+pubSubCmds.psubscribe("events.*").get();
+```
+
+**GLIDE (static subscriptions - at client creation):**
+```java
+import glide.api.models.configuration.*;
+import glide.api.models.configuration.StandaloneSubscriptionConfiguration.PubSubChannelMode;
+
+BaseSubscriptionConfiguration.MessageCallback callback = (msg, ctx) -> {
+    System.out.println("Channel: " + msg.getChannel());
+    System.out.println("Message: " + msg.getMessage());
+    msg.getPattern().ifPresent(p -> System.out.println("Pattern: " + p));
+};
+
+StandaloneSubscriptionConfiguration subConfig =
+    StandaloneSubscriptionConfiguration.builder()
+        .subscription(PubSubChannelMode.EXACT, "channel")
+        .subscription(PubSubChannelMode.PATTERN, "events.*")
+        .callback(callback)
+        .build();
+
+GlideClientConfiguration config = GlideClientConfiguration.builder()
+    .address(NodeAddress.builder().port(6379).build())
+    .subscriptionConfiguration(subConfig)
+    .build();
+
+GlideClient subscriber = GlideClient.createClient(config).get();
+```
+
+**GLIDE (dynamic subscriptions - GLIDE 2.3+):**
+```java
+// Subscribe (non-blocking)
+client.subscribe(Set.of("news", "events")).get();
+client.psubscribe(Set.of("events.*")).get();
+
+// Subscribe with timeout (blocking, waits for server confirmation)
+client.subscribe(Set.of("alerts"), 5000).get();
+client.psubscribe(Set.of("logs.*"), 5000).get();
+
+// Receive via polling (when no callback configured)
+PubSubMessage msg = client.tryGetPubSubMessage();      // non-blocking, returns null
+CompletableFuture<PubSubMessage> future = client.getPubSubMessage();  // async wait
+
+// Unsubscribe
+client.unsubscribe(Set.of("news")).get();
+client.punsubscribe(Set.of("events.*")).get();
+client.unsubscribe();     // all channels
+client.punsubscribe();    // all patterns
+```
+
+Lettuce uses a listener adapter pattern (RedisPubSubAdapter) on a dedicated PubSub connection. GLIDE uses either callbacks (set at creation time) or polling (getPubSubMessage / tryGetPubSubMessage). Both require a dedicated client for subscriptions. GLIDE automatically resubscribes on reconnection.
 
 ---
 

@@ -182,7 +182,7 @@ If you are an application developer and someone else manages Valkey:
 - [Cluster Best Practices](cluster.md) - persistence behavior in cluster mode
 
 **Commands**:
-- [Server Commands](../commands/server.md) - INFO persistence, DBSIZE, LASTSAVE
+- [Server Commands](../basics/server-and-scripting.md) - INFO persistence, DBSIZE, LASTSAVE
 
 **Patterns**:
 - [Caching Patterns](../patterns/caching.md) - write-through and read-through with database backing
@@ -194,7 +194,7 @@ If you are an application developer and someone else manages Valkey:
 - [Security: Auth and ACL](../security/auth-and-acl.md) - authentication required after restart from persistence
 
 **Clients**:
-- [Clients Overview](../clients/overview.md) - reconnection behavior after server restart
+- Clients Overview (see valkey-glide skill) - reconnection behavior after server restart
 
 **Anti-Patterns**:
 - [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - missing TTL, no `maxmemory`, and related pitfalls

@@ -1,329 +1,283 @@
-# Valkey Streams
+Use when working with Valkey Streams in GLIDE Java - adding entries, reading, consumer groups, acknowledging messages, or trimming.
 
-Use when you need durable, ordered message processing with consumer groups, replay capability, or event sourcing. For fire-and-forget broadcast messaging, see [Pub/Sub](pubsub.md) instead. Stream commands can be included in [batches](batching.md) for pipelined or transactional usage.
+## Adding Entries (XADD)
 
-GLIDE supports the full Valkey Streams API for append-only log data structures with consumer groups, range queries, and introspection commands.
+```java
+// Basic - auto-generated ID
+String id = client.xadd("mystream", Map.of("sensor", "temp", "value", "22.5")).get();
 
-## Supported Stream Commands
+// With options - custom ID, conditional stream creation
+StreamAddOptions options = StreamAddOptions.builder()
+    .id("1-0")
+    .makeStream(Boolean.FALSE)  // null if stream doesn't exist
+    .build();
+String id = client.xadd("mystream", Map.of("sensor", "temp"), options).get();
 
-All stream commands from the Rust core `request_type.rs`:
-
-| Command | RequestType | Description |
-|---------|-------------|-------------|
-| XADD | `XAdd` | Append entry to a stream |
-| XDEL | `XDel` | Delete entries by ID |
-| XTRIM | `XTrim` | Trim stream to a maximum length or minimum ID |
-| XLEN | `XLen` | Get the number of entries in a stream |
-| XRANGE | `XRange` | Get entries in a forward ID range |
-| XREVRANGE | `XRevRange` | Get entries in a reverse ID range |
-| XREAD | `XRead` | Read entries from one or more streams |
-| XGROUP CREATE | `XGroupCreate` | Create a consumer group |
-| XGROUP CREATECONSUMER | `XGroupCreateConsumer` | Create a consumer in a group |
-| XGROUP DELCONSUMER | `XGroupDelConsumer` | Delete a consumer from a group |
-| XGROUP DESTROY | `XGroupDestroy` | Destroy a consumer group |
-| XGROUP SETID | `XGroupSetId` | Set the last-delivered ID for a group |
-| XREADGROUP | `XReadGroup` | Read entries as a consumer in a group |
-| XACK | `XAck` | Acknowledge processed entries |
-| XPENDING | `XPending` | Inspect pending entries for a group |
-| XINFO STREAM | `XInfoStream` | Get stream metadata |
-| XINFO GROUPS | `XInfoGroups` | Get consumer group info |
-| XINFO CONSUMERS | `XInfoConsumers` | Get consumer info within a group |
-| XCLAIM | `XClaim` | Transfer ownership of pending entries |
-| XAUTOCLAIM | `XAutoClaim` | Automatically claim idle pending entries |
-
-## Basic Operations (Python)
-
-### Adding Entries
-
-```python
-# Add an entry with auto-generated ID
-entry_id = await client.xadd("mystream", {"sensor": "temp", "value": "23.5"})
-# entry_id: b'1234567890123-0'
-
-# Add with trimming
-from glide import TrimByMaxLen
-entry_id = await client.xadd(
-    "mystream",
-    {"data": "value"},
-    options=TrimByMaxLen(exact=False, threshold=1000),
-)
+// Duplicate field names via String[][] overload
+String id = client.xadd("mystream",
+    new String[][]{{"tag", "a"}, {"tag", "b"}}).get();
 ```
 
-### Reading Entries
+## Reading Entries (XREAD)
 
-```python
-# Read from one or more streams (entries after the given ID)
-entries = await client.xread({"mystream": "0"})
-# {b'mystream': {b'1234567890123-0': {b'sensor': b'temp', b'value': b'23.5'}}}
+```java
+// Read all entries from ID "0-0"
+Map<String, Map<String, String[][]>> result =
+    client.xread(Map.of("mystream", "0-0")).get();
 
-# Read with options (block, count)
-from glide import StreamReadOptions
-entries = await client.xread(
-    {"mystream": "0"},
-    options=StreamReadOptions(count=10, block_ms=5000),
-)
+for (var streamEntry : result.entrySet()) {
+    String streamKey = streamEntry.getKey();
+    for (var entry : streamEntry.getValue().entrySet()) {
+        String entryId = entry.getKey();
+        for (String[] fieldValue : entry.getValue()) {
+            System.out.println(entryId + " -> " + fieldValue[0] + "=" + fieldValue[1]);
+        }
+    }
+}
 ```
 
-### Range Queries
+### Blocking Read
 
-```python
-# Forward range (oldest to newest)
-entries = await client.xrange("mystream", start="-", end="+")
+```java
+StreamReadOptions options = StreamReadOptions.builder()
+    .block(1000L)  // block up to 1 second
+    .count(10L)    // return at most 10 entries
+    .build();
 
-# With count limit
-entries = await client.xrange("mystream", start="-", end="+", count=100)
-
-# Reverse range (newest to oldest)
-entries = await client.xrevrange("mystream", end="+", start="-")
+Map<String, Map<String, String[][]>> result =
+    client.xread(Map.of("mystream", "$"), options).get();
+// Returns null if timeout expires with no new data
 ```
 
-### Stream Metadata
+## Consumer Groups
 
-```python
-# Get stream length
-length = await client.xlen("mystream")
+### Create a Group
 
-# Get stream info
-info = await client.xinfo_stream("mystream")
+```java
+// From beginning of stream
+client.xgroupCreate("mystream", "mygroup", "0-0").get();
 
-# Delete entries
-deleted_count = await client.xdel("mystream", ["1234567890123-0"])
+// From latest entry
+client.xgroupCreate("mystream", "mygroup", "$").get();
 
-# Trim stream
-trimmed = await client.xtrim("mystream", TrimByMaxLen(exact=True, threshold=1000))
+// Create stream if it doesn't exist
+client.xgroupCreate("mystream", "mygroup", "$",
+    StreamGroupOptions.builder().makeStream().build()).get();
 ```
 
-## Consumer Groups (Python)
+### Create a Consumer
 
-Consumer groups allow multiple consumers to cooperatively process stream entries, with each entry delivered to exactly one consumer in the group.
-
-### Creating Groups
-
-```python
-# Create a group starting from the beginning
-await client.xgroup_create("mystream", "mygroup", "0")
-
-# Create starting from new entries only
-await client.xgroup_create("mystream", "mygroup", "$")
-
-# Create with MKSTREAM (create stream if it does not exist)
-await client.xgroup_create("mystream", "mygroup", "0", mkstream=True)
+```java
+boolean created = client.xgroupCreateConsumer(
+    "mystream", "mygroup", "consumer1").get();
 ```
 
-### Reading as a Consumer
+### Read with Consumer Group (XREADGROUP)
 
-```python
-# Read new entries for this consumer
-messages = await client.xreadgroup("mygroup", "consumer1", {"mystream": ">"})
-# {b'mystream': {b'1234567890123-0': {b'sensor': b'temp', b'value': b'23.5'}}}
+Use `">"` as the ID to receive only new (undelivered) messages:
 
-# Read with options
-from glide import StreamReadGroupOptions
-messages = await client.xreadgroup(
+```java
+Map<String, Map<String, String[][]>> result = client.xreadgroup(
+    Map.of("mystream", ">"),
     "mygroup",
-    "consumer1",
-    {"mystream": ">"},
-    options=StreamReadGroupOptions(count=10, block_ms=5000),
-)
+    "consumer1"
+).get();
+
+if (result != null) {
+    for (var streamEntry : result.entrySet()) {
+        for (var entry : streamEntry.getValue().entrySet()) {
+            String entryId = entry.getKey();
+            for (String[] fv : entry.getValue()) {
+                System.out.println(entryId + ": " + fv[0] + "=" + fv[1]);
+            }
+        }
+    }
+}
 ```
 
-### Acknowledging Entries
+### Read with Options
 
-```python
-# Acknowledge processed entries
-ack_count = await client.xack("mystream", "mygroup", ["1234567890123-0"])
-# ack_count: 1
+```java
+StreamReadGroupOptions options = StreamReadGroupOptions.builder()
+    .count(10L)    // max entries per stream
+    .block(5000L)  // block up to 5 seconds
+    .noack()       // don't add to pending list
+    .build();
+
+Map<String, Map<String, String[][]>> result = client.xreadgroup(
+    Map.of("mystream", ">"), "mygroup", "consumer1", options).get();
 ```
 
-### Pending Entry Inspection
+### Re-read Pending Messages
 
-```python
-# Get pending summary for a group
-pending = await client.xpending("mystream", "mygroup")
-# [num_pending, smallest_id, greatest_id, [[consumer_name, num_pending], ...]]
+Pass `"0"` instead of `">"` to re-read messages already delivered but not yet acknowledged:
 
-# Get detailed pending entries with range
-from glide import StreamPendingOptions
-pending_detail = await client.xpending_range(
-    "mystream",
-    "mygroup",
-    start="-",
-    end="+",
-    count=10,
-    options=StreamPendingOptions(min_idle_time_ms=60000),
-)
+```java
+Map<String, Map<String, String[][]>> pending = client.xreadgroup(
+    Map.of("mystream", "0"), "mygroup", "consumer1").get();
 ```
 
-### Claiming Entries
+## Acknowledging Messages (XACK)
 
-```python
-# Claim idle entries from another consumer
-from glide import StreamClaimOptions
+```java
+String entryId = client.xadd("mystream", Map.of("data", "value")).get();
 
-claimed = await client.xclaim(
-    "mystream",
-    "mygroup",
-    "consumer2",
-    min_idle_time_ms=60000,
-    ids=["1234567890123-0"],
-)
-
-# Auto-claim idle entries (Valkey 6.2+)
-result = await client.xautoclaim(
-    "mystream",
-    "mygroup",
-    "consumer2",
-    min_idle_time_ms=60000,
-    start="0",
-)
+// After processing, acknowledge
+Long acked = client.xack("mystream", "mygroup",
+    new String[]{entryId}).get();
+// acked == 1L
 ```
 
-### Group Management
+## Pending Messages (XPENDING)
 
-```python
-# Create a consumer explicitly
-created = await client.xgroup_create_consumer("mystream", "mygroup", "consumer1")
-
-# Delete a consumer (returns pending count for that consumer)
-pending = await client.xgroup_del_consumer("mystream", "mygroup", "consumer1")
-
-# Destroy a group entirely
-destroyed = await client.xgroup_destroy("mystream", "mygroup")
-
-# Set the last-delivered ID for a group
-await client.xgroup_set_id("mystream", "mygroup", "0")
+```java
+// Summary of all pending messages
+Object[] summary = client.xpending("mystream", "mygroup").get();
+// [totalPending, startId, endId, [[consumer, count], ...]]
 ```
 
-## Introspection
+## Stream Length (XLEN)
 
-```python
-# Stream info
-info = await client.xinfo_stream("mystream")
-# Returns: stream length, radix-tree info, first/last entry, etc.
-
-# Consumer group info
-groups = await client.xinfo_groups("mystream")
-# Returns: list of groups with name, consumers, pending, last-delivered-id
-
-# Consumer info within a group
-consumers = await client.xinfo_consumers("mystream", "mygroup")
-# Returns: list of consumers with name, pending count, idle time
+```java
+Long length = client.xlen("mystream").get();
 ```
 
-## Trim Options
+## Range Queries (XRANGE / XREVRANGE)
 
-Two trimming strategies are available via Python classes in `glide_shared.commands.stream`:
+```java
+import glide.api.models.commands.stream.StreamRange.*;
 
-| Class | Strategy | Description |
-|-------|----------|-------------|
-| `TrimByMaxLen` | MAXLEN | Trim to at most N entries |
-| `TrimByMinId` | MINID | Trim entries with IDs less than the threshold |
+// All entries
+Map<String, String[][]> entries = client.xrange("mystream",
+    InfRangeBound.MIN, InfRangeBound.MAX).get();
 
-Both support exact and approximate (near-exact) trimming. Approximate trimming is more efficient:
+// Bounded range
+Map<String, String[][]> entries = client.xrange("mystream",
+    IdBound.of("1-0"), IdBound.of("5-0")).get();
 
-```python
-from glide import TrimByMaxLen, TrimByMinId
+// With count limit
+Map<String, String[][]> entries = client.xrange("mystream",
+    InfRangeBound.MIN, InfRangeBound.MAX, 10L).get();
 
-# Approximate MAXLEN trim (more efficient)
-TrimByMaxLen(exact=False, threshold=1000)
-
-# Exact MINID trim
-TrimByMinId(exact=True, threshold="1234567890000-0")
-
-# With limit on entries trimmed (only with approximate)
-TrimByMaxLen(exact=False, threshold=1000, limit=100)
+// Reverse order
+Map<String, String[][]> entries = client.xrevrange("mystream",
+    InfRangeBound.MAX, InfRangeBound.MIN).get();
 ```
 
-Note: If `exact` is set to `True`, `limit` cannot be specified - this raises `ValueError`.
+## Delete Entries (XDEL)
 
-## Stream Range Boundaries
-
-The `StreamRangeBound` classes control range query boundaries:
-
-- `MinId` / `MaxId` - special `-` and `+` bounds for minimum/maximum IDs
-- `IdBound` - inclusive bound at a specific ID
-- `ExclusiveIdBound` - exclusive bound at a specific ID
-
-## Read Options
-
-### StreamReadOptions
-
-Used with `xread`:
-- `count` (int) - maximum number of entries per stream
-- `block_ms` (int) - block for N milliseconds waiting for new entries
-
-### StreamReadGroupOptions
-
-Used with `xreadgroup`:
-- `count` (int) - maximum number of entries per stream
-- `block_ms` (int) - block for N milliseconds waiting for new entries
-- `noack` (bool) - skip adding entries to the PEL (pending entries list)
-
-### StreamClaimOptions
-
-Used with `xclaim`:
-- `idle_ms` (int) - set the idle time of the claimed entry
-- `idle_unix_time_ms` (int) - set idle time to a specific Unix timestamp
-- `retry_count` (int) - set the retry counter
-- `is_force` (bool) - force claim even if entry does not exist in PEL
-
-### StreamPendingOptions
-
-Used with `xpending` range queries:
-- `min_idle_time_ms` (int) - filter by minimum idle time
-- `consumer` (str) - filter by consumer name
-
-## Batch Support
-
-All stream commands are available in `Batch` and `ClusterBatch` objects for pipelined or transactional usage:
-
-```python
-from glide import Batch
-
-batch = Batch(is_atomic=False)
-batch.xadd("stream1", {"key": "val1"})
-batch.xadd("stream1", {"key": "val2"})
-batch.xlen("stream1")
-batch.xrange("stream1", start="-", end="+")
-result = await client.exec(batch)
+```java
+Long deleted = client.xdel("mystream", new String[]{"1-1", "1-2"}).get();
 ```
 
-## Blocking Commands Warning
+## Claiming Messages (XCLAIM / XAUTOCLAIM)
 
-XREAD and XREADGROUP with `block_ms` are blocking commands. GLIDE recommends creating a separate client instance for blocking commands since they block the multiplexed connection:
+Transfer ownership of pending messages to a different consumer:
 
-> "Blocking commands, such as BLPOP, block the connection until a condition is met. Using a blocking command will prevent all subsequent commands from executing until the block is lifted. Therefore, opening a new client for each blocking command is required to avoid undesired blocking of other commands."
+```java
+// Claim specific entries idle for at least 60 seconds
+Map<String, String[][]> claimed = client.xclaim(
+    "mystream", "mygroup", "consumer2", 60000L,
+    new String[]{entryId}).get();
 
-```python
-# Dedicated client for blocking stream reads
-blocking_client = await GlideClient.create(config)
-messages = await blocking_client.xreadgroup(
-    "mygroup", "consumer1", {"mystream": ">"},
-    options=StreamReadGroupOptions(block_ms=5000),
-)
+// Claim returning only IDs (no field data)
+String[] claimedIds = client.xclaimJustId(
+    "mystream", "mygroup", "consumer2", 60000L,
+    new String[]{entryId}).get();
 
-# Separate client for regular commands
-command_client = await GlideClient.create(config)
-await command_client.set("key", "value")
+// Auto-claim: scan and claim idle messages in one call (Valkey 6.2+)
+Object[] result = client.xautoclaim(
+    "mystream", "mygroup", "consumer2", 3_600_000L, "0-0").get();
+// result[0] = next start ID for subsequent calls
+// result[1] = Map of claimed entry ID -> fields
+// result[2] = array of deleted entry IDs (Valkey 7.0+)
+
+Object[] justIds = client.xautoclaimJustId(
+    "mystream", "mygroup", "consumer2", 3_600_000L, "0-0").get();
 ```
 
-## Exactly-Once Processing
+## Stream Info (XINFO)
 
-Valkey streams provide at-least-once semantics with consumer groups. Exactly-once can be approximated by:
+```java
+// Stream overview
+Map<String, Object> info = client.xinfoStream("mystream").get();
+// Keys: length, radix-tree-keys, radix-tree-nodes, last-generated-id, ...
 
-1. Using `XREADGROUP` with consumer ID for automatic pending entry list (PEL) tracking
-2. Processing message and ACKing in application logic
-3. Using `XPENDING` + `XCLAIM` for recovering from consumer failures
-4. Implementing idempotent consumers using message IDs as deduplication keys
+// Full stream info including entries and groups
+Map<String, Object> full = client.xinfoStreamFull("mystream").get();
+Map<String, Object> fullLimited = client.xinfoStreamFull("mystream", 10).get();
+
+// Group info
+Map<String, Object>[] groups = client.xinfoGroups("mystream").get();
+
+// Consumer info within a group
+Map<String, Object>[] consumers = client.xinfoConsumers(
+    "mystream", "mygroup").get();
+```
+
+## Trimming Streams (XTRIM)
+
+```java
+import glide.api.models.commands.stream.StreamTrimOptions.MaxLen;
+import glide.api.models.commands.stream.StreamTrimOptions.MinId;
+
+// Trim to approximately 1000 entries (nearly exact)
+Long trimmed = client.xtrim("mystream", new MaxLen(false, 1000L)).get();
+
+// Exact trim by minimum ID
+Long trimmed = client.xtrim("mystream", new MinId(true, "0-3")).get();
+```
+
+## Delete Consumer / Destroy Group
+
+```java
+// Delete a consumer - returns count of pending messages it had
+Long pendingCount = client.xgroupDelConsumer(
+    "mystream", "mygroup", "consumer1").get();
+
+// Destroy the entire group
+boolean destroyed = client.xgroupDestroy("mystream", "mygroup").get();
+```
+
+## Set Group Last-Delivered ID
+
+```java
+client.xgroupSetId("mystream", "mygroup", "0").get();
+```
 
 ## Cluster Mode
 
-In cluster mode, stream keys are routed by hash slot like any other key. Consumer groups operate per-stream, so the group, its consumers, and the stream itself all reside on the same node.
+In cluster mode, all keys in a single `xread` or `xreadgroup` call must map to the same hash slot. Use hash tags if needed:
 
-For multi-stream `xread` or `xreadgroup` calls, GLIDE handles per-slot routing automatically - splitting the request across nodes if the stream keys map to different slots.
+```java
+client.xread(Map.of("{app}.stream1", "0-0", "{app}.stream2", "0-0")).get();
+```
 
-## Related Features
+## Full Consumer Group Pattern
 
-- [Pub/Sub](pubsub.md) - fire-and-forget broadcast messaging; use Pub/Sub for real-time notifications where message durability is not required
-- [Batching](batching.md) - all stream commands are available in Batch and ClusterBatch for pipelined or transactional usage
-- [Scripting](scripting.md) - Lua scripts can call stream commands for atomic read-process-write patterns
+```java
+// Setup
+client.xgroupCreate("tasks", "workers", "0-0",
+    StreamGroupOptions.builder().makeStream().build()).get();
+
+// Producer
+client.xadd("tasks", Map.of("job", "process-image", "url", "img.png")).get();
+
+// Consumer loop
+while (true) {
+    var messages = client.xreadgroup(
+        Map.of("tasks", ">"), "workers", "worker-1",
+        StreamReadGroupOptions.builder().count(5L).block(2000L).build()
+    ).get();
+
+    if (messages == null) continue;
+
+    for (var stream : messages.values()) {
+        for (var entry : stream.entrySet()) {
+            String entryId = entry.getKey();
+            // process entry.getValue() fields...
+            client.xack("tasks", "workers", new String[]{entryId}).get();
+        }
+    }
+}
+```

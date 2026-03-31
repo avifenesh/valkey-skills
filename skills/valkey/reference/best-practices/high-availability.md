@@ -276,7 +276,7 @@ Arguments: `WAITAOF <local_fsyncs> <replica_fsyncs> <timeout_ms>`
 - [Key Best Practices](keys.md) - TTL-at-write-time to avoid orphaned keys after failover
 
 **Commands**:
-- [Server Commands](../commands/server.md) - INFO replication, CLIENT LIST, WAIT, WAITAOF
+- [Server Commands](../basics/server-and-scripting.md) - INFO replication, CLIENT LIST, WAIT, WAITAOF
 
 **Patterns**:
 - [Lock Patterns](../patterns/locks.md) - Redlock for distributed locking across failures
@@ -290,7 +290,7 @@ Arguments: `WAITAOF <local_fsyncs> <replica_fsyncs> <timeout_ms>`
 - [Security: Auth and ACL](../security/auth-and-acl.md) - separate Sentinel auth from Valkey auth
 
 **Clients**:
-- [Clients Overview](../clients/overview.md) - Sentinel-aware client configuration and reconnection
+- Clients Overview (see valkey-glide skill) - Sentinel-aware client configuration and reconnection
 
 **Valkey Features**:
 - [Cluster Enhancements](../valkey-features/cluster-enhancements.md) - Valkey 9.0 atomic slot migration (eliminates ASK redirects)
