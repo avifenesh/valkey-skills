@@ -922,13 +922,6 @@ No official Django or FastAPI integration exists.
 | Hash field expiration: HSETEX, HGETEX, HEXPIRE (Valkey 9.0+) | [hash-field-expiration](reference/features/hash-field-expiration.md) |
 
 
-## Migration
-
-| Topic | Reference |
-|-------|-----------|
-| From redis-py (Python) | [from-redis-py](reference/migration/from-redis-py.md) |
-
-
 ## Best Practices
 
 | Topic | Reference |

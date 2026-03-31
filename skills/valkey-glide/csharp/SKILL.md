@@ -457,13 +457,6 @@ MUSL/Alpine support, `Span<T>`/`Memory<T>` optimization, blocking subscribe, Val
 | Hash field expiration: HSETEX, HGETEX, HEXPIRE (Valkey 9.0+) | [hash-field-expiration](reference/features/hash-field-expiration.md) |
 
 
-## Migration
-
-| Topic | Reference |
-|-------|-----------|
-| From StackExchange.Redis (C#) | [from-stackexchange](reference/migration/from-stackexchange.md) |
-
-
 ## Best Practices
 
 | Topic | Reference |

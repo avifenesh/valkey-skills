@@ -652,13 +652,6 @@ No drop-in compatibility layer exists for Go. The recommended approach:
 | Hash field expiration: HSETEX, HGETEX, HEXPIRE (Valkey 9.0+) | [hash-field-expiration](reference/features/hash-field-expiration.md) |
 
 
-## Migration
-
-| Topic | Reference |
-|-------|-----------|
-| From go-redis (Go) | [from-go-redis](reference/migration/from-go-redis.md) |
-
-
 ## Best Practices
 
 | Topic | Reference |

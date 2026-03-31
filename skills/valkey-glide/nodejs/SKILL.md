@@ -868,13 +868,6 @@ The main entry point (`@valkey/valkey-glide`) exports:
 | Hash field expiration: HSETEX, HGETEX, HEXPIRE (Valkey 9.0+) | [hash-field-expiration](reference/features/hash-field-expiration.md) |
 
 
-## Migration
-
-| Topic | Reference |
-|-------|-----------|
-| From ioredis (Node.js) | [from-ioredis](reference/migration/from-ioredis.md) |
-
-
 ## Best Practices
 
 | Topic | Reference |
