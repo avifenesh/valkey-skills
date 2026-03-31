@@ -2,6 +2,20 @@
 
 Use when working on GLIDE's single-connection-per-node design, multiplexing, inflight request limiting, request/connection timeouts, reconnection backoff, lazy connection, periodic health checks, or read-only mode.
 
+## Contents
+
+- Single Multiplexed Connection (line 19)
+- Inflight Request Limiting (line 36)
+- Request Timeout (line 48)
+- Connection Timeout (line 54)
+- Reconnection with Exponential Backoff (line 58)
+- Periodic Connection Checks (line 75)
+- Connection State Preservation (line 85)
+- When to Create Separate Client Instances (line 97)
+- Batch Retry Strategies (Cluster Non-Atomic) (line 106)
+- Read-Only Mode (GLIDE 2.3) (line 113)
+- Custom Commands (line 123)
+
 ## Single Multiplexed Connection
 
 GLIDE uses one `MultiplexedConnection` per node - not a connection pool. All requests pipeline through this connection via Valkey's built-in pipelining protocol. The connection is wrapped in `ReconnectingConnection` (`client/reconnecting_connection.rs`):

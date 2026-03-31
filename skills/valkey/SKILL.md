@@ -1,6 +1,6 @@
 ---
 name: valkey
-description: "Use when building applications with Valkey. Focuses on what Valkey adds beyond Redis: conditional ops (SET IFEQ, DELIFEQ), hash field TTL (HSETEX/HGETEX/HEXPIRE), COMMANDLOG, EXPIRETIME, cluster enhancements, geospatial polygons, I/O threading. Also covers application patterns, best practices, and security."
+description: "Use when building applications with Valkey - commands, data types, caching, sessions, queuing, locking, rate-limiting, leaderboards, streams, pub-sub, scripting, transactions. Not for server internals (valkey-dev) or ops (valkey-ops)."
 version: 2.0.0
 argument-hint: "[feature, pattern, or scenario]"
 ---

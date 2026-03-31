@@ -3,6 +3,17 @@
 Use when cluster state is degraded, nodes are marked as failed, slots are
 uncovered, or clients receive CLUSTERDOWN errors.
 
+## Contents
+
+- Symptoms (line 19)
+- Diagnosis (line 28)
+- Network Split Scenarios (line 105)
+- Resolution (line 133)
+- Prevention (line 208)
+- Large Key Migration Blocked (Cluster Incident Pattern) (line 228)
+- Cluster Scaling Improvements (Valkey 8.1+) (line 246)
+- See Also (line 260)
+
 ---
 
 ## Symptoms

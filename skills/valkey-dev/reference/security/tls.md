@@ -7,6 +7,22 @@ and background certificate reloading.
 Source: `src/tls.c` (~2,000 lines). Configuration struct in `src/server.h`.
 The entire file is conditionally compiled behind `USE_OPENSSL`.
 
+## Contents
+
+- Build Modes (line 28)
+- Configuration Struct (line 44)
+- SSL Context Architecture (line 80)
+- Connection Type Registration (line 120)
+- TLS Connection Struct (line 131)
+- Client Certificate Authentication (line 163)
+- Replication and Cluster Bus (line 202)
+- Background Certificate Reloading (line 214)
+- Pending Data Handling (line 251)
+- OpenSSL Version Handling (line 260)
+- Key Functions (line 276)
+- Certificate Monitoring (line 297)
+- See Also (line 306)
+
 ---
 
 ## Build Modes

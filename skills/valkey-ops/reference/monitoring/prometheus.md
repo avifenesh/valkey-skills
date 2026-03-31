@@ -3,6 +3,18 @@
 Use when configuring Prometheus to scrape Valkey metrics - exporter deployment,
 scrape configuration, metric naming, and multi-instance setups.
 
+## Contents
+
+- Tested Example: Valkey + Exporter via Docker (line 20)
+- Exporter: oliver006/redis_exporter (line 49)
+- Exporter Configuration Flags (line 98)
+- Prometheus Scrape Configuration (line 127)
+- Metric Naming Conventions (line 219)
+- Scrape Intervals (line 270)
+- ACL User for Exporter (line 281)
+- Verification (line 294)
+- See Also (line 311)
+
 ---
 
 ## Tested Example: Valkey + Exporter via Docker

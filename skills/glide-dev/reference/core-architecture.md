@@ -2,6 +2,18 @@
 
 Use when understanding the Rust core design, three-layer architecture, FFI mechanisms per language, the module structure, command flow, runtime model, or debugging connection/protocol issues.
 
+## Contents
+
+- Three-Layer Design (line 17)
+- Request Pipeline (line 37)
+- Module Structure (line 73)
+- Key Structs and Types (line 92)
+- FFI Mechanisms by Language (line 139)
+- Runtime Model (line 183)
+- Command Flow (line 199)
+- Dependencies (line 213)
+- Version History (line 220)
+
 ## Three-Layer Design
 
 ```

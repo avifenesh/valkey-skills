@@ -4,6 +4,18 @@ Use when you need to understand how Valkey distributes data across nodes, how th
 
 Source files: `cluster.h`, `cluster.c`, `cluster_legacy.h`, `cluster_legacy.c`
 
+## Contents
+
+- Hash Slot Model (line 21)
+- Key Structs (line 40)
+- Cluster Bus (line 120)
+- Gossip Protocol (line 165)
+- Node Discovery and Topology (line 193)
+- MOVED and ASK Redirects (line 207)
+- Cluster State Determination (line 233)
+- Key Lifecycle Functions (line 243)
+- See Also (line 259)
+
 ---
 
 ## Hash Slot Model

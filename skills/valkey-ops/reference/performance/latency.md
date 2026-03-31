@@ -3,6 +3,19 @@
 Use when investigating latency spikes, establishing baseline latency, analyzing
 slow commands, or using LATENCY DOCTOR for automated diagnostics.
 
+## Contents
+
+- Diagnosis Workflow (line 21)
+- Step 1: Measure Intrinsic Latency (line 30)
+- Step 2: Enable Latency Monitor (line 55)
+- Step 3: LATENCY DOCTOR (line 92)
+- Step 4: Commandlog (Slowlog) Analysis (line 144)
+- Step 5: Client Analysis (line 187)
+- Step 6: Software Watchdog (Emergency) (line 205)
+- Transparent Huge Pages - The #1 Linux Misconfiguration (line 222)
+- Common Latency Causes (line 251)
+- See Also (line 267)
+
 ---
 
 ## Diagnosis Workflow

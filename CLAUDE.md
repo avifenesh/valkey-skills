@@ -4,7 +4,7 @@
 
 ## Skills
 
-### Valkey Core (8 skills)
+### Valkey Core (9 skills)
 
 | Directory | Skill | Audience | Files |
 |-----------|-------|----------|-------|
@@ -16,6 +16,7 @@
 | `skills/valkey-module-dev/` | valkey-module-dev | Custom Valkey module developers - ValkeyModule_* C API | 6 |
 | `skills/valkey-json-dev/` | valkey-json-dev | valkey-json module contributors - architecture, JSONPath engine, RDB serialization | 4 |
 | `skills/valkey-search-dev/` | valkey-search-dev | valkey-search module contributors - C++ architecture, index types, query engine, build | 5 |
+| `skills/valkey-bloom-dev/` | valkey-bloom-dev | valkey-bloom module contributors - Rust scalable bloom filters, build, replication | 4 |
 
 ### GLIDE Per-Language (7 sub-skills under valkey-glide/)
 
@@ -51,7 +52,7 @@
 
 ## Architecture
 
-Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-modules, glide-dev, valkey-module-dev, valkey-json-dev, valkey-search-dev) and per-language GLIDE skills all follow the router pattern:
+Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-modules, glide-dev, valkey-module-dev, valkey-json-dev, valkey-search-dev, valkey-bloom-dev) and per-language GLIDE skills all follow the router pattern:
 - `SKILL.md` - concise router (<500 lines) with trigger phrases and reference tables
 - `reference/` - deep RAG library of focused docs (most under 300 lines)
 
@@ -81,9 +82,9 @@ Skills were written and verified against these versions. Update when new release
 |-----------|---------|----------------|
 | Valkey server | 9.0.3 | valkey, valkey-dev, valkey-ops |
 | Valkey GLIDE | 2.3.0 | valkey-glide, all per-language skills |
-| valkey-search | 1.2.0 | valkey-modules (search), valkey-module-dev |
-| valkey-json | GA | valkey-modules (json) |
-| valkey-bloom | GA | valkey-modules (bloom) |
+| valkey-search | 1.2.0 | valkey-modules (search), valkey-module-dev, valkey-search-dev |
+| valkey-json | GA | valkey-modules (json), valkey-json-dev |
+| valkey-bloom | GA | valkey-modules (bloom), valkey-bloom-dev |
 | Valkey GLIDE (source) | 2.3.0 | glide-dev |
 | glide-mq | 0.14.0 | glide-mq, migrate-bullmq, migrate-bee |
 | Spring Data Valkey | 1.0 | spring-data-valkey |

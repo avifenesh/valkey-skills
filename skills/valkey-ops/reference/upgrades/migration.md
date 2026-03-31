@@ -2,6 +2,21 @@
 
 Use when migrating from Redis OSS to Valkey, planning a migration strategy, or understanding what changes between the two systems.
 
+## Contents
+
+- Compatibility Baseline (line 22)
+- What Changes (line 28)
+- What Does NOT Change (line 40)
+- Extended Redis Compatibility Mode (line 51)
+- Method 1: Binary Replacement (Downtime Required) (line 65)
+- Method 2: Replication-Based (Minimal Downtime) (line 98)
+- Method 3: Cluster Migration (line 133)
+- Configuration Changes Without Restart (line 162)
+- Data Validation After Migration (line 220)
+- Downtime Estimates by Method (line 236)
+- Migration Checklist (line 251)
+- See Also (line 265)
+
 ---
 
 ## Compatibility Baseline

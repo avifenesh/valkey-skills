@@ -2,6 +2,19 @@
 
 Use when storing, querying, or manipulating JSON documents in Valkey, migrating from RedisJSON, or integrating JSON operations with GLIDE clients.
 
+## Contents
+
+- Overview (line 20)
+- Key Commands (line 34)
+- Performance (line 90)
+- JSONPath Syntax (line 94)
+- Usage Examples (line 125)
+- Client Integration via GLIDE (line 153)
+- RDB Compatibility (line 165)
+- Version History (line 174)
+- When to Use (line 186)
+- Cross-References (line 196)
+
 ---
 
 ## Overview

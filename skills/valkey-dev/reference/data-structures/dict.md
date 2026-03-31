@@ -4,6 +4,17 @@ Use when working with code that still uses the dict API - primarily Lua scriptin
 
 Source: `src/dict.c`, `src/dict.h`
 
+## Contents
+
+- Overview (line 20)
+- Core Structs (line 24)
+- Incremental Rehashing (line 100)
+- Key API (line 123)
+- Utility Macros (line 183)
+- Where Dict Is Still Used (post-8.1) (line 192)
+- Hash Function (line 209)
+- See Also (line 218)
+
 ---
 
 ## Overview

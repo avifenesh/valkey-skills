@@ -4,6 +4,17 @@ Use when implementing real-time message broadcasting in Ruby - chat, notificatio
 
 GLIDE Ruby supports all three PubSub subscription modes (exact, pattern, sharded) plus introspection commands. The API follows redis-rb conventions.
 
+## Contents
+
+- Subscription Modes (line 18)
+- Subscribe and Publish (line 26)
+- Pattern Subscriptions (line 41)
+- Sharded PubSub (Cluster Mode) (line 54)
+- PubSub Introspection (line 75)
+- PubSub Callback (line 115)
+- redis-rb Migration (line 126)
+- Important Notes (line 145)
+
 ## Subscription Modes
 
 | Mode | Subscribe | Unsubscribe | Publish | Cluster Only |

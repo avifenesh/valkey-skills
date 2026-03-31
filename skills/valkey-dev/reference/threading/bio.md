@@ -5,6 +5,19 @@ Use when you need to understand how Valkey offloads blocking operations
 
 Source: `src/bio.c`, `src/bio.h`
 
+## Contents
+
+- Design (line 23)
+- Job Types (line 35)
+- Worker Data Structure (line 68)
+- Job Structure (line 91)
+- Initialization (line 127)
+- Job Processing Loop (line 151)
+- Job Creation Functions (line 189)
+- Monitoring and Control (line 249)
+- Key Differences from I/O Threads (line 293)
+- See Also (line 305)
+
 ---
 
 ## Design

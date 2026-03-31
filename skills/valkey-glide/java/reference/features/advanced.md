@@ -1,5 +1,16 @@
 Use when configuring TLS, authentication, Lua scripting, handling errors, or working with CompletableFuture patterns in GLIDE Java.
 
+## Contents
+
+- TLS Configuration (line 14)
+- Authentication (line 50)
+- Lua Scripting (line 81)
+- Error Types (line 190)
+- CompletableFuture Patterns (line 203)
+- Custom Commands (line 243)
+- OpenTelemetry (line 261)
+- Advanced Configuration (line 291)
+
 ## TLS Configuration
 
 ### Basic TLS

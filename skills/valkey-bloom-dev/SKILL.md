@@ -1,6 +1,6 @@
 ---
 name: valkey-bloom-dev
-description: "Use when contributing to valkey-io/valkey-bloom - Rust scalable bloom filter module internals, building from source, writing tests, adding commands, debugging RDB/AOF persistence, replication, defragmentation, or reviewing PRs."
+description: "Use when contributing to valkey-io/valkey-bloom source - Rust bloom filter internals, building, testing, RDB/AOF, replication, or reviewing PRs. Not for using BF.ADD/EXISTS in apps (valkey-modules) or building new modules (valkey-module-dev)."
 version: 1.0.0
 argument-hint: "[area or task]"
 ---
@@ -9,7 +9,11 @@ argument-hint: "[area or task]"
 
 Rust-based Valkey module implementing scalable bloom filters using the `bloomfilter` crate and `valkey-module` SDK.
 
-NOT for application-level bloom filter usage (see valkey-modules skill), GLIDE client APIs (see valkey-glide), or custom module development patterns (see valkey-module-dev).
+## Not This Skill
+
+- Using BF.ADD/BF.EXISTS/BF.RESERVE commands in applications -> use valkey-modules
+- Building custom Valkey modules from scratch -> use valkey-module-dev
+- valkey-module Rust SDK reference -> use valkey-module-dev
 
 ## Routing
 

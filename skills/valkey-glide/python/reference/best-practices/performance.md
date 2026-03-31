@@ -2,6 +2,15 @@
 
 Use when optimizing GLIDE Python throughput and latency, tuning inflight limits, or choosing batching strategies.
 
+## Contents
+
+- Batching Is the Top Optimization (line 16)
+- Async Best Practices (line 56)
+- Inflight Request Limit (line 87)
+- Connection Model (line 107)
+- Compression (line 120)
+- When to Choose GLIDE over redis-py (line 139)
+
 ---
 
 ## Batching Is the Top Optimization

@@ -3,6 +3,16 @@
 Use when configuring alerts for Valkey - alert thresholds for availability,
 memory, connections, replication, persistence, and performance.
 
+## Contents
+
+- Alert Rule File (line 18)
+- Complete Alert Rules (line 31)
+- Alert Threshold Summary (line 243)
+- Recording Rules (line 273)
+- Alertmanager Routing (line 291)
+- Community Alert Sources (line 323)
+- See Also (line 333)
+
 ---
 
 ## Alert Rule File

@@ -6,6 +6,21 @@ encryption.
 
 Source-verified against `src/tls.c` and `src/config.c` in valkey-io/valkey.
 
+## Contents
+
+- Prerequisites (line 26)
+- Certificate Generation (line 40)
+- Server Configuration (line 78)
+- Mutual TLS (Client Authentication) (line 124)
+- TLS for Replication (line 151)
+- TLS for Cluster Bus (line 172)
+- Certificate Auto-Reload (line 186)
+- Client Connection (line 199)
+- Recommended Cipher Suites (line 228)
+- TLS Material Validation (line 257)
+- Troubleshooting (line 270)
+- See Also (line 288)
+
 ---
 
 ## Prerequisites

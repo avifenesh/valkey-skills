@@ -2,6 +2,16 @@
 
 Use when you need to understand how Sentinel provides high availability for non-clustered Valkey - how it monitors instances, detects failures, elects leaders, and promotes replicas.
 
+## Contents
+
+- How Sentinel Works (line 17)
+- Quorum and Majority (line 74)
+- Failure Detection: SDOWN and ODOWN (line 94)
+- Replica Selection Algorithm (line 139)
+- Key Timing Constants (line 180)
+- Pub/Sub Events (line 206)
+- See Also (line 218)
+
 ---
 
 ## How Sentinel Works

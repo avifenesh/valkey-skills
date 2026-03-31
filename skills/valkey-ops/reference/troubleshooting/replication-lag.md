@@ -3,6 +3,14 @@
 Use when replicas fall behind the primary, replication breaks are frequent,
 or replica data staleness is unacceptable.
 
+## Contents
+
+- Symptoms (line 16)
+- Diagnosis (line 25)
+- Resolution (line 97)
+- Monitoring (line 188)
+- See Also (line 219)
+
 ---
 
 ## Symptoms

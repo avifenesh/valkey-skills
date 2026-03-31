@@ -2,6 +2,15 @@
 
 Use when tuning memory usage for small collections or diagnosing unexpected memory consumption. All thresholds verified against `src/config.c`.
 
+## Contents
+
+- How Compact Encodings Work (line 16)
+- Encoding Thresholds by Data Type (line 23)
+- Checking Current Encoding (line 99)
+- Tuning for Memory Efficiency (line 124)
+- Memory Impact Example (line 160)
+- See Also (line 171)
+
 ---
 
 ## How Compact Encodings Work

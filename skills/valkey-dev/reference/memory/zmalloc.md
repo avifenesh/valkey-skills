@@ -5,6 +5,17 @@ underlying allocator, or when debugging memory accounting discrepancies.
 
 Source: `src/zmalloc.c`, `src/zmalloc.h`
 
+## Contents
+
+- Overview (line 21)
+- Compile-Time Allocator Selection (line 40)
+- Memory Tracking Architecture (line 75)
+- Core Allocation Functions (line 112)
+- Memory Reporting (line 186)
+- jemalloc Background Thread and Purge (line 240)
+- CoW Optimization: zmadvise_dontneed (line 253)
+- See Also (line 266)
+
 ---
 
 ## Overview

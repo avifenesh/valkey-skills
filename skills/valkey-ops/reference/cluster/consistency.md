@@ -2,6 +2,16 @@
 
 Use when evaluating Valkey Cluster's write safety for your use case, understanding what can go wrong during network partitions, or deciding between consistency and availability trade-offs.
 
+## Contents
+
+- Consistency Model (line 17)
+- What Can Go Wrong (line 25)
+- Write Safety Mechanisms (line 62)
+- Cluster State Determination (line 118)
+- Trade-Offs Operators Should Understand (line 130)
+- Failure Detection Timing (line 171)
+- See Also (line 181)
+
 ---
 
 ## Consistency Model

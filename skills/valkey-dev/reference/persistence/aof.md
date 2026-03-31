@@ -4,6 +4,18 @@ Use when you need to understand how Valkey logs every write command for durabili
 
 Source file: `src/aof.c`
 
+## Contents
+
+- Multi-Part AOF Architecture (line 21)
+- How Commands Are Appended (line 65)
+- Fsync Policies (line 97)
+- AOF Loading and Recovery (line 138)
+- AOF Rewrite (BGREWRITEAOF) (line 168)
+- Hybrid RDB+AOF Preamble Mode (line 217)
+- AOF State Machine (line 237)
+- Key Configuration Parameters (line 249)
+- See Also (line 265)
+
 ---
 
 ## Multi-Part AOF Architecture

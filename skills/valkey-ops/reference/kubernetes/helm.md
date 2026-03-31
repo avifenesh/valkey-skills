@@ -2,6 +2,17 @@
 
 Use when deploying Valkey on Kubernetes via Helm, choosing between the official and Bitnami charts, or configuring chart values for production.
 
+## Contents
+
+- Tested Example: kind + Helm Deployment (line 18)
+- Chart Comparison (line 48)
+- Official Valkey Helm Chart (line 75)
+- Bitnami Helm Chart (line 142)
+- Production Values Recommendations (line 219)
+- Upgrading Helm Releases (line 264)
+- Migrating from Bitnami to Official Chart (line 282)
+- See Also (line 299)
+
 ---
 
 ## Tested Example: kind + Helm Deployment

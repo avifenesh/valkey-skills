@@ -4,6 +4,18 @@ Use when you need to understand how Valkey 8.0+ separates the RDB transfer from 
 
 Source file: `src/replication.c` (search for `dualChannel`)
 
+## Contents
+
+- Problem: Classic Full Resync (line 21)
+- Solution: Two Separate Connections (line 34)
+- Protocol Flow (line 47)
+- Replica-Side State Machine (RDB Channel) (line 93)
+- Local Replication Buffer (line 128)
+- Primary-Side Handling (line 193)
+- Benefits (line 220)
+- Configuration and Backwards Compatibility (line 230)
+- See Also (line 260)
+
 ---
 
 ## Problem: Classic Full Resync

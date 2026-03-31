@@ -2,6 +2,17 @@
 
 Use when building real-time ranking systems, game leaderboards, top-N lists, or any feature that requires sorted scoring with efficient rank queries.
 
+## Contents
+
+- Why Sorted Sets (line 18)
+- Basic Leaderboard (line 34)
+- Paginated Results (line 129)
+- Composite Scoring (line 165)
+- Time-Bucketed Leaderboards (line 199)
+- Union and Intersection for Combined Leaderboards (line 240)
+- Scaling Considerations (line 265)
+- See Also (line 277)
+
 ---
 
 ## Why Sorted Sets

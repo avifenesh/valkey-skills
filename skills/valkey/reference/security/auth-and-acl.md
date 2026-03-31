@@ -2,6 +2,14 @@
 
 Use when connecting your application to Valkey with authentication, configuring ACL permissions for your app user, or setting up TLS connections.
 
+## Contents
+
+- Authentication (line 15)
+- ACL Basics for Application Developers (line 82)
+- TLS Connection Setup (line 159)
+- Security Checklist for Application Developers (line 233)
+- See Also (line 248)
+
 ---
 
 ## Authentication

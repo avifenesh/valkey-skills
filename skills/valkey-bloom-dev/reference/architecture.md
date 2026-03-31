@@ -1,6 +1,21 @@
-# Scalable Bloom Filter Architecture
+# valkey-bloom Architecture
 
 Use when understanding bloom filter internals, memory layout, scaling behavior, hash functions, tightening ratio, or false positive management.
+
+## Contents
+
+- Two-Layer Structure (line 20)
+- Scaling Mechanism (line 46)
+- Item Operations (line 60)
+- Hash Function and Seeds (line 66)
+- Memory Layout and Sizing (line 76)
+- Max Scaled Capacity (line 86)
+- RDB Persistence (line 90)
+- AOF Rewrite (line 100)
+- Defragmentation (line 106)
+- Metrics (line 116)
+- Module Initialization (line 128)
+- Module Configs (line 132)
 
 ## Two-Layer Structure
 
@@ -33,11 +48,12 @@ pub struct BloomFilter {
 When a filter reaches capacity:
 
 1. Check `expansion > 0` (non-scaling filters return `NonScalingFilterFull`)
-2. Calculate new FP rate: `fp_rate * tightening_ratio^num_filters`
-3. Calculate new capacity: `last_filter.capacity * expansion`
-4. Validate total object size against `bloom-memory-usage-limit` (default 128MB)
-5. Create new `BloomFilter` with the same seed as the first filter
-6. Push new filter to the `filters` vec
+2. Check filter count < `BLOOM_NUM_FILTERS_PER_OBJECT_LIMIT_MAX` (i32::MAX)
+3. Calculate new FP rate: `fp_rate * tightening_ratio^num_filters` (must stay above `f64::MIN_POSITIVE`)
+4. Calculate new capacity: `last_filter.capacity * expansion` (checked multiply, overflow returns `BadCapacity`)
+5. Validate total object size against `bloom-memory-usage-limit` (default 128MB)
+6. Create new `BloomFilter` with the same seed as the first filter
+7. Push new filter to the `filters` vec
 
 The tightening ratio ensures the overall bloom object maintains the configured FP rate as it scales. Each successive filter uses a stricter (lower) FP rate.
 
@@ -85,6 +101,8 @@ Encoding version: `BLOOM_TYPE_ENCODING_VERSION = 1`. Load rejects newer versions
 
 Uses `BF.LOAD` command with a bincode-serialized representation of the entire `BloomObject`. The `encode_object` method prepends a version byte (`BLOOM_OBJECT_VERSION = 1`) to the bincode output.
 
+**BF.LOAD decode path** (`decode_object`): Reads the version byte, then deserializes the remaining bytes via bincode into `(u32, f64, f64, bool, Vec<Box<BloomFilter>>)`. Validates expansion range, FP rate range, tightening ratio range, filter count limit, and total memory size. Rejects unsupported versions or empty input.
+
 ## Defragmentation
 
 The defrag callback (`bloom_defrag`) uses cursor-based incremental defragmentation:
@@ -105,7 +123,11 @@ Global atomic counters in `src/metrics.rs` track:
 - `bloom_capacity_across_objects` - total capacity
 - `bloom_defrag_hits` / `bloom_defrag_misses`
 
-Metrics are updated on create, drop, add, and scale-out. Exposed via `INFO bf`.
+Metrics are updated on create, drop, add, and scale-out. Both `BloomObject` and `BloomFilter` implement `Drop` to decrement their respective counters when freed. Exposed via `INFO bf` (sections: `bloom_core_metrics`, `bloom_defrag_metrics`).
+
+## Module Initialization
+
+On load, the `initialize` function calls `valid_server_version` to check the server meets the minimum version `[8, 0, 0]` (defined in `configs::BLOOM_MIN_SUPPORTED_VERSION`). If the version is too old, the module logs a warning and returns `Status::Err`, preventing load. Also sets `ModuleOptions::HANDLE_IO_ERRORS` for RDB error handling.
 
 ## Module Configs
 

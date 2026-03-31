@@ -2,6 +2,16 @@
 
 Use when implementing a caching layer with Valkey, setting up cache invalidation, or evaluating client-side caching for hot data.
 
+## Contents
+
+- Cache-Aside (Lazy Loading) (line 17)
+- Write-Through (line 104)
+- Write-Behind (Write-Back) (line 130)
+- Client-Side Caching (CLIENT TRACKING) (line 146)
+- Cache Invalidation Strategies (line 272)
+- TTL Patterns (line 315)
+- See Also (line 348)
+
 ---
 
 ## Cache-Aside (Lazy Loading)

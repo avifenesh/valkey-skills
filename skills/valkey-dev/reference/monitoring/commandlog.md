@@ -5,6 +5,18 @@ in a running Valkey instance.
 
 Source: `src/commandlog.c`, `src/commandlog.h`
 
+## Contents
+
+- Overview (line 22)
+- Log Types (line 29)
+- Data Structures (line 45)
+- Configuration (line 76)
+- How Commands Are Logged (line 90)
+- Client Commands (line 123)
+- Timing Measurement (line 149)
+- Memory Management (line 160)
+- See Also (line 171)
+
 ---
 
 ## Overview

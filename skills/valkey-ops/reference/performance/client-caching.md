@@ -3,6 +3,18 @@
 Use when reducing read latency, offloading read traffic from the server, or
 implementing a local cache in application code with server-assisted invalidation.
 
+## Contents
+
+- What It Is (line 20)
+- Configuration (line 30)
+- Protocol Requirement (line 57)
+- Two Tracking Modes (line 69)
+- OPTIN / OPTOUT Modes (line 106)
+- Monitoring (line 149)
+- Performance Impact (line 182)
+- Operational Considerations (line 194)
+- See Also (line 205)
+
 ---
 
 ## What It Is

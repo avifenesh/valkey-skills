@@ -2,6 +2,20 @@
 
 Use when evaluating GLIDE PHP capabilities, understanding differences from PHPRedis, or checking available commands and limitations.
 
+## Contents
+
+- Status (line 19)
+- Key Differences from Other GLIDE Clients (line 23)
+- Requirements (line 34)
+- Platform Support (line 39)
+- Installation (line 49)
+- Available Command Groups (line 68)
+- Features (line 89)
+- Error Handling (line 107)
+- Architecture Notes (line 126)
+- Limitations (line 133)
+- Repository (line 141)
+
 ## Status
 
 **GA** - version 1.0.0 released. Production-ready.

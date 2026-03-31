@@ -4,6 +4,20 @@ Use when you need to submit a patch, understand coding conventions, or navigate 
 
 **Contributor path**: this guide -> [build](../build/building.md) -> code -> [test](../testing/tcl-tests.md) -> [CI](../testing/ci-pipeline.md) -> review -> merge.
 
+## Contents
+
+- PR Process (line 23)
+- Developer Certificate of Origin (DCO) (line 71)
+- Coding Style (line 89)
+- Licensing (line 146)
+- Commit Message Conventions (line 160)
+- Documentation (line 181)
+- Running Extended Tests (line 191)
+- Communication Channels (line 202)
+- Review Criteria (line 210)
+- Common Mistakes (line 222)
+- See Also (line 230)
+
 ---
 
 ## PR Process

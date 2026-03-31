@@ -2,6 +2,19 @@
 
 Use when evaluating GLIDE C# capabilities, understanding differences from other GLIDE clients or StackExchange.Redis, or checking available commands and limitations.
 
+## Contents
+
+- Status (line 18)
+- Key Differences from Other GLIDE Clients (line 22)
+- Requirements (line 33)
+- Platform Support (line 38)
+- Two Connection Styles (line 49)
+- Available Command Groups (line 67)
+- Features (line 86)
+- Error Handling (line 103)
+- Limitations (Preview) (line 124)
+- Repository (line 131)
+
 ## Status
 
 **Preview** - the C# wrapper is functional but API may change before GA. Many features are implemented; some advanced features may still be in progress.

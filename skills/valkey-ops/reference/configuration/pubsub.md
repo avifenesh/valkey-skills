@@ -4,6 +4,17 @@ Use when running Pub/Sub workloads, managing subscriber memory, configuring
 keyspace notifications, or operating sharded Pub/Sub in cluster mode. All
 defaults verified against `src/config.c` and `src/server.h` in valkey-io/valkey.
 
+## Contents
+
+- Client Output Buffer Limits for Pub/Sub (line 20)
+- Subscriber Memory Management (line 68)
+- Keyspace Notifications (line 112)
+- Sharded Pub/Sub (Cluster Mode) (line 181)
+- Pattern Subscription Performance (line 221)
+- Scaling Pub/Sub (line 246)
+- Monitoring Subscriber Count and Memory (line 253)
+- See Also (line 293)
+
 ---
 
 ## Client Output Buffer Limits for Pub/Sub

@@ -2,6 +2,14 @@
 
 Use when implementing error handling, retry logic, or batch error semantics in the GLIDE Java client.
 
+## Contents
+
+- Error Types (line 15)
+- Basic Error Handling (line 27)
+- Batch Error Handling (line 52)
+- Reconnection Behavior (line 114)
+- Failover and Timeout (line 141)
+
 ---
 
 ## Error Types

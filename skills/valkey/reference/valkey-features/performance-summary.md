@@ -6,6 +6,14 @@ Use when evaluating Valkey's performance characteristics or understanding what v
 
 Performance figures below are from Valkey project benchmarks and release notes. Actual improvements depend on workload characteristics, hardware, and configuration. See the linked Valkey release notes for methodology details.
 
+## Contents
+
+- Version-by-Version Performance Changes (line 17)
+- What Application Developers Get for Free (line 51)
+- What Requires Configuration (line 82)
+- Application-Side Optimizations (line 111)
+- See Also (line 140)
+
 ## Version-by-Version Performance Changes
 
 ### Valkey 8.0

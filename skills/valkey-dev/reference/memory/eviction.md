@@ -5,6 +5,20 @@ enforcement, or understanding how Valkey selects and removes keys under memory p
 
 Source: `src/evict.c`, `src/lrulfu.c`, `src/lrulfu.h`
 
+## Contents
+
+- Overview (line 24)
+- Eviction Policies (line 38)
+- The Eviction Pool (line 62)
+- evictionPoolPopulate() (line 90)
+- LRU Clock (line 119)
+- LFU Frequency Counter (line 136)
+- performEvictions() (line 157)
+- Memory Accounting (line 189)
+- Eviction Time Limit (line 203)
+- Call Graph Summary (line 222)
+- Configuration Reference (line 245)
+
 ---
 
 ## Overview

@@ -2,6 +2,14 @@
 
 Use when deploying GLIDE Node.js to production, configuring timeouts, managing connections, or setting up observability.
 
+## Contents
+
+- Connection Management (line 15)
+- Timeout Configuration (line 55)
+- Cluster Configuration (line 84)
+- OpenTelemetry (line 111)
+- Connection Defaults (line 138)
+
 ---
 
 ## Connection Management

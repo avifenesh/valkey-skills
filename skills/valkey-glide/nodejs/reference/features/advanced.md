@@ -2,6 +2,17 @@
 
 Use when configuring TLS, authentication, Lua scripting, protocol version, response decoding, or handling error types in the GLIDE Node.js client.
 
+## Contents
+
+- TLS Configuration (line 16)
+- Authentication (line 45)
+- Lua Scripting (line 98)
+- Error Types (line 151)
+- Decoder Options (line 186)
+- Protocol Version (line 210)
+- Valkey Functions (7.0+) (line 228)
+- Client Statistics (line 282)
+
 ## TLS Configuration
 
 Enable TLS with `useTLS`. The server must also be configured for TLS.

@@ -5,6 +5,17 @@ or using the DEBUG command for development and testing.
 
 Source: `src/debug.c` (2646 lines)
 
+## Contents
+
+- Overview (line 21)
+- DEBUG Command Subcommands (line 29)
+- Crash Reporting (line 128)
+- Stack Trace Collection (line 172)
+- Software Watchdog (line 200)
+- Assertion Infrastructure (line 234)
+- Utility Functions (line 254)
+- See Also (line 269)
+
 ---
 
 ## Overview

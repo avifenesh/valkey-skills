@@ -2,6 +2,15 @@
 
 Use when implementing task queues, job processing, or message passing between services using Valkey as the message broker.
 
+## Contents
+
+- Simple Queue (LPUSH/BRPOP) (line 16)
+- Reliable Queue (LMOVE) (line 75)
+- Stream-Based Queue (XADD/XREADGROUP) (line 132)
+- Comparison Table (line 306)
+- Priority Queue (line 348)
+- See Also (line 368)
+
 ---
 
 ## Simple Queue (LPUSH/BRPOP)

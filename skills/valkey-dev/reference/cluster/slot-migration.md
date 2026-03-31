@@ -4,6 +4,14 @@ Use when you need to understand how slots are moved between nodes during reshard
 
 Source files: `cluster_legacy.c` (SETSLOT, MIGRATE), `cluster_migrateslots.c` and `cluster_migrateslots.h` (atomic migration), `cluster.c` (redirect logic)
 
+## Contents
+
+- Traditional Slot Migration (CLUSTER SETSLOT + MIGRATE) (line 17)
+- Atomic Slot Migration (Valkey 9.0+) (line 107)
+- Comparison: Traditional vs Atomic (line 251)
+- Key Functions Reference (line 266)
+- See Also (line 285)
+
 ---
 
 ## Traditional Slot Migration (CLUSTER SETSLOT + MIGRATE)

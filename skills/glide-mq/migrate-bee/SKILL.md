@@ -1,6 +1,6 @@
 ---
 name: glide-mq-migrate-bee
-description: "Migrates Bee-Queue applications to glide-mq. Use when user wants to convert, migrate, replace, or switch from Bee-Queue to glide-mq, or asks about Bee-Queue vs glide-mq differences."
+description: "Use when migrating Bee-Queue applications to glide-mq. Covers chained builder to options object conversion, API mapping, and architectural changes. Not for BullMQ migration (migrate-bullmq) or greenfield glide-mq development (glide-mq)."
 version: 1.0.0
 argument-hint: "[migration scope or question]"
 ---

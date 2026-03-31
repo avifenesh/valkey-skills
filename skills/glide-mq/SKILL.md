@@ -1,6 +1,6 @@
 ---
 name: glide-mq
-description: "Use when building message queues with glide-mq. Covers queue setup, producer/consumer patterns, job scheduling, workflows, batch processing, AI/LLM job metadata, streaming, suspend/resume, budget middleware, and greenfield glide-mq development."
+description: "Use when building message queues with glide-mq. Covers queue setup, producer/consumer patterns, job scheduling, workflows, batch processing, streaming, and suspend/resume. Not for migrating from BullMQ (migrate-bullmq) or Bee-Queue (migrate-bee)."
 version: 1.1.0
 argument-hint: "[task description]"
 ---

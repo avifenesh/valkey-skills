@@ -2,6 +2,17 @@
 
 Use when migrating from Redis to Valkey, evaluating compatibility of existing applications, or planning a migration strategy.
 
+## Contents
+
+- Compatibility Baseline (line 18)
+- What Changes in Migration (line 32)
+- What Does NOT Change (line 57)
+- Migration Strategies (line 73)
+- Incompatible Versions (line 173)
+- Client Library Compatibility (line 185)
+- Application Code Changes (line 206)
+- See Also (line 217)
+
 ---
 
 ## Compatibility Baseline

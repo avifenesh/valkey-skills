@@ -4,6 +4,16 @@ Use when configuring Valkey replication, setting up read replicas, promoting rep
 
 Source: `src/config.c`, `src/replication.c` (Valkey source).
 
+## Contents
+
+- Tested Example: Primary + Replica via Docker (line 19)
+- When to Use Replication (line 45)
+- Configuration Reference (line 52)
+- Setup Procedures (line 82)
+- Synchronization Mechanisms (line 136)
+- Operational Notes (line 167)
+- See Also (line 194)
+
 ---
 
 ## Tested Example: Primary + Replica via Docker

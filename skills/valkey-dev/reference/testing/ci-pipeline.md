@@ -2,6 +2,17 @@
 
 Use when you need to understand what CI checks run on your PR, diagnose CI failures, or run extended tests manually. For local build and test setup, see [Building Valkey](../build/building.md).
 
+## Contents
+
+- Workflow Files (line 18)
+- PR CI (ci.yml) - What Runs on Every PR (line 40)
+- Clang Format Check (clang-format.yml) (line 85)
+- Daily / Extended Tests (daily.yml) (line 96)
+- CI Duration (line 145)
+- Common Failure Patterns (line 154)
+- Required Checks (line 186)
+- See Also (line 190)
+
 ---
 
 ## Workflow Files

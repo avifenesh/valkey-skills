@@ -4,6 +4,20 @@ Use when building a Valkey module from scratch, understanding the module lifecyc
 
 Source: `src/valkeymodule.h`, `src/module.c`, `src/module.h`
 
+## Contents
+
+- Module Lifecycle (line 23)
+- Initialization: ValkeyModule_Init (line 63)
+- Command Registration (line 80)
+- The Context Object: ValkeyModuleCtx (line 142)
+- Return Values and Error Handling (line 168)
+- Memory Management (line 188)
+- API Versioning (line 217)
+- Backward Compatibility with Redis Modules (line 240)
+- Minimal Complete Module Example (line 248)
+- Reply Helpers (line 298)
+- See Also (line 321)
+
 ---
 
 ## Module Lifecycle

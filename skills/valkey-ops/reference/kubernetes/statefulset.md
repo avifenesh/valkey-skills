@@ -2,6 +2,18 @@
 
 Use when deploying Valkey on Kubernetes with raw StatefulSets, configuring PVCs, pod scheduling, health probes, resource sizing, or Pod Disruption Budgets.
 
+## Contents
+
+- When to Use Raw StatefulSets (line 19)
+- Persistent Volume Claims (line 28)
+- Pod Anti-Affinity (line 60)
+- Health Probes (line 116)
+- Resource Sizing (line 182)
+- Pod Disruption Budget (line 216)
+- Complete StatefulSet Example (line 239)
+- Common StatefulSet Gotchas for Valkey (line 329)
+- See Also (line 350)
+
 ---
 
 ## When to Use Raw StatefulSets

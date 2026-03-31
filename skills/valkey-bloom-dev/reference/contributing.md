@@ -2,6 +2,20 @@
 
 Use when adding new commands, modifying bloom filter behavior, understanding code organization, replication patterns, or Rust module patterns used in the project.
 
+## Contents
+
+- Code Structure (line 19)
+- Adding a New Command (line 40)
+- Write Command Pattern (line 84)
+- Replication Strategy (line 111)
+- Keyspace Notifications (line 122)
+- Adding a Module Config (line 130)
+- Valkey 8.0 vs 8.1 Compatibility (line 155)
+- Data Type Callbacks (line 164)
+- Error Constants (line 180)
+- PR Checklist (line 190)
+- Dependencies (line 200)
+
 ## Code Structure
 
 ```
@@ -103,6 +117,8 @@ Replication is deterministic. The module does not replicate commands verbatim fo
 
 The `ReplicateArgs` struct in `command_handler.rs` carries all bloom object properties needed for deterministic replication.
 
+Note: BF.INSERT also accepts `TIGHTENING` and `SEED` arguments but these are replication-internal only - primaries use them when replicating to ensure replicas create identical objects. `VALIDATESCALETO` and `NOCREATE` are user-facing BF.INSERT arguments handled before replication.
+
 ## Keyspace Notifications
 
 Two events defined in `utils.rs`:
@@ -170,6 +186,16 @@ pub const MY_ERROR: &str = "ERR description of what went wrong";
 ```
 
 Add new variants to `BloomError` enum and implement `as_str()` mapping.
+
+## PR Checklist
+
+- [ ] Unit tests pass: `cargo test --features enable-system-alloc`
+- [ ] Clippy clean: `cargo clippy --profile release --all-targets -- -D clippy::all`
+- [ ] Format clean: `cargo fmt --check`
+- [ ] Integration tests pass: `SERVER_VERSION=unstable ./build.sh`
+- [ ] ASAN clean: `ASAN_BUILD=true SERVER_VERSION=unstable ./build.sh`
+- [ ] Write commands replicate deterministically (use `ReplicateArgs`)
+- [ ] New commands have ACL category `"bloom"`
 
 ## Dependencies
 

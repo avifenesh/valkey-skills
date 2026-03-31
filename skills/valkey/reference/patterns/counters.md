@@ -2,6 +2,16 @@
 
 Use when implementing atomic counters, unique event counting, idempotency keys, sharded counters for high-throughput hot keys, or deduplication of requests and events.
 
+## Contents
+
+- Atomic Counters (line 17)
+- Sharded Counters (line 85)
+- Idempotency Keys (line 150)
+- HyperLogLog for Approximate Unique Counting (line 222)
+- BITFIELD-Based Packed Counters (line 283)
+- Deduplication (line 338)
+- See Also (line 395)
+
 ---
 
 ## Atomic Counters

@@ -2,6 +2,18 @@
 
 Use when reducing Valkey memory footprint, choosing data structures for space efficiency, or planning TTL and eviction strategies from an application developer perspective.
 
+## Contents
+
+- Memory-Efficient Data Structure Choices (line 19)
+- Hash-Based Storage (line 55)
+- String Encoding Rules (line 116)
+- Bit Operations for Boolean Flags (line 130)
+- TTL Strategies (line 146)
+- Eviction Policies (User Perspective) (line 191)
+- Avoiding Large Values (line 220)
+- Quick Reference: Memory Anti-Patterns (line 242)
+- See Also (line 255)
+
 ---
 
 ## Memory-Efficient Data Structure Choices

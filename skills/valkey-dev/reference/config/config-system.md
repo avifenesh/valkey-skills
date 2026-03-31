@@ -4,6 +4,20 @@ Use when understanding how Valkey loads, validates, modifies, and persists confi
 
 Source: `src/config.c` (3,681 lines)
 
+## Contents
+
+- Architecture Overview (line 23)
+- Key Structs (line 33)
+- Type System (line 60)
+- Registration and Initialization (line 88)
+- Config Flags (line 111)
+- File Parsing: loadServerConfig() (line 126)
+- CONFIG SET Implementation (line 145)
+- CONFIG GET Implementation (line 162)
+- CONFIG REWRITE Implementation (line 175)
+- Adding a New Config Parameter (line 201)
+- See Also (line 221)
+
 ---
 
 ## Architecture Overview

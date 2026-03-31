@@ -2,6 +2,16 @@
 
 Use when implementing real-time messaging, event broadcasting, or notification systems. Covers standard pub/sub, sharded pub/sub in cluster, and keyspace notifications for event-driven architectures.
 
+## Contents
+
+- Fan-Out Messaging (line 17)
+- Sharded Pub/Sub (Cluster Mode) (line 82)
+- Keyspace Notifications (line 123)
+- Pub/Sub vs Streams Comparison (line 214)
+- Channel Naming Patterns (line 243)
+- Production Tips (line 277)
+- See Also (line 288)
+
 ---
 
 ## Fan-Out Messaging

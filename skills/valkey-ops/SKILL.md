@@ -1,6 +1,6 @@
 ---
 name: valkey-ops
-description: "Use when deploying, configuring, monitoring, troubleshooting, or maintaining self-hosted Valkey. Covers installation, HA with Sentinel, cluster mode, persistence, replication, security, performance tuning, Kubernetes deployment, upgrades, and capacity planning."
+description: "Use when deploying, configuring, monitoring, or troubleshooting self-hosted Valkey. Covers Sentinel HA, cluster mode, persistence, replication, security, K8s, and tuning. Not for app development (valkey) or server internals (valkey-dev)."
 version: 1.0.0
 argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 ---

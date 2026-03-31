@@ -2,6 +2,21 @@
 
 Use when creating a GLIDE client, choosing between standalone and cluster mode, configuring authentication, TLS, timeouts, reconnection backoff, read strategy, or closing connections.
 
+## Contents
+
+- GlideClient vs GlideClusterClient (line 20)
+- Creating a Standalone Client (line 33)
+- Creating a Cluster Client (line 73)
+- BaseClientConfiguration - Shared Options (line 87)
+- ServerCredentials (line 107)
+- ReadFrom Strategy (line 131)
+- Connection Backoff (line 150)
+- AdvancedBaseClientConfiguration (line 163)
+- GlideClusterClient-Specific Options (line 174)
+- Lazy Connect (line 186)
+- Protocol Version (line 199)
+- Closing Connections (line 203)
+
 ## GlideClient vs GlideClusterClient
 
 | Client | Mode | Use When |

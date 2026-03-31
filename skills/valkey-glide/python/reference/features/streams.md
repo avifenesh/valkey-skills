@@ -2,6 +2,16 @@
 
 Use when you need durable, ordered message processing with consumer groups, message acknowledgment, and replay capability. For ephemeral real-time broadcasting, see [Pub/Sub](pubsub.md) instead.
 
+## Contents
+
+- Adding Entries (line 15)
+- Trimming (line 47)
+- Reading Entries (line 56)
+- Consumer Groups (line 86)
+- Group Management (line 189)
+- Info, Length, and Deletion (line 206)
+- Cluster Mode (line 218)
+
 ## Adding Entries
 
 ```python

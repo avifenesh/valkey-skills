@@ -5,6 +5,18 @@ when deleting large objects, or when investigating UNLINK vs DEL behavior.
 
 Source: `src/lazyfree.c`
 
+## Contents
+
+- Why Lazy Freeing Exists (line 22)
+- Threshold Decision: LAZYFREE_THRESHOLD (line 38)
+- Free Effort Estimation (line 50)
+- Core Functions (line 89)
+- Background Free Callbacks (line 145)
+- Statistics (line 173)
+- Configuration Options (line 189)
+- Integration with BIO (line 208)
+- See Also (line 217)
+
 ---
 
 ## Why Lazy Freeing Exists

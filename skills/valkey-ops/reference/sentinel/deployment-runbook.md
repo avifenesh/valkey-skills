@@ -2,6 +2,17 @@
 
 Use when deploying Sentinel for the first time, configuring Sentinel directives, or planning deployments in Docker/NAT environments.
 
+## Contents
+
+- Tested Example: Minimal Sentinel Setup (Docker) (line 18)
+- Step-by-Step Deployment (line 54)
+- Sentinel Configuration Directives (line 164)
+- Cross-Datacenter Sentinel Placement (line 204)
+- Docker and NAT Considerations (line 228)
+- Coordinated Failover (Valkey 9.0+) (line 266)
+- Systemd Service Files (line 313)
+- See Also (line 346)
+
 ---
 
 ## Tested Example: Minimal Sentinel Setup (Docker)

@@ -2,6 +2,17 @@
 
 Use when building applications that run on Valkey Cluster - designing keys for multi-key operations, understanding redirects, reading from replicas, scanning, or pipelining in cluster mode.
 
+## Contents
+
+- Hash Tags for Multi-Key Commands (line 18)
+- Cross-Slot Errors (line 82)
+- MOVED and ASK Redirects (line 116)
+- Read-From-Replica Strategies (line 156)
+- Pipelining in Cluster Mode (line 230)
+- SCAN in Cluster Mode (line 262)
+- Quick Reference: Cluster Pitfalls (line 326)
+- See Also (line 339)
+
 ---
 
 ## Hash Tags for Multi-Key Commands

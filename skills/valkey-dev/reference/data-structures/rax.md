@@ -4,6 +4,16 @@ Use when you need a memory-efficient, prefix-compressed tree for byte-string key
 
 Source: `src/rax.c`, `src/rax.h`
 
+## Contents
+
+- Overview (line 19)
+- Visual Example (from source) (line 23)
+- Core Structs (line 47)
+- Key Operations (line 146)
+- Where Used in Valkey (line 208)
+- Performance (line 219)
+- See Also (line 231)
+
 ---
 
 ## Overview

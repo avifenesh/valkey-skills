@@ -2,6 +2,16 @@
 
 Use when storing user sessions in Valkey, implementing session expiration, or leveraging hash field expiration for per-field TTL on session data.
 
+## Contents
+
+- Basic Session Storage with Hashes (line 17)
+- Sliding Session Timeout (line 97)
+- Hash Field Expiration (Valkey 9.0+) (line 129)
+- Session Rotation (line 230)
+- Session Counting and Management (line 257)
+- Production Tips (line 312)
+- See Also (line 322)
+
 ---
 
 ## Basic Session Storage with Hashes

@@ -6,6 +6,18 @@ across multiple commands in a pipeline, or when investigating the
 
 Source: `src/memory_prefetch.c`, `src/memory_prefetch.h`
 
+## Contents
+
+- Problem: Memory Access Is the Bottleneck (line 23)
+- Solution: Interleaved Prefetching (line 36)
+- Data Structures (line 48)
+- How Prefetching Works (line 96)
+- Batch Management (line 209)
+- Configuration (line 244)
+- Performance Impact (line 252)
+- Statistics (line 268)
+- See Also (line 277)
+
 ---
 
 ## Problem: Memory Access Is the Bottleneck

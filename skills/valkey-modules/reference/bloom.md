@@ -2,6 +2,19 @@
 
 Use when implementing probabilistic membership testing, deduplication, cache warming, or migrating from Redis Bloom BF.* commands.
 
+## Contents
+
+- Overview (line 20)
+- Commands (line 36)
+- Scalable vs Non-Scalable Filters (line 62)
+- Usage Examples (line 96)
+- Client Integration (line 125)
+- Use Cases (line 149)
+- Error Rate and Memory (line 181)
+- Version History (line 193)
+- Client Library Compatibility (line 201)
+- Cross-References (line 205)
+
 ---
 
 ## Overview

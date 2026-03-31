@@ -4,6 +4,15 @@ Use when writing tests for a custom module, setting up CI for module builds, loa
 
 Source: `tests/unit/moduleapi/`, `tests/modules/`, `tests/support/`
 
+## Contents
+
+- Test Infrastructure (line 18)
+- Writing Tcl Tests for Your Module (line 38)
+- Building Test Modules (line 127)
+- CI Integration (line 161)
+- Loading and Unloading at Runtime (line 173)
+- Debugging Tips (line 179)
+
 ---
 
 ## Test Infrastructure

@@ -4,6 +4,20 @@ Use when you need to understand how Valkey automatically selects compact encodin
 
 Source: `src/object.c`, `src/t_list.c`, `src/t_set.c`, `src/t_zset.c`, `src/t_hash.c`, `src/config.c`
 
+## Contents
+
+- Overview (line 23)
+- Transition Table (line 27)
+- String Encoding (line 41)
+- List Encoding (line 71)
+- Set Encoding (line 92)
+- Sorted Set Encoding (line 126)
+- Hash Encoding (line 151)
+- Configuration Reference (line 168)
+- Memory Impact (line 192)
+- Checking Current Encoding (line 206)
+- See Also (line 224)
+
 ---
 
 ## Overview

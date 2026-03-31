@@ -2,6 +2,23 @@
 
 Use when implementing vector similarity search, full-text search, hybrid queries combining text/tag/numeric/vector filters, aggregations, or understanding the differences between valkey-search and RediSearch.
 
+## Contents
+
+- Overview (line 24)
+- Full-Text Search (1.2.0+) (line 48)
+- Tag and Numeric Search (1.2.0+) (line 63)
+- FT.AGGREGATE (1.1.0+) (line 72)
+- Vector Search Algorithms (line 85)
+- Performance (line 116)
+- Supported Data Types (line 123)
+- Index Creation (line 130)
+- Query Syntax (line 176)
+- Client Integration via GLIDE (line 254)
+- Feature Comparison: valkey-search vs RediSearch (line 266)
+- Commands (line 285)
+- Use Cases (line 296)
+- Cross-References (line 307)
+
 ---
 
 ## Overview

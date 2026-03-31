@@ -4,6 +4,16 @@ Use when you need to send multiple commands in a single round-trip for throughpu
 
 Requires: `@valkey/valkey-glide` 2.0+.
 
+## Contents
+
+- How Batching Differs from ioredis pipeline() (line 17)
+- Batch vs ClusterBatch vs Transaction vs ClusterTransaction (line 32)
+- Creating a Batch, Adding Commands, Executing (line 43)
+- Error Handling in Batch Results (line 93)
+- Complete Example: Batch Write 50 Products (line 140)
+- Cluster Routing Behavior (line 201)
+- Standalone-Only Commands (line 207)
+
 ## How Batching Differs from ioredis pipeline()
 
 In ioredis you call `client.pipeline()` to get a chainable pipeline, then `.exec()`. In GLIDE, you construct a `Batch` or `ClusterBatch` object with an `isAtomic` flag, chain commands on it, then pass it to `client.exec()`. The same class handles both pipelines and transactions - the `isAtomic` constructor argument controls the mode.

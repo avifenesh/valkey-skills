@@ -4,6 +4,15 @@ Use when you need real-time message broadcasting between clients - chat, notific
 
 GLIDE supports Valkey's publish/subscribe messaging with three subscription modes, automatic reconnection with resubscription, and a synchronizer that reconciles desired vs actual subscription state. Sharded subscriptions require Valkey 7.0+. Dynamic subscribe/unsubscribe requires GLIDE 2.3+.
 
+## Contents
+
+- Subscription Modes (line 16)
+- Subscription Approaches (line 24)
+- Receiving Messages (line 123)
+- Subscription State Inspection (line 152)
+- Reconciliation (line 171)
+- Publishing (line 191)
+
 ## Subscription Modes
 
 | Mode | Subscribe / Unsubscribe | Description | Client |

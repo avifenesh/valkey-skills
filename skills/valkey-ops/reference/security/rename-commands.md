@@ -5,6 +5,18 @@ the legacy `rename-command` directive and the preferred ACL alternative.
 
 Source-verified against `src/config.c` in valkey-io/valkey.
 
+## Contents
+
+- rename-command Syntax (line 22)
+- Common Patterns (line 43)
+- Limitations of rename-command (line 91)
+- ACL Alternative (Preferred) (line 105)
+- When rename-command Is Still Useful (line 163)
+- Migration from rename-command to ACL (line 195)
+- Full Dangerous Command Reference (line 219)
+- Troubleshooting (line 241)
+- See Also (line 252)
+
 ---
 
 ## rename-command Syntax

@@ -6,6 +6,22 @@ optimization.
 
 Source: `src/object.c` (1,931 lines), `src/server.h` (struct definition)
 
+## Contents
+
+- What This Is (line 27)
+- The robj Struct (line 35)
+- Memory Layout (line 55)
+- Object Types and Encodings (line 80)
+- Creation Functions (line 113)
+- Embedded Key and Expire (Valkey-Specific) (line 157)
+- Value Access (line 179)
+- Reference Counting (line 192)
+- Shared Integer Objects (line 218)
+- Encoding Optimization (line 224)
+- Memory Dismissal (CoW Optimization) (line 237)
+- OBJECT Command (line 247)
+- See Also (line 258)
+
 ---
 
 ## What This Is

@@ -3,6 +3,15 @@
 Use when clients report high latency, timeouts, or when monitoring shows
 elevated command execution times.
 
+## Contents
+
+- Symptoms (line 17)
+- Diagnosis (line 25)
+- Common Culprits (line 111)
+- Resolution (line 177)
+- Hot Key Detection (line 228)
+- See Also (line 261)
+
 ---
 
 ## Symptoms

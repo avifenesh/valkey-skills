@@ -4,6 +4,16 @@ Use when investigating fork latency, running memory tests, or as a quick
 reference for Valkey diagnostic commands. Covers the general investigation
 workflow for any production issue.
 
+## Contents
+
+- 7-Phase Diagnostic Runbook (line 19)
+- Fork Latency (line 63)
+- Memory Testing (line 135)
+- Diagnostic Commands Reference (line 168)
+- Real Incident Patterns (line 241)
+- Quick Health Check Script (line 319)
+- See Also (line 335)
+
 ---
 
 ## 7-Phase Diagnostic Runbook

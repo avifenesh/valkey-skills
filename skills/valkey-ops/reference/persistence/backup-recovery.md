@@ -2,6 +2,20 @@
 
 Use when implementing automated backup strategies, planning disaster recovery procedures, or performing point-in-time recovery from RDB or AOF files.
 
+## Contents
+
+- When to Use This Guide (line 21)
+- Backup Methods Overview (line 28)
+- Automated RDB Backup Script (line 37)
+- AOF Backup Procedure (line 103)
+- Off-Site Backup (line 154)
+- Replica-Based Backup (line 195)
+- Disaster Recovery Procedures (line 214)
+- Recovery Time Estimates (line 282)
+- Backup Verification (line 299)
+- Retention Strategy (line 339)
+- See Also (line 350)
+
 ---
 
 ## When to Use This Guide

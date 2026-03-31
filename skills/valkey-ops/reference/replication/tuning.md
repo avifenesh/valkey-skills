@@ -4,6 +4,16 @@ Use when sizing the replication backlog, configuring diskless or dual-channel re
 
 Source: `src/config.c`, `src/replication.c` (Valkey source).
 
+## Contents
+
+- Replication Backlog (line 19)
+- Diskless Replication (line 80)
+- Dual-Channel Replication (line 127)
+- Connection Tuning (line 151)
+- Docker and NAT Considerations (line 169)
+- Monitoring Replication Health (line 219)
+- See Also (line 239)
+
 ---
 
 ## Replication Backlog

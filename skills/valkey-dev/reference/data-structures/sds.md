@@ -4,6 +4,16 @@ Use when you need binary-safe strings with O(1) length, preallocation for amorti
 
 Source: `src/sds.c`, `src/sds.h`
 
+## Contents
+
+- Overview (line 19)
+- Header Variants (line 25)
+- Memory Layout (line 70)
+- Key Functions (line 92)
+- Why SDS Over C Strings (line 162)
+- Implementation Notes (line 173)
+- See Also (line 180)
+
 ---
 
 ## Overview

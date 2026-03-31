@@ -2,6 +2,20 @@
 
 Use when preparing a Valkey deployment for production, auditing an existing setup, or verifying readiness before go-live.
 
+## Contents
+
+- Quick-Verify Script (line 21)
+- System (line 49)
+- Configuration (line 58)
+- Security (line 70)
+- Monitoring (line 80)
+- Backup (line 95)
+- High Availability (line 102)
+- Kubernetes-Specific (line 116)
+- Persistence Specifics (line 125)
+- Pre-Upgrade Verification (line 133)
+- See Also (line 142)
+
 ---
 
 ## Quick-Verify Script

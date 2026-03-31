@@ -2,6 +2,21 @@
 
 Use when evaluating GLIDE Ruby capabilities, understanding differences from redis-rb, or checking available commands and limitations.
 
+## Contents
+
+- Status (line 20)
+- Key Differences from Other GLIDE Clients (line 24)
+- Requirements (line 35)
+- Installation (line 44)
+- Available Command Groups (line 56)
+- Features (line 83)
+- OpenTelemetry (line 101)
+- Client Statistics (line 117)
+- Error Types (line 128)
+- redis-rb Drop-In Replacement (line 143)
+- Limitations (line 147)
+- Repository (line 153)
+
 ## Status
 
 **GA** - valkey-rb 1.0.0 published on RubyGems. Production-ready.

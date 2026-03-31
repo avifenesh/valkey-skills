@@ -4,6 +4,16 @@ Use when you need to understand how Valkey replicates data from a primary to rep
 
 Source file: `src/replication.c`
 
+## Contents
+
+- PSYNC Protocol (line 19)
+- Replication Backlog (line 64)
+- Dual Replication IDs (line 112)
+- Replica Handshake Sequence (line 157)
+- Write Propagation (line 207)
+- Key Server State Fields (line 251)
+- See Also (line 268)
+
 ---
 
 ## PSYNC Protocol

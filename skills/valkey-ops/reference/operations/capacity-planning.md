@@ -4,6 +4,16 @@ Use when sizing Valkey instances, planning memory allocation, estimating
 connection requirements, or deciding when to scale a cluster. All config
 defaults verified against `src/config.c` in valkey-io/valkey.
 
+## Contents
+
+- Memory Per Key Type (line 19)
+- `maxmemory` vs System RAM (line 63)
+- Client Output Buffer Planning (line 143)
+- Connection Count Planning (line 190)
+- Cluster Sizing (line 245)
+- Capacity Planning Checklist (line 296)
+- See Also (line 309)
+
 ---
 
 ## Memory Per Key Type

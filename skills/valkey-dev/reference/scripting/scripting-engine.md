@@ -4,6 +4,22 @@ Use when investigating the pluggable scripting engine framework, engine registra
 
 Source files: `src/scripting_engine.c`, `src/scripting_engine.h`, `src/valkeymodule.h`
 
+## Contents
+
+- Overview (line 25)
+- Subsystem Types (line 31)
+- Key Data Structures (line 45)
+- Engine Methods (ABI) (line 100)
+- Engine Registration (line 157)
+- Engine Unregistration (line 190)
+- Engine Callback Wrappers (line 204)
+- Async Environment Reset (line 226)
+- Interactive Debugger (line 239)
+- Adding a New Scripting Engine (line 274)
+- Engine Iterator (line 307)
+- Memory Reporting (line 315)
+- See Also (line 325)
+
 ---
 
 ## Overview

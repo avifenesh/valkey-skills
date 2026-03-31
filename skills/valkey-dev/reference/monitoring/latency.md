@@ -5,6 +5,18 @@ introducing delays, or generating latency reports with LATENCY DOCTOR.
 
 Source: `src/latency.c`, `src/latency.h`
 
+## Contents
+
+- Overview (line 22)
+- Configuration (line 30)
+- Data Structures (line 40)
+- Core Function: latencyAddSample (line 85)
+- Instrumentation Macros (line 99)
+- Event Types and Their Callers (line 111)
+- Duration Stats (line 140)
+- Client Commands (line 157)
+- See Also (line 195)
+
 ---
 
 ## Overview

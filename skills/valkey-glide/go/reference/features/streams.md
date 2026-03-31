@@ -4,6 +4,20 @@ Use when you need durable, ordered message processing with consumer groups, repl
 
 Packages: `github.com/valkey-io/valkey-glide/go/v2/options`, `github.com/valkey-io/valkey-glide/go/v2/models`.
 
+## Contents
+
+- Adding Entries (line 21)
+- Reading Entries (line 49)
+- Range Queries (line 73)
+- Consumer Groups (line 87)
+- Pending Entries (line 126)
+- Claiming Entries (line 143)
+- Group Management (line 172)
+- Stream Metadata (line 184)
+- Introspection (line 207)
+- Blocking Commands (line 219)
+- Cluster Mode (line 223)
+
 ## Adding Entries
 
 ```go

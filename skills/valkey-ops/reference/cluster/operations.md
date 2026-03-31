@@ -2,6 +2,15 @@
 
 Use when performing manual failovers, checking cluster health, diagnosing node issues, or planning for cluster scalability.
 
+## Contents
+
+- Manual Failover (line 16)
+- Cluster Health Checks (line 95)
+- Automatic Replica Migration (line 186)
+- Cluster Scalability (line 208)
+- Operational Runbook: Rolling Restart (line 248)
+- See Also (line 280)
+
 ---
 
 ## Manual Failover

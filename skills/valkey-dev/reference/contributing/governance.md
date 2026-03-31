@@ -2,6 +2,19 @@
 
 Use when you need to understand Valkey's decision-making process, who the maintainers are, or how major changes are approved.
 
+## Contents
+
+- Technical Steering Committee (TSC) (line 20)
+- Roles (line 55)
+- Decision Making (line 61)
+- Major Decisions (line 79)
+- Termination of Membership (line 106)
+- Delegation (line 114)
+- Process Transparency (line 120)
+- How to Influence Decisions (line 127)
+- License (line 139)
+- See Also (line 143)
+
 ---
 
 ## Technical Steering Committee (TSC)

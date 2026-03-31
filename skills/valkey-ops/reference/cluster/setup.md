@@ -2,6 +2,15 @@
 
 Use when deploying a new Valkey Cluster, configuring cluster parameters, or understanding hash slot mechanics.
 
+## Contents
+
+- Tested Example: 6-Node Cluster on Localhost (line 16)
+- Network Requirements (line 46)
+- Cluster Configuration (line 71)
+- Creating a Cluster (line 123)
+- Hash Slots and Hash Tags (line 208)
+- See Also (line 261)
+
 ---
 
 ## Tested Example: 6-Node Cluster on Localhost

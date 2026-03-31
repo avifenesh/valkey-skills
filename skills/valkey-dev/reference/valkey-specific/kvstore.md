@@ -6,6 +6,21 @@ hash tables - for multi-database support (16 DBs) or cluster slot isolation
 
 Source: `src/kvstore.c`, `src/kvstore.h`
 
+## Contents
+
+- What This Is (line 26)
+- Core Struct (line 38)
+- Flags (line 61)
+- Creation (line 73)
+- Usage in the Server (line 91)
+- Fenwick Tree for Key Lookup (line 109)
+- Scanning (line 122)
+- Rehashing (line 139)
+- Key API Functions (line 150)
+- Cluster Migration Support (line 167)
+- Iterator Types (line 179)
+- See Also (line 188)
+
 ---
 
 ## What This Is

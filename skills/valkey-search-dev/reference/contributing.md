@@ -1,10 +1,6 @@
-# Contributing
+# Contributing to valkey-search
 
 Use when navigating the codebase, adding new index types, adding query features, understanding the code layout, or preparing a PR for valkey-search.
-
-Source: `src/`, `testing/`, `docs/`, `rfc/`
-
----
 
 ## Code Layout
 
@@ -55,16 +51,20 @@ src/
     universal_set_fetcher.cc/h  # Yields all keys for negation queries
     text/
       text_index.cc/h       # TextIndex and TextIndexSchema - inverted index
+      text_iterator.h       # TextIterator base interface for key+position iteration
       lexer.cc/h            # Text tokenizer (punctuation, stop words, unicode)
       posting.cc/h          # Posting lists (doc -> positions)
       term.cc/h             # Term management
       radix_tree.h          # Rax tree wrapper
       rax_wrapper.cc/h      # Rax C library wrapper with mutex
+      rax_target_mutex_pool.h  # Sharded mutex pool for concurrent rax writes
+      invasive_ptr.h        # Memory-efficient ref-counted smart pointer
       flat_position_map.cc/h   # Position storage for phrase queries
       proximity.cc/h        # Proximity/phrase matching (SLOP, INORDER)
       orproximity.cc/h      # OR-combined proximity matching
       fuzzy.h               # Fuzzy matching (Levenshtein)
       text_fetcher.cc/h     # Text content fetcher for results
+      textinfocmd.cc        # FT._DEBUG TEXTINFO subcommand implementation
       unicode_normalizer.cc/h  # ICU-based unicode normalization
 
   query/
@@ -72,16 +72,21 @@ src/
     planner.cc/h            # Pre-filter vs inline filter decision
     predicate.cc/h          # Predicate tree nodes (Tag, Numeric, Text, Composed, Negate)
     fanout.cc/h             # Distributed search fan-out
+    fanout_operation_base.h # Template base for all fan-out operations
+    cluster_info_fanout_operation.cc/h  # FT.INFO fan-out to all nodes
+    primary_info_fanout_operation.cc/h  # FT.INFO fan-out to primaries only
     content_resolution.cc/h # Post-search content fetch and contention check
     response_generator.cc/h # Response formatting
 
   coordinator/
     server.cc/h             # gRPC server for cross-shard queries
     client.cc/h             # gRPC client for fan-out requests
+    client_pool.h           # Lazy gRPC client pool by address
     metadata_manager.cc/h   # Global metadata consistency
     search_converter.cc/h   # Convert between SearchParameters and gRPC messages
     info_converter.cc/h     # Convert FT.INFO data for gRPC
     grpc_suspender.cc/h     # Suspend gRPC during RDB save
+    util.h                  # Status conversion, coordinator port derivation
     coordinator.proto       # gRPC service and message definitions
 
   utils/
@@ -168,6 +173,16 @@ Most tests use a mock `ValkeyModuleCtx` and test at the C++ level. See `testing/
 5. Run integration tests if touching commands or search paths
 6. PR targets `main` branch
 7. CI runs: unit tests, ASan, TSan, integration, formatting, spell check
+
+## Documentation (`docs/`)
+
+The `docs/` directory contains user-facing documentation:
+
+- `docs/commands/` - per-command reference (ft.create, ft.search, ft.aggregate, ft.info, ft.dropindex, ft._list)
+- `docs/topics/` - conceptual guides (search.md, query, configurables, observables, expressions, data-formats)
+- `docs/full-text/` - full-text search documentation
+- `docs/examples/` - usage examples
+- `COMMANDS.md` (root) - command summary with syntax
 
 ## RFCs
 

@@ -2,6 +2,15 @@
 
 Use when evaluating whether Valkey covers your module needs, understanding what is missing compared to Redis Stack or Redis 8, or finding alternatives for unsupported features.
 
+## Contents
+
+- Feature Comparison: Redis 8 vs Valkey 9 (line 16)
+- Major Gaps (line 33)
+- Minor Gaps (line 103)
+- Where Valkey Has No Gap (or Leads) (line 118)
+- Decision Guide (line 134)
+- Cross-References (line 145)
+
 ---
 
 ## Feature Comparison: Redis 8 vs Valkey 9

@@ -1,6 +1,6 @@
 ---
 name: migrate-jedis
-description: "Use when migrating Java applications from Jedis to Valkey GLIDE. Covers two migration paths (Jedis compatibility layer for zero-code-change, or full native migration), Spring Data Valkey alternative, API mapping, CompletableFuture async model, PubSub (static and dynamic), and common gotchas."
+description: "Use when migrating Java applications from Jedis to Valkey GLIDE. Covers Jedis compatibility layer (zero-code-change) and native migration paths, CompletableFuture async, PubSub. Not for greenfield Java apps - use valkey-glide-java instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---

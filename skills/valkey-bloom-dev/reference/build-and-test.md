@@ -2,6 +2,17 @@
 
 Use when building valkey-bloom from source, running tests, debugging CI failures, or setting up a local development environment.
 
+## Contents
+
+- Prerequisites (line 16)
+- Cargo Build (line 23)
+- Feature Flags (line 39)
+- Format and Lint Checks (line 48)
+- Unit Tests (line 57)
+- Integration Tests (line 81)
+- CI Pipeline (line 155)
+- ASAN Build (line 167)
+
 ## Prerequisites
 
 - Rust toolchain (stable): `curl https://sh.rustup.rs -sSf | sh`
@@ -18,6 +29,8 @@ cargo build --release
 # For Valkey 8.0 compatibility
 cargo build --release --features valkey_8_0
 ```
+
+The `build.sh` script adds `RUSTFLAGS="-D warnings"` for release builds, promoting all warnings to errors.
 
 Output: `target/release/libvalkey_bloom.so` (Linux) or `libvalkey_bloom.dylib` (macOS).
 
@@ -36,10 +49,10 @@ The crate type is `cdylib` (C-compatible dynamic library), named `valkey_bloom`.
 
 ```bash
 cargo fmt --check
-cargo clippy --profile release --all-targets -- -D clippy::all
+cargo clippy --profile release --all-targets
 ```
 
-CI runs these before any build step. Fix all clippy warnings before submitting.
+CI runs these before any build step. The `build.sh` script additionally passes `-- -D clippy::all` to deny all clippy warnings. Fix all clippy warnings before submitting.
 
 ## Unit Tests
 
@@ -53,9 +66,12 @@ Unit tests live in `src/bloom/utils.rs` under `#[cfg(test)] mod tests`. They tes
 - Non-scaling filter behavior (fill to capacity, reject overflow)
 - Scaling filter behavior (auto scale-out, multi-filter correctness)
 - False positive rate validation with margin
-- Encode/decode round-trip via bincode serialization
+- Encode/decode round-trip via bincode serialization (including unsupported version and empty bytes)
 - Copy correctness
 - Seed behavior (random vs fixed)
+- Size limit enforcement (`validate_size_before_create`)
+- Max scaled capacity calculation (parameterized with `#[rstest]`)
+- Vec capacity matching size calculations (ensures `next_power_of_two` assumptions hold)
 - Server version validation
 
 Test helpers: `add_items_till_capacity`, `check_items_exist`, `fp_assert`, `verify_restored_items`.
@@ -127,9 +143,14 @@ The `ValkeyBloomTestCaseBase` class provides:
 - `verify_error_response(client, cmd, expected_err)` - assert error message
 - `verify_command_success_reply(client, cmd, expected)` - assert success
 - `add_items_till_capacity(client, name, capacity, ...)` - batch add with BF.MADD
+- `add_items_till_nonscaling_failure(client, name, start, prefix)` - add until non-scaling error
 - `check_items_exist(client, name, start, end, ...)` - batch check with BF.MEXISTS
 - `fp_assert(errors, ops, fp_rate, margin)` - FP rate assertion
 - `validate_copied_bloom_correctness(...)` - COPY + digest validation
+- `validate_nonscaling_failure(client, name, prefix, idx)` - verify non-scaling error from all add cmds
+- `verify_bloom_metrics(info, memory, objects, filters, items, capacity)` - INFO bf metrics check
+- `parse_valkey_info(section)` - parse INFO output into dict
+- `calculate_expected_capacity(capacity, expansion, num_filters)` - compute total capacity across filters
 
 ## CI Pipeline
 
@@ -141,7 +162,7 @@ GitHub Actions (`.github/workflows/ci.yml`):
 | `build-macos-latest` | (none) | fmt, clippy, build, unit tests only |
 | `asan-build` | unstable, 8.0, 8.1 | Same as ubuntu + AddressSanitizer build, leak detection |
 
-The ASAN job builds Valkey with `SANITIZER=address` and checks test output for `LeakSanitizer: detected memory leaks`.
+The ASAN job builds Valkey with `SANITIZER=address SERVER_CFLAGS='-Werror' BUILD_TLS=module` and checks test output for `LeakSanitizer: detected memory leaks`. ASAN integration tests run with `-m "not skip_for_asan"` to exclude tests incompatible with ASAN (e.g., defrag tests that require `activedefrag yes`).
 
 ## ASAN Build
 

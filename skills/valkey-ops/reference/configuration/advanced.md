@@ -4,6 +4,20 @@ Use when tuning structured logging, OOM behavior, graceful shutdown, active
 expiration, CPU pinning, Unix sockets, or protocol limits. All defaults
 verified against `src/config.c` in valkey-io/valkey.
 
+## Contents
+
+- Structured Logging (line 23)
+- OOM Score Adjustment (line 58)
+- Graceful Shutdown (line 82)
+- Active Expiration (line 114)
+- CPU Pinning (line 139)
+- Unix Socket (line 173)
+- Protocol Limits (line 207)
+- Quick Reference Summary (line 231)
+- Common Anti-Patterns (line 248)
+- Config Interaction Warnings (line 266)
+- See Also (line 287)
+
 ---
 
 ## Structured Logging

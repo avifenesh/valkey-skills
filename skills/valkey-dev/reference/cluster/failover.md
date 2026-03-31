@@ -4,6 +4,16 @@ Use when you need to understand how Valkey detects node failures, how replicas g
 
 Source files: `cluster_legacy.c` (all failover logic), `cluster_legacy.h` (flag definitions)
 
+## Contents
+
+- Failure Detection: Two-Phase Model (line 19)
+- Automatic Failover (line 84)
+- Manual Failover (line 194)
+- Replica Migration (line 241)
+- State Machine Summary (line 256)
+- Key Functions Reference (line 284)
+- See Also (line 302)
+
 ---
 
 ## Failure Detection: Two-Phase Model

@@ -1,6 +1,15 @@
-# Valkey JSON Architecture
+# valkey-json Architecture
 
-Use when understanding the document model, JSONPath engine internals, memory layout, RDB serialization, or the KeyTable string interning system.
+Use when understanding the document model, JSONPath engine internals, object hash tables, memory layout, RDB serialization, or the KeyTable string interning system.
+
+## Contents
+
+- Document Model (line 14)
+- JSONPath Engine (Selector) (line 66)
+- Memory Architecture (line 126)
+- KeyTable (String Interning) (line 147)
+- RDB Serialization (line 165)
+- Defragmentation (line 190)
 
 ## Document Model
 
@@ -26,7 +35,7 @@ RapidJSON supports seven value types. The module maps them directly:
 | kNumberType (int64) | integer | 64-bit signed |
 | kNumberType (double) | number | Stored as string text (avoids precision loss) |
 | kStringType | string | Length-prefixed, UTF-8 |
-| kObjectType | object | Member array of (key, value) pairs |
+| kObjectType | object | Member vector or hash table of (key, value) pairs |
 | kArrayType | array | Contiguous element array |
 
 Numbers are stored as string text internally (not as native doubles) to preserve the exact representation from the original JSON input. The `jsonutil_double_to_string` helpers format numbers for output.
@@ -43,6 +52,16 @@ RapidJSON parsing uses platform-specific SIMD (configured in `rapidjson_includes
 - x86_64: SSE4.2 (`RAPIDJSON_SSE42`)
 - ARM: NEON (`RAPIDJSON_NEON`)
 - 48-bit pointer optimization enabled (`RAPIDJSON_48BITPOINTER_OPTIMIZATION`)
+
+### Object Member Hash Table
+
+The vendored RapidJSON in `src/rapidjson/document.h` is heavily modified to support an inline hash table for JSON object members. Small objects use a flat member vector (same as upstream RapidJSON). When an object grows past `HashTableFactors::minHTSize` (default 32) members, it auto-converts to an open-addressing hash table for O(1) member lookup instead of O(n) linear scan.
+
+Key details:
+- `kHashTableFlag` (0x2000) in the value's flags marks hash table mode
+- `HashTableFactors` controls load factors and grow/shrink thresholds (same pattern as KeyTable)
+- `HashTableStats` tracks rehash-up, rehash-down, and vector-to-HT conversions
+- The hash table is integrated with KeyTable - object member names are interned handles
 
 ## JSONPath Engine (Selector)
 
@@ -94,30 +113,32 @@ The two-stage write (`prepareSetValues` + `commit`) allows validation before mut
 
 ### Safety Limits
 
-All configurable via `CONFIG SET json.*`:
+| Limit | Default | Configurable | Purpose |
+|-------|---------|-------------|---------|
+| max-path-limit | 128 | `CONFIG SET json.max-path-limit` | Max nesting depth |
+| max-document-size | 0 (unlimited) | `CONFIG SET json.max-document-size` | Max bytes per document |
+| max-parser-recursion-depth | 200 | compile-time only | Selector recursion limit |
+| max-recursive-descent-tokens | 20 | compile-time only | Token limit for `..` queries |
+| max-query-string-size | 128KB | compile-time only | Max path string length |
 
-| Config | Default | Purpose |
-|--------|---------|---------|
-| max-path-limit | 128 | Max nesting depth |
-| max-document-size | 0 (unlimited) | Max bytes per document |
-| max-parser-recursion-depth | 200 | Selector recursion limit |
-| max-recursive-descent-tokens | 20 | Token limit for `..` queries |
-| max-query-string-size | 128KB | Max path string length |
+Only `max-path-limit` and `max-document-size` are registered as module configs via `registerModuleConfigs()`. The other three are static defaults in `json.cc` - changing them requires recompilation.
 
 ## Memory Architecture
 
 ### Three-Layer Allocator Stack
 
-1. **memory layer** (`memory.cc`) - wraps `malloc`/`free`, provides memory traps (diagnostics for double-free, overwrite, dangling pointer), custom STL allocator (`jsn::stl_allocator`)
+1. **memory layer** (`memory.cc`) - wraps `ValkeyModule_Alloc`/`ValkeyModule_Free`, provides memory traps (diagnostics for double-free, overwrite, dangling pointer), custom STL allocator (`jsn::stl_allocator`)
 2. **dom_alloc layer** (`alloc.cc`) - wraps memory layer, tracks per-document and global memory via `jsonstats_increment_used_mem`/`jsonstats_decrement_used_mem`
 3. **RapidJsonAllocator** - template adapter routing RapidJSON allocations to dom_alloc
 
 ### jsn:: Namespace
 
-All STL containers used in the module use custom allocators under the `jsn::` namespace to route through the memory layer:
+STL containers used in the module use custom allocators under the `jsn::` namespace:
 
 - `jsn::vector<T>`, `jsn::set<T>`, `jsn::unordered_set<T>`
 - `jsn::string`, `jsn::stringstream`
+
+Note: `jsn::stl_allocator` currently uses `std::malloc`/`std::free` directly (not the global `memory_alloc`/`memory_free` function pointers). This means jsn:: container allocations are not tracked by the module's memory accounting or protected by memory traps. Only dom_alloc-routed allocations (DOM tree nodes, RapidJSON internals) are fully tracked.
 
 ### Memory Traps
 
@@ -168,4 +189,4 @@ Version 0 is read-only (for backward compatibility). All new saves use version 3
 
 ## Defragmentation
 
-The `DocumentType_Defrag` callback copies the entire document via `dom_copy` and swaps it in. This is only done for documents under the `defrag-threshold` config (default 64MB). Large documents are skipped because the current implementation does not support stop-and-resume defrag.
+The `DocumentType_Defrag` callback copies the entire document via `dom_copy` and swaps it in. This is only done for documents under the `defrag-threshold` internal default (64MB, defined as `DEFAULT_DEFRAG_THRESHOLD` in `json.cc`). Large documents are skipped because the current implementation does not support stop-and-resume defrag. This threshold is not exposed as a `CONFIG SET` parameter.

@@ -3,6 +3,16 @@
 Use when Valkey returns OOM errors on writes, the Linux OOM killer terminates
 Valkey, or memory usage is approaching limits.
 
+## Contents
+
+- Symptoms (line 18)
+- Diagnosis (line 26)
+- Resolution (line 89)
+- Root Causes (line 182)
+- Production Thresholds (line 198)
+- Prevention (line 210)
+- See Also (line 231)
+
 ---
 
 ## Symptoms

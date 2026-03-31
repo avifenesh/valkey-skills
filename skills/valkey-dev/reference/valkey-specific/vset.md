@@ -7,6 +7,20 @@ with expiry semantics.
 
 Source: `src/vset.c` (2,446 lines), `src/vset.h`
 
+## Contents
+
+- What This Is (line 26)
+- Public API (line 36)
+- Key Types (line 67)
+- Pointer Tagging Scheme (line 78)
+- Bucket Lifecycle (line 94)
+- Time Bucket Organization (line 104)
+- pVector - Custom Pointer Vector (line 127)
+- Bucket Splitting Strategy (line 146)
+- Usage in the Codebase (line 160)
+- Thread Safety (line 172)
+- See Also (line 179)
+
 ---
 
 ## What This Is

@@ -2,6 +2,14 @@
 
 Use when deploying GLIDE Go to production, configuring timeouts, managing connections, or setting up observability.
 
+## Contents
+
+- Connection Management (line 15)
+- Timeout Configuration (line 62)
+- Cluster Configuration (line 93)
+- Batch Options in Production (line 130)
+- Connection Defaults (line 150)
+
 ---
 
 ## Connection Management

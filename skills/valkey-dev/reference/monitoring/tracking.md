@@ -5,6 +5,22 @@ or debugging why clients receive (or fail to receive) cache invalidations.
 
 Source: `src/tracking.c`
 
+## Contents
+
+- Overview (line 26)
+- Global State (line 33)
+- Broadcast State (line 49)
+- Enabling and Disabling (line 60)
+- Default Mode: Key-Based Tracking (line 88)
+- Broadcast Mode: Prefix-Based Tracking (line 125)
+- Invalidation Message Format (line 155)
+- Flush Handling (line 175)
+- Memory Pressure: Table Eviction (line 181)
+- Pending Key Invalidations (line 193)
+- Prefix Collision Detection (line 206)
+- INFO Metrics (line 212)
+- See Also (line 221)
+
 ---
 
 ## Overview

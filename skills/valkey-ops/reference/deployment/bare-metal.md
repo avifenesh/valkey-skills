@@ -2,6 +2,19 @@
 
 Use when deploying Valkey on physical servers or VMs without containers - systemd service, kernel tuning, directory structure, and permissions.
 
+## Contents
+
+- Directory Structure (line 20)
+- Systemd Service File (line 41)
+- Kernel Tuning (line 84)
+- File Descriptor Limits (line 157)
+- Permissions and Security (line 181)
+- Multiple Instances (line 221)
+- EC2 and Cloud VM Considerations (line 267)
+- Low-Latency Tuning (NUMA, cgroups) (line 275)
+- Health Checks (line 289)
+- See Also (line 307)
+
 ---
 
 ## Directory Structure

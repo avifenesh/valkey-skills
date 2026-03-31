@@ -2,6 +2,16 @@
 
 Use when optimizing Valkey throughput, reducing latency, or reviewing application-level performance patterns before production deployment.
 
+## Contents
+
+- UNLINK vs DEL (line 17)
+- SCAN vs KEYS (line 62)
+- Pipeline Batching (line 127)
+- Connection Pooling (line 221)
+- I/O Threading (User Perspective) (line 271)
+- Quick Reference: Performance Anti-Patterns (line 300)
+- See Also (line 315)
+
 ---
 
 ## UNLINK vs DEL

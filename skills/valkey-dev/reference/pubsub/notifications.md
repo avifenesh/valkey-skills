@@ -4,6 +4,18 @@ Use when working on event-driven features that react to key changes, or when deb
 
 Source: `src/notify.c`
 
+## Contents
+
+- Overview (line 21)
+- Configuration (line 25)
+- Parsing Functions (line 57)
+- Core Function (line 67)
+- Debug Assertion (line 115)
+- Callers (line 122)
+- Subscribing to Notifications (line 136)
+- Performance Notes (line 147)
+- See Also (line 153)
+
 ---
 
 ## Overview

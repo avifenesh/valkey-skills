@@ -2,6 +2,14 @@
 
 Use when implementing error handling, retry logic, or batch error semantics in the GLIDE Node.js client.
 
+## Contents
+
+- Error Types (line 15)
+- Basic Error Handling (line 35)
+- Batch Error Handling (line 59)
+- Reconnection Behavior (line 106)
+- Failover and Timeout (line 129)
+
 ---
 
 ## Error Types

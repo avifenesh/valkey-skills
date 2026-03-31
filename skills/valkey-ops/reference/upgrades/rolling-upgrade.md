@@ -2,6 +2,17 @@
 
 Use when upgrading Valkey with zero downtime in Sentinel or Cluster setups, performing planned primary swaps, or executing maintenance windows.
 
+## Contents
+
+- General Rules (line 18)
+- Rolling Upgrade: Sentinel Setup (line 26)
+- Rolling Upgrade: Cluster Setup (line 92)
+- Zero-Downtime Primary Swap (line 158)
+- Health Checks Between Steps (line 200)
+- Valkey 9.0 Cluster Upgrade Considerations (line 218)
+- Rollback Plan (line 238)
+- See Also (line 268)
+
 ---
 
 ## General Rules

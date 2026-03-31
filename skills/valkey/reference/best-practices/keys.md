@@ -2,6 +2,16 @@
 
 Use when designing key schemas, diagnosing hot key or big key problems, planning key expiration strategies, or analyzing key characteristics in production.
 
+## Contents
+
+- Key Naming Conventions (line 17)
+- Avoiding Hot Keys (line 65)
+- Avoiding Big Keys (line 113)
+- Key Expiration Strategies (line 168)
+- Key Analysis Commands (line 205)
+- Quick Reference: Key Anti-Patterns (line 242)
+- See Also (line 255)
+
 ---
 
 ## Key Naming Conventions

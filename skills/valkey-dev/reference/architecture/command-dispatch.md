@@ -2,6 +2,16 @@
 
 Use when you need to understand how a client request goes from raw bytes on the wire to command execution and reply.
 
+## Contents
+
+- End-to-End Flow (line 17)
+- The Command Table (line 47)
+- processCommand() - Pre-Execution Checks (`server.c:4222`) (line 99)
+- call() - Command Execution (`server.c:3831`) (line 145)
+- Pipelining (line 179)
+- MULTI/EXEC Transactions (line 196)
+- See Also (line 202)
+
 ---
 
 ## End-to-End Flow

@@ -2,6 +2,18 @@
 
 Use when you need to understand what Valkey is, how it relates to Redis, its licensing, governance, and what differentiates it from Redis 8+.
 
+## Contents
+
+- Overview (line 19)
+- Key Facts (line 27)
+- Licensing (line 40)
+- What Valkey Brings (line 48)
+- What Redis 8+ Brings (line 73)
+- Choosing Between Them (line 88)
+- Version History (line 102)
+- Community and Ecosystem (line 114)
+- See Also (line 124)
+
 ---
 
 ## Overview

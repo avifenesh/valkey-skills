@@ -2,6 +2,14 @@
 
 Use when reviewing application code for common Valkey mistakes, or as a checklist before deploying to production.
 
+## Contents
+
+- Anti-Pattern Table (line 15)
+- Severity Guide (line 42)
+- Detection Commands (line 77)
+- Quick Decision Guide (line 106)
+- See Also (line 135)
+
 ---
 
 ## Anti-Pattern Table

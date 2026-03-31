@@ -3,6 +3,16 @@
 Use when reducing Valkey memory footprint, tuning encoding thresholds for
 space efficiency, managing memory fragmentation, or configuring eviction.
 
+## Contents
+
+- maxmemory Configuration (line 18)
+- Encoding Thresholds (line 86)
+- Valkey 8.0 Cluster Mode Memory Savings (line 124)
+- Memory-Efficient Data Modeling (line 147)
+- Fragmentation Management (line 212)
+- Memory Diagnostics (line 254)
+- See Also (line 272)
+
 ---
 
 ## maxmemory Configuration

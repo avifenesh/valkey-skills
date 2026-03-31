@@ -2,6 +2,18 @@
 
 Use when you need to run, understand, or write low-level unit tests for Valkey's data structures and internal functions. Build the test binary first with `make all-with-unit-tests` - see [Building Valkey](../build/building.md).
 
+## Contents
+
+- Overview (line 19)
+- Building (line 25)
+- Running (line 46)
+- Binary Flags (line 74)
+- Test Files (line 87)
+- Writing a New Unit Test (line 121)
+- Build System Details (line 204)
+- Unit vs Integration Tests (line 215)
+- See Also (line 228)
+
 ---
 
 ## Overview

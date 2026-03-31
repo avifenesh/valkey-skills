@@ -4,6 +4,19 @@ Use when you need real-time message broadcasting between Go clients - chat, noti
 
 GLIDE supports Valkey's publish/subscribe messaging with three subscription modes, automatic reconnection with resubscription, and a synchronizer that continuously reconciles desired vs actual subscription state. Sharded subscriptions require Valkey 7.0+. Dynamic subscribe/unsubscribe requires GLIDE 2.3+.
 
+## Contents
+
+- Subscription Modes (line 20)
+- Configuration-Time Subscriptions (Immutable) (line 30)
+- Dynamic Subscriptions (GLIDE 2.3+) (line 80)
+- Receiving Messages (line 124)
+- PubSubMessage Type (line 181)
+- Publishing (line 191)
+- Dedicated Subscriber Client (line 202)
+- Introspection (line 206)
+- Subscription State (line 230)
+- Reconciliation and Reconnection (line 243)
+
 ## Subscription Modes
 
 | Mode | Subscribe/Unsubscribe | Description |

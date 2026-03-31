@@ -2,6 +2,17 @@
 
 Use when choosing or tuning the maxmemory eviction policy. All 8 policy names verified against `maxmemory_policy_enum` in `src/config.c`.
 
+## Contents
+
+- When Eviction Happens (line 18)
+- The 8 Eviction Policies (line 24)
+- Policy Selection Guide (line 45)
+- LRU/LFU Precision (line 92)
+- LFU Tuning (line 104)
+- Monitoring Eviction (line 143)
+- Common Mistakes (line 159)
+- See Also (line 169)
+
 ---
 
 ## When Eviction Happens

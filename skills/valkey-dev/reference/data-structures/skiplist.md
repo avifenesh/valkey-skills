@@ -4,6 +4,18 @@ Use when working with sorted sets that exceed the listpack threshold. The skipli
 
 Source: `src/t_zset.c`, `src/server.h`
 
+## Contents
+
+- Overview (line 21)
+- Core Structs (line 31)
+- Level Randomization (line 96)
+- Ordering (line 120)
+- Key Operations (line 137)
+- Span Tracking (line 189)
+- Performance (line 205)
+- When Used (line 218)
+- See Also (line 229)
+
 ---
 
 ## Overview

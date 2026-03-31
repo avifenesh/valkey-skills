@@ -2,6 +2,16 @@
 
 Use when diagnosing slow commands, large requests, or large replies. Replaces the legacy SLOWLOG with a unified logging system that captures three categories.
 
+## Contents
+
+- Syntax (line 17)
+- Types (line 25)
+- Examples (line 33)
+- Entry Format (line 52)
+- Configuration (line 64)
+- Use Cases (line 82)
+- Migration from SLOWLOG (line 102)
+
 ---
 
 ## Syntax

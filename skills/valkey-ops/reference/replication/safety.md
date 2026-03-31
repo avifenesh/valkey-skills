@@ -4,6 +4,15 @@ Use when configuring write safety guarantees, preventing data loss during networ
 
 Source: `src/config.c`, `src/replication.c` (Valkey source).
 
+## Contents
+
+- Safety Configuration (line 18)
+- The WAIT Command (line 62)
+- Critical Warnings (line 81)
+- Monitoring Checklist (line 191)
+- Pre-Deployment Safety Checklist (line 201)
+- See Also (line 211)
+
 ---
 
 ## Safety Configuration

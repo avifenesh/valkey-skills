@@ -2,6 +2,19 @@
 
 Use when you need to understand how Valkey multiplexes I/O, processes timers, or hooks into the event cycle.
 
+## Contents
+
+- Overview (line 20)
+- Backend Selection (line 24)
+- Core Data Structures (line 46)
+- Key Functions (line 98)
+- The AE_BARRIER Flag (line 175)
+- The beforeSleep Hook (`server.c:1812`) (line 181)
+- The afterSleep Hook (`server.c:2015`) (line 202)
+- The epoll Backend (`ae_epoll.c`) (line 211)
+- Thread Safety (line 226)
+- See Also (line 230)
+
 ---
 
 ## Overview

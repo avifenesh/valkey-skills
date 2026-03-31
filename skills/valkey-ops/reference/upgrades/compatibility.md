@@ -2,6 +2,20 @@
 
 Use when planning upgrades between Valkey versions, checking replication compatibility, or evaluating whether a version jump is safe.
 
+## Contents
+
+- Semantic Versioning (line 21)
+- Support Policy (line 31)
+- RDB Version Compatibility (line 36)
+- Replication Version Negotiation (line 51)
+- RDB Version Check Modes (line 79)
+- RDB File Magic Strings (line 92)
+- Valkey Release History (line 100)
+- Feature Compatibility Between Versions (line 126)
+- Client Library Compatibility (line 141)
+- Deprecated Configurations (line 150)
+- See Also (line 162)
+
 ---
 
 ## Semantic Versioning

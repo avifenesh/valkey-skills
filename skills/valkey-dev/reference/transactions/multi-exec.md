@@ -4,6 +4,18 @@ Use when working on command queuing, optimistic locking, or transaction executio
 
 Source: `src/multi.c`
 
+## Contents
+
+- Data Structures (line 21)
+- Lazy Initialization (line 66)
+- MULTI Command (line 70)
+- Command Queuing (line 78)
+- DISCARD Command (line 91)
+- EXEC Command (line 99)
+- WATCH Mechanism (line 138)
+- Memory Overhead Tracking (line 178)
+- See Also (line 186)
+
 ---
 
 ## Data Structures

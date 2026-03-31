@@ -3,6 +3,18 @@
 Use when configuring Grafana dashboards for Valkey monitoring - importing
 community dashboards, configuring data sources, and building key panels.
 
+## Contents
+
+- Prerequisites (line 20)
+- Data Source Configuration (line 27)
+- Community Dashboards (line 38)
+- Key Panels to Configure (line 67)
+- Dashboard Variables (line 147)
+- Dashboard JSON Export (line 164)
+- Grafana Provisioning (line 177)
+- Percona PMM Dashboards (line 200)
+- See Also (line 232)
+
 ---
 
 ## Prerequisites

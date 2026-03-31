@@ -4,6 +4,19 @@ Use when working on message broadcasting, channel subscriptions, pattern matchin
 
 Source: `src/pubsub.c`
 
+## Contents
+
+- Data Structures (line 22)
+- Subscribe Flow (line 78)
+- Unsubscribe Flow (line 97)
+- Message Delivery (line 112)
+- Command Implementations (line 138)
+- Sharded Pub/Sub (line 152)
+- Client Lifecycle (line 162)
+- RESP Protocol Differences (line 173)
+- Counting Functions (line 177)
+- See Also (line 186)
+
 ---
 
 ## Data Structures

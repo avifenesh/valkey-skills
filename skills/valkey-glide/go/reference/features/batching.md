@@ -4,6 +4,20 @@ Use when you need to send multiple commands in a single round-trip for throughpu
 
 Package: `github.com/valkey-io/valkey-glide/go/v2/pipeline`.
 
+## Contents
+
+- Core Concepts (line 21)
+- Batch Types (line 30)
+- Standalone Batch (line 39)
+- Cluster Batch (line 67)
+- Exec Signatures (line 85)
+- Error Handling (line 119)
+- Batch Options (line 141)
+- WATCH for Optimistic Locking (line 167)
+- Cluster Routing for Batches (line 187)
+- Retry Strategies (Non-Atomic Cluster Batches) (line 199)
+- Batch Command Set (line 206)
+
 ## Core Concepts
 
 | Mode | Constructor | Protocol | Slot Constraint |

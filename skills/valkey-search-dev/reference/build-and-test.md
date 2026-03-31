@@ -2,10 +2,6 @@
 
 Use when building valkey-search from source, running tests, setting up CI, debugging build issues, or working with sanitizers.
 
-Source: `build.sh`, `CMakeLists.txt`, `testing/`, `integration/`, `.github/workflows/`, `.devcontainer/`
-
----
-
 ## Prerequisites
 
 Ubuntu 24.04 (or the devcontainer). Required packages:
@@ -57,9 +53,9 @@ ninja
 
 ```bash
 valkey-server --loadmodule .build-release/libsearch.so
-# Or with coordinator port for cluster mode:
-valkey-server --loadmodule .build-release/libsearch.so --coordinator-port 6380
 ```
+
+In cluster mode, the gRPC coordinator port is auto-derived (`valkey_port + 20294`). The `use-coordinator` module config controls whether the coordinator starts. No `--coordinator-port` CLI argument needed.
 
 ## Unit Tests
 
@@ -82,10 +78,19 @@ Test binaries are in `.build-release/tests/`. Each `*_test.cc` compiles to a sep
 | `ft_search_parser_test.cc` | Query string parsing |
 | `filter_test.cc` | Filter predicate evaluation |
 | `ft_create_test.cc` | FT.CREATE index creation |
+| `ft_create_parser_test.cc` | FT.CREATE argument parsing |
 | `ft_aggregate_parser_test.cc` | FT.AGGREGATE parsing |
 | `ft_aggregate_exec_test.cc` | FT.AGGREGATE execution |
+| `ft_dropindex_test.cc` | FT.DROPINDEX operations |
+| `ft_info_test.cc` | FT.INFO output |
+| `ft_list_test.cc` | FT._LIST operations |
 | `text_test.cc` | Full-text indexing |
+| `text_index_schema_test.cc` | TextIndexSchema management |
 | `lexer_test.cc` | Text tokenization |
+| `posting_test.cc` | Posting list operations |
+| `flat_position_map_test.cc` | Position storage for phrase queries |
+| `radix_test.cc` | Radix tree operations |
+| `rax_wrapper_test.cc` | Rax C wrapper |
 | `numeric_index_test.cc` | Numeric range index |
 | `tag_index_test.cc` | Tag index |
 | `index_schema_test.cc` | IndexSchema lifecycle |
@@ -93,13 +98,28 @@ Test binaries are in `.build-release/tests/`. Each `*_test.cc` compiles to a sep
 | `rdb_serialization_test.cc` | RDB save/load |
 | `search_test.cc` | Search execution paths |
 | `acl_test.cc` | ACL permission checks |
+| `attribute_data_type_test.cc` | Hash vs JSON field extraction |
+| `keyspace_event_manager_test.cc` | Keyspace event routing |
+| `server_events_test.cc` | Server event handlers |
+| `multi_exec_test.cc` | MULTI/EXEC transaction handling |
+| `vector_externalizer_test.cc` | Vector denormalization |
+| `valkey_search_test.cc` | ValkeySearch singleton |
+| `segment_tree_test.cc` | Segment tree for range counts |
+
+### Subdirectory Tests
+
+| Directory | Tests |
+|-----------|-------|
+| `testing/commands/` | `ft_internal_update_test.cc` |
+| `testing/coordinator/` | `client_test.cc`, `metadata_manager_test.cc` |
+| `testing/utils/` | `allocator_test.cc`, `intrusive_list_test.cc`, `intrusive_ref_count_test.cc`, `lru_test.cc`, `patricia_tree_test.cc`, `scanner_test.cc`, `segment_tree_test.cc`, `string_interning_test.cc` |
+| `testing/expr/` | `expr_test.cc`, `value_test.cc` |
+| `testing/query/` | `response_generator_test.cc` |
 
 ### Test Utilities
 
 - `testing/common.h` / `common.cc` - shared test fixtures, mock helpers
-- `testing/commands/` - command-specific test helpers
-- `testing/coordinator/` - coordinator test helpers
-- `testing/utils/` - utility test helpers
+- `testing/coordinator/common.h` - coordinator-specific test helpers
 
 ## Integration Tests
 
@@ -107,13 +127,13 @@ Two integration test suites:
 
 ### C++ Integration Tests (`testing/integration/`)
 
-Abseil-based tests that start a real Valkey server with the module loaded.
+Python-based tests that start a real Valkey server with the module loaded.
 
 ```bash
 ./build.sh --run-integration-tests
 ```
 
-Key files: `vector_search_integration_test.py`, `stability_test.py`
+Key files: `vector_search_integration_test.py`, `stability_test.py`, `stability_runner.py`, `ft_internal_update_integration_test.py`
 
 ### Python Integration Tests (`integration/`)
 
@@ -125,7 +145,7 @@ Comprehensive pytest suite. Run via `integration/run.sh`.
 ./build.sh --retries=3                      # Retry flaky tests
 ```
 
-Key test files cover: VSS basic, non-vector search, full-text, filter expressions, HNSW, JSON, RDB save/restore, cluster fan-out, ACL, eviction, OOM handling, query parser, aggregation metrics, multi/Lua, copy, debug, versioning.
+Key test files cover: VSS basic, non-vector search, full-text (including in-flight blocking and space performance), filter expressions, HNSW (allow_replace_deleted), JSON, RDB save/restore (including module v1.0 load and load-without-module), cluster fan-out (info cluster, info primary, metadata cluster validation, search/info partition consistency controls), ACL, eviction, expired keys, OOM handling, reclaimable memory, query parser, post-filter, aggregation metrics, multi/Lua, copy, debug, versioning, multi-DB search, FT.CREATE/DROPINDEX consistency, cancel, single-slot, skip-initial-scan, skip-index-load, cross-module compat, FT.INTERNAL_UPDATE, flushall.
 
 Test base class: `valkey_search_test_case.py` - manages server lifecycle, module loading.
 
@@ -163,8 +183,13 @@ Applies to `*.h` and `*.cc` files. Excludes `src/indexes/text/rax/` (vendored co
 | `clang_tidy_format.yml` | PR/push | Formatting and linting |
 | `spell_check.yml` | PR/push | Spell check |
 | `macos.yml` | PR/push | macOS build verification |
+| `trigger-search-release.yml` | Release published | Triggers valkey-bundle extension update |
 
 All CI runs in Docker using the devcontainer image. Concurrency groups cancel in-progress runs for the same branch.
+
+## Benchmark Scripts
+
+`scripts/benchmark/` contains benchmark tooling. `scripts/common.rc` is shared shell config. Additional scripts in `ci/` handle Docker build (`build_ubuntu.sh`), format checks (`check_clang_format.sh`), change detection (`check_changes.sh`), sanitizer suppressions (`asan.supp`, `tsan.supp`), and the CI entrypoint (`entrypoint.sh`).
 
 ## Protobuf Generation
 

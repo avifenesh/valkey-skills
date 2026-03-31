@@ -2,6 +2,16 @@
 
 Use when implementing a custom data type with RDB persistence, AOF rewrite, memory reporting, lazy-free, defrag, or auxiliary data. Source: `src/valkeymodule.h`, `src/module.c`
 
+## Contents
+
+- Registration (line 17)
+- Required Callbacks (line 44)
+- RDB Serialization Primitives (line 83)
+- AOF Rewrite (line 99)
+- Optional Callbacks (line 116)
+- Auxiliary Data (line 183)
+- Setting Values on Keys (line 191)
+
 ---
 
 ## Registration

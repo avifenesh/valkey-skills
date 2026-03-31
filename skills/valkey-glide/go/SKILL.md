@@ -1,6 +1,6 @@
 ---
 name: valkey-glide-go
-description: "Use when building Go applications with Valkey GLIDE. Covers synchronous API, Client/ClusterClient, CGO bridge, Result[T] types, error handling, batching, streams, TLS, authentication, OpenTelemetry, Lua scripting."
+description: "Use when building Go applications with Valkey GLIDE. Covers synchronous API, Client/ClusterClient, CGO bridge, Result[T] types, batching, streams, TLS, OpenTelemetry, Lua scripting. Not for migrating from go-redis - use migrate-go-redis instead."
 version: 2.0.0
 argument-hint: "[API or config question]"
 ---

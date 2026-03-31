@@ -2,6 +2,15 @@
 
 Use when optimizing GLIDE Java throughput and latency, tuning inflight limits, or choosing batching strategies.
 
+## Contents
+
+- Batching Is the Top Optimization (line 16)
+- CompletableFuture Best Practices (line 57)
+- Inflight Request Limit (line 80)
+- Connection Model (line 98)
+- Resource Management (line 111)
+- When to Choose GLIDE over Jedis / Lettuce (line 123)
+
 ---
 
 ## Batching Is the Top Optimization

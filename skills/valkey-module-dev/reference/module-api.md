@@ -4,6 +4,19 @@ Use when starting a new module, understanding the lifecycle, working with the co
 
 Source: `src/valkeymodule.h`, `src/module.c`
 
+## Contents
+
+- Module Lifecycle (line 22)
+- Context Object (line 48)
+- Memory Management (line 67)
+- Server Events (line 94)
+- Timers (line 136)
+- Module Configuration (line 150)
+- Cluster Messaging (line 169)
+- Logging (line 186)
+- Module Options (line 192)
+- Version Checks (line 198)
+
 ---
 
 ## Module Lifecycle

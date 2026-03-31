@@ -2,6 +2,16 @@
 
 Use when implementing mutual exclusion across distributed services, preventing duplicate processing, or coordinating access to shared resources.
 
+## Contents
+
+- Simple Lock (Single Instance) (line 17)
+- Lock Extension (Renewal) (line 107)
+- Redlock (Distributed Multi-Instance) (line 158)
+- Fencing Tokens (line 230)
+- Lock Anti-Patterns (line 251)
+- Retry Strategy (line 264)
+- See Also (line 285)
+
 ---
 
 ## Simple Lock (Single Instance)

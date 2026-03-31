@@ -6,6 +6,18 @@ tuning I/O thread count for throughput.
 
 Source: `src/io_threads.c`, `src/io_threads.h`
 
+## Contents
+
+- Design Principle (line 23)
+- Thread Pool Architecture (line 39)
+- Thread Lifecycle (line 77)
+- Dynamic Thread Adjustment (line 132)
+- Job Dispatch (line 153)
+- Synchronization (line 222)
+- Configuration (line 252)
+- Performance Characteristics (line 264)
+- See Also (line 278)
+
 ---
 
 ## Design Principle

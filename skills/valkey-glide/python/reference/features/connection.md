@@ -2,6 +2,21 @@
 
 Use when creating GLIDE client instances, configuring addresses, authentication, TLS, reconnection, protocol version, compression, AZ affinity, or managing connection lifecycle.
 
+## Contents
+
+- Client Types (line 20)
+- Standalone Client (line 29)
+- Cluster Client (line 63)
+- TLS and mTLS (line 85)
+- Authentication (line 135)
+- Runtime Password Update (line 157)
+- IAM Token Refresh (line 170)
+- Compression (line 177)
+- AZ Affinity (line 195)
+- Lazy Connect (line 207)
+- Connection Statistics (line 218)
+- Graceful Shutdown (line 230)
+
 ## Client Types
 
 | Client | Class | Config Class | Use Case |

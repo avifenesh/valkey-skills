@@ -2,6 +2,16 @@
 
 Use when planning for network partition scenarios, configuring write safety for Sentinel-managed deployments, or troubleshooting data loss after a failover.
 
+## Contents
+
+- The Split-Brain Problem (line 17)
+- How Sentinel Prevents Split-Brain (line 29)
+- Configuring Write Safety (line 51)
+- Network Partition Scenarios (line 68)
+- Operational Checklist (line 116)
+- What min-replicas Cannot Prevent (line 128)
+- See Also (line 140)
+
 ---
 
 ## The Split-Brain Problem

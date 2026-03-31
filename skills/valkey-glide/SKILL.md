@@ -1,6 +1,6 @@
 ---
 name: valkey-glide
-description: "Router for Valkey GLIDE per-language skills. Each language skill is fully self-contained with its own API reference, features, best practices, and migration guides. Use this skill to find the right per-language skill or migration skill."
+description: "Router for Valkey GLIDE per-language skills. Use when you need to find the right language-specific GLIDE skill or migration skill. Not for GLIDE library internals or contributing to GLIDE source code - use glide-dev instead."
 version: 1.1.0
 argument-hint: "[language or migration target]"
 ---

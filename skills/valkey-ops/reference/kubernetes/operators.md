@@ -2,6 +2,16 @@
 
 Use when deploying Valkey via a Kubernetes operator, comparing operator options, writing CRD manifests, or deciding between operators and Helm charts.
 
+## Contents
+
+- Operator Comparison (line 17)
+- Valkey Official Operator (valkey-io/valkey-operator) (line 39)
+- Hyperspike Valkey Operator (line 165)
+- SAP Valkey Operator (line 289)
+- Operator Day-2 Operations (line 355)
+- Choosing Between Operators (line 395)
+- See Also (line 408)
+
 ---
 
 ## Operator Comparison

@@ -5,6 +5,23 @@ instances, detects failures, elects leaders, and executes failovers.
 
 Source: `src/sentinel.c` (5,441 lines)
 
+## Contents
+
+- Activation (line 27)
+- Core Data Structures (line 50)
+- Main Timer Loop (line 82)
+- Monitoring (line 118)
+- Failure Detection (line 152)
+- Leader Election (line 194)
+- Failover State Machine (line 229)
+- Coordinated Failover (line 300)
+- Sentinel Commands (line 309)
+- Configuration Directives (line 328)
+- Pub/Sub Event Channels (line 340)
+- Script Execution (line 367)
+- Key Timing Constants (line 379)
+- See Also (line 395)
+
 ---
 
 ## Activation

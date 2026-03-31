@@ -4,6 +4,20 @@ Use when writing a Valkey module in Rust instead of C, evaluating the Rust SDK a
 
 Source: `src/valkeymodule.h` (C API that the Rust SDK wraps), research guide section 15
 
+## Contents
+
+- Overview (line 23)
+- Project Setup (line 31)
+- Module Declaration (line 65)
+- Command Handlers (line 117)
+- Key Access (line 166)
+- Custom Data Types (line 204)
+- Comparison: C vs Rust Module Development (line 214)
+- Blocking Commands in Rust (line 247)
+- Configuration and Options (line 273)
+- Testing (line 279)
+- See Also (line 285)
+
 ---
 
 ## Overview

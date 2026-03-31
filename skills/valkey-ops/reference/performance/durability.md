@@ -4,6 +4,16 @@ Use when choosing persistence settings, tuning TCP/client connections, or
 evaluating Valkey 9.0 performance features. Covers the full spectrum from
 maximum safety to maximum speed.
 
+## Contents
+
+- Durability Spectrum (line 19)
+- TCP Backlog Configuration (line 108)
+- Client Connection Tuning (line 131)
+- Valkey 9.0 Performance Features (line 173)
+- Kernel Tuning for Performance (line 203)
+- Quick Decision Guide (line 220)
+- See Also (line 232)
+
 ---
 
 ## Durability Spectrum

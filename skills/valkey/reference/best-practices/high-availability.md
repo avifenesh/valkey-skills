@@ -2,6 +2,15 @@
 
 Use when connecting to Valkey through Sentinel, handling failovers in application code, implementing retry strategies for connection drops, or ensuring read-after-write consistency with replication.
 
+## Contents
+
+- Connecting via Sentinel (line 16)
+- What Happens During Failover (line 76)
+- Retry Strategies for Connection Drops (line 110)
+- Read-After-Write Consistency (line 195)
+- Architecture Decision: Sentinel vs Cluster (line 263)
+- See Also (line 278)
+
 ---
 
 ## Connecting via Sentinel

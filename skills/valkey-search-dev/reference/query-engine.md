@@ -2,10 +2,6 @@
 
 Use when working on query parsing, filter evaluation, hybrid search, the FT.SEARCH or FT.AGGREGATE command implementation, or the predicate tree.
 
-Source: `src/commands/`, `src/query/`, `src/expr/`
-
----
-
 ## FT.SEARCH Pipeline
 
 ```
@@ -112,7 +108,9 @@ Parse -> Search (reuses FT.SEARCH) -> Stage pipeline -> Reply
 
 ### Reducers (in `GroupBy`)
 
-Built-in reducers registered in `GroupBy::reducerTable`. Each reducer implements `ReducerInstance::ProcessRecord()` and `GetResult()`.
+Built-in reducers registered in `GroupBy::reducerTable` (`src/commands/ft_aggregate_exec.cc`). Each reducer implements `ReducerInstance::ProcessRecord()` and `GetResult()`.
+
+Available reducers: `COUNT`, `MIN`, `MAX`, `SUM`, `AVG`, `STDDEV`, `COUNT_DISTINCT`.
 
 ### Expression Engine (`src/expr/expr.h`)
 
@@ -136,6 +134,19 @@ Used in pre-filtering path. Evaluates predicates against per-key data in the ind
 Used during content resolution. Evaluates predicates against actual key data fetched from Valkey.
 
 Both implement `query::Evaluator` interface with `EvaluateTags()`, `EvaluateNumeric()`, `EvaluateText()`.
+
+## FT._DEBUG TEXTINFO (`src/indexes/text/textinfocmd.cc`)
+
+Debug subcommand for inspecting text index internals:
+
+```
+FT._DEBUG TEXTINFO <index_name> PREFIX <word> [WITHKEYS [WITHPOSITIONS]]
+FT._DEBUG TEXTINFO <index_name> SUFFIX <word> [WITHKEYS [WITHPOSITIONS]]
+FT._DEBUG TEXTINFO <index_name> STEM <word>
+FT._DEBUG TEXTINFO <index_name> LEXER <string>
+```
+
+Dumps prefix/suffix tree entries, stem mappings, and lexer tokenization results. Only available when debug mode is enabled.
 
 ## Cancellation (`src/utils/cancel.h`)
 

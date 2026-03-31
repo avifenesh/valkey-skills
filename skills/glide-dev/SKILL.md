@@ -1,6 +1,6 @@
 ---
 name: glide-dev
-description: "Use when contributing to the Valkey GLIDE client library. Covers Rust core (glide-core), language bindings (Python/Java/Node.js/Go via PyO3/JNI/NAPI/CGO/FFI), protocol layer, PubSub synchronizer, cluster topology, testing, and build system."
+description: "Use when contributing to GLIDE client source code. Covers Rust core, language bindings (PyO3/JNI/NAPI/CGO/FFI), protocol layer, PubSub synchronizer, cluster topology, and build system. Not for using GLIDE in apps - use valkey-glide instead."
 version: 1.0.0
 argument-hint: "[language binding or core component]"
 ---

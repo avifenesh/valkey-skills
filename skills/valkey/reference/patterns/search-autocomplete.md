@@ -2,6 +2,14 @@
 
 Use when building prefix autocomplete, tag-based filtering, search result ranking, or lightweight full-text search without external search engines.
 
+## Contents
+
+- Prefix Autocomplete with Sorted Sets (line 15)
+- Scored Search Results (line 83)
+- Tag-Based Search with Sets (line 126)
+- Hash-Based Inverted Indexes (line 208)
+- See Also (line 275)
+
 ---
 
 ## Prefix Autocomplete with Sorted Sets

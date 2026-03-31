@@ -4,6 +4,19 @@ Use when working with the List data type at full encoding. Quicklist combines th
 
 Source: `src/quicklist.c`, `src/quicklist.h`
 
+## Contents
+
+- Overview (line 22)
+- Core Structs (line 26)
+- Fill Factor (`list-max-listpack-size`) (line 102)
+- Compression (`list-compress-depth`) (line 131)
+- PLAIN Nodes (line 146)
+- Key Operations (line 150)
+- Node Merging and Splitting (line 218)
+- Bookmarks (line 228)
+- Performance (line 240)
+- See Also (line 251)
+
 ---
 
 ## Overview

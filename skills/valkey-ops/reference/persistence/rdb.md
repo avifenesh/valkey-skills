@@ -4,6 +4,16 @@ Use when configuring point-in-time snapshots, tuning BGSAVE behavior, or underst
 
 Source: `src/config.c`, `src/rdb.c` (Valkey source). Cross-ref: valkey-dev `reference/persistence/rdb.md` for binary format internals.
 
+## Contents
+
+- When to Use RDB (line 19)
+- Trade-offs (line 26)
+- Configuration Reference (line 35)
+- Operational Procedures (line 93)
+- Production Recommendations (line 163)
+- RDB File Format Overview (line 173)
+- See Also (line 184)
+
 ---
 
 ## When to Use RDB

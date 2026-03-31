@@ -4,6 +4,21 @@ Use when understanding how Valkey stores, retrieves, modifies, and iterates keys
 
 Source: `src/db.c` (3,054 lines)
 
+## Contents
+
+- The serverDb Struct (line 24)
+- Key-Value Slot Mapping (line 54)
+- Key Lookup (line 64)
+- Key Storage: dbAdd, dbOverwrite, setKey (line 100)
+- Key Deletion (line 148)
+- Database Selection (line 166)
+- RANDOMKEY (line 180)
+- DBSIZE (line 188)
+- SCAN Implementation (line 196)
+- Database Flushing (line 236)
+- Key Space Change Hooks (line 276)
+- See Also (line 294)
+
 ---
 
 ## The serverDb Struct

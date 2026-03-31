@@ -6,6 +6,20 @@ adding a new connection type.
 
 Source: `src/connection.c`, `src/connection.h`, `src/socket.c`
 
+## Contents
+
+- What This Is (line 25)
+- ConnectionType Vtable (line 38)
+- Connection Base Struct (line 102)
+- Registration (line 145)
+- Dispatch Functions (line 168)
+- Socket Implementation (Reference) (line 195)
+- Listener Configuration (line 220)
+- Pending Data (IO Threads Support) (line 240)
+- How to Add a New Connection Type (line 257)
+- Cached Type Lookups (line 266)
+- See Also (line 278)
+
 ---
 
 ## What This Is

@@ -4,6 +4,17 @@ Use when implementing real-time message broadcasting in C# - chat, notifications
 
 GLIDE C# supports all three PubSub subscription modes with full async/await, dynamic subscribe/unsubscribe, callback-based message delivery, and automatic reconnection with resubscription.
 
+## Contents
+
+- Subscription Modes (line 18)
+- Static Subscriptions (at Client Creation) (line 26)
+- Dynamic Subscriptions (Runtime) (line 61)
+- Sharded PubSub (Cluster Only) (line 92)
+- Publishing (line 106)
+- Subscription Introspection (line 118)
+- Reconciliation Interval (line 137)
+- Important Notes (line 141)
+
 ## Subscription Modes
 
 | Mode | Methods | Description | Cluster Only |

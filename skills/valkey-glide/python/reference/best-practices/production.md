@@ -2,6 +2,14 @@
 
 Use when deploying GLIDE Python to production, configuring timeouts, managing connections, or setting up observability.
 
+## Contents
+
+- Connection Management (line 15)
+- Timeout Configuration (line 56)
+- Cluster Configuration (line 87)
+- OpenTelemetry (line 116)
+- Connection Defaults (line 146)
+
 ---
 
 ## Connection Management

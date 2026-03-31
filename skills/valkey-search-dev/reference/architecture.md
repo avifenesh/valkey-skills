@@ -1,10 +1,8 @@
-# Architecture
+# valkey-search Architecture
 
 Use when understanding valkey-search internals, index types, shard design, cluster coordination, or the data model.
 
-Source: `src/`, `src/indexes/`, `src/coordinator/`, `vmsdk/`
-
----
+Source: `src/`, `src/indexes/`, `src/coordinator/`, `src/query/`, `vmsdk/`
 
 ## Module Overview
 
@@ -85,13 +83,24 @@ IndexBase (abstract)
 - Full inverted index with prefix tree (Rax) and optional suffix tree
 - Per-key text indexes for post-filtering
 - Supports: term, prefix, suffix, infix, fuzzy (Levenshtein), exact match
-- Stemming via Snowball stemmer with configurable min stem size
+- Stemming via Snowball stemmer (`third_party/snowball/`) with configurable min stem size (default 4)
 - Position tracking for proximity/phrase queries (SLOP, INORDER)
 - `TextIndexSchema` manages the shared text index across all TEXT attributes in a schema
+- `TextIterator` (`text/text_iterator.h`) - base interface for key+position iteration across text search results
+- `InvasivePtr<T>` (`text/invasive_ptr.h`) - memory-efficient ref-counted smart pointer with inline refcount, used for posting list targets in the rax tree
+- `RaxTargetMutexPool` (`text/rax_target_mutex_pool.h`) - sharded mutex pool for concurrent rax tree writes, hashes word to mutex index
 
 ## String Interning (`src/utils/string_interning.h`)
 
 Keys and vectors are interned - stored once and referenced by pointer. `InternedStringPtr` is used throughout for memory efficiency and fast equality checks.
+
+## Vector Externalization (`src/vector_externalizer.h`)
+
+When COSINE distance is used, vectors are normalized on insert. `VectorExternalizer` denormalizes vectors on read so clients see original values. Uses an LRU cache (default 100 entries) to avoid repeated denormalization. Registers an externalize callback with the Valkey engine for Hash field interception.
+
+## Metrics (`src/metrics.h`)
+
+Singleton `Metrics` class tracks extensive telemetry via atomic counters and `LatencySampler` (HdrHistogram-backed, from `third_party/hdrhistogram_c/`). Categories: query stats (vector, non-vector, text, hybrid, pre-filter vs inline), HNSW/FLAT operation exceptions, RDB load/save progress, coordinator gRPC latencies, ingestion rates, time-slice mutex stats, and full-text in-flight blocking. Exposed via `MODULE INFO`.
 
 ## Cluster Coordination
 
@@ -101,15 +110,35 @@ In cluster mode, valkey-search runs a gRPC sidecar for cross-shard communication
 
 - **Server** (`server.h`) - receives `SearchIndexPartition`, `InfoIndexPartition`, `GetGlobalMetadata` RPCs
 - **Client** (`client.h`) - sends fan-out requests to other shards
+- **ClientPool** (`client_pool.h`) - lazy-creates and caches gRPC `Client` instances by address
 - **MetadataManager** (`metadata_manager.h`) - global metadata consistency via cluster bus messages and gRPC reconciliation
+- **Util** (`util.h`) - gRPC/absl status conversion, coordinator port derivation
 
-### Fan-out Search (`src/query/fanout.h`)
+### Coordinator Port (`src/coordinator/util.h`)
 
-Distributed search: coordinator node fans out `SearchIndexPartitionRequest` to all shards via gRPC, merges `SearchIndexPartitionResponse` results. Consistency ensured via `IndexFingerprintVersion` and `slot_fingerprint`.
+The gRPC coordinator port is auto-derived: `valkey_port + 20294`. For default port 6379 this yields 26673 (COORD on a telephone keypad). Not configurable via CLI argument - derived automatically. The `use-coordinator` module config (default true in cluster mode) enables/disables the coordinator.
+
+### Fan-out Architecture (`src/query/`)
+
+`FanoutOperationBase<Request, Response, TargetMode>` (`fanout_operation_base.h`) is the template base for all distributed operations. It blocks the client, fans out gRPC requests to targets, collects responses, retries on failure (10ms between rounds), and handles timeouts. Target modes: `kAll` (all nodes) or `kPrimary` (primary nodes only).
+
+Concrete fan-out operations:
+
+| Class | File | Purpose |
+|-------|------|---------|
+| `PerformSearchFanoutAsync` | `fanout.h` | Distributed FT.SEARCH - fan-out to all shards, merge results |
+| `ClusterInfoFanoutOperation` | `cluster_info_fanout_operation.h` | FT.INFO across all nodes (kAll mode) |
+| `PrimaryInfoFanoutOperation` | `primary_info_fanout_operation.h` | FT.INFO across primaries only (kPrimary mode) |
+
+Error types tracked per-request: `INDEX_NAME_ERROR`, `INCONSISTENT_STATE_ERROR`, `COMMUNICATION_ERROR`. Consistency ensured via `IndexFingerprintVersion` and `slot_fingerprint`.
+
+### Replication (`src/commands/ft_internal_update.cc`)
+
+Index metadata replicates to replicas via the `FT.INTERNAL_UPDATE` command. When the primary creates/modifies an index, `MetadataManager::ReplicateFTInternalUpdate()` calls `ValkeyModule_ReplicateVerbatim()` to propagate protobuf-serialized `GlobalMetadataEntry` to replicas. On replicas, `CreateEntryOnReplica()` processes the update. Handles corrupted AOF entries with the `skip-corrupted-internal-update-entries` config.
 
 ### Metadata Versioning (`src/version.h`)
 
-Metadata uses protobuf with a version overlay. Each IndexSchema computes a minimum compatible version. Versions: kVersion1 (1.0), kVersion2 (1.1 - cluster DB support), kVersion3 (1.2 - full text). Messages with higher minimum version than the receiver are dropped.
+Metadata uses protobuf with a version overlay. Each IndexSchema dynamically computes a minimum compatible version based on feature usage. Versions: kRelease10 (1.0.0), kRelease11 (1.1.0 - cluster DB support), kRelease12 (1.2.0 - full text). Messages with higher minimum version than the receiver are dropped. This enables forward compatibility - 1.1 code writes kVersion1 objects when new features are unused.
 
 ## Thread Model
 
@@ -125,7 +154,7 @@ Main thread handles: command parsing, backfill scheduling, content resolution, r
 
 ## RDB Persistence (`src/rdb_serialization.h`)
 
-Index data saved as protobuf-serialized `RDBSection` chunks in Valkey's aux data slot. Vector indexes save their full state (HNSW graph, FLAT data). Tag/Numeric indexes rebuild from keyspace on load. Chunked I/O via `RDBChunkOutputStream`/`RDBChunkInputStream` for large indexes.
+Index data saved as protobuf-serialized `RDBSection` chunks in Valkey's aux data slot (`rdb_section.proto`). Format: minimum semantic version + count of `RDBSection` protos, each followed by optional `SupplementalContent` sections for chunked data (vector index graphs, key-to-ID maps). Vector indexes save their full state (HNSW graph, FLAT data). Tag/Numeric indexes rebuild from keyspace on load. Chunked I/O via `RDBChunkOutputStream`/`RDBChunkInputStream` for large indexes. V2 format adds mutation queue persistence (`RdbWriteV2`/`RdbReadV2` configs).
 
 ## Key Dependencies
 
@@ -134,6 +163,8 @@ Index data saved as protobuf-serialized `RDBSection` chunks in Valkey's aux data
 | Abseil (absl) | Containers, synchronization, status, strings |
 | gRPC + Protobuf | Cluster coordinator communication |
 | hnswlib (third_party) | HNSW and brute-force vector algorithms |
+| SimSIMD (third_party/simsimd) | SIMD-accelerated distance computations (L2, IP) via `third_party/hnswlib/simsimd.h` |
 | ICU (third_party) | Unicode normalization for text indexing |
-| Highway Hash | Metadata fingerprinting |
-| vmsdk | Valkey Module SDK wrapper (thread pools, cluster map, blocked clients) |
+| Snowball (third_party/snowball) | English stemmer for full-text search |
+| HdrHistogram_c (third_party) | Latency histogram sampling for metrics |
+| vmsdk | Valkey Module SDK wrapper (thread pools, cluster map, blocked clients, config, info fields) |

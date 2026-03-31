@@ -1,5 +1,19 @@
 Use when creating a GLIDE Java client, choosing between standalone and cluster mode, or configuring connection options.
 
+## Contents
+
+- Client Types (line 17)
+- Standalone Client (line 23)
+- Cluster Client (line 38)
+- NodeAddress (line 53)
+- Authentication (line 63)
+- ReadFrom Strategy (line 86)
+- Reconnection Strategy (line 106)
+- Common Configuration Options (line 123)
+- Lazy Connect (line 140)
+- Database Selection (Standalone Only) (line 144)
+- Resource Management (line 154)
+
 ## Client Types
 
 `GlideClient` connects to standalone Valkey servers. `GlideClusterClient` connects to Valkey Cluster and auto-discovers topology from seed nodes.

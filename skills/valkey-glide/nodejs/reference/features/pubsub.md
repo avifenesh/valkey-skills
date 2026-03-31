@@ -2,6 +2,17 @@
 
 Use when you need real-time message broadcasting between clients - chat, notifications, event distribution, or live data feeds.
 
+## Contents
+
+- Key Difference from ioredis (line 16)
+- PubSubChannelModes (line 59)
+- PubSubSubscriptions Interface (line 69)
+- PubSubMsg Interface (line 87)
+- Message Delivery: Callback (line 101)
+- Message Delivery: Polling (line 124)
+- Complete Example: Publisher + Subscriber (line 161)
+- Important Notes (line 199)
+
 ## Key Difference from ioredis
 
 GLIDE PubSub differs from ioredis in two ways: (1) no event emitters - use callbacks or polling instead, (2) RESP3 protocol required.

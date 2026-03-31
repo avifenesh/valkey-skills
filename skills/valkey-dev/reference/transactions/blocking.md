@@ -4,6 +4,18 @@ Use when working on BLPOP, BRPOP, BLMOVE, BZPOPMIN, XREAD, WAIT, module blocking
 
 Source: `src/blocked.c`
 
+## Contents
+
+- Data Structures (line 21)
+- Entering Blocked State (line 74)
+- Key Readiness Detection (line 114)
+- Processing Ready Keys (line 128)
+- Unblocking (line 150)
+- Cleanup Helpers (line 201)
+- Mass Unblock (line 214)
+- Event Loop Integration (line 230)
+- See Also (line 244)
+
 ---
 
 ## Data Structures

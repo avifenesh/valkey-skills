@@ -2,6 +2,15 @@
 
 Use when optimizing GLIDE Go throughput and latency, tuning inflight limits, or choosing batching strategies.
 
+## Contents
+
+- Batching Is the Top Optimization (line 16)
+- Goroutine Concurrency (line 69)
+- Inflight Request Limit (line 92)
+- Connection Model (line 103)
+- Resource Cleanup (line 116)
+- When to Choose GLIDE over go-redis (line 132)
+
 ---
 
 ## Batching Is the Top Optimization

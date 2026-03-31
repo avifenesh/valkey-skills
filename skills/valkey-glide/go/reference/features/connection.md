@@ -2,6 +2,22 @@
 
 Use when creating, configuring, or managing Valkey GLIDE Go client connections - standalone or cluster, TLS, authentication, reconnection, password rotation, lazy connect, or database selection.
 
+## Contents
+
+- Client Types (line 21)
+- Standalone Connection (line 30)
+- Cluster Connection (line 56)
+- Configuration Methods (line 73)
+- Authentication (line 95)
+- Password Rotation (line 115)
+- Reconnection Strategy (line 135)
+- ReadFrom Strategies (line 151)
+- Lazy Connect (line 162)
+- Database Selection (line 174)
+- Connection Info Commands (line 187)
+- Error Types (line 198)
+- Statistics and Close (line 219)
+
 ## Client Types
 
 | Type | Constructor | Mode |

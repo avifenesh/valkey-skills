@@ -2,6 +2,19 @@
 
 Use when understanding the Valkey module system, loading modules, checking compatibility with Redis modules, or deciding between individual modules and the valkey-bundle container image.
 
+## Contents
+
+- Module System (line 20)
+- Valkey Bundle (line 26)
+- Official Modules (line 45)
+- Loading Modules (line 54)
+- Redis Module Compatibility (line 86)
+- Client Integration (line 102)
+- When to Use Modules vs Core Features (line 113)
+- Building Custom Modules (line 129)
+- Additional Official Repositories (line 244)
+- Cross-References (line 254)
+
 ---
 
 ## Module System

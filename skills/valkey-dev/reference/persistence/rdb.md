@@ -4,6 +4,15 @@ Use when you need to understand how Valkey creates point-in-time snapshots, the 
 
 Source files: `src/rdb.c`, `src/rdb.h`
 
+## Contents
+
+- RDB File Format (line 18)
+- BGSAVE Flow (line 137)
+- RDB Loading on Startup (line 195)
+- rdbSaveInfo - Replication Metadata in RDB (line 240)
+- Diskless Replication (line 255)
+- See Also (line 269)
+
 ---
 
 ## RDB File Format

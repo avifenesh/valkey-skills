@@ -1,6 +1,6 @@
 ---
 name: migrate-lettuce
-description: "Use when migrating Java applications from Lettuce to Valkey GLIDE. Covers three migration paths (Spring Data Valkey, future compatibility layer, native rewrite), no reactive API equivalent, PubSub (static and dynamic), and common gotchas including codec system and ClientResources gaps."
+description: "Use when migrating Java applications from Lettuce to Valkey GLIDE. Covers Spring Data Valkey, compatibility layer, and native rewrite paths. No reactive API equivalent, PubSub, codec gaps. Not for Jedis migration - use migrate-jedis instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---

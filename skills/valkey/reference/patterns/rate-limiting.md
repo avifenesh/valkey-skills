@@ -2,6 +2,17 @@
 
 Use when implementing API rate limiting, throttling user actions, or protecting backend services from traffic spikes.
 
+## Contents
+
+- Fixed Window Counter (line 18)
+- Sliding Window Counter (line 76)
+- Sliding Window Log (Sorted Set) (line 134)
+- Token Bucket (Lua Script) (line 196)
+- Per-Field Rate Limiting (Valkey 9.0+) (line 264)
+- Comparison Table (line 306)
+- Production Tips (line 324)
+- See Also (line 334)
+
 ---
 
 ## Fixed Window Counter

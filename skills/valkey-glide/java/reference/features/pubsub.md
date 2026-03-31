@@ -1,5 +1,19 @@
 Use when implementing Pub/Sub messaging with GLIDE Java - subscribing to channels, receiving messages, publishing, or using sharded pub/sub in cluster mode.
 
+## Contents
+
+- Two Subscription Models (line 17)
+- Creation-Time Subscriptions (Standalone) (line 21)
+- Creation-Time Subscriptions (Cluster) (line 51)
+- Runtime Subscribe/Unsubscribe (line 72)
+- Runtime Sharded Subscribe/Unsubscribe (Cluster Only) (line 98)
+- Receiving Messages - Callback vs Polling (line 111)
+- PubSubMessage Fields (line 141)
+- Publishing (line 150)
+- Introspection (line 160)
+- Subscription State (line 177)
+- Reconciliation (line 191)
+
 ## Two Subscription Models
 
 GLIDE Java supports both creation-time subscriptions (configured in the builder) and runtime subscriptions (subscribe/unsubscribe after client creation).

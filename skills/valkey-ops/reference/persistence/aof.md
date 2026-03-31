@@ -4,6 +4,19 @@ Use when configuring write-ahead logging for durability, choosing fsync policies
 
 Source: `src/config.c`, `src/aof.c` (Valkey source). Cross-ref: valkey-dev `reference/persistence/aof.md` for multi-part architecture internals.
 
+## Contents
+
+- Tested Example: AOF with Hybrid Persistence (line 22)
+- When to Use AOF (line 50)
+- Trade-offs (line 57)
+- Configuration Reference (line 66)
+- Multi-Part AOF Architecture (line 115)
+- Hybrid Persistence (Recommended) (line 135)
+- AOF Rewrite (line 153)
+- Operational Procedures (line 185)
+- Production Recommendations (line 244)
+- See Also (line 254)
+
 ---
 
 ## Tested Example: AOF with Hybrid Persistence

@@ -6,6 +6,19 @@ connection-layer code.
 
 Source: `src/rdma.c` (1,932 lines)
 
+## Contents
+
+- What This Is (line 24)
+- Protocol Design (line 40)
+- Key Structs (line 58)
+- Memory Management (line 106)
+- Configuration (line 140)
+- Connection Lifecycle (line 154)
+- Event Handling (line 166)
+- Pending Write List (line 190)
+- ConnectionType Registration (line 197)
+- See Also (line 221)
+
 ---
 
 ## What This Is

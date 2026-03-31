@@ -4,6 +4,22 @@ Use when you need the primary key-value store or the backing structure for Hash,
 
 Source: `src/hashtable.c`, `src/hashtable.h`
 
+## Contents
+
+- Overview (line 25)
+- Bucket Layout (line 35)
+- Secondary Hash (h2) (line 68)
+- Bucket Chaining (line 80)
+- Core Struct (line 97)
+- Type Callbacks (line 114)
+- Fill Factor and Resizing (line 135)
+- Resize Policy (line 155)
+- Incremental Rehashing (line 165)
+- Key API (line 178)
+- Hash Function (line 236)
+- Differences from Legacy Dict (line 245)
+- See Also (line 257)
+
 ---
 
 ## Overview

@@ -2,6 +2,18 @@
 
 Use when you need to understand the wire format, how Valkey parses client requests, or differences between RESP2 and RESP3.
 
+## Contents
+
+- Overview (line 19)
+- RESP2 Types (line 28)
+- RESP3 Types (line 72)
+- Inline Command Format (line 129)
+- RESP Multibulk (Standard Format) (line 143)
+- How Valkey Parses RESP (line 162)
+- Buffer Size Constants (line 199)
+- Push Protocol (Client-Side Caching) (line 210)
+- See Also (line 241)
+
 ---
 
 ## Overview

@@ -6,6 +6,17 @@ values.
 
 Source: `src/defrag.c`, `src/allocator_defrag.c`, `src/allocator_defrag.h`
 
+## Contents
+
+- Why Defragmentation Is Needed (line 22)
+- Architecture: Two Layers (line 36)
+- allocator_defrag.c - jemalloc Interface (line 55)
+- defrag.c - Defrag Orchestration (line 127)
+- Configuration (line 232)
+- Statistics (INFO memory) (line 251)
+- Interaction with Child Processes (line 264)
+- See Also (line 278)
+
 ---
 
 ## Why Defragmentation Is Needed

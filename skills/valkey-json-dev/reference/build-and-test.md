@@ -2,6 +2,17 @@
 
 Use when building valkey-json from source, running unit or integration tests, debugging build issues, or understanding the CI pipeline.
 
+## Contents
+
+- Prerequisites (line 16)
+- Build Commands (line 23)
+- Build System Internals (line 94)
+- Unit Test Structure (line 111)
+- Integration Test Structure (line 129)
+- CI Pipeline (line 145)
+- Loading the Module (line 160)
+- Debugging Tips (line 173)
+
 ## Prerequisites
 
 - CMake 3.17+
@@ -107,7 +118,7 @@ Location: `tst/unit/`
 | `selector_test.cc` | JSONPath v1/v2 parsing, filter expressions, slices |
 | `json_test.cc` | Command-level logic, config, error codes |
 | `keytable_test.cc` | String interning, refcounting, sharding |
-| `hashtable_test.cc` | RapidJSON internal hashtable |
+| `hashtable_test.cc` | Vendored RapidJSON object member hash table (auto-convert, rehash, load factors) |
 | `stats_test.cc` | Memory tracking, histograms |
 | `util_test.cc` | Number formatting, overflow checks |
 | `traps_test.cc` | Memory trap diagnostics |

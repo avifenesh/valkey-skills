@@ -6,6 +6,19 @@ access denials.
 
 Source-verified against `src/acl.c` and `src/server.h` in valkey-io/valkey.
 
+## Contents
+
+- Tested Example: ACL User Creation (line 24)
+- ACL SETUSER Syntax (line 55)
+- Command Categories (line 93)
+- Selectors (Multi-Permission Sets) (line 126)
+- User Role Examples (line 142)
+- ACL Persistence (line 200)
+- ACL Management Commands (line 239)
+- Default User (line 266)
+- Key Permission Granularity (line 285)
+- See Also (line 294)
+
 ---
 
 ## Tested Example: ACL User Creation

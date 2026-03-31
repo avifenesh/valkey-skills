@@ -4,6 +4,16 @@ Use when implementing a custom data type with RDB persistence, building blocking
 
 Source: `src/valkeymodule.h` (lines 1413-1433), `src/module.h` (lines 28-76), `src/module.c` (lines 7088-7290, 8053-8672)
 
+## Contents
+
+- Custom Data Types (line 19)
+- RDB Serialization Primitives (line 131)
+- Setting and Getting Module Type Values on Keys (line 170)
+- Key Access API (line 189)
+- Blocking Commands (line 260)
+- Quick Reference: Custom Type Skeleton (line 300)
+- See Also (line 326)
+
 ---
 
 ## Custom Data Types

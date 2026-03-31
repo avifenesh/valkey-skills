@@ -1,24 +1,36 @@
-# Contributing to Valkey JSON
+# Contributing to valkey-json
 
 Use when adding new commands, extending the JSONPath engine, modifying RDB serialization, or understanding code conventions for the valkey-json module.
+
+## Contents
+
+- Code Structure (line 15)
+- Adding a New Command (line 40)
+- Extending the JSONPath Engine (line 108)
+- Modifying RDB Serialization (line 135)
+- Coding Conventions (line 148)
+- Module Configuration (line 182)
+- PR Checklist (line 202)
 
 ## Code Structure
 
 ```
 src/
   json/
-    json.cc          - Module entry point and command handlers
+    json.cc          - Module entry point and command handlers (~3000 lines)
+    json.h           - Config getters, instrumentation flags, key verification
     dom.cc/.h        - Document model (parse, serialize, CRUD, RDB)
     selector.cc/.h   - JSONPath parser and evaluator
     keytable.cc/.h   - String interning hash table
     alloc.cc/.h      - DOM memory allocator
-    stats.cc/.h      - Memory tracking and histograms
+    stats.cc/.h      - Memory tracking, histograms, logical stats
     memory.cc/.h     - Low-level allocator, traps, jsn:: STL types
     util.cc/.h       - Error codes, number formatting, helpers
-    json_api.cc/.h   - C API for cross-module access
-    shared_api.cc/.h - SharedJSON_Get for other modules
+    json_api.cc/.h   - C API for cross-module access (get_json_value, get_json_value_type)
+    shared_api.cc/.h - SharedJSON_Get via ValkeyModule_ExportSharedAPI
     rapidjson_includes.h - RapidJSON config and includes
-  rapidjson/         - Vendored RapidJSON headers (modified)
+  rapidjson/         - Vendored RapidJSON headers (modified: object hash table, KeyTable)
+  commands/          - 23 command spec JSON files (json.set.json, json.get.json, etc.)
   include/           - Auto-copied valkeymodule.h (generated at build)
 tst/
   unit/              - GoogleTest C++ tests
@@ -169,13 +181,21 @@ DOM and util functions should avoid `ValkeyModuleCtx`, `ValkeyModuleString`, etc
 
 ## Module Configuration
 
-Configs registered in `registerModuleConfigs()` and accessible via `CONFIG SET json.*`:
+Two configs are registered in `registerModuleConfigs()` and accessible via `CONFIG SET json.*`:
 
-| Config | Default | Type | Purpose |
+| Config | Default | Flag | Purpose |
 |--------|---------|------|---------|
-| max-document-size | 0 | memory | Max bytes per document (0 = unlimited) |
-| max-path-limit | 128 | numeric | Max JSONPath nesting depth |
-| defrag-threshold | 64MB | internal | Max doc size for defrag (not exposed as config) |
+| max-document-size | 0 | VALKEYMODULE_CONFIG_MEMORY | Max bytes per document (0 = unlimited) |
+| max-path-limit | 128 | VALKEYMODULE_CONFIG_DEFAULT | Max JSONPath nesting depth |
+
+Internal defaults (not exposed via CONFIG SET - compile-time only):
+
+| Static Variable | Default | Purpose |
+|----------------|---------|---------|
+| config_max_parser_recursion_depth | 200 | Selector recursion limit |
+| config_max_recursive_descent_tokens | 20 | Token limit for `..` queries |
+| config_max_query_string_size | 128KB | Max path string length |
+| config_defrag_threshold | 64MB | Max doc size for defrag |
 
 KeyTable tuning (grow/shrink factors, shard count) is configured internally at startup via `configKeyTable()`.
 

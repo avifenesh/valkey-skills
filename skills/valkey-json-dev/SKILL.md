@@ -1,6 +1,6 @@
 ---
 name: valkey-json-dev
-description: "Use when contributing to valkey-io/valkey-json - C++ module internals, JDocument/RapidJSON DOM, JSONPath engine, KeyTable interning, RDB serialization, dom_alloc memory layers, building from source, or reviewing PRs."
+description: "Use when contributing to valkey-io/valkey-json source code - C++ internals, RapidJSON DOM, JSONPath engine, RDB serialization, dom_alloc layers. Not for using JSON.SET/GET in apps (valkey-modules) or building new modules (valkey-module-dev)."
 version: 1.0.0
 argument-hint: "[area or task]"
 ---
@@ -17,7 +17,7 @@ C++ module implementing JSON document storage with JSONPath queries, backed by a
 
 ## Routing
 
-- JDocument, JValue, RapidJSON, RapidJsonAllocator, GenericValue, type system, SIMD -> Architecture
+- JDocument, JValue, RapidJSON, RapidJsonAllocator, GenericValue, type system, SIMD, object hash table -> Architecture
 - Selector, JSONPath v1/v2, filter expressions, recursive descent, slices, wildcards -> Architecture
 - KeyTable, string interning, shard table, ref-counting, PtrWithMetaData, FNV-1a -> Architecture
 - dom_alloc, memory traps, jsn:: namespace, three-layer allocator, defrag -> Architecture
@@ -32,21 +32,19 @@ C++ module implementing JSON document storage with JSONPath queries, backed by a
 
 | Topic | Reference |
 |-------|-----------|
-| JDocument/JValue DOM, RapidJSON allocator, JSONPath engine, KeyTable, memory layers, RDB format, defrag | [architecture](reference/architecture.md) |
+| JDocument/JValue DOM, RapidJSON allocator, object hash table, JSONPath engine, KeyTable, memory layers, RDB format, defrag | [architecture](reference/architecture.md) |
 | build.sh, CMake, GoogleTest unit tests, pytest integration tests, ASAN, CI pipeline | [build-and-test](reference/build-and-test.md) |
 | Adding commands, extending JSONPath, RDB versioning, coding conventions, PR checklist | [contributing](reference/contributing.md) |
 
 ## Quick Reference
 
+```bash
+./build.sh              # Release build -> build/src/libjson.so
+./build.sh --unit       # Build + run GoogleTest unit tests
+./build.sh --integration  # Build module + valkey-server, run pytest
+./build.sh --clean      # Clean all artifacts
+ASAN_BUILD=true ./build.sh --integration  # ASAN build
+valkey-server --loadmodule ./build/src/libjson.so
 ```
-src/json/json.cc        Module entry, command handlers, RDB callbacks, config
-src/json/dom.cc/.h      JDocument/JValue tree, CRUD, parse, serialize, RDB
-src/json/selector.cc/.h JSONPath v1 (legacy) + v2 (dollar) parser/evaluator
-src/json/keytable.cc/.h Sharded string interning (ref-counted, FNV-1a)
-src/json/alloc.cc/.h    dom_alloc/dom_free wrapping ValkeyModule_Alloc
-src/json/memory.cc/.h   Memory traps, jsn:: STL allocator
-src/json/stats.cc/.h    Memory tracking, histograms, INFO metrics
-src/json/util.cc/.h     JsonUtilCode errors, number formatting
-src/json/json_api.cc/.h Cross-module C API (SharedJSON_Get)
-src/rapidjson/          Vendored RapidJSON (SSE4.2/NEON, 48-bit pointers)
-```
+
+Commands: `JSON.SET`, `JSON.MSET`, `JSON.GET`, `JSON.MGET`, `JSON.DEL`, `JSON.FORGET`, `JSON.ARRAPPEND`, `JSON.ARRINDEX`, `JSON.ARRINSERT`, `JSON.ARRLEN`, `JSON.ARRPOP`, `JSON.ARRTRIM`, `JSON.CLEAR`, `JSON.NUMINCRBY`, `JSON.NUMMULTBY`, `JSON.OBJKEYS`, `JSON.OBJLEN`, `JSON.RESP`, `JSON.STRLEN`, `JSON.STRAPPEND`, `JSON.TOGGLE`, `JSON.TYPE`, `JSON.DEBUG`

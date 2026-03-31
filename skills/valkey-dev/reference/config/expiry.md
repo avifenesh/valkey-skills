@@ -4,6 +4,17 @@ Use when understanding how Valkey expires keys (and hash fields), both lazily on
 
 Source: `src/expire.c` (~500 lines for active expiry), `src/db.c` (~300 lines for lazy expiry and expire management)
 
+## Contents
+
+- Two Expiration Strategies (line 20)
+- Lazy Expiration: expireIfNeeded (line 29)
+- Active Expiration: activeExpireCycle (line 70)
+- Hash Field Expiration (Valkey-Specific) (line 166)
+- Expire Management Functions (line 193)
+- EXPIRE Command Family (line 219)
+- Writable Replica Key Expiration (line 238)
+- See Also (line 254)
+
 ---
 
 ## Two Expiration Strategies

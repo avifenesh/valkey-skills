@@ -2,6 +2,17 @@
 
 Use when you need to understand client connections, read/write buffers, or the reply delivery mechanism.
 
+## Contents
+
+- Client Connection Lifecycle (line 18)
+- The client Struct (`server.h:1332`) (line 43)
+- Reading: readQueryFromClient (`networking.c:4202`) (line 103)
+- Writing: The Two-Level Reply Buffer (line 134)
+- Connection Acceptance (`networking.c:1792`) (line 195)
+- Client Cleanup: freeClient (`networking.c:2048`) (line 221)
+- I/O Threading (line 233)
+- See Also (line 243)
+
 ---
 
 ## Client Connection Lifecycle

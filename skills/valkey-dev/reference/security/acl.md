@@ -6,6 +6,22 @@ persistence, and audit logging.
 
 Source: `src/acl.c` (~3,500 lines), structs in `src/server.h`.
 
+## Contents
+
+- Global State (line 27)
+- Core Structs (line 36)
+- Selector Model (line 78)
+- Command Bitmap (line 110)
+- Command Categories (line 122)
+- ACLSetUser - The Rule Engine (line 143)
+- Authentication Flow (line 187)
+- Permission Checking (line 204)
+- Default User (line 233)
+- Persistence (line 241)
+- ACL LOG - Audit System (line 272)
+- User Deletion and Rule Ordering (line 287)
+- See Also (line 300)
+
 ---
 
 ## Global State

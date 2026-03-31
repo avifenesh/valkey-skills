@@ -7,6 +7,15 @@ commands.
 Source-verified against `src/server.c` INFO output generation in
 valkey-io/valkey.
 
+## Contents
+
+- INFO Command (line 21)
+- Critical Metrics by Category (line 40)
+- Derived Metrics (line 148)
+- Operational Diagnostic Commands (line 163)
+- APM Integrations (line 241)
+- See Also (line 282)
+
 ---
 
 ## INFO Command

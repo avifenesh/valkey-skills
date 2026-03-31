@@ -2,6 +2,22 @@
 
 Use when you need durable, ordered message processing with consumer groups, replay capability, or event sourcing in Node.js/TypeScript. For fire-and-forget messaging, see [Pub/Sub](pubsub.md).
 
+## Contents
+
+- XADD - Adding Entries (line 21)
+- XREAD - Reading Without Consumer Groups (line 45)
+- XGROUP CREATE (line 58)
+- XREADGROUP - Reading With Consumer Groups (line 69)
+- XACK - Acknowledging Messages (line 87)
+- XLEN, XRANGE, XINFO (line 96)
+- Group Management (line 129)
+- XPENDING - Inspecting Pending Messages (line 140)
+- XCLAIM - Changing Message Ownership (line 165)
+- XAUTOCLAIM - Automatic Pending Transfer (6.2+) (line 184)
+- Complete Example: Producer/Consumer With Consumer Group (line 205)
+- Blocking Commands Warning (line 257)
+- Related Features (line 268)
+
 ## XADD - Adding Entries
 
 ```typescript

@@ -2,6 +2,14 @@
 
 Use when optimizing GLIDE Node.js throughput and latency, tuning inflight limits, or choosing batching strategies.
 
+## Contents
+
+- Batching Is the Top Optimization (line 15)
+- Inflight Request Limit (line 56)
+- Connection Model (line 74)
+- TCP Tuning (line 87)
+- When to Choose GLIDE over ioredis / node-redis (line 100)
+
 ---
 
 ## Batching Is the Top Optimization

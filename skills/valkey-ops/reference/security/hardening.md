@@ -7,6 +7,19 @@ audits.
 Source-verified against `src/config.c`, `src/networking.c`, `src/acl.c`,
 and `src/server.h` in valkey-io/valkey.
 
+## Contents
+
+- Defense in Depth Layers (line 25)
+- Protected Mode (line 41)
+- Network Security (line 71)
+- Restricting Dangerous Commands (line 115)
+- Process Security (line 160)
+- CVE History - Top Vulnerabilities (line 193)
+- PCI DSS Key Mappings (line 211)
+- Credential Management (line 225)
+- Security Checklist (line 235)
+- See Also (line 257)
+
 ---
 
 ## Defense in Depth Layers

@@ -2,6 +2,17 @@
 
 Use when you need to run, understand, or write integration tests for Valkey. These tests exercise end-to-end functionality by starting real server instances and sending commands. Build the server first - see [Building Valkey](../build/building.md).
 
+## Contents
+
+- Quick Reference (line 18)
+- Running Tests (line 26)
+- Test Directory Structure (line 102)
+- Tags System (line 145)
+- Test Framework API (line 197)
+- Writing a New Test (line 278)
+- Test Framework Internals (line 313)
+- See Also (line 323)
+
 ---
 
 ## Quick Reference

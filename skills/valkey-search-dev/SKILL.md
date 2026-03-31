@@ -1,13 +1,19 @@
 ---
 name: valkey-search-dev
-description: "Contributing to valkey-io/valkey-search C++ module - index internals (HNSW, FLAT, numeric, tag, text), query engine, vector similarity, hybrid search, build system, tests, cluster coordinator, and PR review."
+description: "Use when contributing to valkey-io/valkey-search - C++ internals, HNSW/FLAT indexes, query engine, vector similarity, hybrid search. Not for using FT.SEARCH in apps (valkey-modules) or building new modules (valkey-module-dev)."
 version: 1.0.0
 argument-hint: "[area or task]"
 ---
 
 # Valkey Search Module - Contributor Reference
 
-C++ module providing vector similarity search (ANN/KNN), full-text search, and hybrid queries for Valkey. Does NOT cover user-facing FT.SEARCH usage or application patterns - see the `valkey-modules` skill for that.
+C++ module providing vector similarity search (ANN/KNN), full-text search, and hybrid queries for Valkey.
+
+## Not This Skill
+
+- Using FT.CREATE/FT.SEARCH/FT.AGGREGATE commands in applications -> use valkey-modules
+- Building custom Valkey modules from scratch -> use valkey-module-dev
+- ValkeyModule_* C API reference -> use valkey-module-dev
 
 ## Routing
 
@@ -41,4 +47,4 @@ C++ module providing vector similarity search (ANN/KNN), full-text search, and h
 valkey-server --loadmodule .build-release/libsearch.so
 ```
 
-Commands: `FT.CREATE`, `FT.SEARCH`, `FT.AGGREGATE`, `FT.INFO`, `FT.DROPINDEX`, `FT._LIST`, `FT._DEBUG`
+Commands: `FT.CREATE`, `FT.SEARCH`, `FT.AGGREGATE`, `FT.INFO`, `FT.DROPINDEX`, `FT._LIST`, `FT._DEBUG`, `FT.INTERNAL_UPDATE` (replication)

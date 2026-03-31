@@ -4,6 +4,17 @@ Use when investigating slow commands, large requests, or large replies.
 The commandlog is Valkey's evolution of Redis SLOWLOG, expanded to cover
 network bandwidth in addition to execution time.
 
+## Contents
+
+- What It Is (line 20)
+- Three Log Types (line 29)
+- Configuration (line 42)
+- Commands (line 81)
+- Migration from SLOWLOG (line 134)
+- Operational Patterns (line 156)
+- Grafana Panels for Commandlog (line 215)
+- See Also (line 235)
+
 ---
 
 ## What It Is

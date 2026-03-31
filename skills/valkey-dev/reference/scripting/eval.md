@@ -4,6 +4,20 @@ Use when investigating EVAL/EVALSHA command behavior, Lua script caching, script
 
 Source files: `src/eval.c`, `src/script.c`, `src/script.h`
 
+## Contents
+
+- Overview (line 23)
+- Key Data Structures (line 27)
+- SHA1 Hashing (line 76)
+- Script Registration (line 86)
+- Shebang Flags (line 97)
+- LRU Eviction (line 127)
+- Command Entry Points (line 133)
+- Script Execution Lifecycle (script.c) (line 165)
+- Memory Accounting (line 177)
+- Replication (line 186)
+- See Also (line 190)
+
 ---
 
 ## Overview

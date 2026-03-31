@@ -4,6 +4,26 @@ Use when investigating FUNCTION LOAD/CALL/DELETE/LIST/STATS/DUMP/RESTORE, functi
 
 Source files: `src/functions.c`, `src/functions.h`, `src/script.c`
 
+## Contents
+
+- Overview (line 29)
+- How Functions Differ from EVAL (line 33)
+- Key Data Structures (line 46)
+- Library Metadata Format (line 98)
+- FUNCTION LOAD (line 118)
+- FCALL / FCALL_RO (line 143)
+- FUNCTION DELETE (line 162)
+- FUNCTION LIST (line 166)
+- FUNCTION STATS (line 170)
+- FUNCTION DUMP / RESTORE (line 176)
+- FUNCTION FLUSH (line 187)
+- Library Linking (line 197)
+- Command Flag Extraction (line 204)
+- Persistence and Replication (line 212)
+- Memory Accounting (line 218)
+- Initialization (line 227)
+- See Also (line 235)
+
 ---
 
 ## Overview

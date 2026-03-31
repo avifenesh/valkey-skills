@@ -4,6 +4,16 @@ Use when you need a compact, contiguous-memory container for small collections. 
 
 Source: `src/listpack.c`, `src/listpack.h`
 
+## Contents
+
+- Overview (line 19)
+- Header (line 23)
+- Entry Format (line 45)
+- Key Operations (line 95)
+- When Valkey Uses Listpack (line 168)
+- Performance Characteristics (line 181)
+- See Also (line 193)
+
 ---
 
 ## Overview

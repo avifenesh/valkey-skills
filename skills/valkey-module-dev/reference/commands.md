@@ -2,6 +2,18 @@
 
 Use when registering commands, defining subcommands, parsing arguments, building replies, accessing keys, calling other commands, or implementing blocking commands. Source: `src/valkeymodule.h`, `src/module.c`
 
+## Contents
+
+- Command Registration (line 19)
+- Subcommands (line 68)
+- Command Metadata (line 78)
+- Argument Parsing (line 86)
+- Reply Building (line 116)
+- Key Access (line 158)
+- Calling Other Commands (line 166)
+- Blocking Commands (line 178)
+- Replication (line 201)
+
 ---
 
 ## Command Registration

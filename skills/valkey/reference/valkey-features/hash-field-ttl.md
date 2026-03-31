@@ -2,6 +2,20 @@
 
 Use when you need per-field TTL on hash entries - expiring individual fields without deleting the entire hash. Available in Valkey 9.0+.
 
+## Contents
+
+- Overview (line 21)
+- New Commands (line 29)
+- Core Operations (line 51)
+- Return Values for TTL Commands (line 93)
+- Use Case: Session Storage with Granular Expiration (line 105)
+- Use Case: Feature Flags with Per-Flag Expiration (line 126)
+- Use Case: Caching with Per-Field Freshness (line 142)
+- Memory Overhead (line 155)
+- Interaction with Key-Level TTL (line 163)
+- Important Notes (line 172)
+- See Also (line 182)
+
 ---
 
 ## Overview
