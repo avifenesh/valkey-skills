@@ -1,6 +1,57 @@
 === Task 1: Bug Investigation Validation ===
   [PASS] Source fixed: deferral call removed or disabled
   [PASS] Epoch collision handler preserved with bump
+  Building fixed Valkey...
+  [PASS] Fixed source compiles (docker compose build)
+  Starting cluster...
+>>> Performing hash slots allocation on 6 node(s)...
+Primary[0] -> Slots 0 - 5460
+Primary[1] -> Slots 5461 - 10922
+Primary[2] -> Slots 10923 - 16383
+Adding replica 172.30.0.15:7005 to 172.30.0.11:7001
+Adding replica 172.30.0.16:7006 to 172.30.0.12:7002
+Adding replica 172.30.0.14:7004 to 172.30.0.13:7003
+M: 94e6ee23b46d6f25af91fb8587725613f5ee95e1 172.30.0.11:7001
+   slots:[0-5460] (5461 slots) master
+M: e8b4341ef490d599a8dc09e3232656603581024f 172.30.0.12:7002
+   slots:[5461-10922] (5462 slots) master
+M: df0e1f1367e1e13a99b81370583e9f0c21c3068c 172.30.0.13:7003
+   slots:[10923-16383] (5461 slots) master
+S: 704e2f7357dca6bba16a04d82c74694daf47674b 172.30.0.14:7004
+   replicates df0e1f1367e1e13a99b81370583e9f0c21c3068c
+S: 406ead69776e61cc83764ef46f09f43964951e03 172.30.0.15:7005
+   replicates 94e6ee23b46d6f25af91fb8587725613f5ee95e1
+S: 0ef62c051b6b0441a91a12d7e84d7fec25bb7f55 172.30.0.16:7006
+   replicates e8b4341ef490d599a8dc09e3232656603581024f
+>>> Nodes configuration updated
+>>> Assign a different config epoch to each node
+>>> Sending CLUSTER MEET messages to join the cluster
+Waiting for the cluster to join
+.
+>>> Performing Cluster Check (using node 172.30.0.11:7001)
+M: 94e6ee23b46d6f25af91fb8587725613f5ee95e1 172.30.0.11:7001
+   slots:[0-5460] (5461 slots) master
+   1 additional replica(s)
+M: e8b4341ef490d599a8dc09e3232656603581024f 172.30.0.12:7002
+   slots:[5461-10922] (5462 slots) master
+   1 additional replica(s)
+S: 0ef62c051b6b0441a91a12d7e84d7fec25bb7f55 172.30.0.16:7006
+   slots: (0 slots) slave
+   replicates e8b4341ef490d599a8dc09e3232656603581024f
+S: 704e2f7357dca6bba16a04d82c74694daf47674b 172.30.0.14:7004
+   slots: (0 slots) slave
+   replicates df0e1f1367e1e13a99b81370583e9f0c21c3068c
+S: 406ead69776e61cc83764ef46f09f43964951e03 172.30.0.15:7005
+   slots: (0 slots) slave
+   replicates 94e6ee23b46d6f25af91fb8587725613f5ee95e1
+M: df0e1f1367e1e13a99b81370583e9f0c21c3068c 172.30.0.13:7003
+   slots:[10923-16383] (5461 slots) master
+   1 additional replica(s)
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+  [PASS] Cluster starts and is healthy
   [PASS] Identifies epoch collision handler
   [PASS] Identifies deferral function as the bug
   [PASS] Explains why deferral always triggers
@@ -8,5 +59,5 @@
   [PASS] Explains split-brain from unresolved collision
   [PASS] Identifies cluster_legacy.c
 
-Result: 7/10 passed
-SCORE=7/10
+Result: 9/12 passed
+SCORE=9/12
