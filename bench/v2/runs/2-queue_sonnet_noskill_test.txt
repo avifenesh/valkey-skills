@@ -1,13 +1,15 @@
 === Task 2: Message Queue Validation ===
   [PASS] Uses GLIDE client (not ioredis/node-redis)
-  [PASS] Uses XADD for producing messages
-  [PASS] Uses XGROUP CREATE for consumer groups
-  [PASS] Uses XREADGROUP for consuming
-  [PASS] Uses XACK for message acknowledgment
+  [PASS] Consumer group APIs (XGROUP + XREADGROUP + XACK)
   [PASS] Dead letter handling (XPENDING/XCLAIM)
-  [PASS] Multiple concurrent workers
-  [PASS] Graceful shutdown handling
-  [PASS] Dashboard/monitoring (XLEN/XPENDING)
+  Starting docker compose...
+  [PASS] Valkey is running
+  Waiting for queue processing (30s max)...
+  [FAIL] Stream exists (tasks:queue)
+  [FAIL] Consumer group created
+  [FAIL] Consumers registered (0)
+  [FAIL] Multiple workers (>= 2 consumers)
+  [FAIL] Messages delivered (last-delivered-id != 0-0)
 
-Result: 9/9 passed
-SCORE=9/9
+Result: 4/9 passed
+SCORE=4/9
