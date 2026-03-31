@@ -1,0 +1,24 @@
+services:
+  valkey:
+    image: valkey/valkey:9
+    ports:
+      - "6379:6379"
+    command: valkey-server --save "" --appendonly yes
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 5
+
+  app:
+    image: node:22
+    working_dir: /app
+    volumes:
+      - .:/app
+    depends_on:
+      valkey:
+        condition: service_healthy
+    command: ["sh", "-c", "npm install && node queue.js"]
+    environment:
+      - VALKEY_HOST=valkey
+      - VALKEY_PORT=6379
