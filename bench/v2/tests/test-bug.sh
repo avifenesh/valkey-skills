@@ -141,6 +141,7 @@ if [ "$build_ok" -eq 1 ]; then
   docker compose down -v 2>/dev/null
 else
   check "Cluster starts and is healthy" 0
+  check "No split-brain after partition test (3 masters)" 0
 fi
 
 cd - > /dev/null
@@ -157,27 +158,27 @@ if [ -z "$RESPONSE" ]; then
   exit 0
 fi
 
-# Check 5: Identifies clusterHandleConfigEpochCollision as the affected function
+# Check 6: Identifies clusterHandleConfigEpochCollision as the affected function
 found_func=$(echo "$ALL" | grep -ci "clusterHandleConfigEpochCollision\|HandleConfigEpochCollision\|epoch.*collision" || true)
 check "Identifies epoch collision handler" "$([ "$found_func" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 4: Identifies clusterShouldDeferEpochBump as the buggy function
+# Check 7: Identifies clusterShouldDeferEpochBump as the buggy function
 found_defer=$(echo "$ALL" | grep -ci "clusterShouldDeferEpochBump\|ShouldDeferEpochBump\|defer.*epoch.*bump" || true)
 check "Identifies deferral function as the bug" "$([ "$found_defer" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 5: Explains WHY the deferral is always true
+# Check 8: Explains WHY the deferral is always true
 found_why=$(echo "$ALL" | grep -ci "always.*true\|always.*return.*1\|always.*defer\|currentEpoch.*always.*match\|never.*resolve\|configEpoch.*==.*currentEpoch.*always" || true)
 check "Explains why deferral always triggers" "$([ "$found_why" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 6: References the relationship between currentEpoch and configEpoch
+# Check 9: References the relationship between currentEpoch and configEpoch
 found_epoch=$(echo "$ALL" | grep -ci "currentEpoch.*max.*configEpoch\|currentEpoch.*highest\|at least one.*match\|by definition" || true)
 check "Explains currentEpoch/configEpoch relationship" "$([ "$found_epoch" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 7: Explains the split-brain mechanism
+# Check 10: Explains the split-brain mechanism
 found_mechanism=$(echo "$ALL" | grep -ci "collision.*never.*resolved\|same.*configEpoch.*forever\|both.*claim.*slot\|neither.*bump\|split.brain" || true)
 check "Explains split-brain from unresolved collision" "$([ "$found_mechanism" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 8: References cluster_legacy.c as the file
+# Check 11: References cluster_legacy.c as the file
 found_file=$(echo "$ALL" | grep -ci "cluster_legacy" || true)
 check "Identifies cluster_legacy.c" "$([ "$found_file" -gt 0 ] && echo 1 || echo 0)"
 
