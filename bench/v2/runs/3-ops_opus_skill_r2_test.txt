@@ -4,21 +4,31 @@
   [PASS] ACL users defined
   Deploying to kind (this may take a few minutes)...
   [PASS] kind cluster created
-Kubernetes control plane is running at https://127.0.0.1:50841
-CoreDNS is running at https://127.0.0.1:50841/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Kubernetes control plane is running at https://127.0.0.1:51932
+CoreDNS is running at https://127.0.0.1:51932/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
-  Running /tmp/bench-v2/r2/3-ops_opus_skill/deploy.sh...
+  Running /tmp/bench-v2-parallel/r2/3-ops_opus_skill/deploy.sh...
+ ✓ Starting control-plane 🕹️
+ • Installing CNI 🔌  ...
+ ✓ Installing CNI 🔌
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+ • Joining worker nodes 🚜  ...
+ ✓ Joining worker nodes 🚜
+ • Waiting ≤ 2m0s for control-plane = Ready ⏳  ...
+ ✓ Waiting ≤ 2m0s for control-plane = Ready ⏳
+ • Ready after 9s 💚
+Set kubectl context to "kind-valkey-dev"
+You can now use your cluster with:
 
-[0;32m[INFO][0m  =============================================
-[0;32m[INFO][0m    Valkey Cluster Deployment (Bitnami Helm)   
-[0;32m[INFO][0m  =============================================
-[0;32m[INFO][0m  No official Valkey K8s Operator exists yet.
-[0;32m[INFO][0m  Using Bitnami valkey-cluster Helm chart.
+kubectl cluster-info --context kind-valkey-dev
 
-[0;32m[INFO][0m  Checking prerequisites…
-[0;31m[ERROR][0m Missing tools: helm
-[0;31m[ERROR][0m Install them before running this script.
+Have a nice day! 👋
+    Cluster ready.
+>>> [2/6] Creating namespace...
+namespace/valkey created
+>>> [3/6] Generating TLS certificates...
   Waiting for pods (120s max)...
   [FAIL] Valkey pods running (0)
   [FAIL] At least 3 pods (primaries)

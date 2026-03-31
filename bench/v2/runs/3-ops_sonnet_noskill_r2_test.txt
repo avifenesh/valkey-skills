@@ -1,16 +1,34 @@
 === Task 3: Ops Cluster Validation ===
-  [PASS] YAML files present (7)
+  [PASS] YAML files present (4)
   [PASS] valkey-search module referenced
   [PASS] ACL users defined
   Deploying to kind (this may take a few minutes)...
   [PASS] kind cluster created
-Kubernetes control plane is running at https://127.0.0.1:51601
-CoreDNS is running at https://127.0.0.1:51601/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Kubernetes control plane is running at https://127.0.0.1:51329
+CoreDNS is running at https://127.0.0.1:51329/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
-  Running /tmp/bench-v2/r2/3-ops_sonnet_noskill/deploy.sh...
-==> Checking prerequisites...
-ERROR: 'helm' is required but not found. Install it and retry.
+  Running /tmp/bench-v2-parallel/r2/3-ops_sonnet_noskill/deploy.sh...
+certificate.cert-manager.io/valkey-ca created
+clusterissuer.cert-manager.io/valkey-ca-issuer created
+  ✓ Certificate issuers configured
+
+[0;32m[5/8] Creating namespace...[0m
+namespace/valkey created
+Context "kind-valkey-cluster" modified.
+  ✓ Namespace 'valkey' created
+
+[0;32m[6/8] Installing Valkey Cluster...[0m
+  This may take several minutes as the cluster initializes...
+Error: INSTALLATION FAILED: execution error at (valkey-cluster/templates/NOTES.txt:124:4): 
+
+⚠ ERROR: Original containers have been substituted for unrecognized ones. Deploying this chart with non-standard containers is likely to cause degraded security and performance, broken chart features, and missing environment variables.
+
+Unrecognized images:
+  - docker.io/bitnami/valkey-exporter:1.67.0-debian-12-r0
+
+If you are sure you want to proceed with non-standard containers, you can skip container image verification by setting the global parameter 'global.security.allowInsecureImages' to true.
+Further information can be obtained at https://github.com/bitnami/charts/issues/30850
   Waiting for pods (120s max)...
   [FAIL] Valkey pods running (0)
   [FAIL] At least 3 pods (primaries)

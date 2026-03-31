@@ -4,14 +4,31 @@
   [PASS] ACL users defined
   Deploying to kind (this may take a few minutes)...
   [PASS] kind cluster created
-Kubernetes control plane is running at https://127.0.0.1:54501
-CoreDNS is running at https://127.0.0.1:54501/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Kubernetes control plane is running at https://127.0.0.1:58079
+CoreDNS is running at https://127.0.0.1:58079/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
-  Running /tmp/bench-v2/3-ops_opus_noskill/deploy.sh...
-[0;32m[DEPLOY][0m Starting Valkey production cluster deployment...
-[0;31m[ERROR][0m Missing prerequisites: helm
-[0;31m[ERROR][0m Install them and re-run this script.
+  Running /tmp/bench-v2-parallel/3-ops_opus_noskill/deploy.sh...
+#1 transferring dockerfile: 522B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/bitnami/valkey-cluster:8.0
+#2 ERROR: docker.io/bitnami/valkey-cluster:8.0: not found
+
+#3 [internal] load metadata for docker.io/redis/redis-stack-server:latest
+#3 CANCELED
+------
+ > [internal] load metadata for docker.io/bitnami/valkey-cluster:8.0:
+------
+Dockerfile.valkey:7
+--------------------
+   5 |     FROM redis/redis-stack-server:latest AS module-source
+   6 |     
+   7 | >>> FROM bitnami/valkey-cluster:8.0
+   8 |     
+   9 |     USER root
+--------------------
+ERROR: failed to build: failed to solve: bitnami/valkey-cluster:8.0: failed to resolve source metadata for docker.io/bitnami/valkey-cluster:8.0: docker.io/bitnami/valkey-cluster:8.0: not found
   Waiting for pods (120s max)...
   [FAIL] Valkey pods running (0)
   [FAIL] At least 3 pods (primaries)

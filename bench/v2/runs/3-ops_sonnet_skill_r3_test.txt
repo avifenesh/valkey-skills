@@ -1,8 +1,10 @@
 === Task 3: Ops Cluster Validation ===
-  [FAIL] YAML files present (0)
-  [FAIL] valkey-search module referenced
-  [FAIL] ACL users defined
-  [WARN] No deploy script found (expected deploy.sh)
+  [PASS] YAML files present (2)
+  [PASS] valkey-search module referenced
+  [PASS] ACL users defined
+  Deploying to kind (this may take a few minutes)...
+  [FAIL] kind cluster created
+  kind cluster creation failed, skipping runtime checks
 
-Result: 0/9 passed
-SCORE=0/9
+Result: 3/9 passed
+SCORE=3/9

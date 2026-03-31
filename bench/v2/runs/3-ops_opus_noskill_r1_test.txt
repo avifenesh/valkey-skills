@@ -1,22 +1,41 @@
 === Task 3: Ops Cluster Validation ===
-  [PASS] YAML files present (5)
+  [PASS] YAML files present (2)
   [PASS] valkey-search module referenced
   [PASS] ACL users defined
   Deploying to kind (this may take a few minutes)...
   [PASS] kind cluster created
-Kubernetes control plane is running at https://127.0.0.1:53726
-CoreDNS is running at https://127.0.0.1:53726/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Kubernetes control plane is running at https://127.0.0.1:50098
+CoreDNS is running at https://127.0.0.1:50098/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
-  Running /tmp/bench-v2/r1/3-ops_opus_noskill/deploy.sh...
-[1;31m[ERR][0m   helm is required but not found
+  Running /tmp/bench-v2-parallel/r1/3-ops_opus_noskill/deploy.sh...
+ ✓ Writing configuration 📜
+ • Starting control-plane 🕹️  ...
+ ✓ Starting control-plane 🕹️
+ • Installing CNI 🔌  ...
+ ✓ Installing CNI 🔌
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+ • Joining worker nodes 🚜  ...
+ ✓ Joining worker nodes 🚜
+ • Waiting ≤ 2m0s for control-plane = Ready ⏳  ...
+ ✓ Waiting ≤ 2m0s for control-plane = Ready ⏳
+ • Ready after 8s 💚
+Set kubectl context to "kind-valkey-cluster"
+You can now use your cluster with:
+
+kubectl cluster-info --context kind-valkey-cluster
+
+Not sure what to do next? 😅  Check out https://kind.sigs.k8s.io/docs/user/quick-start/
+[1;32m✓ Kind cluster ready[0m
+[1;34m▶ Generating TLS certificates…[0m
   Waiting for pods (120s max)...
   [FAIL] Valkey pods running (0)
   [FAIL] At least 3 pods (primaries)
   [FAIL] Can PING Valkey from pod
   [FAIL] Cluster mode enabled
-  [FAIL] Probes use valkey-cli (not redis-cli)
+  [PASS] Probes use valkey-cli (not redis-cli)
   Cleaning up kind cluster...
 
-Result: 4/9 passed
-SCORE=4/9
+Result: 5/9 passed
+SCORE=5/9

@@ -1,9 +1,1 @@
-Done. Here's the summary:
 
-## Bug Found and Fixed
-
-**Root cause:** A bogus function `clusterShouldDeferEpochBump()` was injected into `src/cluster_legacy.c` (lines 2457-2477). It was called from `clusterHandleConfigEpochCollision()` and created a circular deadlock: epoch collision resolution was permanently deferred because the function checked for the exact condition that a collision creates (a primary with `configEpoch == currentEpoch`).
-
-**Fix:** Removed the entire `clusterShouldDeferEpochBump()` function and its call site, restoring the standard epoch collision resolution behavior where the node with the smaller Node ID bumps its epoch to win slot ownership.
-
-**Verification:** After the fix, `reproduce.sh` completes successfully - the old primary (valkey-1) correctly steps down to replica, the promoted node (valkey-5) keeps master status, and the cluster converges to `cluster_state:ok` with no overlapping slot claims.

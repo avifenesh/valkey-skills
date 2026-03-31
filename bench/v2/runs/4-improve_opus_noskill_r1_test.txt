@@ -7,10 +7,10 @@
   [PASS] Q6 Inventory: Hash or MGET instead of KEYS+GET
   [PASS] Q7 Job queue: Streams over LIST
   [FAIL] Q8 Conditional updates: SET IFEQ/IFGT [VALKEY]
-  [FAIL] Q9 Search: valkey-search module
+  [PASS] Q9 Search: valkey-search module
   [PASS] Q10 Pub/Sub: Streams for persistence
   [PASS] Q11 Monitoring: COMMANDLOG replaces SLOWLOG [VALKEY]
   [PASS] Q12 Leaderboard: EXPIRE works on sorted sets
 
-Result: 9/12 passed
-SCORE=9/12
+Result: 10/12 passed
+SCORE=10/12

@@ -1,17 +1,1 @@
-The implementation is complete. Here's a summary of what was implemented:
-
-**`TaskQueue`** — produces tasks via `xadd` with `[[field, value], ...]` pairs; `addBatch` fans out in parallel.
-
-**`Worker`** — each worker gets its own dedicated blocking client (required by GLIDE since blocking commands monopolize the connection):
-- `start()` creates the consumer group (ignores `BUSYGROUP` if it exists), then loops on `XREADGROUP BLOCK 2000ms`
-- `processMessage()` simulates 50–200ms work then `XACK`s the message
-- `claimStale()` runs every 30s via `xpendingRange`, reclaims messages idle ≥ 30s, and moves to DLQ after 3 deliveries
-- `moveToDLQ()` force-claims the entry to retrieve its data, writes to `tasks:deadletter`, then acks the original
-
-**3 concurrent workers** — `commandClient` is shared for all non-blocking commands; each worker gets its own `blockingClient`.
-
-**Dashboard** — every 5s prints stream length, pending count, DLQ count, total processed, and per-worker counts via `xlen`/`xpending`.
-
-**Graceful shutdown** — `SIGTERM`/`SIGINT` calls `worker.stop()` on all workers (sets `running=false`), waits for the 2s block timeout to elapse, prints final stats, closes all clients.
-
-**Auto-exit** — polls every 500ms; once all 100 tasks are acknowledged it triggers shutdown automatically.
+You're out of extra usage · resets 12am (Asia/Jerusalem)

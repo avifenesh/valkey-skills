@@ -1,1 +1,3 @@
-
+```json
+{"correctness": 4, "completeness": 5, "valkey_awareness": 5, "production_quality": 3, "specificity": 4}
+```

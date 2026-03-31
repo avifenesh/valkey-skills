@@ -1,14 +1,16 @@
-Done. ANSWERS.md has been written with assessments for all 12 scenarios. Key findings:
+Done. ANSWERS.md has been written with assessments for all 12 scenarios. Here's a quick summary:
 
-1. **Session Management** - Replace `KEYS` with `SCAN`; use native TTL + `EXPIRE`/`EXPIREAT` instead of cron cleanup
-2. **Product Catalog Cache** - Use `UNLINK` (non-blocking) instead of `DEL`; pipeline batch invalidations; use hash tags for slot co-location
-3. **User Profiles Field TTL** - Valkey 9.0.3 supports per-field hash TTL via `HEXPIRE`; no need for the separate key workaround
-4. **Rate Limiting** - Fix operation order (remove stale before add); use Lua for atomicity; consider smaller members or fixed-window counters for memory
-5. **Distributed Lock** - Replace non-atomic GET+check+DEL with a Lua script for atomic check-and-delete
-6. **Real-time Inventory** - Replace `KEYS` scan with a hash-per-SKU (`HVALS`/`HINCRBY`)
-7. **Job Queue** - Replace deprecated `BRPOPLPUSH` with Valkey Streams + consumer groups (`XREADGROUP`/`XACK`/`XAUTOCLAIM`)
-8. **Conditional Updates** - Replace WATCH/MULTI/EXEC with a Lua compare-and-set script to eliminate contention retries
-9. **Full-text Search** - Build an inverted index with sets (`SADD`/`SINTER`) or use a dedicated search engine
-10. **Pub/Sub** - Replace fire-and-forget Pub/Sub with Streams for persistent, acknowledged delivery
-11. **Monitoring** - Adjust `slowlog-log-slower-than` threshold; use `CLIENT SETNAME`; add `LATENCY` monitoring
-12. **Leaderboard TTL** - `EXPIRE` works on any key type including sorted sets; just set a TTL on each daily leaderboard
+| # | Scenario | Verdict | Key Fix |
+|---|----------|---------|---------|
+| 1 | Session Management | Problematic | Use `EXPIRE`/TTL instead of `KEYS` + cron |
+| 2 | Product Catalog Cache | Problematic | Use `UNLINK` (async) + pipelining instead of looped `DEL` |
+| 3 | Field-Level TTL | Problematic (outdated assumption) | Valkey 9.x supports `HEXPIRE` — use it, drop the second key |
+| 4 | Rate Limiting | Problematic | Wrap ZADD/ZREMRANGEBYSCORE/ZCARD in a Lua script for atomicity; add EXPIRE |
+| 5 | Distributed Lock | Problematic | Atomic unlock via Lua (check-and-delete) instead of GET+DEL |
+| 6 | Real-time Inventory | Problematic | Use a hash per SKU (`HVALS`/`HINCRBY`) instead of `KEYS` + N GETs |
+| 7 | Job Queue | Problematic | Replace LIST with Streams (`XADD`/`XREADGROUP`/`XACK`) |
+| 8 | Conditional Updates | Problematic | Lua compare-and-swap script instead of WATCH/MULTI/EXEC retry loop |
+| 9 | Full-text Search | Problematic | Use built-in `FT.CREATE`/`FT.SEARCH` instead of KEYS + app-side matching |
+| 10 | Pub/Sub Notifications | Problematic | Replace Pub/Sub with Streams + consumer groups for reliable messaging |
+| 11 | Monitoring | Problematic | Tune slowlog thresholds, use `CLIENT SETNAME`, `LATENCY` monitor, `INFO commandstats` |
+| 12 | Leaderboard TTL | Problematic (false premise) | `EXPIRE` works on sorted sets — just set TTL, drop the cleanup cron |

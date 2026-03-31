@@ -7,7 +7,7 @@ argument-hint: "[language binding or core component]"
 
 # Valkey GLIDE Contributor Reference
 
-For using GLIDE in applications, see the per-language GLIDE user skills instead.
+For using GLIDE in applications, see the `valkey-glide` skill (per-language user skills).
 
 ## Routing
 
@@ -19,7 +19,7 @@ For using GLIDE in applications, see the per-language GLIDE user skills instead.
 - PubSub synchronizer, subscription management -> PubSub Internals
 - Cluster topology, slot mapping, failover -> Cluster Internals
 - Adding a new command -> Adding Commands
-- Testing, test utils, cluster setup -> Testing
+- Build environment, prerequisites, testing, test utils, cluster setup -> Build & Test
 
 ## Repository Structure
 

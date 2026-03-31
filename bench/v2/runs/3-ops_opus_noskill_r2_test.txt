@@ -1,29 +1,41 @@
 === Task 3: Ops Cluster Validation ===
-  [PASS] YAML files present (4)
+  [PASS] YAML files present (3)
   [PASS] valkey-search module referenced
   [PASS] ACL users defined
   Deploying to kind (this may take a few minutes)...
   [PASS] kind cluster created
-Kubernetes control plane is running at https://127.0.0.1:57458
-CoreDNS is running at https://127.0.0.1:57458/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Kubernetes control plane is running at https://127.0.0.1:53249
+CoreDNS is running at https://127.0.0.1:53249/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
-  Running /tmp/bench-v2/r2/3-ops_opus_noskill/deploy.sh...
-[0;32m[deploy][0m ═══════════════════════════════════════════════════════════════
-[0;32m[deploy][0m   Deploying Production Valkey Cluster on kind
-[0;32m[deploy][0m   Topology: 3 primaries + 3 replicas (cluster mode)
-[0;32m[deploy][0m   Features: TLS, ACLs, valkey-search, Prometheus metrics
-[0;32m[deploy][0m ═══════════════════════════════════════════════════════════════
+  Running /tmp/bench-v2-parallel/r2/3-ops_opus_noskill/deploy.sh...
+ ✓ Writing configuration 📜
+ • Starting control-plane 🕹️  ...
+ ✓ Starting control-plane 🕹️
+ • Installing CNI 🔌  ...
+ ✓ Installing CNI 🔌
+ • Installing StorageClass 💾  ...
+ ✓ Installing StorageClass 💾
+ • Joining worker nodes 🚜  ...
+ ✓ Joining worker nodes 🚜
+ • Waiting ≤ 2m0s for control-plane = Ready ⏳  ...
+ ✓ Waiting ≤ 2m0s for control-plane = Ready ⏳
+ • Ready after 6s 💚
+Set kubectl context to "kind-valkey-test"
+You can now use your cluster with:
 
-[0;31m[deploy][0m Missing required tools: helm
-[0;31m[deploy][0m Install them before running this script.
+kubectl cluster-info --context kind-valkey-test
+
+Have a question, bug, or feature request? Let us know! https://kind.sigs.k8s.io/#community 🙂
+[0;32m[INFO][0m  Kind cluster created.
+[0;32m[INFO][0m  Generating self-signed TLS certificates...
   Waiting for pods (120s max)...
   [FAIL] Valkey pods running (0)
   [FAIL] At least 3 pods (primaries)
   [FAIL] Can PING Valkey from pod
   [FAIL] Cluster mode enabled
-  [FAIL] Probes use valkey-cli (not redis-cli)
+  [PASS] Probes use valkey-cli (not redis-cli)
   Cleaning up kind cluster...
 
-Result: 4/9 passed
-SCORE=4/9
+Result: 5/9 passed
+SCORE=5/9

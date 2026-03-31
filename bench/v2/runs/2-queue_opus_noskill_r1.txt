@@ -1,15 +1,21 @@
-The implementation is complete. Here's what I built:
+The code is complete. Let me do a quick summary of the migration:
 
-- **TaskQueue** — produces 100 tasks via `xadd` with high/medium/low priorities
-- **Worker** — consumer group reader with:
-  - Idempotent `XGROUP CREATE` with `MKSTREAM`
-  - Blocking `XREADGROUP` (2s timeout for responsive shutdown)
-  - `XACK` after processing
-  - Dead letter: `XPENDING` range + `XCLAIM` for stale messages (>30s idle), moves to DLQ after 3 retries
-- **3 concurrent workers** — each with its own `GlideClient` connection (required for blocking reads)
-- **Dashboard** — every 5s showing stream length, pending counts per consumer, DLQ size, processed total
-- **Graceful shutdown** — `SIGTERM`/`SIGINT` handlers stop workers, wait for in-flight work, print final dashboard, close connections
-- **Auto-exit** — shuts down cleanly after all 100 tasks are processed
+**Migration summary - `app.js` (ioredis → Valkey GLIDE):**
+
+| Feature | Approach |
+|---|---|
+| **Connection** | `GlideClusterClient.createClient()` with 3 node addresses |
+| **Cache with TTL** | `customCommand` for SET with EX/NX options; built-in `mget` for multi-get |
+| **Pub/Sub** | Subscriber created via `createClient` with `pubsubSubscriptions` config (pattern mode); publish via `customCommand` |
+| **Batch ops** | `ClusterBatch` (falls back to `ClusterTransaction`) with `customCommand` for HSET/HGETALL |
+| **Streams** | `customCommand` for XGROUP CREATE, XADD, XREADGROUP, XACK, XINFO; handles both RESP2/RESP3 response formats |
+| **Sorted sets** | Built-in `zadd` with `{element, score}[]`; `customCommand` for ZREVRANGE, ZREVRANK, ZRANGEBYSCORE with WITHSCORES |
+
+Key design decisions:
+- Uses `import * as Glide` for defensive imports with fallbacks (`ClusterBatch || ClusterTransaction`, `PubSubChannelModes` with hardcoded fallback)
+- Handles both RESP2 (flat arrays) and RESP3 (maps/objects) formats for `customCommand` responses
+- Pub/Sub uses creation-time subscription config with callback, plus a 10s safety timeout
+- 500ms delay before publishing to let subscription propagate
 
 Test with:
 ```bash

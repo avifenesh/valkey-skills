@@ -1,16 +1,16 @@
-`ANSWERS.md` written. Here's a summary of the key findings:
+I've completed the assessment of all 12 Valkey usage scenarios and written the answers to ANSWERS.md.
 
-| # | Scenario | Verdict | Core Issue |
-|---|----------|---------|------------|
-| 1 | Session Management | **Problematic** | `KEYS session:*` blocks server; use TTL + `EXPIREAT` for retroactive extension |
-| 2 | Catalog Cache | **Partially correct** | Loop DELs = N round trips; use `UNLINK` with batched keys, hash tags for cluster |
-| 3 | Field-Level TTL | **Correct** | Splitting key is right; pipeline both reads to avoid double round trips |
-| 4 | Rate Limiting | **Correct algorithm, memory fix needed** | Store timestamp as member (integer) instead of UUID → listpack encoding |
-| 5 | Distributed Lock | **Problematic** | GET→DEL is not atomic; use Lua script for safe unlock |
-| 6 | Real-time Inventory | **Seriously problematic** | `KEYS` on every page load; use `HSET inventory:{sku} {warehouse} {count}` |
-| 7 | Job Queue | **Mostly correct, fixable** | `BRPOPLPUSH` deprecated; migrate to Streams + consumer groups |
-| 8 | Conditional Updates | **Wrong implementation** | Replace WATCH/MULTI/EXEC retries with a single atomic Lua script |
-| 9 | Full-text Search | **Problematic** | `KEYS` + app matching; use `FT.CREATE`/`FT.SEARCH` (valkey-search module) |
-| 10 | Pub/Sub Notifications | **Wrong tool** | Pub/Sub has no persistence; use Streams with `XREADGROUP`/`XACK` |
-| 11 | Monitoring | **Incomplete** | Use `CLIENT SETNAME`, lower slowlog threshold, add `LATENCY` and `INFO commandstats` |
-| 12 | Leaderboard TTL | **Based on false premise** | `EXPIRE`/`EXPIREAT` works on sorted sets; drop the cleanup cron entirely |
+**Key findings:**
+
+- **3 Critical Issues** (#1, #5, #6, #9): Using `KEYS` in production, distributed lock race conditions, and completely unsuitable approaches
+- **6 Performance Issues** (#2, #4, #7, #8, #10, #11): Inefficient patterns that need optimization
+- **3 Based on Misconceptions** (#3, #12): Features that actually exist in Valkey 9.0.3 (hash field expiration, TTL on sorted sets)
+
+The most impactful improvements:
+1. Replace `KEYS` with `SCAN` or proper data structures (hashes)
+2. Use Lua scripts for atomic operations (locks, compare-and-swap)
+3. Use Streams instead of Pub/Sub for persistent messaging
+4. Leverage hash field expiration (`HEXPIRE`) available in Valkey 9.0.3
+5. Use Valkey Search module for full-text search capabilities
+
+Each scenario includes concrete Valkey commands and the exact approach to implement the improvement.

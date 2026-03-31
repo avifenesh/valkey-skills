@@ -1,18 +1,28 @@
-The implementation is complete. Here's what was built:
+The file is written. Here's a summary of the key API differences handled:
 
-**`TaskQueue`** — `addTask` calls `xadd` with typed fields; `addBatch` iterates sequentially.
+**Feature 1 — Cache with TTL**
+- `set(key, val, {expiry: {type: "ex", count: 3600}})` instead of `set key val EX 3600`
+- `set(key, val, {conditionalSet: "onlyIfDoesNotExist", expiry: ...})` instead of `SET NX EX`
+- `mget([...keys])` instead of `mget(...keys)` — takes array
 
-**`Worker`** — Each worker runs its own blocking `xreadgroup` loop with `block: 2000` so it can check `this.running`. Before each read, it calls `claimStale()` which uses `xautoclaim` with a 30s idle threshold. Retry counts are tracked in a `tasks:retries` hash; once a message hits 3 retries it's moved to `tasks:deadletter` via `moveToDLQ`.
+**Feature 2 — Pub/Sub with patterns**
+- GLIDE requires subscriptions declared at client creation time via `pubsubSubscriptions`
+- `GlideClusterClientConfiguration.PubSubChannelModes.Pattern` for `PSUBSCRIBE`-style pattern matching
+- Separate `GlideClusterClient` instance for subscribing; callback receives `{pattern, channel, payload}`
 
-**3 dedicated clients** — Blocking `xreadgroup` calls hold the connection open, so each worker gets its own `GlideClient` instance. The producer/dashboard shares a fourth client.
+**Feature 3 — Batch operations**
+- `ClusterBatch(false)` (non-atomic pipeline) instead of `cluster.pipeline()`
+- `client.exec(batch, false)` with `raiseOnError=false`; results are values directly (not `[err, val]` pairs)
+- `hset(key, {field: val})` accepts a plain object
 
-**Dashboard** — Prints every 5s via `setInterval`: stream length (`xlen`), unacked count (`xpending` summary), DLQ depth, and per-worker processed counts.
+**Feature 4 — Streams**
+- `xgroupCreate(key, group, id, {makeStream: true})` instead of `xgroup("CREATE", ..., "MKSTREAM")`
+- `xadd(key, [["field","val"], ...])` with field-value pairs array
+- `xreadgroup(group, consumer, {key: ">"}, {count: 5})` — keyed object instead of positional args
+- `xack(key, group, [id])` — takes array of IDs
+- `customCommand(["XINFO", "STREAM", key])` for stream info (flat Redis array, index 1 = length)
 
-**Graceful shutdown** — `SIGTERM`/`SIGINT` set `running = false` on all workers, waits for `Promise.allSettled`, prints final dashboard, closes all clients. Also auto-exits when all 100 tasks are processed and pending = 0.
-
-**Key GLIDE details applied:**
-- `xreadgroup(group, consumer, {streamKey: ">"}, {count, block})`
-- Fields from stream come back as flat `[f1,v1,f2,v2]` arrays → `fieldsToObject()` converts them
-- `xgroupCreate` with `{ mkStream: true }` to create stream atomically
-- `hincrby` on a hash for atomic retry counting
-- `xadd` accepts plain `{field: value}` objects
+**Feature 5 — Sorted sets**
+- `zadd(key, [{score, member}])` instead of `zadd(key, score, member, ...)`
+- `customCommand(["ZREVRANGE", ...])` and `customCommand(["ZRANGEBYSCORE", ...])` for exact output parity with the ioredis flat-array format
+- `zrevrank(key, member)` — same name

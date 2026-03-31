@@ -1,16 +1,17 @@
 === Task 3: Ops Cluster Validation ===
-  [PASS] YAML files present (3)
+  [PASS] YAML files present (2)
   [PASS] valkey-search module referenced
   [PASS] ACL users defined
   Deploying to kind (this may take a few minutes)...
   [PASS] kind cluster created
-Kubernetes control plane is running at https://127.0.0.1:59736
-CoreDNS is running at https://127.0.0.1:59736/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Kubernetes control plane is running at https://127.0.0.1:52066
+CoreDNS is running at https://127.0.0.1:52066/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
-  Running /tmp/bench-v2/r1/3-ops_sonnet_skill/deploy.sh...
-[INFO]  Checking prerequisites...
-[ERROR] 'helm' not found — install it: https://helm.sh/docs/intro/install/
+  Running /tmp/bench-v2-parallel/r1/3-ops_sonnet_skill/deploy.sh...
+[0;32m=== Valkey Cluster Deployment Script ===[0m
+[1;33mChecking prerequisites...[0m
+[0;31mhelm is required but not installed.[0m
   Waiting for pods (120s max)...
   [FAIL] Valkey pods running (0)
   [FAIL] At least 3 pods (primaries)

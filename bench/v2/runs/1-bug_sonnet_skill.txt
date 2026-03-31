@@ -1,11 +1,1 @@
-## Summary
-
-**Root cause:** `src/cluster_legacy.c` — the introduced function `clusterShouldDeferEpochBump()` permanently blocks `clusterHandleConfigEpochCollision()` from resolving epoch collisions after a failover.
-
-**Why it causes split-brain:** After failover, the promoted replica's `configEpoch` always equals `currentEpoch`. The guard function sees this and returns "defer" on every gossip cycle, so the two primaries sharing the same configEpoch (old primary + new primary) are never reconciled.
-
-**Fix:** Removed `clusterShouldDeferEpochBump()` and its call, restoring the standard lexicographic node-ID collision resolution algorithm that guarantees convergence.
-
-**Verified:** After the fix, `reproduce.sh` shows the old primary (valkey-1) correctly stepping down to replica of the newly elected primary — no split-brain, `cluster_state:ok`, single master per slot range.
-
-Two Dockerfile issues were also fixed to allow the cluster to actually start: a duplicate `valkey-server` in the ENTRYPOINT+command, and a missing Lua shared library at runtime (`BUILD_LUA=no`).
+You're out of extra usage · resets 12am (Asia/Jerusalem)

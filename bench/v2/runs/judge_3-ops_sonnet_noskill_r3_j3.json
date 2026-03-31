@@ -1,0 +1,11 @@
+```json
+{"correctness": 3, "completeness": 6, "valkey_awareness": 4, "production_quality": 3, "specificity": 5}
+```
+
+Key issues driving the scores:
+
+- **Correctness (3)**: `architecture: replication` contradicts `cluster-enabled yes` in `commonConfiguration`. `master.count: 3` doesn't exist in the Bitnami chart's replication architecture (silently ignored, yields 1 master). PDB `minAvailable: 2` for masters is impossible with 1 master. TLS is enabled but `test.sh` never passes `--tls` to `valkey-cli` - all tests would fail. The `kubectl exec -it ... <<EOF` heredoc in `deploy.sh` is unreliable for piping to a remote process. ACL ConfigMap is created but never referenced in Helm values.
+- **Completeness (6)**: Covers ACL, TLS, persistence, monitoring, PDBs, testing, and secrets - broad surface area. But the Secret isn't wired into Helm values, no Sentinel config for replication HA, no maxmemory policy, no network policies, no teardown script.
+- **Valkey Awareness (4)**: Knows `valkey-cli`, ACL SAVE/CONFIG REWRITE, AOF, module detection, and ACL categories. But fundamentally confuses replication vs cluster architecture - the single biggest Valkey/Redis deployment distinction. Greps for `redis_version` in tests (works for compat but shows copy-paste from Redis patterns).
+- **Production Quality (3)**: Hardcoded passwords throughout (`admin_secure_password123`). Deploy script echoes credentials to stdout. Uses `default` namespace. Auto-generated self-signed TLS certs. No maxmemory-policy. Architecture mismatch would cause deployment failure or silent misconfiguration.
+- **Specificity (5)**: ACL categories (`+@read +@write -@admin -@dangerous`) are appropriate and specific. Vector search test shows awareness of `FT.CREATE`/`FT.SEARCH`. But many configurations are generic Helm boilerplate with Valkey-incorrect values bolted on.

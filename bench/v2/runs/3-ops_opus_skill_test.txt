@@ -4,24 +4,20 @@
   [PASS] ACL users defined
   Deploying to kind (this may take a few minutes)...
   [PASS] kind cluster created
-Kubernetes control plane is running at https://127.0.0.1:59765
-CoreDNS is running at https://127.0.0.1:59765/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+Kubernetes control plane is running at https://127.0.0.1:55045
+CoreDNS is running at https://127.0.0.1:55045/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
-  Running /tmp/bench-v2/3-ops_opus_skill/deploy.sh...
-
-[1;34m==>[0m Checking prerequisites
-[1;32m  ✓[0m kind found: /c/Users/avife/bin/kind
-[1;32m  ✓[0m kubectl found: /c/Program Files/Docker/Docker/resources/bin/kubectl
-[1;32m  ✓[0m docker found: /c/Program Files/Docker/Docker/resources/bin/docker
-[1;31mERROR:[0m Missing prerequisites: helm. Install them and re-run.
+  Running /tmp/bench-v2-parallel/3-ops_opus_skill/deploy.sh...
+==> Checking prerequisites...
+ERROR: helm is required but not found in PATH
   Waiting for pods (120s max)...
   [FAIL] Valkey pods running (0)
   [FAIL] At least 3 pods (primaries)
   [FAIL] Can PING Valkey from pod
   [FAIL] Cluster mode enabled
-  [PASS] Probes use valkey-cli (not redis-cli)
+  [FAIL] Probes use valkey-cli (not redis-cli)
   Cleaning up kind cluster...
 
-Result: 5/9 passed
-SCORE=5/9
+Result: 4/9 passed
+SCORE=4/9

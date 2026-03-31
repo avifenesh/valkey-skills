@@ -6,7 +6,7 @@
 DIR="$1"
 PASS=0
 FAIL=0
-TOTAL=13
+TOTAL=11
 
 check() {
   local desc="$1"
@@ -149,9 +149,8 @@ cd - > /dev/null
 
 if [ -z "$RESPONSE" ]; then
   echo "  [WARN] No ANALYSIS.md found - checking source fix only"
-  for i in $(seq 3 $TOTAL); do
-    FAIL=$((FAIL + 1))
-  done
+  remaining=$((TOTAL - PASS - FAIL))
+  FAIL=$((FAIL + remaining))
   echo ""
   echo "Result: $PASS/$TOTAL passed"
   echo "SCORE=$PASS/$TOTAL"

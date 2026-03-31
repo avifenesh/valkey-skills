@@ -1,1 +1,50 @@
-Failed to authenticate. API Error: 401 {"type":"error","error":{"type":"authentication_error","message":"OAuth authentication is currently not supported."},"request_id":"req_011CZbQyyygEA3bZTR22A2HR"}
+Perfect! I've created all the necessary Kubernetes manifests and configuration files for deploying a production-ready Valkey cluster. Here's what was created:
+
+## 📁 Files Created
+
+1. **kind-config.yaml** - Kind cluster with 3 worker nodes for pod distribution
+2. **valkey-values.yaml** - Bitnami Helm chart configuration with:
+   - 3 master + 3 replica nodes (cluster mode)
+   - TLS enabled (auto-generated self-signed certs)
+   - Persistent volumes with AOF enabled
+   - Prometheus metrics exporter
+   - Pod anti-affinity rules
+   - Health probes (liveness & readiness)
+
+3. **acl-configmap.yaml** - ACL configuration for 3 users:
+   - `admin` - full access
+   - `app` - read/write data commands only
+   - `monitor` - read-only monitoring
+
+4. **valkey-secret.yaml** - Credentials for ACL users
+5. **pdb.yaml** - PodDisruptionBudgets (min 2 masters available)
+6. **deploy.sh** - Automated deployment script
+7. **test.sh** - Comprehensive validation script
+8. **README.md** - Documentation and usage guide
+
+## 🚀 Usage
+
+```bash
+# Deploy everything
+./deploy.sh
+
+# Validate deployment
+./test.sh
+```
+
+## ✅ Requirements Met
+
+- ✅ **Bitnami Helm chart** - Using official Bitnami Valkey chart (not hand-crafted StatefulSets)
+- ✅ **Cluster topology** - 3 primaries + 3 replicas
+- ✅ **Security** - ACL with 3 users, TLS, default user disabled
+- ✅ **HA** - PodDisruptionBudgets, anti-affinity, health probes
+- ✅ **Storage** - PVCs with AOF enabled
+- ✅ **Monitoring** - Prometheus metrics exporter
+- ✅ **Kind cluster** - Multi-node setup for proper distribution
+- ✅ **Testing** - Validates ACL, data operations, and deployment health
+
+## ⚠️ Note on valkey-search Module
+
+The Bitnami Valkey chart uses the standard Valkey distribution, which may not include valkey-search by default. The test script includes checks for this and documents the limitation. For production with vector search, you'd need to build a custom image with the module compiled in.
+
+All files are ready to use - just run `./deploy.sh` to get started!

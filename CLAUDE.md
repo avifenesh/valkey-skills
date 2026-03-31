@@ -4,7 +4,7 @@
 
 ## Skills
 
-### Valkey Core (7 skills)
+### Valkey Core (6 skills)
 
 | Directory | Skill | Audience | Files |
 |-----------|-------|----------|-------|
@@ -12,8 +12,8 @@
 | `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 60 |
 | `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 54 |
 | `skills/valkey-modules/` | valkey-modules | Module usage: search, JSON, bloom | 6 |
-| `skills/glide-dev/` | glide-dev | GLIDE client library contributors - Rust core, language bindings, build system | 6 |
-| `skills/valkey-module-dev/` | valkey-module-dev | Custom Valkey module developers - ValkeyModule_* C API | 5 |
+| `skills/glide-dev/` | glide-dev | GLIDE client library contributors - Rust core, language bindings, build system | 7 |
+| `skills/valkey-module-dev/` | valkey-module-dev | Custom Valkey module developers - ValkeyModule_* C API | 6 |
 
 ### GLIDE Per-Language (7 sub-skills under valkey-glide/)
 

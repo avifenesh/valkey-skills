@@ -1,16 +1,16 @@
-Done. ANSWERS.md has been written with assessments for all 12 scenarios. Here's a quick summary:
+Done. I've written assessments for all 12 scenarios to `ANSWERS.md`. Here's a summary of the key findings:
 
-| # | Scenario | Verdict |
-|---|----------|---------|
-| 1 | Session Management | **Problematic** — `KEYS` blocks the server; use `EXPIRE`/`SET EX` instead of cron |
-| 2 | Product Catalog Cache | **Mostly fine** — batch with variadic `UNLINK` instead of looping `DEL` |
-| 3 | Field-Level TTL | **Problematic** — Valkey 9.0.3 supports `HEXPIRE`; no need for split keys |
-| 4 | Rate Limiting | **Correct approach, two issues** — wrap in Lua for atomicity; consider fixed-window counters for memory |
-| 5 | Distributed Lock | **Problematic** — GET/check/DEL race; use a Lua atomic check-and-delete |
-| 6 | Real-time Inventory | **Problematic** — `KEYS` on every page load; use a hash per SKU with `HVALS` |
-| 7 | Job Queue | **Problematic** — LIST queues can't handle crash recovery cleanly; switch to Streams with consumer groups |
-| 8 | Conditional Updates | **Correct but suboptimal** — replace WATCH/MULTI/EXEC with a Lua compare-and-set |
-| 9 | Full-text Search | **Problematic** — worst pattern; use a dedicated search engine or inverted index sets |
-| 10 | Pub/Sub Notifications | **Problematic** — Pub/Sub is fire-and-forget; switch to Streams with consumer groups |
-| 11 | Monitoring | **Partially correct** — tune `slowlog-log-slower-than`, use `CLIENT SETNAME`, enable latency tracking |
-| 12 | Leaderboard TTL | **Problematic** — `EXPIRE` works on any key type including sorted sets; just set it |
+| # | Scenario | Verdict | Core Issue |
+|---|----------|---------|------------|
+| 1 | Session Management | Problematic | `KEYS` blocks server; use `EXPIRE`/`EXPIREAT` instead of cron |
+| 2 | Product Catalog Cache | Problematic | Use `UNLINK` (async) + pipelining instead of `DEL` in a loop |
+| 3 | Field-Level TTL | Problematic (outdated) | Valkey 9.0.3 supports `HEXPIRE` -- no need for separate keys |
+| 4 | Rate Limiting | Problematic | Wrong operation order + UUID members waste memory; use Lua script |
+| 5 | Distributed Lock | Problematic | Non-atomic release; use Lua script for check-and-delete |
+| 6 | Real-time Inventory | Problematic | `KEYS` on every page load; use a hash per SKU instead |
+| 7 | Job Queue | Problematic | LIST queues lack ack/recovery; migrate to Streams + consumer groups |
+| 8 | Conditional Updates | Problematic | WATCH contention; use Lua script for atomic compare-and-swap |
+| 9 | Full-text Search | Problematic | Full keyspace scan; build inverted indexes with sets + `SINTER` |
+| 10 | Pub/Sub Notifications | Problematic | Pub/Sub is fire-and-forget; use Streams for durable delivery |
+| 11 | Monitoring | Partially problematic | Set `CLIENT SETNAME`, lower threshold, add `LATENCY MONITOR` |
+| 12 | Leaderboard TTL | Problematic (misconception) | `EXPIRE` works on any key type including sorted sets |

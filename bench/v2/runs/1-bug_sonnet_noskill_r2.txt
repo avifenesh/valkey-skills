@@ -1,15 +1,1 @@
-The fix is complete and verified. Here's a summary:
 
-## What was found and fixed
-
-**Primary bug** — `src/cluster_legacy.c`, function `clusterShouldDeferEpochBump` (introduced before `clusterHandleConfigEpochCollision`):
-
-The function was supposed to prevent "unnecessary epoch inflation" during cluster transitions, but its condition — "defer if any primary has `configEpoch == currentEpoch`" — is always true after a failover, because the newly promoted primary always gets `configEpoch = currentEpoch`. This permanently blocked epoch collision resolution, leaving both the old and new primary claiming the same slots indefinitely.
-
-**Fix**: Removed `clusterShouldDeferEpochBump` entirely and removed its call from `clusterHandleConfigEpochCollision`, restoring the standard deterministic collision resolution: nodes use their node ID as a tie-breaker, the higher-ID node bumps its epoch, and gossip propagation causes the other node to step down.
-
-**Two Dockerfile issues** also needed fixing to allow containers to start at all:
-1. `ENTRYPOINT ["valkey-server"]` conflicted with docker-compose commands that already started with `valkey-server` (double invocation)
-2. Default `BUILD_LUA=yes` compiled `libvalkeylua.so` that wasn't copied into the image, causing a panic at startup → added `BUILD_LUA=no`
-
-After the fix, `reproduce.sh` confirms: the old primary (valkey-1) correctly steps down to `slave` after partition recovery, with a single master per slot range and `cluster_state:ok`.

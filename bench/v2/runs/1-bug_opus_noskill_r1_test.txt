@@ -4,61 +4,9 @@
   Building fixed Valkey...
   [PASS] Fixed source compiles (docker compose build)
   Starting cluster...
->>> Performing hash slots allocation on 6 node(s)...
-Primary[0] -> Slots 0 - 5460
-Primary[1] -> Slots 5461 - 10922
-Primary[2] -> Slots 10923 - 16383
-Adding replica 172.30.0.15:7005 to 172.30.0.11:7001
-Adding replica 172.30.0.16:7006 to 172.30.0.12:7002
-Adding replica 172.30.0.14:7004 to 172.30.0.13:7003
-M: c49cdd7c2732c848cda32a2ddefc7906afb4e196 172.30.0.11:7001
-   slots:[0-5460] (5461 slots) master
-M: 4d008fa4df9d921f86c84b909f61058ca11f3ab7 172.30.0.12:7002
-   slots:[5461-10922] (5462 slots) master
-M: b750480bcbb4418a78af85c9e1da936bf1227b6a 172.30.0.13:7003
-   slots:[10923-16383] (5461 slots) master
-S: 2ceba7794a4d98df86f821af1df597961d1ea0f1 172.30.0.14:7004
-   replicates b750480bcbb4418a78af85c9e1da936bf1227b6a
-S: 22b042a489c7da3f64b0e65588ee6e06353e227f 172.30.0.15:7005
-   replicates c49cdd7c2732c848cda32a2ddefc7906afb4e196
-S: 8f3a8d9fd46935102d15cf441110ab2d4027faea 172.30.0.16:7006
-   replicates 4d008fa4df9d921f86c84b909f61058ca11f3ab7
->>> Nodes configuration updated
->>> Assign a different config epoch to each node
->>> Sending CLUSTER MEET messages to join the cluster
-Waiting for the cluster to join
-
->>> Performing Cluster Check (using node 172.30.0.11:7001)
-M: c49cdd7c2732c848cda32a2ddefc7906afb4e196 172.30.0.11:7001
-   slots:[0-5460] (5461 slots) master
-   1 additional replica(s)
-M: 4d008fa4df9d921f86c84b909f61058ca11f3ab7 172.30.0.12:7002
-   slots:[5461-10922] (5462 slots) master
-   1 additional replica(s)
-S: 2ceba7794a4d98df86f821af1df597961d1ea0f1 172.30.0.14:7004
-   slots: (0 slots) slave
-   replicates b750480bcbb4418a78af85c9e1da936bf1227b6a
-S: 8f3a8d9fd46935102d15cf441110ab2d4027faea 172.30.0.16:7006
-   slots: (0 slots) slave
-   replicates 4d008fa4df9d921f86c84b909f61058ca11f3ab7
-S: 22b042a489c7da3f64b0e65588ee6e06353e227f 172.30.0.15:7005
-   slots: (0 slots) slave
-   replicates c49cdd7c2732c848cda32a2ddefc7906afb4e196
-M: b750480bcbb4418a78af85c9e1da936bf1227b6a 172.30.0.13:7003
-   slots:[10923-16383] (5461 slots) master
-   1 additional replica(s)
-[OK] All nodes agree about slots configuration.
->>> Check for open slots...
->>> Check slots coverage...
-[OK] All 16384 slots covered.
   [FAIL] Cluster starts and is healthy
   [FAIL] No split-brain after partition test (3 masters)
-  [PASS] Identifies epoch collision handler
-  [PASS] Identifies deferral function as the bug
-  [PASS] Explains why deferral always triggers
-  [FAIL] Explains currentEpoch/configEpoch relationship
-  [PASS] Explains split-brain from unresolved collision
-  [PASS] Identifies cluster_legacy.c
+  [WARN] No ANALYSIS.md found - checking source fix only
 
-Result: 8/13 passed
-SCORE=8/13
+Result: 3/13 passed
+SCORE=3/13

@@ -1,9 +1,1 @@
-Done. Here's a summary of what was found and fixed:
-
-**The Bug**: An injected function `clusterShouldDeferEpochBump()` in `src/cluster_legacy.c:2457-2477` was called inside `clusterHandleConfigEpochCollision()`. It checked if any primary's `configEpoch` matched `currentEpoch` and, if so, skipped collision resolution entirely. After a failover, the promoted replica *always* has `configEpoch == currentEpoch`, so this check created a permanent deadlock -- the epoch collision between the old and new primary could never be resolved, causing split-brain.
-
-**The Fix**: Removed the `clusterShouldDeferEpochBump()` function and its call. The original collision resolution algorithm (tiebreak by node ID, smaller ID bumps its epoch) is already correct and convergent.
-
-**Additional Docker fixes**: Removed duplicate `valkey-server` from compose commands (conflicted with ENTRYPOINT), and added the missing `libvalkeylua.so` module to the Docker image.
-
-**Verification**: `reproduce.sh` now shows clean post-partition recovery -- old primary steps down to replica, new primary owns the slots, `cluster_state:ok` everywhere.
+You're out of extra usage · resets 7pm (Asia/Jerusalem)

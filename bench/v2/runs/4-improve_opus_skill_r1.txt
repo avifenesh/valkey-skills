@@ -1,16 +1,16 @@
-Done. I've written `ANSWERS.md` with assessments for all 12 scenarios. Here's a quick summary:
+Done. ANSWERS.md has been written with assessments for all 12 scenarios. Here's a summary:
 
-| # | Scenario | Verdict | Core Issue |
-|---|----------|---------|------------|
-| 1 | Session Management | Problematic | `KEYS` blocks server; use `EXPIRE`/`PERSIST` instead of cron |
-| 2 | Product Catalog Cache | Problematic | Use `UNLINK` (async) + pipelining instead of looped `DEL` |
-| 3 | Field-Level TTL | Problematic | Valkey 7.4+ supports `HEXPIRE` — no need for separate keys |
-| 4 | Rate Limiting | Problematic | Non-atomic, wrong ordering; use a Lua script + `PEXPIRE` |
-| 5 | Distributed Lock | Problematic | GET/check/DEL race condition; use Lua atomic check-and-delete |
-| 6 | Real-time Inventory | Problematic | `KEYS` on every page load; use a Hash per SKU instead |
-| 7 | Job Queue | Problematic | `BRPOPLPUSH` deprecated, no ack; switch to Streams + consumer groups |
-| 8 | Conditional Updates | Problematic | WATCH/retry causes contention; use Lua compare-and-set |
-| 9 | Full-text Search | Problematic | `KEYS` + app-side matching; use inverted index Sets or Search module |
-| 10 | Pub/Sub Notifications | Problematic | Fire-and-forget loses messages; switch to Streams |
-| 11 | Monitoring | Problematic | Must query all nodes, set client names, tune thresholds |
-| 12 | Leaderboard TTL | Problematic | False premise — `EXPIRE` works on any key type including sorted sets |
+| # | Scenario | Verdict | Key Issue |
+|---|----------|---------|-----------|
+| 1 | Session Management | Problematic | `KEYS` blocks server; use native `EXPIRE`/`TTL` instead of cron |
+| 2 | Product Catalog Cache | Problematic under load | Use `UNLINK` (async) + batching instead of looped `DEL` |
+| 3 | Field-Level TTL | Problematic (outdated assumption) | Valkey 9.0.3 supports `HEXPIRE` -- use it |
+| 4 | Rate Limiting | Correct approach, wrong execution | Wrap in Lua for atomicity; clean before counting; add key `EXPIRE` |
+| 5 | Distributed Lock | Problematic (race condition) | Atomic check-and-delete via Lua script |
+| 6 | Real-time Inventory | Problematic | Use `HSET inventory:{sku}` hash per SKU, not `KEYS` on every page load |
+| 7 | Job Queue | Problematic | Migrate from LIST to Valkey Streams with consumer groups |
+| 8 | Conditional Updates | Correct but slow | Replace `WATCH/MULTI/EXEC` with Lua compare-and-swap |
+| 9 | Full-text Search | Problematic | Use a dedicated search engine; or inverted index with sets as fallback |
+| 10 | Pub/Sub Notifications | Problematic | Pub/Sub is fire-and-forget; use Streams for durable messaging |
+| 11 | Monitoring | Incomplete | Lower `slowlog-log-slower-than`; use `CLIENT SETNAME`; add latency monitoring |
+| 12 | Leaderboard TTL | Problematic (misconception) | `EXPIRE` works on sorted sets; just set TTL on creation |

@@ -1,16 +1,22 @@
-Written `ANSWERS.md` with assessments for all 12 scenarios. Summary of findings:
+I've completed the assessment and written the answers to ANSWERS.md. 
 
-| # | Status | Core Issue |
-|---|--------|-----------|
-| 1 | Problematic | `KEYS session:*` blocks server; use `SCAN` + TTL with `EXPIRE` |
-| 2 | Partially correct | Loop DEL → single variadic `UNLINK` with hash tags for cluster |
-| 3 | Correct workaround | Valkey 9 supports `HEXPIRE` for field-level TTL — no split key needed |
-| 4 | Correct algorithm | UUID members waste memory; use timestamp as member + `EXPIRE` on key |
-| 5 | Problematic | GET+DEL race condition; fix with atomic Lua compare-and-delete |
-| 6 | Problematic | `KEYS` per page load in cluster is broken; use `HSET inventory:{sku}` hash |
-| 7 | Mostly correct | `BRPOPLPUSH` deprecated → `BLMOVE`; recovery pushes break FIFO ordering |
-| 8 | Correct but inefficient | WATCH retry loop → single atomic Lua CAS script |
-| 9 | Problematic | `KEYS` + app-layer matching → `FT.CREATE`/`FT.SEARCH` with ValkeySearch |
-| 10 | Wrong tool | Pub/Sub has no persistence → Streams with `XREADGROUP`/`XACK` |
-| 11 | Incomplete | Threshold too high; cluster requires per-node queries; use `CLIENT SETNAME` |
-| 12 | False premise | You **can** set TTL on sorted sets — `EXPIRE leaderboard:{date} 172800` |
+The analysis covers all 12 Valkey usage scenarios with:
+
+**Critical Issues Identified:**
+- **Scenarios 1, 6, 9**: Using `KEYS` in production - this blocks the entire server and will cause severe performance problems
+- **Scenario 5**: Race condition in distributed locks that can corrupt data
+- **Scenario 10**: Using Pub/Sub for reliable messaging loses data
+
+**Performance Issues:**
+- **Scenario 2**: Inefficient individual DEL calls (should batch)
+- **Scenario 4**: Memory-heavy rate limiting
+- **Scenario 8**: Contention with WATCH/MULTI/EXEC
+
+**Correctness Issues:**
+- **Scenario 7**: Job queue ordering/duplication problems
+
+**Easy Fixes:**
+- **Scenario 12**: Misconception about TTL on sorted sets (they DO support TTL)
+- **Scenario 11**: Just needs configuration adjustments
+
+Each answer provides the exact Valkey commands and data structures to use for the correct implementation.

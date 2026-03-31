@@ -1,5 +1,5 @@
 === Task 1: Bug Investigation Validation ===
-  [FAIL] Source fixed: buggy deferral still active
+  [PASS] Source fixed: deferral call removed or disabled
   [PASS] Epoch collision handler preserved with bump
   Building fixed Valkey...
   [PASS] Fixed source compiles (docker compose build)
@@ -11,41 +11,41 @@ Primary[2] -> Slots 10923 - 16383
 Adding replica 172.30.0.15:7005 to 172.30.0.11:7001
 Adding replica 172.30.0.16:7006 to 172.30.0.12:7002
 Adding replica 172.30.0.14:7004 to 172.30.0.13:7003
-M: dce024774ea398f916d1a05aebad7f48f4789999 172.30.0.11:7001
+M: 0805227cc7f87840d75e8a242df120927e434479 172.30.0.11:7001
    slots:[0-5460] (5461 slots) master
-M: b426a6a602ba7df136ca346b8eca8863037a85b0 172.30.0.12:7002
+M: bcf76ddec045666db0e16424b151424adfa23a7c 172.30.0.12:7002
    slots:[5461-10922] (5462 slots) master
-M: 4e171d4943d2c46373ae9f3415808eabb0d634dd 172.30.0.13:7003
+M: 991ca3ad9ed3ba45a7ad1c6084afb23207e7d0be 172.30.0.13:7003
    slots:[10923-16383] (5461 slots) master
-S: 29653e9a2d3171ed7b1f6799adfb7e2f97136870 172.30.0.14:7004
-   replicates 4e171d4943d2c46373ae9f3415808eabb0d634dd
-S: 89fb0e695167acfdd5b8a9485268f39becb0fa10 172.30.0.15:7005
-   replicates dce024774ea398f916d1a05aebad7f48f4789999
-S: 6a8fded7e5bbf7a3d3e9da89c4ea244f6aac70e9 172.30.0.16:7006
-   replicates b426a6a602ba7df136ca346b8eca8863037a85b0
+S: a05cfdd8ac211180d2bc8dea6e73da3169609eb8 172.30.0.14:7004
+   replicates 991ca3ad9ed3ba45a7ad1c6084afb23207e7d0be
+S: aec8b7d2e333034e22442d2c7672370887290100 172.30.0.15:7005
+   replicates 0805227cc7f87840d75e8a242df120927e434479
+S: 94223c1744431779adf83bcb7edd0bbd2d3d35c1 172.30.0.16:7006
+   replicates bcf76ddec045666db0e16424b151424adfa23a7c
 >>> Nodes configuration updated
 >>> Assign a different config epoch to each node
 >>> Sending CLUSTER MEET messages to join the cluster
 Waiting for the cluster to join
-..
+.
 >>> Performing Cluster Check (using node 172.30.0.11:7001)
-M: dce024774ea398f916d1a05aebad7f48f4789999 172.30.0.11:7001
+M: 0805227cc7f87840d75e8a242df120927e434479 172.30.0.11:7001
    slots:[0-5460] (5461 slots) master
    1 additional replica(s)
-M: b426a6a602ba7df136ca346b8eca8863037a85b0 172.30.0.12:7002
-   slots:[5461-10922] (5462 slots) master
-   1 additional replica(s)
-S: 6a8fded7e5bbf7a3d3e9da89c4ea244f6aac70e9 172.30.0.16:7006
+S: 94223c1744431779adf83bcb7edd0bbd2d3d35c1 172.30.0.16:7006
    slots: (0 slots) slave
-   replicates b426a6a602ba7df136ca346b8eca8863037a85b0
-S: 89fb0e695167acfdd5b8a9485268f39becb0fa10 172.30.0.15:7005
-   slots: (0 slots) slave
-   replicates dce024774ea398f916d1a05aebad7f48f4789999
-S: 29653e9a2d3171ed7b1f6799adfb7e2f97136870 172.30.0.14:7004
-   slots: (0 slots) slave
-   replicates 4e171d4943d2c46373ae9f3415808eabb0d634dd
-M: 4e171d4943d2c46373ae9f3415808eabb0d634dd 172.30.0.13:7003
+   replicates bcf76ddec045666db0e16424b151424adfa23a7c
+M: 991ca3ad9ed3ba45a7ad1c6084afb23207e7d0be 172.30.0.13:7003
    slots:[10923-16383] (5461 slots) master
+   1 additional replica(s)
+S: aec8b7d2e333034e22442d2c7672370887290100 172.30.0.15:7005
+   slots: (0 slots) slave
+   replicates 0805227cc7f87840d75e8a242df120927e434479
+S: a05cfdd8ac211180d2bc8dea6e73da3169609eb8 172.30.0.14:7004
+   slots: (0 slots) slave
+   replicates 991ca3ad9ed3ba45a7ad1c6084afb23207e7d0be
+M: bcf76ddec045666db0e16424b151424adfa23a7c 172.30.0.12:7002
+   slots:[5461-10922] (5462 slots) master
    1 additional replica(s)
 [OK] All nodes agree about slots configuration.
 >>> Check for open slots...
@@ -76,5 +76,5 @@ OK
   [PASS] No split-brain after partition test (3 masters)
   [WARN] No ANALYSIS.md found - checking source fix only
 
-Result: 4/13 passed
-SCORE=4/13
+Result: 5/13 passed
+SCORE=5/13

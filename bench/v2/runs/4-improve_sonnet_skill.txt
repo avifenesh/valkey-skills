@@ -1,16 +1,16 @@
-Written to `ANSWERS.md`. Here's a summary of findings:
+`ANSWERS.md` written. Here's a summary of the assessments:
 
-| # | Scenario | Verdict | Core Issue |
-|---|----------|---------|------------|
-| 1 | Session Management | **Problematic** | `KEYS` blocks server; use `EXPIRE`/`EXPIREAT` instead |
-| 2 | Product Catalog Cache | **Minor issue** | Loop DEL → batch into single variadic `DEL` or pipeline |
-| 3 | User Profiles with Field TTL | **Outdated** | Valkey 9.0.3 has `HEXPIRE` — keep everything in one hash |
-| 4 | Rate Limiting | **Problematic** | Non-atomic 3-step sequence + high memory from UUIDs; use Lua script |
-| 5 | Distributed Lock | **Problematic** | GET→DEL race condition; use atomic Lua compare-and-delete |
-| 6 | Real-time Inventory | **Critical** | `KEYS` on every page load; use a Hash (`HSET inventory:{sku} {wh} {count}`) |
-| 7 | Job Queue | **Partially problematic** | `BRPOPLPUSH` deprecated; use Streams with consumer groups for reliability |
-| 8 | Conditional Updates | **Wrong implementation** | WATCH/MULTI/EXEC retry storms; replace with atomic Lua CAS |
-| 9 | Full-text Search | **Critical** | `KEYS`+app-side scan; use inverted index Sets or external search engine |
-| 10 | Pub/Sub Notifications | **Wrong tool** | Pub/Sub has no persistence; use Streams with `XREADGROUP`/`XACK` |
-| 11 | Monitoring | **Incomplete** | Lower `slowlog-log-slower-than`; use `CLIENT SETNAME` for identification |
-| 12 | Leaderboard TTL | **False premise** | `EXPIRE` works on sorted sets; drop the cleanup job, set TTL directly |
+| # | Scenario | Verdict | Core Fix |
+|---|----------|---------|----------|
+| 1 | Session Management | **Problematic** | `KEYS` in cron blocks server; use hash + `EXPIRE`, sliding TTL with `EXPIRE` on each request |
+| 2 | Product Catalog Cache | **Problematic** | Replace loop of `DEL` calls with batched `UNLINK` (non-blocking, multiple keys per call) |
+| 3 | Field-Level TTL | **Unnecessarily complex** | Valkey 9.0 has native per-field hash TTL: `HSETEX`/`HEXPIRE` — eliminate the split-key pattern |
+| 4 | Rate Limiting | **Wrong algorithm** | Sorted set log is O(N) memory per key; switch to fixed-window `INCR`+`EXPIRE` (O(1)) |
+| 5 | Distributed Lock | **Problematic** | GET+DEL has a race condition; use `DELIFEQ lock:{r} {token}` (native in 9.0, atomic) |
+| 6 | Real-time Inventory | **Critically problematic** | `KEYS` on every page load + N GETs; replace with a single hash `HSET inventory:{sku} wh1 N wh2 N` + `HGETALL` |
+| 7 | Job Queue | **Problematic** | `BRPOPLPUSH` is deprecated; move to Streams + consumer groups for ordering, dedup, and recovery |
+| 8 | Conditional Updates | **Correct but obsolete** | Replace `WATCH/MULTI/EXEC` with `SET price:{id} new IFEQ expected` (native CAS in 8.1+) |
+| 9 | Full-text Search | **Critically problematic** | `KEYS` + app-layer scan; use `FT.CREATE`/`FT.SEARCH` (valkey-search module in 9.0 bundle) |
+| 10 | Pub/Sub Notifications | **Wrong tool** | Pub/Sub can't be made durable; migrate to Streams + consumer groups (`XREADGROUP`/`XACK`) |
+| 11 | Monitoring | **Legacy API** | `SLOWLOG GET` misses large-payload commands; use `COMMANDLOG GET N slow/large-request/large-reply`; set `CLIENT SETNAME` for identity |
+| 12 | Leaderboard TTL | **False assumption** | `EXPIRE` works on sorted sets; set TTL at creation, delete the cron job |

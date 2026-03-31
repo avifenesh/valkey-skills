@@ -1,5 +1,5 @@
 === Task 4: Valkey Usage Review Validation ===
-  [FAIL] Q1 Sessions: KEYS problem + EXPIRETIME/PERSIST [VALKEY]
+  [PASS] Q1 Sessions: KEYS problem + EXPIRETIME/PERSIST [VALKEY]
   [PASS] Q2 Cache: DEL -> UNLINK
   [PASS] Q3 Hash field TTL: HEXPIRE/HPEXPIRE [VALKEY]
   [PASS] Q4 Rate limit: identify memory waste
@@ -12,5 +12,5 @@
   [PASS] Q11 Monitoring: COMMANDLOG replaces SLOWLOG [VALKEY]
   [PASS] Q12 Leaderboard: EXPIRE works on sorted sets
 
-Result: 9/12 passed
-SCORE=9/12
+Result: 10/12 passed
+SCORE=10/12

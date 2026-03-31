@@ -25,7 +25,8 @@ Parent router for the official Valkey GLIDE multi-language client skills. Each p
 - Switching from go-redis -> **migrate-go-redis**
 - Switching from StackExchange.Redis -> **migrate-stackexchange**
 - Spring Boot / Spring Data Valkey -> **spring-data-valkey**
-- How GLIDE works internally (Rust core, FFI, Protobuf) -> any per-language skill covers architecture
+- How GLIDE works internally (Rust core, FFI, Protobuf) -> **glide-dev** (contributor skill)
+- Contributing to GLIDE, adding commands, build system -> **glide-dev**
 - Cluster vs standalone, slot routing, ReadFrom -> any per-language skill covers connection/cluster
 
 
