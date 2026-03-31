@@ -1,0 +1,51 @@
+Everything looks correct. Here's a summary of all the files created:
+
+---
+
+## Files Created
+
+### `kind-config.yaml`
+Kind cluster with 1 control-plane + **3 worker nodes** (required for primary anti-affinity across nodes).
+
+### `Dockerfile`
+Multi-stage build: compiles `valkey-search` from source (Debian bookworm), then copies the `.so` into `valkey/valkey:8.0`. **Expect 15–30 min on first build** due to valkey-search's C++ dependencies.
+
+### `k8s/00-namespace.yaml` — namespace `valkey`
+
+### `k8s/02-configmap.yaml` — `valkey.conf`
+Key settings: `cluster-enabled yes`, TLS-only (`port 0`, `tls-port 6379`), `tls-replication yes`, `tls-cluster yes`, `aclfile /acl/users.acl`, `appendonly yes`, `loadmodule /usr/local/lib/valkey-modules/valkey-search.so`.
+
+### `k8s/05-statefulset.yaml` — 6-replica StatefulSet
+- **Init container** (`busybox`): generates ACL file from Secret env vars with `admin`/`app`/`monitor` users
+- **Main container** (`valkey-custom:latest`): `imagePullPolicy: Never` (kind local image), liveness on PING, readiness on `cluster_state:ok`
+- **Sidecar** (`oliver006/redis_exporter:v1.62.0`): Prometheus metrics on port 9121 using `monitor` user
+- **Anti-affinity**: `preferredDuringScheduling` on `kubernetes.io/hostname`
+- **PVCs**: 10Gi per pod for AOF data
+
+### `k8s/06-services.yaml`
+- `valkey-headless` (ClusterIP: None, `publishNotReadyAddresses: true`) — StatefulSet DNS + cluster bus
+- `valkey` (ClusterIP) — client access
+- `valkey-metrics` (ClusterIP, port 9121) — Prometheus scraping with annotations
+
+### `k8s/07-pdb.yaml`
+`minAvailable: 4` — ensures at most 2 pods disrupted simultaneously, guaranteeing ≥2 primaries stay up.
+
+### `k8s/08-cluster-init-job.yaml`
+Waits for all 6 nodes to respond to PING, then runs `valkey-cli --cluster create` with `--cluster-replicas 1`. Idempotent — skips if `cluster_state:ok` already.
+
+### `deploy.sh`
+1. Creates kind cluster from `kind-config.yaml`
+2. Builds and loads the custom Docker image
+3. Generates self-signed TLS CA + server cert (SANs for all 6 pod FQDNs + wildcard)
+4. Creates `valkey-tls` and `valkey-passwords` secrets with random passwords
+5. Applies all manifests
+6. Waits for init containers to complete, pauses 15s, then submits the cluster-init job
+7. Waits for `rollout status` before printing credentials
+
+### `test.sh`
+Reads credentials from K8s secrets, then validates:
+1. **Cluster health** — `cluster_state:ok`, 6 nodes
+2. **App user write/read** — `SET`/`GET` via `kubectl exec`
+3. **ACL restrictions** — monitor blocked on `SET`, allowed on `INFO` and `CLUSTER INFO`
+4. **valkey-search** — Python test pod (`python:3.12-slim` + `redis-py`) creates a `FLOAT32/DIM=3/COSINE` index, inserts 4 vectors, runs a KNN search with `DIALECT 2`
+5. **Prometheus metrics** — verifies exporter returns `valkey_*` metric lines

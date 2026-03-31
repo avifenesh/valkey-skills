@@ -1,0 +1,38 @@
+All done. Here's the full file layout:
+
+```
+.
+├── kind-config.yaml                         # 3 worker nodes for anti-affinity
+├── manifests/
+│   ├── namespace.yaml                       # valkey namespace
+│   ├── valkey-configmap.yaml                # valkey.conf: cluster, TLS, AOF
+│   ├── acl-configmap.yaml                   # 3 users: admin, app, monitor
+│   ├── valkey-statefulset.yaml              # 6-replica StatefulSet
+│   ├── valkey-headless-service.yaml         # headless svc for pod DNS
+│   ├── valkey-metrics-service.yaml          # ClusterIP for Prometheus scraping
+│   └── pdb.yaml                             # minAvailable: 5
+├── deploy.sh                                # end-to-end deployment
+├── test.sh                                  # integration tests
+└── requirements.md
+```
+
+**Key design decisions:**
+
+| Requirement | Implementation |
+|---|---|
+| **3P + 3R cluster** | 6-replica StatefulSet; `valkey-cli --cluster create --cluster-replicas 1` |
+| **TLS everywhere** | `port 0` disables plaintext; self-signed CA + wildcard SAN cert generated in deploy.sh |
+| **ACL** | `admin` = `+@all`; `app` = `+@all -@admin` + cluster read cmds; `monitor` = explicit allowlist; default user disabled |
+| **valkey-search** | deploy.sh attempts to build from source; startup script conditionally loads any `.so` in `/usr/lib/valkey/modules/`; test gracefully SKIPs if module absent |
+| **PDB** | `minAvailable: 5` — at most 1 pod disrupted, guaranteeing ≥2 primaries |
+| **Anti-affinity** | `preferredDuringSchedulingIgnoredDuringExecution` on `kubernetes.io/hostname` spreads pods across the 3 workers |
+| **Probes** | Liveness + readiness via `valkey-cli --tls ... ping` |
+| **Storage** | 1Gi PVC per pod, AOF with `appendfsync everysec` |
+| **Monitoring** | `oliver006/redis_exporter` sidecar on port 9121; dedicated `valkey-metrics` Service |
+| **Tests** | Python pod running `valkey-py`: cluster topology, SET/GET, vector search, ACL denial, metrics endpoint |
+
+**Usage:**
+```bash
+./deploy.sh   # creates kind cluster, generates TLS, deploys everything, initializes cluster
+./test.sh     # runs integration tests inside the cluster
+```

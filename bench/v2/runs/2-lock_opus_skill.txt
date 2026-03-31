@@ -1,0 +1,15 @@
+All 50 orders processed, 0 duplicates. The distributed lock is working correctly.
+
+Here's what was implemented:
+
+**`DistributedLock.java`** - the core lock with:
+- **Acquire**: `SET key ownerUUID NX PX ttl` via GLIDE's `SetOptions.builder().conditionalSetOnlyIfNotExist().expiry(Expiry.Milliseconds(...))` -- atomic set-if-not-exists with millisecond TTL
+- **Owner ID**: random UUID per lock instance, ensuring only the owner can release
+- **Retry with backoff**: exponential delay (`base * 2^attempt`) plus random jitter on contention
+- **Safe release**: Lua script (`EVAL`) does atomic compare-and-delete -- checks the key's value matches the owner UUID before deleting, preventing one thread from releasing another's lock
+- **Cluster-safe**: single-key operations throughout; the Lua script touches only `KEYS[1]`
+
+**`App.java`** - updated to:
+- Create a `GlideClient` connected to `localhost:6379`
+- Wrap each order's processing in a `DistributedLock` acquire/release cycle
+- Count duplicates prevented when a lock can't be acquired

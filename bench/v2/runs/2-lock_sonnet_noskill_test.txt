@@ -1,0 +1,11 @@
+=== Task 2: Distributed Lock Validation ===
+  [PASS] Uses GLIDE client (not Jedis/Lettuce)
+  [PASS] Uses SET NX (not deprecated SETNX)
+  [PASS] Lock has TTL-based expiration
+  [PASS] Owner identification (UUID/token)
+  [PASS] Safe release (compare-and-delete)
+  [PASS] Retry with backoff
+  [PASS] Code compiles (mvn compile)
+
+Result: 7/7 passed
+SCORE=7/7

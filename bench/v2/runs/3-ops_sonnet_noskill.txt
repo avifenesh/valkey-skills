@@ -1,0 +1,26 @@
+Everything is consistent. Here's a summary of everything created:
+
+---
+
+## Files created
+
+| File | Purpose |
+|------|---------|
+| `Dockerfile` | Multi-stage build: compiles `valkey-search` from source (clones `main` branch with submodules), embeds the `.so` into `valkey/valkey:8.0` with Python 3 for testing |
+| `kind-config.yaml` | 1 control-plane + 3 worker nodes, each labeled with a zone for anti-affinity spreading |
+| `k8s/namespace.yaml` | `valkey` namespace |
+| `k8s/configmap.yaml` | `valkey.conf` with cluster mode, TLS-only (`port 0 / tls-port 6379`), ACL file, AOF, hostname-based cluster endpoints, and `loadmodule /modules/valkey_search.so` |
+| `k8s/services.yaml` | Three services: headless (pod DNS + `publishNotReadyAddresses`), ClusterIP client, Prometheus metrics scrape target |
+| `k8s/pdb.yaml` | `minAvailable: 4` — at most 2 pods disrupted at once, guaranteeing ≥2 primaries survive planned maintenance |
+| `k8s/statefulset.yaml` | 6 replicas; each pod runs a startup script that sets `--cluster-announce-hostname <pod>.valkey-cluster-headless…` for stable DNS-based cluster topology; `oliver006/redis_exporter` sidecar on port 9121; `preferredDuringScheduling` anti-affinity across nodes; readiness/liveness probes via `valkey-cli ping` |
+| `k8s/cluster-init-job.yaml` | Polls all 6 nodes for readiness, skips if already initialised, then runs `valkey-cli --cluster create --cluster-replicas 1 --cluster-yes` with all pod DNS names |
+
+The existing `deploy.sh` and `test.sh` were left untouched — all manifests are wire-compatible with their expectations.
+
+### Deploy flow
+```
+./deploy.sh           # ~10 min first run (valkey-search compile), fast after
+./test.sh             # requires local valkey-cli with TLS support
+```
+
+> **Note:** The Docker build clones `main` of `valkey-io/valkey-search` and compiles it (~10 min). You can pin to a specific release tag by setting `--build-arg VALKEY_SEARCH_REF=v1.x.x` once the project publishes stable releases.

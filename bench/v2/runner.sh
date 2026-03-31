@@ -3,8 +3,6 @@
 # Runs all 16 conditions sequentially to avoid port conflicts.
 # Each agent gets exclusive Docker port access.
 
-set -e
-
 BENCH_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILLS_DIR="$BENCH_DIR/../../skills"
 RUNS_DIR="$BENCH_DIR/runs"
@@ -68,14 +66,12 @@ run_agent() {
   echo ">>> Running $label (model: $model)"
 
   cd "$run_dir"
-  set +e
   claude -p "$prompt" \
     --model "$model" \
     --output-format json \
     --max-turns 30 \
     --dangerously-skip-permissions \
-    > "$out_json" 2>/dev/null
-  set -e
+    > "$out_json" 2>/dev/null || true
   cd "$BENCH_DIR"
 
   # Extract text result
