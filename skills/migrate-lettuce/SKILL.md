@@ -319,12 +319,12 @@ For native migration, the key steps:
 ## See Also
 
 - **valkey-glide-java** skill - full GLIDE Java API details
-- [Batching](../features/batching.md) - pipeline and transaction patterns
-- [AZ Affinity](../features/az-affinity.md) - availability zone aware routing
-- [OpenTelemetry](../features/opentelemetry.md) - observability integration
-- [TLS and authentication](../features/tls-auth.md) - TLS setup and credential management
-- [Production deployment](../best-practices/production.md) - timeout tuning, connection management, observability
-- [Error handling](../best-practices/error-handling.md) - error types, reconnection, batch error semantics
+- Batching (see valkey-glide skill) - pipeline and transaction patterns
+- AZ Affinity (see valkey-glide skill) - availability zone aware routing
+- OpenTelemetry (see valkey-glide skill) - observability integration
+- TLS and authentication (see valkey-glide skill) - TLS setup and credential management
+- Production deployment (see valkey-glide skill) - timeout tuning, connection management, observability
+- Error handling (see valkey-glide skill) - error types, reconnection, batch error semantics
 
 ---
 

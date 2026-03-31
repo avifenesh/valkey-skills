@@ -306,11 +306,11 @@ No drop-in replacement or compatibility layer exists for Python. The recommended
 ## See Also
 
 - **valkey-glide-python** skill - full GLIDE Python API details
-- [PubSub](../features/pubsub.md) - subscription patterns and dynamic PubSub
-- [Batching](../features/batching.md) - pipeline and transaction patterns
-- [TLS and authentication](../features/tls-auth.md) - TLS setup and credential management
-- [Production deployment](../best-practices/production.md) - timeout tuning, connection management, observability
-- [Error handling](../best-practices/error-handling.md) - error types, reconnection, batch error semantics
+- PubSub (see valkey-glide skill) - subscription patterns and dynamic PubSub
+- Batching (see valkey-glide skill) - pipeline and transaction patterns
+- TLS and authentication (see valkey-glide skill) - TLS setup and credential management
+- Production deployment (see valkey-glide skill) - timeout tuning, connection management, observability
+- Error handling (see valkey-glide skill) - error types, reconnection, batch error semantics
 
 ---
 

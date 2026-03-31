@@ -18,13 +18,25 @@
 
 | Directory | Skill | Content |
 |-----------|-------|---------|
-| `skills/valkey-glide/python/` | valkey-glide-python | Async (valkey-glide) / sync (valkey-glide-sync), all data types, OTel, redis-py migration |
-| `skills/valkey-glide/java/` | valkey-glide-java | CompletableFuture, Spring Data Valkey, Jedis/Lettuce migration |
-| `skills/valkey-glide/nodejs/` | valkey-glide-nodejs | TypeScript, ESM/CJS, ioredis migration |
-| `skills/valkey-glide/go/` | valkey-glide-go | CGO, Result[T], go-redis migration |
-| `skills/valkey-glide/csharp/` | valkey-glide-csharp | .NET 6.0+/8.0+ (preview), StackExchange.Redis migration |
+| `skills/valkey-glide/python/` | valkey-glide-python | Async/sync API, all data types, OTel, TLS, batching, PubSub, streams |
+| `skills/valkey-glide/java/` | valkey-glide-java | CompletableFuture API, configuration builders, batching, streams, server modules |
+| `skills/valkey-glide/nodejs/` | valkey-glide-nodejs | Promise API, TypeScript, ESM/CJS, batching, PubSub, streams |
+| `skills/valkey-glide/go/` | valkey-glide-go | Synchronous API, CGO, Result[T], batching, error handling |
+| `skills/valkey-glide/csharp/` | valkey-glide-csharp | Async/await API, .NET 8.0+ (preview), configuration builders |
 | `skills/valkey-glide/php/` | valkey-glide-php | C extension (PHP 8.1+), PIE/Composer/PECL |
 | `skills/valkey-glide/ruby/` | valkey-glide-ruby | valkey-rb gem (GA), redis-rb drop-in replacement |
+
+### Migration Skills (6 standalone + 1 framework)
+
+| Directory | Skill | Content |
+|-----------|-------|---------|
+| `skills/migrate-jedis/` | migrate-jedis | Jedis to GLIDE Java migration |
+| `skills/migrate-lettuce/` | migrate-lettuce | Lettuce to GLIDE Java migration |
+| `skills/migrate-ioredis/` | migrate-ioredis | ioredis to GLIDE Node.js migration |
+| `skills/migrate-redis-py/` | migrate-redis-py | redis-py to GLIDE Python migration |
+| `skills/migrate-go-redis/` | migrate-go-redis | go-redis to GLIDE Go migration |
+| `skills/migrate-stackexchange/` | migrate-stackexchange | StackExchange.Redis to GLIDE C# migration |
+| `skills/spring-data-valkey/` | spring-data-valkey | Spring Boot + Spring Data Valkey integration |
 
 ### Glide-MQ (3 skills under glide-mq/)
 
@@ -70,7 +82,7 @@ Skills were written and verified against these versions. Update when new release
 | valkey-json | GA | valkey-ecosystem (modules/json) |
 | valkey-bloom | GA | valkey-ecosystem (modules/bloom) |
 | glide-mq | 0.14.0 | glide-mq, migrate-bullmq, migrate-bee |
-| Spring Data Valkey | 1.0 | valkey-glide-java (Spring section) |
+| Spring Data Valkey | 1.0 | spring-data-valkey |
 
 Last full review: 2026-03-30
 

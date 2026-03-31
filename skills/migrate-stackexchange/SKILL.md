@@ -323,11 +323,11 @@ No drop-in compatibility layer exists for C#, though the GLIDE C# client intenti
 ## See Also
 
 - **valkey-glide-csharp** skill - full GLIDE C# API details
-- [Batching](../features/batching.md) - pipeline and transaction patterns
-- [PubSub](../features/pubsub.md) - subscription patterns and dynamic PubSub
-- [TLS and authentication](../features/tls-auth.md) - TLS setup and credential management
-- [Production deployment](../best-practices/production.md) - timeout tuning, connection management, observability
-- [Error handling](../best-practices/error-handling.md) - error types, reconnection, batch error semantics
+- Batching (see valkey-glide skill) - pipeline and transaction patterns
+- PubSub (see valkey-glide skill) - subscription patterns and dynamic PubSub
+- TLS and authentication (see valkey-glide skill) - TLS setup and credential management
+- Production deployment (see valkey-glide skill) - timeout tuning, connection management, observability
+- Error handling (see valkey-glide skill) - error types, reconnection, batch error semantics
 
 ---
 

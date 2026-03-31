@@ -321,12 +321,12 @@ No drop-in compatibility layer exists for Node.js. The recommended approach:
 ## See Also
 
 - **valkey-glide-nodejs** skill - full GLIDE Node.js API details
-- [Scripting](../features/scripting.md) - Lua scripting and the Script class
-- [PubSub](../features/pubsub.md) - subscription patterns and dynamic PubSub
-- [Batching](../features/batching.md) - pipeline and transaction patterns
-- [TLS and authentication](../features/tls-auth.md) - TLS setup and credential management
-- [Production deployment](../best-practices/production.md) - timeout tuning, connection management, observability
-- [Error handling](../best-practices/error-handling.md) - error types, reconnection, batch error semantics
+- Scripting (see valkey-glide skill) - Lua scripting and the Script class
+- PubSub (see valkey-glide skill) - subscription patterns and dynamic PubSub
+- Batching (see valkey-glide skill) - pipeline and transaction patterns
+- TLS and authentication (see valkey-glide skill) - TLS setup and credential management
+- Production deployment (see valkey-glide skill) - timeout tuning, connection management, observability
+- Error handling (see valkey-glide skill) - error types, reconnection, batch error semantics
 
 ---
 

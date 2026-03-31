@@ -332,11 +332,11 @@ For the zero-code-change path using the Jedis compatibility layer, see the Migra
 ## See Also
 
 - **valkey-glide-java** skill - full GLIDE Java API details
-- [Batching](../features/batching.md) - pipeline and transaction patterns
-- [TLS and authentication](../features/tls-auth.md) - TLS setup and credential management
-- [Production deployment](../best-practices/production.md) - timeout tuning, connection management, observability
-- [Error handling](../best-practices/error-handling.md) - error types, reconnection, batch error semantics
-- [OpenTelemetry](../features/opentelemetry.md) - observability integration
+- Batching (see valkey-glide skill) - pipeline and transaction patterns
+- TLS and authentication (see valkey-glide skill) - TLS setup and credential management
+- Production deployment (see valkey-glide skill) - timeout tuning, connection management, observability
+- Error handling (see valkey-glide skill) - error types, reconnection, batch error semantics
+- OpenTelemetry (see valkey-glide skill) - observability integration
 
 ---
 
