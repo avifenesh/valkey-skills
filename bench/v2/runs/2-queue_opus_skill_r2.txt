@@ -1,0 +1,24 @@
+The implementation is complete. Here's a summary of what's implemented:
+
+**TaskQueue** (producer)
+- `addTask()` — XADD to the stream with task fields
+- `addBatch()` — adds 100 tasks sequentially
+
+**Worker** (consumer group reader)
+- Separate `readClient` per worker for blocking XREADGROUP (GLIDE requires dedicated clients for blocking commands since it uses a single multiplexed connection)
+- Shared `cmdClient` for XACK, XPENDING, XCLAIM
+- `processMessage()` — simulates 50–200ms work, then XACKs
+- `claimStale()` — uses `XPENDING ... IDLE 30000` to find stale messages, XCLAIMs them, moves to DLQ after 3 retries
+- `stop()` — sets running=false, waits for in-flight processing
+
+**3 concurrent workers** — each with its own blocking-read client, sharing the command client
+
+**Dead letter queue** — messages pending > 30s are claimed; after 3 delivery attempts they're moved to `tasks:deadletter` stream via XADD + XACK
+
+**Dashboard** — every 5s shows stream length, pending count, DLQ size, per-worker processed counts, pending per consumer
+
+**Graceful shutdown** — SIGTERM/SIGINT handlers stop workers, print final dashboard, close all clients. Auto-exits when all 100 tasks are processed.
+
+**Response parsing** — handles both RESP2 (nested arrays) and RESP3 (Maps/objects) formats from `customCommand` since GLIDE defaults to RESP3.
+
+Test with: `docker compose up --build`

@@ -1,14 +1,62 @@
 services:
-  valkey:
+  valkey-1:
     image: valkey/valkey:9
+    command: >
+      valkey-server
+      --port 7001
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --protected-mode no
     ports:
-      - "6380:6379"
-    command: valkey-server --save "" --appendonly yes
-    healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
-      interval: 2s
-      timeout: 3s
-      retries: 5
+      - "7001:7001"
+    networks:
+      cluster-net:
+        ipv4_address: 172.31.0.11
+
+  valkey-2:
+    image: valkey/valkey:9
+    command: >
+      valkey-server
+      --port 7002
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --protected-mode no
+    ports:
+      - "7002:7002"
+    networks:
+      cluster-net:
+        ipv4_address: 172.31.0.12
+
+  valkey-3:
+    image: valkey/valkey:9
+    command: >
+      valkey-server
+      --port 7003
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --protected-mode no
+    ports:
+      - "7003:7003"
+    networks:
+      cluster-net:
+        ipv4_address: 172.31.0.13
+
+  cluster-init:
+    image: valkey/valkey:9
+    depends_on:
+      - valkey-1
+      - valkey-2
+      - valkey-3
+    command: >
+      bash -c "sleep 3 && valkey-cli --cluster create
+      172.31.0.11:7001 172.31.0.12:7002 172.31.0.13:7003
+      --cluster-replicas 0 --cluster-yes &&
+      echo 'Cluster ready'"
+    networks:
+      cluster-net:
 
   app:
     image: node:22
@@ -16,9 +64,14 @@ services:
     volumes:
       - .:/app
     depends_on:
-      valkey:
-        condition: service_healthy
-    command: ["sh", "-c", "npm install && node queue.js"]
-    environment:
-      - VALKEY_HOST=valkey
-      - VALKEY_PORT=6379
+      - cluster-init
+    command: ["sh", "-c", "sleep 8 && npm install && node app.js"]
+    networks:
+      cluster-net:
+
+networks:
+  cluster-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.0.0/24

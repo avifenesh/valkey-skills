@@ -1,11 +1,11 @@
 #!/bin/bash
-# Validates Task 2 (message queue) - runs the actual queue against real Valkey
-# Input: $1 = directory containing agent's code
+# Validates Task 2 (ioredis to GLIDE migration) - runs against real cluster
+# Input: $1 = directory containing agent's migrated code
 
 DIR="$1"
 PASS=0
 FAIL=0
-TOTAL=9
+TOTAL=10
 
 check() {
   local desc="$1"
@@ -19,98 +19,98 @@ check() {
   fi
 }
 
-echo "=== Task 2: Message Queue Validation ==="
+echo "=== Task 2: ioredis to GLIDE Migration Validation ==="
 
 cd "$DIR"
 
-# Clean any leftover Docker state from previous runs
+# Clean any leftover Docker state
 docker compose down -v 2>/dev/null || true
 
 # --- Static checks (3) ---
 
-CODE=$(find "$DIR" -name "*.js" -o -name "*.ts" | grep -v node_modules | xargs cat 2>/dev/null)
+CODE=$(find "$DIR" -name "app.js" | xargs cat 2>/dev/null)
 
 if [ -z "$CODE" ]; then
-  echo "  [ERROR] No source files found"
+  echo "  [ERROR] No app.js found"
   echo "Result: 0/$TOTAL passed"
   echo "SCORE=0/$TOTAL"
   exit 0
 fi
 
-# Check 1: Uses GLIDE (not ioredis/node-redis)
-uses_glide=$(echo "$CODE" | grep -ci "GlideClient\|valkey-glide\|@valkey/valkey-glide" || true)
-uses_other=$(echo "$CODE" | grep -ci "import.*ioredis\|import.*redis\|require.*ioredis\|require.*\"redis\"" || true)
-check "Uses GLIDE client (not ioredis/node-redis)" "$([ "$uses_glide" -gt 0 ] && [ "$uses_other" -eq 0 ] && echo 1 || echo 0)"
+# Check 1: Uses GlideClusterClient (not ioredis)
+uses_glide=$(echo "$CODE" | grep -ci "GlideClusterClient\|valkey-glide\|@valkey/valkey-glide" || true)
+still_ioredis=$(echo "$CODE" | grep -c "import.*ioredis\|require.*ioredis\|new Redis" || true)
+check "Uses GlideClusterClient (not ioredis)" "$([ "$uses_glide" -gt 0 ] && [ "$still_ioredis" -eq 0 ] && echo 1 || echo 0)"
 
-# Check 2: Has consumer group code (XGROUP + XREADGROUP + XACK)
-has_xgroup=$(echo "$CODE" | grep -ci "xgroupCreate\|XGROUP\|customCommand.*XGROUP" || true)
-has_xreadgroup=$(echo "$CODE" | grep -ci "xreadgroup\|XREADGROUP\|customCommand.*XREADGROUP" || true)
-has_xack=$(echo "$CODE" | grep -ci "xack\|XACK" || true)
-check "Consumer group APIs (XGROUP + XREADGROUP + XACK)" "$([ "$has_xgroup" -gt 0 ] && [ "$has_xreadgroup" -gt 0 ] && [ "$has_xack" -gt 0 ] && echo 1 || echo 0)"
+# Check 2: Has Batch/pipeline equivalent (not ioredis .pipeline())
+has_batch=$(echo "$CODE" | grep -ci "Batch\|\.batch\|new Batch\|ClusterTransaction" || true)
+has_pipeline=$(echo "$CODE" | grep -c "\.pipeline()" || true)
+check "Uses GLIDE Batch (not ioredis pipeline)" "$([ "$has_batch" -gt 0 ] && [ "$has_pipeline" -eq 0 ] && echo 1 || echo 0)"
 
-# Check 3: Dead letter handling (XPENDING + XCLAIM/XAUTOCLAIM)
-has_dlq=$(echo "$CODE" | grep -ci "xpending\|XPENDING\|xclaim\|XCLAIM\|xautoclaim\|XAUTOCLAIM" || true)
-check "Dead letter handling (XPENDING/XCLAIM)" "$([ "$has_dlq" -gt 0 ] && echo 1 || echo 0)"
+# Check 3: Has stream operations (XADD, XREADGROUP, XACK)
+has_streams=$(echo "$CODE" | grep -ci "xadd\|xreadgroup\|xack\|XADD\|XREADGROUP\|XACK" || true)
+check "Stream operations present" "$([ "$has_streams" -gt 0 ] && echo 1 || echo 0)"
 
-# --- Runtime checks (6) ---
+# --- Runtime checks (7) ---
 
-# Start Valkey and the app
-echo "  Starting docker compose..."
+echo "  Starting cluster..."
 docker compose up -d --build 2>/dev/null
 
-# Wait for Valkey to be ready
-for i in $(seq 1 15); do
-  docker compose exec -T valkey valkey-cli PING 2>/dev/null | grep -q PONG && break
-  sleep 1
+# Wait for cluster to be ready
+for i in $(seq 1 30); do
+  cluster_ok=$(docker compose exec -T valkey-1 valkey-cli -p 7001 CLUSTER INFO 2>/dev/null | grep -c "cluster_state:ok" || true)
+  [ "$cluster_ok" -gt 0 ] && break
+  sleep 2
 done
 
-# Check 4: Valkey is running
-valkey_up=$(docker compose exec -T valkey valkey-cli PING 2>/dev/null | grep -c PONG || true)
-check "Valkey is running" "$([ "$valkey_up" -gt 0 ] && echo 1 || echo 0)"
+check "Cluster is ready" "$([ "$cluster_ok" -gt 0 ] && echo 1 || echo 0)"
 
-if [ "$valkey_up" -eq 0 ]; then
-  echo "  Valkey not running, skipping runtime checks"
-  FAIL=$((FAIL + 5))
+if [ "$cluster_ok" -eq 0 ]; then
+  echo "  Cluster not ready, skipping runtime checks"
+  FAIL=$((FAIL + 6))
+  docker compose down -v 2>/dev/null
   echo ""
   echo "Result: $PASS/$TOTAL passed"
   echo "SCORE=$PASS/$TOTAL"
-  docker compose down -v 2>/dev/null
   exit 0
 fi
 
-# Wait for the app to produce and consume messages (up to 30s)
-echo "  Waiting for queue processing (30s max)..."
-for i in $(seq 1 30); do
-  stream_len=$(docker compose exec -T valkey valkey-cli XLEN tasks:queue 2>/dev/null | tr -d '[:space:]' || echo "0")
-  [ "$stream_len" != "0" ] && break
+# Wait for app to finish (up to 60s)
+echo "  Waiting for app to complete (60s max)..."
+for i in $(seq 1 60); do
+  app_done=$(docker compose logs app 2>/dev/null | grep -c "=== Results ===" || true)
+  app_error=$(docker compose logs app 2>/dev/null | grep -c "Fatal:\|not implemented\|Error:" || true)
+  [ "$app_done" -gt 0 ] || [ "$app_error" -gt 0 ] && break
   sleep 1
 done
 
-# Check 5: Stream exists with messages produced (XLEN > 0 or messages were consumed)
-stream_exists=$(docker compose exec -T valkey valkey-cli EXISTS tasks:queue 2>/dev/null | tr -d '[:space:]' || echo "0")
-xlen=$(docker compose exec -T valkey valkey-cli XLEN tasks:queue 2>/dev/null | tr -d '[:space:]' || echo "0")
-check "Stream exists (tasks:queue)" "$([ "$stream_exists" = "1" ] && echo 1 || echo 0)"
+# Check 4: App ran without fatal errors
+check "App completed without fatal errors" "$([ "$app_done" -gt 0 ] && [ "$app_error" -eq 0 ] && echo 1 || echo 0)"
 
-# Check 6: Consumer group was created
-groups=$(docker compose exec -T valkey valkey-cli XINFO GROUPS tasks:queue 2>/dev/null | grep -c "name" || true)
-check "Consumer group created" "$([ "$groups" -gt 0 ] && echo 1 || echo 0)"
+# Check 5: Cache data written
+cache_exists=$(docker compose exec -T valkey-1 valkey-cli -p 7001 -c EXISTS {cache}:user:1 2>/dev/null | tr -d '[:space:]' || echo "0")
+check "Cache data written ({cache}:user:1)" "$([ "$cache_exists" = "1" ] && echo 1 || echo 0)"
 
-# Check 7: Messages were consumed (check pending or acked)
-xinfo=$(docker compose exec -T valkey valkey-cli XINFO GROUPS tasks:queue 2>/dev/null)
-consumers=$(echo "$xinfo" | grep -c "consumers" || true)
-# Also check if there are consumers registered
-consumer_count=$(docker compose exec -T valkey valkey-cli XINFO CONSUMERS tasks:queue workers 2>/dev/null | grep -c "name" || true)
-check "Consumers registered ($consumer_count)" "$([ "$consumer_count" -gt 0 ] && echo 1 || echo 0)"
+# Check 6: Products batch-written (check a few)
+product_exists=$(docker compose exec -T valkey-1 valkey-cli -p 7001 -c HGET {product}:0 name 2>/dev/null | tr -d '[:space:]' || echo "")
+check "Batch products written ({product}:0)" "$([ -n "$product_exists" ] && [ "$product_exists" != "" ] && echo 1 || echo 0)"
 
-# Check 8: Multiple workers (at least 2 consumers)
-check "Multiple workers (>= 2 consumers)" "$([ "$consumer_count" -ge 2 ] && echo 1 || echo 0)"
+# Check 7: Stream exists with messages
+stream_len=$(docker compose exec -T valkey-1 valkey-cli -p 7001 -c XLEN "{stream}:tasks" 2>/dev/null | tr -d '[:space:]' || echo "0")
+check "Stream has messages (XLEN > 0)" "$([ "$stream_len" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 9: Some messages were acknowledged (delivered count > 0 in group info)
-delivered=$(docker compose exec -T valkey valkey-cli XINFO GROUPS tasks:queue 2>/dev/null | grep -A1 "last-delivered-id" | tail -1 | tr -d '[:space:]' || echo "0-0")
-check "Messages delivered (last-delivered-id != 0-0)" "$([ "$delivered" != "0-0" ] && [ -n "$delivered" ] && echo 1 || echo 0)"
+# Check 8: Consumer group exists
+group_exists=$(docker compose exec -T valkey-1 valkey-cli -p 7001 -c XINFO GROUPS "{stream}:tasks" 2>/dev/null | grep -c "workers" || true)
+check "Consumer group created" "$([ "$group_exists" -gt 0 ] && echo 1 || echo 0)"
+
+# Check 9: Sorted set populated
+zcard=$(docker compose exec -T valkey-1 valkey-cli -p 7001 -c ZCARD leaderboard:daily 2>/dev/null | tr -d '[:space:]' || echo "0")
+check "Sorted set populated ($zcard members)" "$([ "$zcard" -gt 0 ] && echo 1 || echo 0)"
 
 # Cleanup
 docker compose down -v 2>/dev/null
+
+cd - > /dev/null
 
 echo ""
 echo "Result: $PASS/$TOTAL passed"

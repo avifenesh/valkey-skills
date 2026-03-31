@@ -1,32 +1,24 @@
-# Task Queue - Reliable Message Queue with Valkey Streams
+# ioredis to GLIDE Migration
 
-Implement a reliable message queue using Valkey Streams and the GLIDE Node.js client.
+This application uses ioredis and needs to be migrated to Valkey GLIDE (`@valkey/valkey-glide`).
 
 ## Task
 
-Complete `queue.js` with the implementations described in the TODOs. All code must use `@valkey/valkey-glide` - not ioredis, not node-redis.
+Migrate `app.js` from ioredis to GLIDE. The migrated code must:
+1. Use `@valkey/valkey-glide` - not ioredis, not node-redis
+2. Connect to a Valkey cluster (3 nodes) using GlideClusterClient
+3. Preserve all functionality - cache, pub/sub, batch writes, streams
+4. Run in Docker (GLIDE native deps require Linux)
+5. Pass the same behavioral tests as the original
 
-## Requirements
-
-1. **TaskQueue** - producer that adds tasks to a stream
-2. **Worker** - consumer group reader with acknowledgment and dead letter handling
-3. **3 concurrent workers** in one process
-4. **Dead letter queue** - reclaim stale messages after 30s, move to DLQ after 3 retries
-5. **Dashboard** - periodic status display
-6. **Graceful shutdown** on SIGTERM/SIGINT
-
-## Run
+## Setup
 
 ```bash
 docker compose up --build
 ```
 
-The app container runs in Docker (GLIDE native deps require Linux). Valkey is a separate container.
+The original ioredis version works. Your job is to make the GLIDE version work identically.
 
-## Validation
+## Key Differences to Handle
 
-The queue should:
-- Process all 100 tasks across 3 workers
-- Show dashboard output with stream stats
-- Handle at-least-once delivery
-- Exit cleanly on interrupt
+The ioredis API and GLIDE API differ significantly. Some patterns that work in ioredis will silently fail or throw in GLIDE. You need to know the correct GLIDE equivalents.
