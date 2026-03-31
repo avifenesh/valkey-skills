@@ -29,7 +29,7 @@ Browse by topic below. Each link leads to a focused reference with code examples
 - Bitmaps/HyperLogLog/BITFIELD -> Features (Bitmaps and HyperLogLog)
 - Hash field TTL/HSETEX/HEXPIRE -> Features (Hash Field Expiration)
 - Log levels/debugging/GLIDE_LOG_DIR -> Features (Logging)
-- Switching from redis-py/ioredis/Jedis/go-redis/Lettuce/StackExchange -> Migration
+- Switching from redis-py/ioredis/Jedis/go-redis/Lettuce/StackExchange -> Migration skills
 - Error handling/retries/reconnection -> Best Practices (Error Handling)
 - Performance tuning/benchmarks -> Best Practices (Performance)
 - Production deployment/timeouts/defaults -> Best Practices (Production)
@@ -84,16 +84,16 @@ Per-language API details (configuration, data types, streams, OTel, TLS, PubSub,
 
 ## Migration
 
-For migration guides, use the per-language skills above or the detailed reference files:
+For migration guides, use the dedicated standalone migration skills:
 
-| Topic | Reference |
-|-------|-----------|
-| From redis-py (Python) | [from-redis-py](reference/migration/from-redis-py.md) or **valkey-glide-python** |
-| From ioredis (Node.js) | [from-ioredis](reference/migration/from-ioredis.md) or **valkey-glide-nodejs** |
-| From Jedis (Java) | [from-jedis](reference/migration/from-jedis.md) or **valkey-glide-java** |
-| From go-redis (Go) | [from-go-redis](reference/migration/from-go-redis.md) or **valkey-glide-go** |
-| From Lettuce (Java) | [from-lettuce](reference/migration/from-lettuce.md) or **valkey-glide-java** |
-| From StackExchange.Redis (C#) | [from-stackexchange](reference/migration/from-stackexchange.md) or **valkey-glide-csharp** |
+| Source Library | Migration Skill |
+|----------------|----------------|
+| redis-py (Python) | **migrate-redis-py** |
+| ioredis (Node.js) | **migrate-ioredis** |
+| Jedis (Java) | **migrate-jedis** |
+| Lettuce (Java) | **migrate-lettuce** |
+| go-redis (Go) | **migrate-go-redis** |
+| StackExchange.Redis (C#) | **migrate-stackexchange** |
 
 
 ## Best Practices

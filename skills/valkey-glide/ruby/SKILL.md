@@ -1,8 +1,8 @@
 ---
 name: valkey-glide-ruby
-description: "Use when building Ruby applications with Valkey GLIDE. Covers the Ruby client (valkey-rb gem), installation, API reference, and redis-rb migration."
+description: "Use when building Ruby applications with Valkey GLIDE. Covers the Ruby client (valkey-rb gem), installation, API reference."
 version: 1.0.0
-argument-hint: "[API, config, or migration question]"
+argument-hint: "[API or config question]"
 ---
 
 # Valkey GLIDE Ruby Client Reference
@@ -17,7 +17,6 @@ Synchronous Ruby client for Valkey built on the GLIDE Rust core via FFI. Designe
 - Streams -> Streams
 - Error handling -> Error Handling
 - PubSub -> PubSub
-- redis-rb migration -> Migration from redis-rb
 - OTel/tracing -> OpenTelemetry
 
 **Repository:** [valkey-io/valkey-glide-ruby](https://github.com/valkey-io/valkey-glide-ruby)
