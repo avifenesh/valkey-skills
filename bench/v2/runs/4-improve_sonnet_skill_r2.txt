@@ -1,0 +1,16 @@
+Written to `ANSWERS.md`. Here's a summary of the findings:
+
+| # | Verdict | Core Issue |
+|---|---------|------------|
+| 1 | Problematic | `KEYS` blocks server; use `EXPIRE`/`EXPIRE` for TTL and `SCAN` if iteration needed |
+| 2 | Minor issue | Use `UNLINK` (async) instead of `DEL`; batch keys in one call |
+| 3 | Outdated | Valkey 7.4+ supports per-field TTL via `HEXPIRE` — no need for a split key |
+| 4 | Correct but wasteful | Store timestamp as both score and member to avoid UUID overhead |
+| 5 | Problematic | GET-check-DEL is not atomic; use a Lua script for safe lock release |
+| 6 | Problematic | `KEYS` on every page load; restructure to `HSET inventory:{sku} warehouse <count>` |
+| 7 | Partially problematic | `BRPOPLPUSH` deprecated; use `BLMOVE` + per-worker lists, or migrate to Streams |
+| 8 | Inefficient under load | Replace WATCH/MULTI/EXEC retry loop with a single Lua compare-and-set |
+| 9 | Severely problematic | `KEYS` on every search; build an inverted index with `SADD`/`SINTERSTORE` or use a dedicated search engine |
+| 10 | Wrong tool | Pub/Sub loses messages; replace with Valkey Streams + consumer groups + `XACK` |
+| 11 | Incomplete | Lower `slowlog-log-slower-than`, use `CLIENT SETNAME` for attribution, add `LATENCY` commands |
+| 12 | False premise | TTL works on sorted sets — just use `EXPIRE`/`EXPIREAT` on the leaderboard key |

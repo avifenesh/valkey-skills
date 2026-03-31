@@ -1,0 +1,51 @@
+All files are in place. Here's a summary of every deliverable:
+
+---
+
+## Files Created
+
+| File | Purpose |
+|------|---------|
+| `kind-config.yaml` | kind cluster: 1 control-plane + 6 workers (one per Valkey pod for anti-affinity) |
+| `Dockerfile` | Multi-stage build — compiles `valkey-search` from source on top of `valkey/valkey:8.1` |
+| `helm/valkey-cluster-values.yaml` | All Bitnami `valkey-cluster` chart values |
+| `manifests/namespace.yaml` | `valkey` namespace |
+| `manifests/acl-configmap.yaml` | ACL template (admin/app/monitor/default) |
+| `manifests/acl-secret.yaml` | Shape reference for the ACL password secret |
+| `manifests/pdb.yaml` | `PodDisruptionBudget` — `minAvailable: 4` (guarantees ≥2 primaries) |
+| `manifests/monitoring-service.yaml` | ClusterIP service with `prometheus.io/scrape` annotations |
+| `deploy.sh` | Full end-to-end deploy |
+| `test.sh` | 14-test validation suite |
+
+---
+
+## deploy.sh workflow
+
+1. Creates the kind cluster (`kind-config.yaml`)
+2. Builds the custom Docker image (valkey + valkey-search) and loads it into kind
+3. Generates self-signed TLS certs with `openssl`, creates `valkey-tls` secret
+4. Creates `valkey-acl-passwords` and `valkey-acl-rendered` secrets
+5. `helm upgrade --install bitnami/valkey-cluster` with the values file
+6. Applies PDB and metrics service manifests
+7. Waits for all 6 pods running
+
+## test.sh covers
+
+- Cluster topology (cluster_enabled, 6 nodes)
+- `app` user SET/GET/HSET/HGET
+- valkey-search MODULE LIST confirmation
+- `FT.CREATE` vector index (4-dim FLOAT32 COSINE)
+- FT.SEARCH KNN query (vectors inserted via python3 in-pod)
+- ACL: `monitor` cannot SET, can INFO
+- ACL: `app` cannot CONFIG SET
+- AOF enabled (`appendonly yes`)
+- PVCs all Bound
+- Prometheus `/metrics` endpoint
+
+## Key design decisions
+
+- **Bitnami `valkey-cluster`** chart (not hand-crafted StatefulSets)
+- **ACL file** mounted via Kubernetes Secret (`valkey-acl-rendered`) — default user disabled
+- **TLS** via openssl-generated self-signed CA; cert covers `*.valkey.svc.cluster.local`
+- **valkey-search** loaded via `extraConfig: loadmodule /modules/libvalkeysearch.so`; module `.so` baked into the custom image
+- **Hard pod anti-affinity** (`podAntiAffinityPreset: hard`) spreads primaries across nodes

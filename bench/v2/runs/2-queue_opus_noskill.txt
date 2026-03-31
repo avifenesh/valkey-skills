@@ -1,23 +1,24 @@
-The implementation is complete. Here's what it does:
+The implementation is complete. Here's what was implemented:
 
-**TaskQueue** (lines 66-81): Produces tasks to the stream using `xadd` with field-value pairs.
+**TaskQueue** - Producer that adds tasks to the stream via `xadd`
 
-**Worker** (lines 87-245): 
-- Creates consumer group via `customCommand` (XGROUP CREATE with MKSTREAM)
-- Reads messages via `xreadgroup` with blocking (2s timeout)
-- Acknowledges each message after processing (50-200ms simulated work)
-- `claimStale()` uses `customCommand` for XPENDING with IDLE filter, then `xclaim` to reclaim messages idle >30s. Messages with 3+ delivery attempts are moved to the dead letter stream
-- `stop()` sets `running = false` for graceful loop exit
+**Worker** - Consumer group reader with:
+- `xgroupCreate` for group setup (handles BUSYGROUP if already exists)
+- `xreadgroup` with blocking read (2s timeout, count 1)
+- `xack` for message acknowledgment after processing
+- `claimStale()` - uses `XPENDING` range + `XCLAIM` to reclaim messages idle > 30s
+- `moveToDLQ()` - moves messages to dead letter stream after 3 failed retries
+- Robust `extractMessages()` parser handling Record, Map, and raw array return formats
 
-**Dashboard** (lines 252-287): Shows stream length, pending count, DLQ size, per-worker processed counts every 5 seconds.
+**3 concurrent workers** - each with its own `GlideClient` connection (required for independent blocking reads)
 
-**Main** (lines 293-376):
-- Connects with retry (up to 10 attempts)
-- Adds 100 tasks with rotating high/medium/low priorities
-- Starts 3 concurrent workers
-- Auto-shuts down when all 100 tasks are processed
-- SIGTERM/SIGINT handlers stop workers gracefully
+**Dashboard** - every 5 seconds showing stream length, pending count, DLQ count, per-worker stats
 
-The helpers (`fieldsToObject`, `iterEntries`, `streamFromResult`) handle multiple possible GLIDE return formats (nested objects, Maps, arrays) for robustness.
+**Graceful shutdown** - SIGTERM/SIGINT handlers stop workers, wait for completion, print final dashboard, close connections
 
-Test with: `docker compose up --build`
+**Auto-exit** - detects when all 100 tasks are processed and stops cleanly
+
+Test with:
+```bash
+docker compose up --build
+```

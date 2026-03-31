@@ -1,0 +1,21 @@
+Here's what was implemented in `queue.js`:
+
+**TaskQueue** — `addTask()` serializes all fields to strings and calls `xadd`; `addBatch()` iterates sequentially.
+
+**Worker** — Each worker:
+- Creates the consumer group (ignores `BUSYGROUP` if already exists)
+- Loops calling `xreadgroup` with `block: 2000` for backpressure-friendly reads
+- Acks with `xack` after simulated work (50–200ms)
+- Calls `claimStale()` each iteration using `xautoclaim` with `CLAIM_TIMEOUT_MS = 30s`
+- Tracks retries in a Redis hash (`tasks:retries`) since stream entries are immutable
+- Moves to `tasks:deadletter` after `MAX_CLAIM_RETRIES = 3`
+- Each worker has a **dedicated `GlideClient`** (required for blocking reads)
+
+**Dashboard** — prints stream length, pending count, DLQ length, and processed count every 5s.
+
+**Graceful shutdown** — SIGTERM/SIGINT stops all workers; also auto-stops when all 100 tasks are processed via a polling interval.
+
+Run with:
+```bash
+docker compose up --build
+```

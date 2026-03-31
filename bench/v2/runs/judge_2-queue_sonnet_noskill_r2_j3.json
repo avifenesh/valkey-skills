@@ -1,0 +1,5 @@
+```json
+{"correctness": 1, "completeness": 1, "valkey_awareness": 2, "production_quality": 1, "specificity": 1}
+```
+
+This is a skeleton with TODO comments, not an implementation. The import, constants, and command references (XADD, XREADGROUP, XACK, XPENDING, XCLAIM) show minimal Valkey awareness, but zero code was actually written. `main()` just logs and exits 1.

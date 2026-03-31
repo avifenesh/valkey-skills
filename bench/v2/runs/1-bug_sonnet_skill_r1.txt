@@ -1,0 +1,20 @@
+The bug is fixed and verified. Here's the summary:
+
+## What was wrong
+
+**Three issues** needed fixing:
+
+### 1. The C Source Bug (the core split-brain bug)
+**`src/cluster_legacy.c`, function `clusterShouldDeferEpochBump()`** (introduced around line 2457)
+
+This function was called as a guard inside `clusterHandleConfigEpochCollision()`. It checked whether any primary's `configEpoch == cluster->currentEpoch` and returned "defer" if so — but this condition is **always true after a successful failover** (the newly promoted primary has exactly that relationship). So the collision resolution that should fix split-brain was permanently blocked.
+
+The fix: removed the entire `clusterShouldDeferEpochBump()` function and its call.
+
+### 2. Dockerfile ENTRYPOINT/CMD mismatch
+`ENTRYPOINT ["valkey-server"]` + `command: valkey-server --port ...` in docker-compose produced `valkey-server valkey-server --port ...`, crashing with "can't open config file '/valkey-server'". Fixed by changing `ENTRYPOINT` to `CMD`.
+
+### 3. Missing libvalkeylua.so in runtime image
+The Lua module `.so` was built but not copied to the runtime container, causing a startup crash. Fixed by adding `COPY --from=builder /valkey/src/modules/lua/libvalkeylua.so /usr/local/lib/`.
+
+**After the fix**, the post-partition cluster state shows valkey-1 correctly stepping down to `slave` of the promoted valkey-5, with no duplicate masters and a unified epoch.

@@ -23,6 +23,9 @@ echo "=== Task 3: Ops Cluster Validation ==="
 
 cd "$DIR"
 
+# Clean any leftover kind cluster from previous runs
+kind delete cluster --name bench-ops 2>/dev/null || true
+
 # --- Static checks (3) ---
 
 ALL_FILES=$(find "$DIR" \( -name "*.yaml" -o -name "*.yml" -o -name "*.sh" -o -name "*.conf" \) ! -name "docker-compose.yml" -exec cat {} + 2>/dev/null)

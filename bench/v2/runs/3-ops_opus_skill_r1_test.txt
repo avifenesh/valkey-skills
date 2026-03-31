@@ -1,0 +1,22 @@
+=== Task 3: Ops Cluster Validation ===
+  [PASS] YAML files present (4)
+  [PASS] valkey-search module referenced
+  [PASS] ACL users defined
+  Deploying to kind (this may take a few minutes)...
+  [PASS] kind cluster created
+Kubernetes control plane is running at https://127.0.0.1:49291
+CoreDNS is running at https://127.0.0.1:49291/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+  Running /tmp/bench-v2/r1/3-ops_opus_skill/deploy.sh...
+ERROR: helm is required but not found
+  Waiting for pods (120s max)...
+  [FAIL] Valkey pods running (0)
+  [FAIL] At least 3 pods (primaries)
+  [FAIL] Can PING Valkey from pod
+  [FAIL] Cluster mode enabled
+  [PASS] Probes use valkey-cli (not redis-cli)
+  Cleaning up kind cluster...
+
+Result: 5/9 passed
+SCORE=5/9

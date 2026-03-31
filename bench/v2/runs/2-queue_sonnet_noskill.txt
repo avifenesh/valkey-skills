@@ -1,15 +1,18 @@
 The implementation is complete. Here's what was built:
 
-**TaskQueue** — uses `xadd` to write tasks with `taskId`, `priority`, `payload`, `createdAt` fields.
+**`TaskQueue`** — `addTask` calls `xadd` with typed fields; `addBatch` iterates sequentially.
 
-**Worker** (×3, each with a dedicated `GlideClient`):
-- `start()` — creates the consumer group (`BUSYGROUP` error ignored on duplicates), then loops: `claimStale()` → blocking `xreadgroup` (2s timeout) → `processMessage()`
-- `processMessage()` — simulates 50–200ms work, then `xack`s; increments `processedCount` and triggers auto-shutdown at 100
-- `claimStale()` — `xautoclaim` with `CLAIM_TIMEOUT_MS=30000`; tracks retry counts in `retry:<id>` keys; after `MAX_CLAIM_RETRIES=3` moves to DLQ
-- `moveToDLQ()` — `xadd` to `tasks:deadletter`, then `xack` original
+**`Worker`** — Each worker runs its own blocking `xreadgroup` loop with `block: 2000` so it can check `this.running`. Before each read, it calls `claimStale()` which uses `xautoclaim` with a 30s idle threshold. Retry counts are tracked in a `tasks:retries` hash; once a message hits 3 retries it's moved to `tasks:deadletter` via `moveToDLQ`.
 
-**Dashboard** — `xlen` + `xpending` summary every 5s.
+**3 dedicated clients** — Blocking `xreadgroup` calls hold the connection open, so each worker gets its own `GlideClient` instance. The producer/dashboard shares a fourth client.
 
-**Graceful shutdown** — SIGTERM/SIGINT and auto-completion both call `doShutdown()`, which stops workers, waits for in-flight tasks, prints final dashboard, closes all clients.
+**Dashboard** — Prints every 5s via `setInterval`: stream length (`xlen`), unacked count (`xpending` summary), DLQ depth, and per-worker processed counts.
 
-Each worker has a **dedicated client** because blocking `xreadgroup` would otherwise monopolize the multiplexed connection.
+**Graceful shutdown** — `SIGTERM`/`SIGINT` set `running = false` on all workers, waits for `Promise.allSettled`, prints final dashboard, closes all clients. Also auto-exits when all 100 tasks are processed and pending = 0.
+
+**Key GLIDE details applied:**
+- `xreadgroup(group, consumer, {streamKey: ">"}, {count, block})`
+- Fields from stream come back as flat `[f1,v1,f2,v2]` arrays → `fieldsToObject()` converts them
+- `xgroupCreate` with `{ mkStream: true }` to create stream atomically
+- `hincrby` on a hash for atomic retry counting
+- `xadd` accepts plain `{field: value}` objects

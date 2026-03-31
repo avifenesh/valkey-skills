@@ -1,0 +1,18 @@
+Here's what was implemented in `queue.js`:
+
+**TaskQueue** — `addTask()` serializes all values to strings before `xadd`; `addBatch()` fans out with `Promise.all`.
+
+**Worker** — each worker gets its own dedicated `blockingClient` (required by GLIDE — blocking `xreadgroup` would otherwise stall the shared multiplexed connection). The shared `commandClient` handles all non-blocking ops (xack, xautoclaim, hincrBy, etc.).
+
+**Dead letter handling** — `claimStale()` runs every 10 s per worker using `xautoclaim` with `CLAIM_TIMEOUT_MS=30000`. A `tasks:retries` hash tracks delivery attempts via `hincrBy`. After `MAX_CLAIM_RETRIES=3`, the message is moved to `tasks:deadletter` via `xadd` + `xack`.
+
+**Consumer group** — created with `mkStream: true` on `start()`; concurrent workers all attempt creation and silently ignore `BUSYGROUP` errors.
+
+**Dashboard** — printed every 5 s showing queue length (`xlen`), pending count (`xpending` summary), DLQ size, and per-worker processed counts.
+
+**Graceful shutdown** — `SIGTERM`/`SIGINT` close the blocking clients immediately (interrupting the blocked read), then await in-flight work and loop drain before closing the shared client and exiting.
+
+Run with:
+```bash
+docker compose up --build
+```

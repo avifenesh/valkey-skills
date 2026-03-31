@@ -23,6 +23,9 @@ echo "=== Task 2: Message Queue Validation ==="
 
 cd "$DIR"
 
+# Clean any leftover Docker state from previous runs
+docker compose down -v 2>/dev/null || true
+
 # --- Static checks (3) ---
 
 CODE=$(find "$DIR" -name "*.js" -o -name "*.ts" | grep -v node_modules | xargs cat 2>/dev/null)

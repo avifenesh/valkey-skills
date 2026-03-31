@@ -1,0 +1,16 @@
+Written `ANSWERS.md` with assessments for all 12 scenarios. Summary of findings:
+
+| # | Status | Core Issue |
+|---|--------|-----------|
+| 1 | **Problematic** | `KEYS session:*` blocks server; use `EXPIRE` + refresh on access |
+| 2 | **Mostly OK** | Loop DEL at scale — batch into single `DEL`/`UNLINK` calls |
+| 3 | **Correct** | Separate key for token TTL is the right pattern; pipeline the two fetches |
+| 4 | **Correct algorithm, high memory** | Store timestamp as member (not UUID); wrap in Lua for atomicity |
+| 5 | **Problematic** | GET+DEL is non-atomic; use Lua script for atomic check-and-delete |
+| 6 | **Problematic** | `KEYS` on every page load; use `HSET inventory:{sku} warehouse count` + precomputed total |
+| 7 | **Problematic** | `BRPOPLPUSH` deprecated; use `BLMOVE`; no recovery for crashed-worker jobs |
+| 8 | **Correct but inefficient** | Replace WATCH/MULTI/EXEC with a Lua compare-and-swap to eliminate retries |
+| 9 | **Fundamentally wrong tool** | `KEYS` + app-layer matching doesn't scale; use Streams or a dedicated search engine |
+| 10 | **Wrong tool** | Pub/Sub has no persistence; switch to Valkey Streams with `XREADGROUP`/`XACK` |
+| 11 | **Incomplete** | Lower `slowlog-log-slower-than`; use `CLIENT SETNAME`; add `INFO commandstats` |
+| 12 | **False premise** | TTL works on sorted sets — just `EXPIRE leaderboard:{date} <seconds>` |

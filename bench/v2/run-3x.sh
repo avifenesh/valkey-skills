@@ -79,9 +79,19 @@ run_single_task() {
         install_skills "$run_dir" "$skill_spec"
       fi
 
+      # Clear Claude project cache to prevent skill leakage between runs
+      local cache_dir="$HOME/.claude/projects"
+      local run_dir_escaped=$(echo "$run_dir" | sed 's|/|--|g; s|^--||; s|:||g')
+      rm -r "$cache_dir/$run_dir_escaped" 2>/dev/null || true
+      # Also clear with Windows path encoding
+      local win_escaped=$(echo "$run_dir" | sed 's|/c/|C--|; s|/|--|g; s|^--||')
+      rm -r "$cache_dir/$win_escaped" 2>/dev/null || true
+      # Nuclear option: clear all /tmp/bench-v2 project caches
+      find "$cache_dir" -maxdepth 1 -name "*bench-v2*" -type d -exec rm -r {} + 2>/dev/null || true
+
       echo "[R$round $task_label] >>> $label ($model_short, $skills)"
       cd "$run_dir"
-      claude -p "$prompt" --model "$model" --output-format json --max-turns "$max_turns" --dangerously-skip-permissions > "$out_json" 2>/dev/null || true
+      claude -p "$prompt" --model "$model" --output-format json --max-turns "$max_turns" --no-session-persistence --dangerously-skip-permissions > "$out_json" 2>/dev/null || true
       cd "$BENCH_DIR"
 
       jq -r '.result // ""' "$out_json" > "$RUNS_DIR/${label}_r${round}.txt" 2>/dev/null

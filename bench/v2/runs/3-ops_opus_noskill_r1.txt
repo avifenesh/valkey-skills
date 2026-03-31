@@ -1,0 +1,33 @@
+All files are created. Here's a summary of the deliverables:
+
+### Files Created
+
+| File | Purpose |
+|---|---|
+| `kind-config.yaml` | Kind cluster with 3 workers (zone-a/b/c labels for anti-affinity) |
+| `Dockerfile.valkey-search` | Multi-stage build: compiles valkey-search module into `valkey/valkey:8.0` |
+| `acl-users.conf` | ACL definitions for `admin`, `app`, `monitor` users; default user disabled |
+| `acl-configmap.yaml` | K8s ConfigMap wrapping the ACL file |
+| `namespace.yaml` | `valkey` namespace |
+| `helm-values.yaml` | Bitnami `valkey-cluster` Helm chart values covering all requirements |
+| `metrics-service.yaml` | Dedicated Prometheus scrape service on port 9121 |
+| `deploy.sh` | End-to-end deployment: kind cluster, image build, TLS certs, secrets, Helm install |
+| `test.sh` | Validation: cluster health, ACL enforcement, vector search, K8s resources, TLS |
+
+### Architecture Highlights
+
+- **Operator/Chart**: Bitnami `valkey-cluster` Helm chart (auto-detects and falls back to `bitnami/valkey` if needed)
+- **Topology**: 6 nodes (3 primary + 3 replica), cluster mode enabled
+- **Security**: 3 ACL users with graduated permissions, default user off, self-signed TLS (generated at deploy time with proper SANs)
+- **Module**: `valkey-search` compiled from source in a multi-stage Docker build
+- **HA**: PDB with `minAvailable: 4` (guarantees 2+ primaries), soft pod anti-affinity across zones
+- **Storage**: 1Gi PVCs per node, AOF enabled with `everysec` fsync
+- **Monitoring**: Bitnami valkey-exporter sidecar + dedicated metrics Service annotated for Prometheus
+
+### Usage
+
+```bash
+chmod +x deploy.sh test.sh
+./deploy.sh    # Creates kind cluster, builds image, deploys everything
+./test.sh      # Validates cluster, ACLs, vector search, K8s resources
+```

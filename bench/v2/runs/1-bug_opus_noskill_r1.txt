@@ -1,0 +1,7 @@
+Done. Here's a summary of what I found and fixed:
+
+**The Bug**: An injected function `clusterShouldDeferEpochBump()` in `src/cluster_legacy.c:2457-2477` permanently blocks the epoch collision resolution mechanism. After a failover, the promoted replica always has `configEpoch == currentEpoch`, so this function always returns "defer" and the collision is never resolved. Two masters claim the same slots indefinitely.
+
+**The Fix**: Removed `clusterShouldDeferEpochBump()` and its call at line 2484 in `clusterHandleConfigEpochCollision()`. The original collision resolution algorithm (smaller Node ID bumps its epoch) handles all cases correctly without deferral.
+
+**Verification**: After the fix, `reproduce.sh` shows the old primary (`valkey-1`) correctly steps down to **slave** after the partition heals, all 16384 slots are covered, and all nodes agree on the topology.

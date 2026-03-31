@@ -1,0 +1,24 @@
+Implementation complete. Here's what was built:
+
+**TaskQueue** - Producer that adds tasks via `XADD` with type, priority, payload, and timestamp fields. `addBatch()` adds 100 tasks sequentially.
+
+**Worker** - Consumer group reader with:
+- `ensureGroup()` - Creates the consumer group with `MKSTREAM`, ignores `BUSYGROUP` if it already exists
+- `start()` - Loops reading with `XREADGROUP GROUP ... BLOCK 2000` for at-least-once delivery
+- `processMessage()` - Simulates 50-200ms random work
+- `claimStale()` - Uses `XPENDING ... IDLE 30000` to find stale messages, then `XCLAIM` to reclaim them. Messages with `deliveryCount >= 3` are moved to the dead letter stream
+- `moveToDLQ()` - Writes original message data to `tasks:deadletter` via `XADD`, then `XACK`s the original
+- `stop()` - Sets `running = false` for graceful exit
+
+**3 concurrent workers** - Each gets its own `GlideClient` (blocking reads block the multiplexed connection, so separate clients are required per the GLIDE docs).
+
+**Dashboard** - Every 5 seconds shows stream length (`XLEN`), DLQ count, total processed, pending messages per consumer (`XPENDING` summary).
+
+**Graceful shutdown** - `SIGTERM`/`SIGINT` handlers stop all workers, wait for current processing to finish via `Promise.allSettled`, print final dashboard, close all clients.
+
+**`customCommand`** used for all stream operations to ensure exact control over wire format and avoid any API signature uncertainty between GLIDE versions.
+
+Test with:
+```bash
+docker compose up --build
+```

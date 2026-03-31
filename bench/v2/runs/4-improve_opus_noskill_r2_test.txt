@@ -1,0 +1,16 @@
+=== Task 4: Valkey Usage Review Validation ===
+  [PASS] Q1 Sessions: KEYS problem + EXPIRETIME/PERSIST [VALKEY]
+  [PASS] Q2 Cache: DEL -> UNLINK
+  [PASS] Q3 Hash field TTL: HEXPIRE/HPEXPIRE [VALKEY]
+  [PASS] Q4 Rate limit: identify memory waste
+  [FAIL] Q5 Lock: SET IFEQ or Lua for atomic release [VALKEY]
+  [PASS] Q6 Inventory: Hash or MGET instead of KEYS+GET
+  [PASS] Q7 Job queue: Streams over LIST
+  [FAIL] Q8 Conditional updates: SET IFEQ/IFGT [VALKEY]
+  [PASS] Q9 Search: valkey-search module
+  [PASS] Q10 Pub/Sub: Streams for persistence
+  [PASS] Q11 Monitoring: COMMANDLOG replaces SLOWLOG [VALKEY]
+  [PASS] Q12 Leaderboard: EXPIRE works on sorted sets
+
+Result: 10/12 passed
+SCORE=10/12

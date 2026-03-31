@@ -75,6 +75,9 @@ fi
 
 cd "$DIR"
 
+# Clean any leftover Docker state from previous runs
+docker compose down -v 2>/dev/null || true
+
 # Check 3: Does it build? (docker compose build)
 echo "  Building fixed Valkey..."
 build_ok=0
