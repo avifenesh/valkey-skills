@@ -1,0 +1,7 @@
+All done. Here's the summary:
+
+**The Bug:** In `src/cluster_legacy.c:5767`, inside `clusterHandleReplicaFailover()`, the line `server.cluster->currentEpoch++` was commented out. This is the epoch increment that must happen before a replica requests failover votes. Without it, the new primary gets the same `configEpoch` as the old primary, so when the old primary reconnects after a network partition, it sees no higher epoch and refuses to step down -- causing a split-brain with two masters claiming the same slots.
+
+**The Fix:** Uncommented `server.cluster->currentEpoch++` on line 5767. Also fixed two Dockerfile issues (ENTRYPOINT/CMD conflict and missing `libvalkeylua.so`) that prevented the containers from starting.
+
+**Verification:** After the fix, `reproduce.sh` shows the cluster correctly recovers from a network partition -- the old primary (valkey-1) steps down to replica, the promoted node (valkey-5) is the sole master for its slots at epoch 7, and `cluster_state:ok` with all 16384 slots covered.

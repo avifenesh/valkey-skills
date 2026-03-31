@@ -1,0 +1,13 @@
+=== Task 4: Code Improvement Validation ===
+  [PASS] KEYS replaced with SCAN
+  [PASS] DEL replaced with UNLINK
+  [PASS] Individual GETs replaced with MGET
+  [PASS] Sequential writes use batching
+  [PASS] Cache entries have TTL
+  [PASS] Session data has TTL
+  [PASS] Connection error handling
+  [PASS] SORT replaced with sorted set
+  [FAIL] Category count uses index/set instead of full scan
+
+Result: 8/9 passed
+SCORE=8/9

@@ -1,0 +1,36 @@
+All files are in place. Here's a summary of what was created:
+
+---
+
+## Deliverables
+
+### Files created
+
+| File | Purpose |
+|------|---------|
+| `kind-config.yaml` | kind cluster with 1 control-plane + 6 workers (needed for anti-affinity to spread 6 pods) |
+| `k8s/00-namespace.yaml` | `valkey` namespace |
+| `k8s/01-cert-issuer.yaml` | self-signed ClusterIssuer + CA Certificate + CA-backed Issuer |
+| `k8s/02-certificate.yaml` | TLS Certificate for the cluster (`*.valkey.svc.cluster.local`) |
+| `k8s/03-acl-secret.yaml` | Kubernetes Secret with passwords for admin / app / monitor |
+| `k8s/04-acl-configmap.yaml` | Reference ACL file + AOF extra config |
+| `k8s/05-valkey-cluster.yaml` | **Hyperspike operator CRD** (`hyperspike.io/v1alpha1/Valkey`) — 3 shards × 1 replica, valkey-bundle image, TLS, redis_exporter sidecar, AOF config, anti-affinity |
+| `k8s/06-pdb.yaml` | `PodDisruptionBudget` — `maxUnavailable: 1` ensures ≥2 primaries always available |
+| `k8s/07-acl-job.yaml` | Post-deploy Job: iterates all cluster nodes and applies `ACL SETUSER` for admin/app/monitor, disables `default` |
+| `k8s/08-metrics-service.yaml` | `ClusterIP` Service on port 9121 + `ServiceMonitor` CRD for Prometheus Operator |
+| `deploy.sh` | Full deployment: creates kind cluster → cert-manager → Hyperspike operator → all manifests → waits for readiness |
+| `test.sh` | 8-section validation: cluster health, app user writes, vector index + KNN search, ACL restriction enforcement, Prometheus metrics, AOF enabled, TLS, PDB |
+
+### Operator choice: Hyperspike `valkey-operator`
+
+- **Why not the official operator** (`valkey-io/valkey-operator`): explicitly "EARLY DEVELOPMENT — not ready for production", no published container images
+- **Why not Bitnami**: requires commercial subscription since August 2025
+- **Hyperspike v0.0.61**: published images (cosign-verified), TLS via cert-manager, bundled redis_exporter, cluster mode — most production-capable community operator available
+
+### Image: `valkey/valkey-bundle`
+
+Includes `valkey-search 1.2.0` (GA, March 2026) pre-loaded — no manual `MODULE LOAD` needed.
+
+### ACL strategy
+
+The operator manages `requirepass` (admin password). A post-deploy Job then connects via `CLUSTER NODES` discovery and runs `ACL SETUSER` on every node to create the three users and disable `default`. This is operator-agnostic and works regardless of whether the operator natively supports ACL CRD fields.

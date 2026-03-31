@@ -1,0 +1,15 @@
+The implementation is complete. Here's what was built:
+
+**TaskQueue** — uses `xadd` to write tasks with `taskId`, `priority`, `payload`, `createdAt` fields.
+
+**Worker** (×3, each with a dedicated `GlideClient`):
+- `start()` — creates the consumer group (`BUSYGROUP` error ignored on duplicates), then loops: `claimStale()` → blocking `xreadgroup` (2s timeout) → `processMessage()`
+- `processMessage()` — simulates 50–200ms work, then `xack`s; increments `processedCount` and triggers auto-shutdown at 100
+- `claimStale()` — `xautoclaim` with `CLAIM_TIMEOUT_MS=30000`; tracks retry counts in `retry:<id>` keys; after `MAX_CLAIM_RETRIES=3` moves to DLQ
+- `moveToDLQ()` — `xadd` to `tasks:deadletter`, then `xack` original
+
+**Dashboard** — `xlen` + `xpending` summary every 5s.
+
+**Graceful shutdown** — SIGTERM/SIGINT and auto-completion both call `doShutdown()`, which stops workers, waits for in-flight tasks, prints final dashboard, closes all clients.
+
+Each worker has a **dedicated client** because blocking `xreadgroup` would otherwise monopolize the multiplexed connection.

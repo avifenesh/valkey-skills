@@ -16,13 +16,13 @@ mkdir -p "$RUNS_DIR" "$TMP"
 TASK_DIRS=("1-bug-investigation" "2-glide-queue" "3-ops-cluster" "4-code-improvement")
 TASK_LABELS=("1-bug" "2-queue" "3-ops" "4-improve")
 TASK_TESTS=("test-bug.sh" "test-queue.sh" "test-ops.sh" "test-improvement.sh")
-TASK_SKILLS=("valkey-dev" "valkey-glide/nodejs" "valkey-ops:valkey-ecosystem" "valkey:valkey-glide/java")
+TASK_SKILLS=("valkey-dev" "valkey-glide/nodejs" "valkey-ops:valkey-ecosystem" "valkey")
 
 TASK_PROMPTS=(
   'This Valkey cluster has a split-brain bug after network partition recovery. The full Valkey 9.0.3 source code is in src/ and deps/ with a Makefile. The bug is somewhere in the C source. Run reproduce.sh to see the symptoms. Do NOT clone or download any code - everything you need is here. Find the bug in the source, fix it, rebuild with docker compose build, and verify the fix by running reproduce.sh again. The cluster must work correctly after your fix. Write your analysis to ANALYSIS.md including: the exact file, function, and line of the bug, what the bug is, and why your fix is correct.'
   'Implement the message queue in queue.js using Valkey Streams and GLIDE Node.js. Read README.md for requirements. Must use @valkey/valkey-glide - not ioredis or node-redis. The app runs in Docker (see docker-compose.yml). Implement TaskQueue, Worker with consumer groups, dead letter handling, 3 concurrent workers, dashboard, and graceful shutdown. Test with: docker compose up --build'
   'Create all Kubernetes manifests and configuration files per requirements.md. Use the Valkey ecosystem Kubernetes operator or Bitnami Helm chart - NOT hand-crafted StatefulSets. Use kind for the local cluster. Include a deploy.sh script and a test.sh that validates the deployment works.'
-  'Review ProductCache.java and improve it. Focus on Valkey-specific best practices, performance patterns, and production readiness. Fix all anti-patterns you find. The improved code must compile. Read README.md for setup.'
+  'Read questions.md and provide your assessment of each Valkey usage scenario. Write your answers to ANSWERS.md. For each scenario state if the approach is correct or problematic, what the specific issue is, and the concrete improvement with exact Valkey commands or data structures.'
 )
 
 install_skills() {

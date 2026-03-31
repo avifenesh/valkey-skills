@@ -1,0 +1,23 @@
+The implementation is complete. Here's what it does:
+
+**TaskQueue** (lines 66-81): Produces tasks to the stream using `xadd` with field-value pairs.
+
+**Worker** (lines 87-245): 
+- Creates consumer group via `customCommand` (XGROUP CREATE with MKSTREAM)
+- Reads messages via `xreadgroup` with blocking (2s timeout)
+- Acknowledges each message after processing (50-200ms simulated work)
+- `claimStale()` uses `customCommand` for XPENDING with IDLE filter, then `xclaim` to reclaim messages idle >30s. Messages with 3+ delivery attempts are moved to the dead letter stream
+- `stop()` sets `running = false` for graceful loop exit
+
+**Dashboard** (lines 252-287): Shows stream length, pending count, DLQ size, per-worker processed counts every 5 seconds.
+
+**Main** (lines 293-376):
+- Connects with retry (up to 10 attempts)
+- Adds 100 tasks with rotating high/medium/low priorities
+- Starts 3 concurrent workers
+- Auto-shuts down when all 100 tasks are processed
+- SIGTERM/SIGINT handlers stop workers gracefully
+
+The helpers (`fieldsToObject`, `iterEntries`, `streamFromResult`) handle multiple possible GLIDE return formats (nested objects, Maps, arrays) for robustness.
+
+Test with: `docker compose up --build`

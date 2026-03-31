@@ -1,0 +1,11 @@
+The implementation is complete. Key design decisions:
+
+- **`TaskQueue`**: `xadd` per task, batched with `Promise.all`
+- **`Worker`**: each gets its own `GlideClient` for blocking `xreadgroup` (GLIDE's multiplexed connection shouldn't block on stream reads)
+- **Consumer group**: created with `mkStream: true` once in `main()`, BUSYGROUP error ignored for re-runs
+- **Dead letter**: `xautoclaim` on every loop iteration reclaims messages idle > 30s; after 3 retries, `xadd` to `tasks:deadletter` + `xack` original
+- **`_retries` field**: tracks retry count directly in the message fields so it survives reclaim cycles
+- **Dashboard**: `xlen`, `xpending` (summary), `xlen` on DLQ every 5s
+- **Graceful shutdown**: `stop()` sets `running=false`, workers exit after blocking read times out (≤2s), then clients are closed
+- **Both GlideRecord shapes**: `xreadgroup` response handled for both plain-object and array-of-`{key,value}` return formats across GLIDE versions
+- **Natural exit**: completion interval checks `totalProcessed >= 100` every 500ms and triggers shutdown

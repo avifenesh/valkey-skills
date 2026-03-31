@@ -1,0 +1,13 @@
+=== Task 3: Ops Cluster Validation ===
+  [FAIL] YAML valid (2 files, 2 errors)
+  [FAIL] StatefulSet defined
+  [PASS] valkey-search module loaded
+  [PASS] ACL users defined
+  [PASS] TLS configured
+  [PASS] Probes use valkey-cli (not redis-cli)
+  [FAIL] PodDisruptionBudget defined
+  [FAIL] Persistent storage configured
+  [PASS] Prometheus metrics exporter
+
+Result: 5/9 passed
+SCORE=5/9
