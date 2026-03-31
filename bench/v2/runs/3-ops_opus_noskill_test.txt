@@ -1,13 +1,24 @@
 === Task 3: Ops Cluster Validation ===
-  [FAIL] YAML valid (2 files, 2 errors)
-  [FAIL] StatefulSet defined
-  [PASS] valkey-search module loaded
+  [PASS] YAML files present (2)
+  [PASS] valkey-search module referenced
   [PASS] ACL users defined
-  [PASS] TLS configured
+  Deploying to kind (this may take a few minutes)...
+  [PASS] kind cluster created
+Kubernetes control plane is running at https://127.0.0.1:54501
+CoreDNS is running at https://127.0.0.1:54501/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+  Running /tmp/bench-v2/3-ops_opus_noskill/deploy.sh...
+[0;32m[DEPLOY][0m Starting Valkey production cluster deployment...
+[0;31m[ERROR][0m Missing prerequisites: helm
+[0;31m[ERROR][0m Install them and re-run this script.
+  Waiting for pods (120s max)...
+  [FAIL] Valkey pods running (0)
+  [FAIL] At least 3 pods (primaries)
+  [FAIL] Can PING Valkey from pod
+  [FAIL] Cluster mode enabled
   [PASS] Probes use valkey-cli (not redis-cli)
-  [FAIL] PodDisruptionBudget defined
-  [FAIL] Persistent storage configured
-  [PASS] Prometheus metrics exporter
+  Cleaning up kind cluster...
 
 Result: 5/9 passed
 SCORE=5/9
