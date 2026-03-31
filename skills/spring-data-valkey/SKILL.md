@@ -66,8 +66,8 @@ This starter includes:
 Spring Data Valkey auto-detects the driver on the classpath. If multiple drivers are present, configure the preferred one explicitly via `spring.data.valkey.client-type`:
 
 ```properties
-spring.data.valkey.client-type=valkey-glide
-# Options: valkey-glide, lettuce, jedis
+spring.data.valkey.client-type=valkeyglide
+# Options: valkeyglide, lettuce, jedis
 ```
 
 ---
@@ -105,13 +105,20 @@ spring.data.valkey.ssl.enabled=true
 Spring Data Valkey 1.0 supports IAM authentication for GLIDE connections to AWS ElastiCache and MemoryDB:
 
 ```properties
-spring.data.valkey.valkey-glide.iam-auth.enabled=true
-spring.data.valkey.valkey-glide.iam-auth.user-id=my-iam-user
-spring.data.valkey.valkey-glide.iam-auth.region=us-east-1
+spring.data.valkey.host=your-cluster-endpoint.cache.amazonaws.com
+spring.data.valkey.username=your-iam-user-id
 spring.data.valkey.ssl.enabled=true
+spring.data.valkey.client-type=valkeyglide
+
+# All three IAM properties are required
+spring.data.valkey.valkey-glide.iam-authentication.cluster-name=your-cluster-name
+spring.data.valkey.valkey-glide.iam-authentication.service=ELASTICACHE
+spring.data.valkey.valkey-glide.iam-authentication.region=us-east-1
+# Optional: token refresh interval (default 300s)
+# spring.data.valkey.valkey-glide.iam-authentication.refresh-interval-seconds=300
 ```
 
-IAM auth requires TLS. The driver handles token refresh automatically - no credential rotation code needed in the application.
+IAM auth requires TLS and the GLIDE driver. AWS credentials must be available in the environment (environment variables, IAM role, or `~/.aws/credentials`). The driver handles token refresh automatically.
 
 ### OpenTelemetry via Spring Properties
 
@@ -294,7 +301,7 @@ Key migration steps:
 4. Update property prefixes from `spring.data.redis` to `spring.data.valkey`
 5. Optionally add GLIDE driver (or continue with Lettuce/Jedis via `client-type`)
 
-You can continue using Lettuce or Jedis as the driver if preferred - set `spring.data.valkey.client-type=lettuce` or `spring.data.valkey.client-type=jedis`.
+You can continue using Lettuce or Jedis as the driver - set `spring.data.valkey.client-type=lettuce` or `spring.data.valkey.client-type=jedis`.
 
 ### Driver Comparison Test Suite
 

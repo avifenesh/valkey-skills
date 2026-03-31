@@ -197,8 +197,18 @@ const results = await queue.search(query, opts);
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `concurrency` | number | 1 | Parallel job limit |
-| `lockDuration` | number | 30000 | Lock timeout (ms) |
+| `lockDuration` | number | 30000 | Lock timeout (ms) - overridable per job |
 | `stalledInterval` | number | 30000 | Recovery check frequency (ms) |
+
+## Connection Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `addresses` | array | required | `[{ host, port }]` |
+| `useTLS` | boolean | false | Enable TLS |
+| `credentials` | object | - | `{ password }` or `{ username, password }` |
+| `clusterMode` | boolean | false | Connect to cluster |
+| `requestTimeout` | number | 500 | Command timeout (ms) |
 
 ## Scheduling and Testing
 
