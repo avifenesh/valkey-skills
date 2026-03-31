@@ -20,11 +20,12 @@ Rust-based Valkey module implementing scalable bloom filters using the `bloomfil
 - BloomObject, BloomFilter, scaling, tightening ratio, fp_rate, memory layout, SipHash, seed modes -> Architecture
 - RDB persistence, AOF rewrite, BF.LOAD encoding, bincode serialization, defrag callbacks -> Architecture
 - bloom-memory-usage-limit, bloom-capacity, bloom-expansion, bloom-defrag-enabled, module configs -> Architecture
-- Metrics, INFO bf, bloom_num_objects, bloom_total_memory_bytes -> Architecture
+- Module initialization, valid_server_version, minimum version check, HANDLE_IO_ERRORS -> Architecture
+- Metrics, INFO bf, bloom_num_objects, bloom_total_memory_bytes, Drop impls -> Architecture
 - Cargo build, feature flags, clippy, enable-system-alloc, unit tests, rstest -> Build and Test
 - Python integration tests, pytest, valkey-test-framework, conftest, ASAN, CI pipeline -> Build and Test
 - Code structure, adding commands, command_handler.rs, data_type.rs, utils.rs -> Contributing
-- Replication strategy, ReplicateArgs, BF.INSERT SEED, replicate_verbatim -> Contributing
+- Replication strategy, ReplicateArgs, BF.INSERT SEED, TIGHTENING, VALIDATESCALETO, NOCREATE, replicate_verbatim -> Contributing
 - Keyspace notifications, ACL category, BloomError, valkey_8_0 feature, 8.0 vs 8.1 compat -> Contributing
 
 ## Reference

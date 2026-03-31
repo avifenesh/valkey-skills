@@ -25,6 +25,7 @@ CMake with Ninja generator (default). C++20 standard. Produces `libsearch.so` (L
 ./build.sh --clean            # Clean build artifacts
 ./build.sh --verbose          # Verbose output
 ./build.sh --jobs=4           # Limit parallel jobs
+./build.sh --no-build         # Skip build (for test-only runs)
 ```
 
 Build output goes to `.build-release/` or `.build-debug/`.
@@ -34,7 +35,7 @@ Build output goes to `.build-release/` or `.build-debug/`.
 | Option | Default | Description |
 |--------|---------|-------------|
 | `BUILD_UNIT_TESTS` | ON | Build GTest unit tests |
-| `WITH_SUBMODULES_SYSTEM` | OFF | Use system gRPC/Protobuf/Abseil instead of submodules |
+| `WITH_SUBMODULES_SYSTEM` | OFF | Use system gRPC/Protobuf/Abseil instead of submodules (CLI: `--use-system-modules`) |
 | `SAN_BUILD` | "" | Sanitizer: `address` or `thread` |
 
 ### Submodules

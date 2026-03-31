@@ -4,6 +4,19 @@ Use when understanding valkey-search internals, index types, shard design, clust
 
 Source: `src/`, `src/indexes/`, `src/coordinator/`, `src/query/`, `vmsdk/`
 
+## Contents
+
+- Module Overview (line 20)
+- Core Data Model (line 26)
+- Index Types (line 48)
+- String Interning (`src/utils/string_interning.h`) (line 106)
+- Vector Externalization (`src/vector_externalizer.h`) (line 110)
+- Metrics (`src/metrics.h`) (line 114)
+- Cluster Coordination (line 118)
+- Thread Model (line 156)
+- RDB Persistence (`src/rdb_serialization.h`) (line 168)
+- Key Dependencies (line 172)
+
 ## Module Overview
 
 valkey-search is a C++20 Valkey module (`libsearch.so`) built with CMake/Ninja. It loads via `ValkeyModule_OnLoad` in `src/module_loader.cc`, which initializes `KeyspaceEventManager`, `ValkeySearch` singleton, thread pools (reader, writer, utility), and optionally a gRPC coordinator for cluster mode.
