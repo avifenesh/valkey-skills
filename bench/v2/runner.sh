@@ -83,13 +83,16 @@ run_task() {
         install_skills "$run_dir" "$skill_spec"
       fi
 
-      # Run agent
-      echo "[TASK $task_label] >>> $label (model: $model_short, skills: $skills)"
+      # Run agent (Task 1 gets 50 turns, others get 30)
+      local max_turns=30
+      [ "$task_idx" -eq 0 ] && max_turns=50
+
+      echo "[TASK $task_label] >>> $label (model: $model_short, skills: $skills, max_turns: $max_turns)"
       cd "$run_dir"
       claude -p "$prompt" \
         --model "$model" \
         --output-format json \
-        --max-turns 30 \
+        --max-turns "$max_turns" \
         --dangerously-skip-permissions \
         > "$out_json" 2>/dev/null || true
       cd "$BENCH_DIR"

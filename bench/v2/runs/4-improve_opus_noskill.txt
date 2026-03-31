@@ -1,13 +1,14 @@
-Here's a summary of all 9 fixes:
+Done. ANSWERS.md has been written with assessments for all 10 scenarios. Here's a summary:
 
-| # | Anti-pattern | Fix | Why |
-|---|---|---|---|
-| 1 | No connection error handling or timeout config | Added `requestTimeout(500)`, bounded `.get(10, SECONDS)`, catch `TimeoutException`/`ExecutionException` | Prevents indefinite hangs on startup; surfaces connection failures clearly |
-| 2 | `DEL` (blocking delete) | `UNLINK` | Frees memory asynchronously in a background thread instead of blocking the server |
-| 3 | N individual `GET` calls | Single `MGET` call | 1 round-trip instead of N; massive latency reduction for batch reads |
-| 4 | N individual `SET` calls | Single `MSET` call | 1 atomic round-trip instead of N; also guarantees all-or-nothing write |
-| 5 | `KEYS product:*` | `SCAN` with cursor iteration | `KEYS` blocks the server for the entire keyspace scan; `SCAN` yields incrementally without blocking |
-| 6 | `SET` without TTL on cache entries | `SET` with `Seconds(3600)` via `SetOptions` | Cache entries without TTL cause unbounded memory growth |
-| 7 | `SET` without TTL on sessions | `SET` with `Seconds(1800)` via `SetOptions` | Stale sessions leak memory; 30-min TTL auto-expires them |
-| 8 | `SORT` on list (O(N+M·log M), blocks server) | `ZRANGE ... BYSCORE REV LIMIT` (O(log N + M)) | Uses sorted set's index natively; no temp sort needed; non-blocking for large datasets |
-| 9 | `KEYS` + individual `GET` per key | `SCAN` + batched `MGET` per scan page | Eliminates both the blocking KEYS call and the N+1 query pattern |
+| # | Scenario | Verdict | Core Issue |
+|---|----------|---------|------------|
+| 1 | Session Management | Problematic | `KEYS` in production blocks server; use `EXPIRE`/`TTL` instead of cron |
+| 2 | Product Catalog Cache | Mostly correct | Use `UNLINK` instead of `DEL`; batch keys; consider Hash per product |
+| 3 | Real-time Inventory | Problematic | `KEYS` on every page load; use Hash per SKU (`HSET`/`HVALS`) |
+| 4 | Rate Limiting | Partially correct | Non-atomic operations cause races; wrap in Lua; use timestamps not UUIDs |
+| 5 | Leaderboard | Correct | Dual sorted sets is valid; add hash tags for atomic Lua updates |
+| 6 | Job Queue | Problematic | `BRPOPLPUSH` is deprecated; switch to Streams with `XREADGROUP`/`XACK` |
+| 7 | Distributed Lock | Problematic | GET-check-DEL race condition; use atomic Lua script for release |
+| 8 | Analytics Counters | Problematic | 500K individual keys + `KEYS` scan; use Hashes grouped by event+date |
+| 9 | Full-text Search | Problematic | Loading all keys for app-side matching; use Search module or inverted index |
+| 10 | Pub/Sub Notifications | Problematic | Pub/Sub is fire-and-forget; switch to Streams for durable messaging |

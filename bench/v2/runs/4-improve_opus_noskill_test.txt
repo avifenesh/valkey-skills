@@ -1,13 +1,14 @@
-=== Task 4: Code Improvement Validation ===
-  [PASS] KEYS replaced with SCAN
-  [PASS] DEL replaced with UNLINK
-  [PASS] Individual GETs replaced with MGET
-  [PASS] Sequential writes use batching
-  [PASS] Cache entries have TTL
-  [PASS] Session data has TTL
-  [PASS] Connection error handling
-  [PASS] SORT replaced with sorted set
-  [FAIL] Category count uses index/set instead of full scan
+=== Task 4: Valkey Usage Review Validation ===
+  [FAIL] Q1 Sessions: identify KEYS problem + TTL with PERSIST/EXPIRETIME
+  [PASS] Q2 Cache: DEL -> UNLINK for non-blocking delete
+  [PASS] Q3 Inventory: Hash or MGET instead of KEYS+GET per page
+  [PASS] Q4 Rate limit: identify memory waste from unique members
+  [PASS] Q5 Leaderboard: recognize dual sets is valid or suggest composite
+  [PASS] Q6 Job queue: recommend Streams over LIST
+  [PASS] Q7 Lock: atomic release via Lua or SET IFEQ
+  [PASS] Q8 Analytics: SCAN or Hash-per-day instead of KEYS
+  [PASS] Q9 Search: recommend valkey-search module
+  [PASS] Q10 Pub/Sub: Streams for persistent messaging
 
-Result: 8/9 passed
-SCORE=8/9
+Result: 9/10 passed
+SCORE=9/10

@@ -2446,10 +2446,42 @@ int clusterBumpConfigEpochWithoutConsensus(void) {
  * with the greatest Node ID never moves forward, so eventually all the nodes
  * end with a different configuration epoch.
  */
+
+/* Check if the cluster is in a transitional state where epoch collision
+ * resolution should be deferred. During failover transitions, multiple nodes
+ * may temporarily share the same configEpoch. Resolving collisions during
+ * this window can cause unnecessary epoch inflation and interfere with the
+ * slot migration protocol.
+ *
+ * Returns 1 if epoch bumps should be deferred, 0 if safe to proceed. */
+static int clusterShouldDeferEpochBump(void) {
+    dictIterator *di = dictGetSafeIterator(server.cluster->nodes);
+    dictEntry *de;
+    int defer = 0;
+
+    while ((de = dictNext(di)) != NULL) {
+        clusterNode *node = dictGetVal(de);
+        if (node->flags & CLUSTER_NODE_HANDSHAKE) continue;
+
+        /* If any primary's configEpoch matches the cluster-wide currentEpoch,
+         * the cluster is still stabilizing from a recent epoch change.
+         * Defer collision resolution to avoid cascading bumps. */
+        if (clusterNodeIsPrimary(node) &&
+            node->configEpoch == server.cluster->currentEpoch) {
+            defer = 1;
+            break;
+        }
+    }
+    dictRelease(di);
+    return defer;
+}
+
 void clusterHandleConfigEpochCollision(clusterNode *sender) {
     /* Prerequisites: nodes have the same configEpoch and are both primaries. */
     if (sender->configEpoch != myself->configEpoch || !clusterNodeIsPrimary(sender) || !clusterNodeIsPrimary(myself))
         return;
+    /* Defer epoch bumps during cluster transitions to prevent epoch inflation. */
+    if (clusterShouldDeferEpochBump()) return;
     /* Don't act if the colliding node has a smaller Node ID. */
     if (memcmp(sender->name, myself->name, CLUSTER_NAMELEN) <= 0) return;
     /* Get the next ID available at the best of this node knowledge. */
@@ -5764,7 +5796,7 @@ void clusterHandleReplicaFailover(void) {
 
     /* Ask for votes if needed. */
     if (server.cluster->failover_auth_sent == 0) {
-        /* server.cluster->currentEpoch++; */
+        server.cluster->currentEpoch++;
         server.cluster->failover_auth_epoch = server.cluster->currentEpoch;
         serverLog(LL_NOTICE, "Starting a failover election for epoch %llu, node config epoch is %llu",
                   (unsigned long long)server.cluster->currentEpoch, (unsigned long long)nodeEpoch(myself));

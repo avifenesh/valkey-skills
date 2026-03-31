@@ -1,55 +1,14 @@
-Here's a summary of every change and why:
+Written `ANSWERS.md` with assessments for all 10 scenarios. Summary of findings:
 
----
-
-### Fix 1 — Connection configuration
-**What changed:** Added `requestTimeout(5000)`, `clientName("product-cache")`, and an exponential-backoff `reconnectStrategy`. Made `client` `final` and the class `AutoCloseable`.
-**Why:** The original silently failed on network blips with no retry. Without `requestTimeout`, a hung server stalls the thread forever. `clientName` lets you identify this client in `CLIENT LIST` output. `implements AutoCloseable` lets callers use try-with-resources so `close()` is always called.
-
----
-
-### Fix 2 — `DEL` → `UNLINK`
-**What changed:** `client.del()` replaced with `client.unlink()`.
-**Why:** `DEL` is synchronous — the server holds its event loop while reclaiming memory for each key. `UNLINK` enqueues the reclaim to a background thread and returns immediately. For large values this is a significant latency difference.
-
----
-
-### Fix 3 — N sequential `GET`s → `MGET`
-**What changed:** The `for` loop over `client.get()` replaced with a single `client.mget(keys)`.
-**Why:** Each `.get()` is a network round trip. 20 products = 20 round trips. `MGET` sends all keys in one request and gets one response regardless of list size.
-
----
-
-### Fix 4 — N sequential `SET`s → `MSET`
-**What changed:** The `for` loop over `client.set()` replaced with `client.mset(prefixedMap)`.
-**Why:** Same round-trip argument as Fix 3. 100 products = 100 round trips with the original. `MSET` is one round trip.
-
----
-
-### Fix 5 — `KEYS` → cursor-based `SCAN`
-**What changed:** `KEYS product:*` replaced with a `SCAN` loop using `MATCH` + `COUNT 200`.
-**Why:** `KEYS` is O(N) and **blocks the entire server** until it finishes scanning every key. In production with millions of keys, this causes visible latency spikes for all other clients. `SCAN` iterates incrementally — each call processes a small slice (~200 keys) and returns a cursor; other clients are served between calls.
-
----
-
-### Fix 6 — `cacheProduct` TTL
-**What changed:** Added `SetOptions.builder().expiry(Expiry.Seconds(3600L))`.
-**Why:** A cache entry with no TTL is just a regular key that accumulates indefinitely. Without expiry, the cache grows until the server hits its memory limit and starts evicting or refusing writes.
-
----
-
-### Fix 7 — `saveSession` TTL
-**What changed:** Added `SetOptions.builder().expiry(Expiry.Seconds(1800L))`.
-**Why:** Abandoned sessions (user closed browser, never logged out) would leak forever. A 30-minute TTL means idle sessions are reclaimed automatically.
-
----
-
-### Fix 8 — `SORT` on list → `ZREVRANGE` on sorted set
-**What changed:** Replaced `SORT leaderboard DESC LIMIT 0 100` with `ZREVRANGE leaderboard 0 99`.
-**Why:** `SORT` on a list is O(N log N) and holds the server while it sorts. A Valkey sorted set (`ZSET`) stores members already ranked by score; `ZREVRANGE` retrieves the top-N in O(log N + M) without recomputing order. The data model change (`zadd` for writes) is the prerequisite.
-
----
-
-### Fix 9 — Full scan + N `GET`s → secondary index + `SCARD`
-**What changed:** Added `saveProductWithCategory` (atomic `Batch(true)` to write product + update a per-category `Set`) and rewrote `countProductsByCategory` to call `client.scard("category:{name}")`.
-**Why:** The original fetched every product key via `KEYS` (Fix 5's problem), then issued a `GET` per key, then scanned the JSON string in Java — O(N) round trips and O(N) string scans. With a secondary index, the count is a single `SCARD` call (O(1)). The `Batch(true)` (MULTI/EXEC) ensures the product write and index update are atomic so the count is never stale.
+| # | Scenario | Verdict | Core Issue |
+|---|----------|---------|------------|
+| 1 | Session Management | Problematic | `KEYS` blocks server; use `EXPIRE` + `SCAN` |
+| 2 | Product Catalog Cache | Partially problematic | Loop `DEL` = N round trips; batch with `UNLINK` + hash tags |
+| 3 | Real-time Inventory | Problematic | `KEYS` on every page load; replace with `HSET inventory:{sku} warehouse count` |
+| 4 | Rate Limiting | Correct but fixable | Non-atomic 3-op sequence + memory waste; use Lua script |
+| 5 | Leaderboard | Mostly correct | Dual-write not atomic; wrap in Lua with hash-tagged keys |
+| 6 | Job Queue | Problematic | `BRPOPLPUSH` deprecated; ordering/dedup broken; migrate to Streams |
+| 7 | Distributed Lock | Problematic | `GET→check→DEL` race condition; use Lua `if GET==owner then DEL` |
+| 8 | Analytics Counters | Problematic | `KEYS` with 500K keys; restructure as `HINCRBY counters:{date} event:product 1` |
+| 9 | Full-text Search | Completely wrong | Full scan + app-side matching; use Valkey Search module or dedicated search engine |
+| 10 | Pub/Sub Notifications | Wrong tool | Pub/Sub is fire-and-forget; migrate to Streams with consumer groups |

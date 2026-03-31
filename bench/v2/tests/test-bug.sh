@@ -1,12 +1,12 @@
 #!/bin/bash
 # Validates Task 1 (bug investigation) response
-# Checks both analysis quality AND presence of a concrete fix
+# Checks analysis quality, concrete fix, and actual source modification
 # Input: $1 = directory containing agent's response
 
 DIR="$1"
 PASS=0
 FAIL=0
-TOTAL=8
+TOTAL=10
 
 check() {
   local desc="$1"
@@ -22,65 +22,91 @@ check() {
 
 echo "=== Task 1: Bug Investigation Validation ==="
 
-# Only search the agent's analysis output - NOT source code files
+# Get analysis from ANALYSIS.md only
 RESPONSE=""
 if [ -f "$DIR/ANALYSIS.md" ]; then
   RESPONSE=$(cat "$DIR/ANALYSIS.md")
 elif [ -f "$DIR/analysis.md" ]; then
   RESPONSE=$(cat "$DIR/analysis.md")
 else
-  RESPONSE=$(find "$DIR" -maxdepth 1 \( -name "*.md" -o -name "*.txt" \) ! -name "symptoms.md" ! -name "README.md" -exec cat {} + 2>/dev/null)
+  RESPONSE=$(find "$DIR" -maxdepth 1 \( -name "*.md" -o -name "*.txt" \) ! -name "symptoms.md" ! -name "README.md" ! -name "CLAUDE.md" ! -name "questions.md" -exec cat {} + 2>/dev/null)
 fi
 
-if [ -z "$RESPONSE" ]; then
-  echo "  [ERROR] No analysis output found (expected ANALYSIS.md)"
-  echo "Result: 0/$TOTAL passed"
-  echo "SCORE=0/$TOTAL"
-  exit 0
-fi
-
-# Also check for .patch or .diff files
+# Also check patch files
 PATCH_FILES=$(find "$DIR" -maxdepth 1 \( -name "*.patch" -o -name "*.diff" \) -exec cat {} + 2>/dev/null)
 ALL="$RESPONSE $PATCH_FILES"
 
+# --- Source code fix checks ---
+
+# Check 1: Did the agent actually modify cluster_legacy.c?
+SRC="$DIR/src/cluster_legacy.c"
+if [ -f "$SRC" ]; then
+  # The bug is clusterShouldDeferEpochBump() always returning 1
+  # Fix: remove/disable the deferral function or fix the logic
+  has_defer=$(grep -c "clusterShouldDeferEpochBump" "$SRC" || true)
+  defer_called=$(grep "if (clusterShouldDeferEpochBump())" "$SRC" | grep -c "return" || true)
+
+  # Fixed if: the call is removed, commented out, or the function is fixed
+  if [ "$defer_called" -eq 0 ]; then
+    check "Source fixed: deferral call removed or disabled" 1
+  else
+    # Check if the function logic was fixed (no longer always returns 1)
+    always_true=$(grep -A20 "clusterShouldDeferEpochBump" "$SRC" | grep -c "configEpoch == server.cluster->currentEpoch" || true)
+    if [ "$always_true" -eq 0 ]; then
+      check "Source fixed: deferral logic corrected" 1
+    else
+      check "Source fixed: buggy deferral still active" 0
+    fi
+  fi
+else
+  check "Source file exists" 0
+fi
+
+# Check 2: Does the fix preserve the epoch collision handler?
+if [ -f "$SRC" ]; then
+  has_collision_handler=$(grep -c "void clusterHandleConfigEpochCollision" "$SRC" || true)
+  has_epoch_bump=$(grep -A20 "clusterHandleConfigEpochCollision" "$SRC" | grep -c "currentEpoch++" || true)
+  check "Epoch collision handler preserved with bump" "$([ "$has_collision_handler" -gt 0 ] && [ "$has_epoch_bump" -gt 0 ] && echo 1 || echo 0)"
+else
+  check "Epoch collision handler preserved" 0
+fi
+
 # --- Analysis checks ---
 
-# Check 1: Identifies cluster_legacy.c
+if [ -z "$RESPONSE" ]; then
+  echo "  [WARN] No ANALYSIS.md found - checking source fix only"
+  for i in $(seq 3 $TOTAL); do
+    FAIL=$((FAIL + 1))
+  done
+  echo ""
+  echo "Result: $PASS/$TOTAL passed"
+  echo "SCORE=$PASS/$TOTAL"
+  exit 0
+fi
+
+# Check 3: Identifies clusterHandleConfigEpochCollision as the affected function
+found_func=$(echo "$ALL" | grep -ci "clusterHandleConfigEpochCollision\|HandleConfigEpochCollision\|epoch.*collision" || true)
+check "Identifies epoch collision handler" "$([ "$found_func" -gt 0 ] && echo 1 || echo 0)"
+
+# Check 4: Identifies clusterShouldDeferEpochBump as the buggy function
+found_defer=$(echo "$ALL" | grep -ci "clusterShouldDeferEpochBump\|ShouldDeferEpochBump\|defer.*epoch.*bump" || true)
+check "Identifies deferral function as the bug" "$([ "$found_defer" -gt 0 ] && echo 1 || echo 0)"
+
+# Check 5: Explains WHY the deferral is always true
+found_why=$(echo "$ALL" | grep -ci "always.*true\|always.*return.*1\|always.*defer\|currentEpoch.*always.*match\|never.*resolve\|configEpoch.*==.*currentEpoch.*always" || true)
+check "Explains why deferral always triggers" "$([ "$found_why" -gt 0 ] && echo 1 || echo 0)"
+
+# Check 6: References the relationship between currentEpoch and configEpoch
+found_epoch=$(echo "$ALL" | grep -ci "currentEpoch.*max.*configEpoch\|currentEpoch.*highest\|at least one.*match\|by definition" || true)
+check "Explains currentEpoch/configEpoch relationship" "$([ "$found_epoch" -gt 0 ] && echo 1 || echo 0)"
+
+# Check 7: Explains the split-brain mechanism
+found_mechanism=$(echo "$ALL" | grep -ci "collision.*never.*resolved\|same.*configEpoch.*forever\|both.*claim.*slot\|neither.*bump\|split.brain" || true)
+check "Explains split-brain from unresolved collision" "$([ "$found_mechanism" -gt 0 ] && echo 1 || echo 0)"
+
+# Check 8: References cluster_legacy.c as the file
 found_file=$(echo "$ALL" | grep -ci "cluster_legacy" || true)
 check "Identifies cluster_legacy.c" "$([ "$found_file" -gt 0 ] && echo 1 || echo 0)"
-
-# Check 2: References failover auth mechanism
-found_failover=$(echo "$ALL" | grep -ci "failover_auth_epoch\|failover_auth_sent\|clusterHandleReplicaFailover" || true)
-check "References failover auth mechanism" "$([ "$found_failover" -gt 0 ] && echo 1 || echo 0)"
-
-# Check 3: References currentEpoch
-found_epoch=$(echo "$ALL" | grep -ci "currentEpoch" || true)
-check "References currentEpoch" "$([ "$found_epoch" -gt 0 ] && echo 1 || echo 0)"
-
-# Check 4: Explains epoch must increment
-found_mechanism=$(echo "$ALL" | grep -ci "increment.*epoch\|epoch.*increment\|epoch.*advance\|bump.*epoch\|epoch.*bump" || true)
-check "Explains epoch must increment during failover" "$([ "$found_mechanism" -gt 0 ] && echo 1 || echo 0)"
-
-# Check 5: References vote/auth request function
-found_vote=$(echo "$ALL" | grep -ci "clusterRequestFailoverAuth\|RequestFailoverAuth\|failover.*auth.*request\|request.*vote" || true)
-check "References vote/auth request function" "$([ "$found_vote" -gt 0 ] && echo 1 || echo 0)"
-
-# --- Fix checks ---
-
-# Check 6: Contains a concrete code fix (diff, sed, or actual C code)
-has_diff=$(echo "$ALL" | grep -ci "^diff\|^---.*cluster_legacy\|^+++.*cluster_legacy\|@@.*@@" || true)
-has_sed=$(echo "$ALL" | grep -ci "sed.*currentEpoch\|sed.*cluster_legacy" || true)
-has_code_fix=$(echo "$ALL" | grep -ci "server\.cluster->currentEpoch++\|server\.cluster->currentEpoch ++" || true)
-check "Contains concrete code fix (diff/sed/C code)" "$([ "$has_diff" -gt 0 ] || [ "$has_sed" -gt 0 ] || [ "$has_code_fix" -gt 0 ] && echo 1 || echo 0)"
-
-# Check 7: Fix targets the correct location (failover auth block, not other epoch increments)
-has_correct_location=$(echo "$ALL" | grep -ci "failover_auth_sent.*currentEpoch\|currentEpoch.*failover_auth\|before.*RequestFailoverAuth\|before.*requesting.*vote" || true)
-check "Fix targets correct location (failover auth block)" "$([ "$has_correct_location" -gt 0 ] && echo 1 || echo 0)"
-
-# Check 8: Fix is not just "undo the Dockerfile" or "use stock image"
-is_docker_workaround=$(echo "$ALL" | grep -ci "remove.*sed\|undo.*patch\|remove.*Dockerfile\|use.*official.*image\|use.*stock" || true)
-has_real_fix=$(echo "$ALL" | grep -ci "restore.*increment\|add.*currentEpoch++\|uncomment.*currentEpoch\|re-enable.*increment\|patch.*source" || true)
-check "Fix is a source code change (not Docker workaround)" "$([ "$has_real_fix" -gt 0 ] && echo 1 || echo 0)"
 
 echo ""
 echo "Result: $PASS/$TOTAL passed"
