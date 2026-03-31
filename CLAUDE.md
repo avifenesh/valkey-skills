@@ -4,7 +4,7 @@
 
 ## Skills
 
-### Valkey Core (6 skills)
+### Valkey Core (8 skills)
 
 | Directory | Skill | Audience | Files |
 |-----------|-------|----------|-------|
@@ -14,6 +14,8 @@
 | `skills/valkey-modules/` | valkey-modules | Module usage: search, JSON, bloom | 6 |
 | `skills/glide-dev/` | glide-dev | GLIDE client library contributors - Rust core, language bindings, build system | 7 |
 | `skills/valkey-module-dev/` | valkey-module-dev | Custom Valkey module developers - ValkeyModule_* C API | 6 |
+| `skills/valkey-json-dev/` | valkey-json-dev | valkey-json module contributors - architecture, JSONPath engine, RDB serialization | 4 |
+| `skills/valkey-search-dev/` | valkey-search-dev | valkey-search module contributors - C++ architecture, index types, query engine, build | 5 |
 
 ### GLIDE Per-Language (7 sub-skills under valkey-glide/)
 
@@ -49,7 +51,7 @@
 
 ## Architecture
 
-Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-modules, glide-dev, valkey-module-dev) and per-language GLIDE skills all follow the router pattern:
+Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-modules, glide-dev, valkey-module-dev, valkey-json-dev, valkey-search-dev) and per-language GLIDE skills all follow the router pattern:
 - `SKILL.md` - concise router (<500 lines) with trigger phrases and reference tables
 - `reference/` - deep RAG library of focused docs (most under 300 lines)
 
