@@ -49,11 +49,11 @@
 
 ## Architecture
 
-Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-modules, glide-dev, valkey-module-dev) follow the router pattern:
+Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-modules, glide-dev, valkey-module-dev) and per-language GLIDE skills all follow the router pattern:
 - `SKILL.md` - concise router (<500 lines) with trigger phrases and reference tables
 - `reference/` - deep RAG library of focused docs (most under 300 lines)
 
-Per-language GLIDE skills are fully language-specific - each contains its own complete API reference, patterns, and examples with no shared reference files. Glide-MQ skills are also self-contained single-file SKILL.md documents.
+Per-language GLIDE skills (Python, Java, Node.js, Go have 9 files; C#, PHP, Ruby have 4 files) are fully language-specific - each contains its own complete API reference, patterns, and examples with no shared reference files. Migration skills and Glide-MQ skills are self-contained single-file SKILL.md documents.
 
 The AI loads SKILL.md into context, scans the tables, and reads only the specific reference file needed. No context bloat.
 
@@ -86,7 +86,7 @@ Skills were written and verified against these versions. Update when new release
 | glide-mq | 0.14.0 | glide-mq, migrate-bullmq, migrate-bee |
 | Spring Data Valkey | 1.0 | spring-data-valkey |
 
-Last full review: 2026-03-30
+Last full review: 2026-03-31
 
 ## Critical Rules
 

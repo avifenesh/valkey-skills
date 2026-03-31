@@ -1,13 +1,13 @@
 ---
 name: spring-data-valkey
-description: "Use when integrating Valkey GLIDE with Spring Boot and Spring Data Valkey. Covers auto-configuration, ValkeyTemplate, ReactiveValkeyTemplate, Actuator health, driver selection, and migration from Spring Data Redis."
-version: 1.0.0
+description: "Use when integrating Valkey GLIDE with Spring Boot and Spring Data Valkey. Covers auto-configuration, ValkeyTemplate, ReactiveValkeyTemplate, Actuator health, driver selection, IAM authentication, and migration from Spring Data Redis."
+version: 1.1.0
 argument-hint: "[Spring config, template, or migration question]"
 ---
 
 # Spring Data Valkey Integration
 
-Use when integrating GLIDE with Spring Boot applications via Spring Data Valkey, configuring auto-wired connections, templates, caching, and health indicators. For GLIDE production deployment, see `production.md`. For error handling patterns, see `error-handling.md`.
+Use when integrating GLIDE with Spring Boot applications via Spring Data Valkey, configuring auto-wired connections, templates, caching, health indicators, and IAM authentication. For GLIDE production deployment, see `production.md`. For error handling patterns, see `error-handling.md`.
 
 ---
 
@@ -25,14 +25,35 @@ The project lives at https://github.com/valkey-io/spring-data-valkey and is main
 <dependency>
     <groupId>io.valkey.springframework.boot</groupId>
     <artifactId>spring-boot-starter-data-valkey</artifactId>
-    <version>0.2.0</version>
+    <version>1.0.0</version>
 </dependency>
+<dependency>
+    <groupId>io.valkey</groupId>
+    <artifactId>valkey-glide</artifactId>
+    <classifier>${os.detected.classifier}</classifier>
+    <version>2.3.0</version>
+</dependency>
+```
+
+GLIDE requires platform-specific native libraries. Add the os-maven-plugin to resolve the classifier:
+
+```xml
+<build>
+    <extensions>
+        <extension>
+            <groupId>kr.motd.maven</groupId>
+            <artifactId>os-maven-plugin</artifactId>
+            <version>1.7.1</version>
+        </extension>
+    </extensions>
+</build>
 ```
 
 This starter includes:
 - Spring Data Valkey core library
 - Auto-configuration for connection factories, templates, and repositories
 - Spring Boot Actuator health indicator for Valkey
+- IAM authentication support for AWS ElastiCache and MemoryDB
 
 ### Supported Drivers
 
@@ -42,7 +63,12 @@ This starter includes:
 | Lettuce | Supported | Reactive/async workloads, existing Lettuce users |
 | Jedis | Supported | Legacy compatibility, synchronous-only workloads |
 
-Spring Data Valkey auto-detects the driver on the classpath. If multiple drivers are present, configure the preferred one explicitly.
+Spring Data Valkey auto-detects the driver on the classpath. If multiple drivers are present, configure the preferred one explicitly via `spring.data.valkey.client-type`:
+
+```properties
+spring.data.valkey.client-type=valkey-glide
+# Options: valkey-glide, lettuce, jedis
+```
 
 ---
 
@@ -73,6 +99,19 @@ spring.data.valkey.cluster.max-redirects=5
 ```properties
 spring.data.valkey.ssl.enabled=true
 ```
+
+### IAM Authentication (AWS ElastiCache / MemoryDB)
+
+Spring Data Valkey 1.0 supports IAM authentication for GLIDE connections to AWS ElastiCache and MemoryDB:
+
+```properties
+spring.data.valkey.valkey-glide.iam-auth.enabled=true
+spring.data.valkey.valkey-glide.iam-auth.user-id=my-iam-user
+spring.data.valkey.valkey-glide.iam-auth.region=us-east-1
+spring.data.valkey.ssl.enabled=true
+```
+
+IAM auth requires TLS. The driver handles token refresh automatically - no credential rotation code needed in the application.
 
 ### OpenTelemetry via Spring Properties
 
@@ -222,32 +261,40 @@ The health endpoint reports:
 Spring Data Valkey supports repository-style access for entities stored as Valkey hashes:
 
 ```java
-@RedisHash("person")  // Stored as Valkey hash
+@ValkeyHash("persons")
 public class Person {
     @Id
     private String id;
-    private String name;
+    @Indexed
+    private String firstname;
+    @Indexed
+    private String lastname;
     private int age;
 }
 
 public interface PersonRepository extends CrudRepository<Person, String> {
-    List<Person> findByName(String name);
+    List<Person> findByFirstname(String firstname);
 }
 ```
+
+Import: `io.valkey.springframework.data.valkey.core.ValkeyHash`
 
 Repository support uses secondary indexes via Valkey SETs. This works well for small to medium datasets but is not designed for high-cardinality queries.
 
 ---
 
-## Alternative Integration: Spring Data Redis Fork
+## Migrating from Spring Data Redis
 
-For teams that cannot adopt Spring Data Valkey (dependency constraints, existing Spring Data Redis investments), there is an alternative path: fork Spring Data Redis and replace the driver with GLIDE using a sed-based script.
+Spring Data Valkey provides a complete migration path from Spring Data Redis. The official migration guide is at https://github.com/valkey-io/spring-data-valkey/blob/main/MIGRATION.md.
 
-This approach rewrites imports and class references from Lettuce/Jedis to GLIDE equivalents. It preserves the full Spring Data Redis API surface while routing all operations through GLIDE's Rust core.
+Key migration steps:
+1. Replace `spring-boot-starter-data-redis` with `spring-boot-starter-data-valkey`
+2. Update package imports from `org.springframework.data.redis` to `io.valkey.springframework.data.valkey`
+3. Replace `@RedisHash` annotations with `@ValkeyHash`
+4. Update property prefixes from `spring.data.redis` to `spring.data.valkey`
+5. Optionally add GLIDE driver (or continue with Lettuce/Jedis via `client-type`)
 
-### Lettuce Compatibility Layer
-
-A Lettuce compatibility layer for drop-in migration to GLIDE is being developed. This would allow existing Spring Data Redis applications using Lettuce to switch to GLIDE without changing application code.
+You can continue using Lettuce or Jedis as the driver if preferred - set `spring.data.valkey.client-type=lettuce` or `spring.data.valkey.client-type=jedis`.
 
 ### Driver Comparison Test Suite
 
@@ -314,8 +361,8 @@ public class HybridService {
 
 ## Version Compatibility
 
-| Spring Data Valkey | Spring Boot | GLIDE | Valkey |
-|-------------------|-------------|-------|--------|
-| 0.2.0 | 3.x | 2.x | 7.2+ |
+| Spring Data Valkey | Spring Boot | GLIDE | Valkey | Java |
+|-------------------|-------------|-------|--------|------|
+| 1.0.0 | 3.5.x | 2.3.x | 7.2+ | 17+ |
 
-The project is under active development. Check the GitHub repository at https://github.com/valkey-io/spring-data-valkey for the latest compatibility matrix and release notes.
+Check the GitHub repository at https://github.com/valkey-io/spring-data-valkey for the latest compatibility matrix and release notes.
