@@ -1,6 +1,5 @@
 #!/bin/bash
-# Validates Task 2 (message queue) response
-# Checks GLIDE stream API usage and queue patterns
+# Validates Task 2 (message queue) - runs the actual queue against real Valkey
 # Input: $1 = directory containing agent's code
 
 DIR="$1"
@@ -22,7 +21,10 @@ check() {
 
 echo "=== Task 2: Message Queue Validation ==="
 
-# Collect all JS/TS source (exclude node_modules)
+cd "$DIR"
+
+# --- Static checks (3) ---
+
 CODE=$(find "$DIR" -name "*.js" -o -name "*.ts" | grep -v node_modules | xargs cat 2>/dev/null)
 
 if [ -z "$CODE" ]; then
@@ -32,43 +34,80 @@ if [ -z "$CODE" ]; then
   exit 0
 fi
 
-# Check 1: Uses GlideClient (not ioredis/node-redis)
+# Check 1: Uses GLIDE (not ioredis/node-redis)
 uses_glide=$(echo "$CODE" | grep -ci "GlideClient\|valkey-glide\|@valkey/valkey-glide" || true)
-uses_other=$(echo "$CODE" | grep -ci "import.*ioredis\|import.*redis\|require.*ioredis\|require.*redis\"" || true)
+uses_other=$(echo "$CODE" | grep -ci "import.*ioredis\|import.*redis\|require.*ioredis\|require.*\"redis\"" || true)
 check "Uses GLIDE client (not ioredis/node-redis)" "$([ "$uses_glide" -gt 0 ] && [ "$uses_other" -eq 0 ] && echo 1 || echo 0)"
 
-# Check 2: XADD for producing messages
-has_xadd=$(echo "$CODE" | grep -ci "xadd\|XADD\|\.xadd(" || true)
-check "Uses XADD for producing messages" "$([ "$has_xadd" -gt 0 ] && echo 1 || echo 0)"
+# Check 2: Has consumer group code (XGROUP + XREADGROUP + XACK)
+has_xgroup=$(echo "$CODE" | grep -ci "xgroupCreate\|XGROUP\|customCommand.*XGROUP" || true)
+has_xreadgroup=$(echo "$CODE" | grep -ci "xreadgroup\|XREADGROUP\|customCommand.*XREADGROUP" || true)
+has_xack=$(echo "$CODE" | grep -ci "xack\|XACK" || true)
+check "Consumer group APIs (XGROUP + XREADGROUP + XACK)" "$([ "$has_xgroup" -gt 0 ] && [ "$has_xreadgroup" -gt 0 ] && [ "$has_xack" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 3: XGROUP CREATE for consumer groups
-has_xgroup=$(echo "$CODE" | grep -ci "xgroupCreate\|XGROUP.*CREATE\|xgroup_create\|customCommand.*XGROUP" || true)
-check "Uses XGROUP CREATE for consumer groups" "$([ "$has_xgroup" -gt 0 ] && echo 1 || echo 0)"
+# Check 3: Dead letter handling (XPENDING + XCLAIM/XAUTOCLAIM)
+has_dlq=$(echo "$CODE" | grep -ci "xpending\|XPENDING\|xclaim\|XCLAIM\|xautoclaim\|XAUTOCLAIM" || true)
+check "Dead letter handling (XPENDING/XCLAIM)" "$([ "$has_dlq" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 4: XREADGROUP for consuming (not plain XREAD)
-has_xreadgroup=$(echo "$CODE" | grep -ci "xreadgroup\|XREADGROUP\|xread.*group\|customCommand.*XREADGROUP" || true)
-check "Uses XREADGROUP for consuming" "$([ "$has_xreadgroup" -gt 0 ] && echo 1 || echo 0)"
+# --- Runtime checks (6) ---
 
-# Check 5: XACK for acknowledgment
-has_xack=$(echo "$CODE" | grep -ci "xack\|XACK\|\.xack(" || true)
-check "Uses XACK for message acknowledgment" "$([ "$has_xack" -gt 0 ] && echo 1 || echo 0)"
+# Start Valkey and the app
+echo "  Starting docker compose..."
+docker compose up -d --build 2>/dev/null
 
-# Check 6: Dead letter queue (XPENDING + XCLAIM or XAUTOCLAIM)
-has_pending=$(echo "$CODE" | grep -ci "xpending\|XPENDING\|xautoclaim\|XAUTOCLAIM" || true)
-has_claim=$(echo "$CODE" | grep -ci "xclaim\|XCLAIM\|xautoclaim\|XAUTOCLAIM" || true)
-check "Dead letter handling (XPENDING/XCLAIM)" "$([ "$has_pending" -gt 0 ] && [ "$has_claim" -gt 0 ] && echo 1 || echo 0)"
+# Wait for Valkey to be ready
+for i in $(seq 1 15); do
+  docker compose exec -T valkey valkey-cli PING 2>/dev/null | grep -q PONG && break
+  sleep 1
+done
 
-# Check 7: Multiple workers (3 concurrent consumers)
-has_workers=$(echo "$CODE" | grep -ci "worker.*1\|worker.*2\|worker.*3\|workers\[.*\]\|Promise\.all.*worker\|concurrent.*worker\|consumer.*name" || true)
-check "Multiple concurrent workers" "$([ "$has_workers" -gt 0 ] && echo 1 || echo 0)"
+# Check 4: Valkey is running
+valkey_up=$(docker compose exec -T valkey valkey-cli PING 2>/dev/null | grep -c PONG || true)
+check "Valkey is running" "$([ "$valkey_up" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 8: Graceful shutdown (SIGTERM/SIGINT handling)
-has_shutdown=$(echo "$CODE" | grep -ci "SIGTERM\|SIGINT\|graceful.*shut\|process\.on" || true)
-check "Graceful shutdown handling" "$([ "$has_shutdown" -gt 0 ] && echo 1 || echo 0)"
+if [ "$valkey_up" -eq 0 ]; then
+  echo "  Valkey not running, skipping runtime checks"
+  FAIL=$((FAIL + 5))
+  echo ""
+  echo "Result: $PASS/$TOTAL passed"
+  echo "SCORE=$PASS/$TOTAL"
+  docker compose down -v 2>/dev/null
+  exit 0
+fi
 
-# Check 9: Dashboard/status (XLEN or XPENDING for monitoring)
-has_dashboard=$(echo "$CODE" | grep -ci "xlen\|XLEN\|dashboard\|status\|pending.*count\|stream.*length" || true)
-check "Dashboard/monitoring (XLEN/XPENDING)" "$([ "$has_dashboard" -gt 0 ] && echo 1 || echo 0)"
+# Wait for the app to produce and consume messages (up to 30s)
+echo "  Waiting for queue processing (30s max)..."
+for i in $(seq 1 30); do
+  stream_len=$(docker compose exec -T valkey valkey-cli XLEN tasks:queue 2>/dev/null | tr -d '[:space:]' || echo "0")
+  [ "$stream_len" != "0" ] && break
+  sleep 1
+done
+
+# Check 5: Stream exists with messages produced (XLEN > 0 or messages were consumed)
+stream_exists=$(docker compose exec -T valkey valkey-cli EXISTS tasks:queue 2>/dev/null | tr -d '[:space:]' || echo "0")
+xlen=$(docker compose exec -T valkey valkey-cli XLEN tasks:queue 2>/dev/null | tr -d '[:space:]' || echo "0")
+check "Stream exists (tasks:queue)" "$([ "$stream_exists" = "1" ] && echo 1 || echo 0)"
+
+# Check 6: Consumer group was created
+groups=$(docker compose exec -T valkey valkey-cli XINFO GROUPS tasks:queue 2>/dev/null | grep -c "name" || true)
+check "Consumer group created" "$([ "$groups" -gt 0 ] && echo 1 || echo 0)"
+
+# Check 7: Messages were consumed (check pending or acked)
+xinfo=$(docker compose exec -T valkey valkey-cli XINFO GROUPS tasks:queue 2>/dev/null)
+consumers=$(echo "$xinfo" | grep -c "consumers" || true)
+# Also check if there are consumers registered
+consumer_count=$(docker compose exec -T valkey valkey-cli XINFO CONSUMERS tasks:queue workers 2>/dev/null | grep -c "name" || true)
+check "Consumers registered ($consumer_count)" "$([ "$consumer_count" -gt 0 ] && echo 1 || echo 0)"
+
+# Check 8: Multiple workers (at least 2 consumers)
+check "Multiple workers (>= 2 consumers)" "$([ "$consumer_count" -ge 2 ] && echo 1 || echo 0)"
+
+# Check 9: Some messages were acknowledged (delivered count > 0 in group info)
+delivered=$(docker compose exec -T valkey valkey-cli XINFO GROUPS tasks:queue 2>/dev/null | grep -A1 "last-delivered-id" | tail -1 | tr -d '[:space:]' || echo "0-0")
+check "Messages delivered (last-delivered-id != 0-0)" "$([ "$delivered" != "0-0" ] && [ -n "$delivered" ] && echo 1 || echo 0)"
+
+# Cleanup
+docker compose down -v 2>/dev/null
 
 echo ""
 echo "Result: $PASS/$TOTAL passed"
