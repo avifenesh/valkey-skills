@@ -7,7 +7,7 @@ SKILLS_DIR="$BENCH_DIR/../../skills"
 RUNS_DIR="$BENCH_DIR/runs"
 TESTS_DIR="$BENCH_DIR/tests"
 TMP="${TMPDIR:-/tmp}/bench-v2-parallel"
-SONNET="us.anthropic.claude-sonnet-4-6"
+SONNET="claude-sonnet-4-6"
 OPUS="opus"
 
 mkdir -p "$RUNS_DIR" "$TMP"
