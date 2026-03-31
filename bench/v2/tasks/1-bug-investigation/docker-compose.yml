@@ -1,6 +1,8 @@
 services:
   valkey-1:
-    image: buggy-valkey:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.buggy-valkey
     command: >
       valkey-server
       --port 7001
@@ -8,6 +10,7 @@ services:
       --cluster-config-file nodes.conf
       --cluster-node-timeout 5000
       --appendonly yes
+      --protected-mode no
     ports:
       - "7001:7001"
     networks:
@@ -15,7 +18,9 @@ services:
         ipv4_address: 172.30.0.11
 
   valkey-2:
-    image: buggy-valkey:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.buggy-valkey
     command: >
       valkey-server
       --port 7002
@@ -23,6 +28,7 @@ services:
       --cluster-config-file nodes.conf
       --cluster-node-timeout 5000
       --appendonly yes
+      --protected-mode no
     ports:
       - "7002:7002"
     networks:
@@ -30,7 +36,9 @@ services:
         ipv4_address: 172.30.0.12
 
   valkey-3:
-    image: buggy-valkey:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.buggy-valkey
     command: >
       valkey-server
       --port 7003
@@ -38,6 +46,7 @@ services:
       --cluster-config-file nodes.conf
       --cluster-node-timeout 5000
       --appendonly yes
+      --protected-mode no
     ports:
       - "7003:7003"
     networks:
@@ -45,7 +54,9 @@ services:
         ipv4_address: 172.30.0.13
 
   valkey-4:
-    image: buggy-valkey:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.buggy-valkey
     command: >
       valkey-server
       --port 7004
@@ -53,6 +64,7 @@ services:
       --cluster-config-file nodes.conf
       --cluster-node-timeout 5000
       --appendonly yes
+      --protected-mode no
     ports:
       - "7004:7004"
     networks:
@@ -60,7 +72,9 @@ services:
         ipv4_address: 172.30.0.14
 
   valkey-5:
-    image: buggy-valkey:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.buggy-valkey
     command: >
       valkey-server
       --port 7005
@@ -68,6 +82,7 @@ services:
       --cluster-config-file nodes.conf
       --cluster-node-timeout 5000
       --appendonly yes
+      --protected-mode no
     ports:
       - "7005:7005"
     networks:
@@ -75,7 +90,9 @@ services:
         ipv4_address: 172.30.0.15
 
   valkey-6:
-    image: buggy-valkey:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.buggy-valkey
     command: >
       valkey-server
       --port 7006
@@ -83,6 +100,7 @@ services:
       --cluster-config-file nodes.conf
       --cluster-node-timeout 5000
       --appendonly yes
+      --protected-mode no
     ports:
       - "7006:7006"
     networks:

@@ -1,1 +1,0 @@
-The background Maven search completed (not needed — we used `mvnw.cmd` instead). Implementation is done and verified.

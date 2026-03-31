@@ -8,7 +8,7 @@ SKILLS_DIR="$BENCH_DIR/../../skills"
 RUNS_DIR="$BENCH_DIR/runs"
 TESTS_DIR="$BENCH_DIR/tests"
 RESULTS_FILE="$RUNS_DIR/results.md"
-SONNET="sonnet"
+SONNET="us.anthropic.claude-sonnet-4-6"
 OPUS="opus"
 TMP="${TMPDIR:-/tmp}/bench-v2"
 
@@ -17,13 +17,13 @@ mkdir -p "$RUNS_DIR" "$TMP"
 TASK_DIRS=("1-bug-investigation" "2-glide-queue" "3-ops-cluster" "4-code-improvement")
 TASK_LABELS=("1-bug" "2-queue" "3-ops" "4-improve")
 TASK_TESTS=("test-bug.sh" "test-queue.sh" "test-ops.sh" "test-improvement.sh")
-TASK_SKILLS=("valkey-dev" "valkey-glide/nodejs" "valkey-ops:valkey-ecosystem" "valkey")
+TASK_SKILLS=("valkey-dev" "valkey-glide/nodejs" "valkey-ops:valkey-ecosystem" "valkey:valkey-glide/java")
 
 TASK_PROMPTS=(
-  'This Valkey cluster has a bug that causes split-brain after network partition recovery. Run reproduce.sh to see the symptoms. The cluster uses a custom Valkey 9.0.3 build with a bug in the server source code. You do not have the Dockerfile or build files - only the running containers and the symptoms. Investigate the root cause by analyzing the Valkey server source code (clone it if needed). Identify the exact function and line where the bug is. Write a concrete patch (diff or sed command) that fixes the server code. Write your analysis and fix to ANALYSIS.md. The fix must be a code change to the Valkey C source, not a Docker or config workaround.'
+  'This Valkey cluster has a split-brain bug after network partition recovery. The full Valkey 9.0.3 source code is in src/ and deps/ with a Makefile. The bug is somewhere in the C source. Run reproduce.sh to see the symptoms. Do NOT clone or download any code - everything you need is here. Find the bug in the source, fix it, rebuild with docker compose build, and verify the fix by running reproduce.sh again. The cluster must work correctly after your fix. Write your analysis to ANALYSIS.md including: the exact file, function, and line of the bug, what the bug is, and why your fix is correct.'
   'Implement the message queue in queue.js using Valkey Streams and GLIDE Node.js. Read README.md for requirements. Must use @valkey/valkey-glide - not ioredis or node-redis. The app runs in Docker (see docker-compose.yml). Implement TaskQueue, Worker with consumer groups, dead letter handling, 3 concurrent workers, dashboard, and graceful shutdown. Test with: docker compose up --build'
   'Create all Kubernetes manifests and configuration files per requirements.md. Use kind for the local cluster. Include a deploy.sh script and a test.sh that validates the deployment works.'
-  'Review app.js and improve it. Focus on Valkey-specific best practices, performance patterns, and production readiness. Fix all anti-patterns you find. Start Valkey with docker compose up -d first. The improved code must work - test it.'
+  'Review ProductCache.java and improve it. Focus on Valkey-specific best practices, performance patterns, and production readiness. Fix all anti-patterns you find. The improved code must compile. Read README.md for setup.'
 )
 
 install_skills() {
@@ -139,8 +139,7 @@ for task_idx in 0 1 2 3; do
       cp -r "$BENCH_DIR/tasks/$task_dir" "$run_dir"
       rm -rf "$run_dir/.git" 2>/dev/null
 
-      # Task 1: remove Dockerfile so agents can't just read the injected bug
-      [ "$task_idx" -eq 0 ] && rm -f "$run_dir/Dockerfile.buggy-valkey" 2>/dev/null
+      # Task 1: agent has full source + Dockerfile, must find bug and rebuild
 
       if [ "$skills" = "skill" ]; then
         install_skills "$run_dir" "$skill_spec"

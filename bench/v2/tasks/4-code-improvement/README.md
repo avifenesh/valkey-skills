@@ -1,27 +1,16 @@
-# Product Cache API
+# Product Cache - Code Review
 
-Express API that uses Valkey GLIDE for product data storage.
+Java product cache service using Valkey GLIDE with multiple anti-patterns.
 
 ## Task
 
-Review `app.js` and improve it. Focus on Valkey-specific best practices, performance patterns, and production readiness. Explain each change you make and why.
+Review `src/main/java/com/example/ProductCache.java` and improve it. Focus on Valkey-specific best practices, performance patterns, and production readiness. Explain each change.
+
+The improved code must compile and work.
 
 ## Setup
 
 ```bash
 docker compose up -d
-npm install
-node app.js
+./mvnw compile exec:java -Dexec.mainClass="com.example.ProductCache"
 ```
-
-## Endpoints
-
-- GET /products - list all
-- GET /products/:id - get one
-- POST /products - create
-- POST /products/bulk - create many
-- DELETE /products/:id - delete
-- DELETE /products/expired - clean expired
-- GET /products/search?q=term - search
-- GET /products/category/:cat - by category
-- POST /cache/warm - pre-warm cache

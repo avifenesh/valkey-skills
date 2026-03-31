@@ -1,12 +1,12 @@
 #!/bin/bash
-# Validates Task 4 (code improvement) response
+# Validates Task 4 (Java code improvement) response
 # Checks which anti-patterns were fixed in the actual code
 # Input: $1 = directory containing agent's improved code
 
 DIR="$1"
 PASS=0
 FAIL=0
-TOTAL=7
+TOTAL=9
 
 check() {
   local desc="$1"
@@ -22,11 +22,11 @@ check() {
 
 echo "=== Task 4: Code Improvement Validation ==="
 
-# Only check the actual code file, not docs/READMEs
-CODE=$(cat "$DIR/app.js" "$DIR/app.ts" 2>/dev/null)
+# Check Java source files (exclude node_modules, .mvn)
+CODE=$(find "$DIR/src" -name "*.java" 2>/dev/null | xargs cat 2>/dev/null)
 
 if [ -z "$CODE" ]; then
-  echo "  [ERROR] No app.js or app.ts found"
+  echo "  [ERROR] No Java source files found"
   echo "Result: 0/$TOTAL passed"
   echo "SCORE=0/$TOTAL"
   exit 0
@@ -41,28 +41,34 @@ check "KEYS replaced with SCAN" "$([ "$still_has_keys" -eq 0 ] && [ "$has_scan" 
 has_unlink=$(echo "$CODE" | grep -ci "\.unlink\|\"UNLINK\"" || true)
 check "DEL replaced with UNLINK" "$([ "$has_unlink" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 3: Promise.all(GET) replaced with MGET
+# Check 3: Individual GETs replaced with MGET
 has_mget=$(echo "$CODE" | grep -ci "\.mget\|\"MGET\"" || true)
 check "Individual GETs replaced with MGET" "$([ "$has_mget" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 4: Sequential SET replaced with batch/pipeline (in code, not comments)
-has_batch=$(echo "$CODE" | grep -ci "new Batch\|\.exec(\|pipeline\|\.batch(" || true)
-still_sequential=$(echo "$CODE" | grep -c "for.*await.*client\.set\|for.*of.*await.*\.set(" || true)
-check "Sequential writes use batching" "$([ "$has_batch" -gt 0 ] || [ "$still_sequential" -eq 0 ] && echo 1 || echo 0)"
+# Check 4: Sequential SET replaced with batch/pipeline
+has_batch=$(echo "$CODE" | grep -ci "Batch\|\.exec(\|batch(" || true)
+check "Sequential writes use batching" "$([ "$has_batch" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 5: Cache entries have TTL (in SET calls, not just comments)
-has_ttl=$(echo "$CODE" | grep -ci "conditionalSet\|options.*expire\|\.setex\|\.set(.*{.*expiry\|\"EX\"\|\"PX\"" || true)
+# Check 5: Cache entries have TTL
+has_ttl=$(echo "$CODE" | grep -ci "expire\|ttl\|\.pexpire\|\.expire\|SetOptions.*expiry\|Expiry\|\"EX\"\|\"PX\"" || true)
 check "Cache entries have TTL" "$([ "$has_ttl" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 6: Connection error handling
-has_error_handling=$(echo "$CODE" | grep -ci "try {.*createClient\|catch.*ConnectionError\|catch.*ClosingError\|connectionBackoff\|\.on.*error" || true)
-# Also check for try/catch wrapping the client creation
+# Check 6: Session data has TTL/expiry
+has_session_ttl=$(echo "$CODE" | grep -B5 -A5 "session" | grep -ci "expire\|ttl\|Expiry\|\"EX\"\|\"PX\"" || true)
+check "Session data has TTL" "$([ "$has_session_ttl" -gt 0 ] && echo 1 || echo 0)"
+
+# Check 7: Connection error handling
+has_error_handling=$(echo "$CODE" | grep -ci "try.*createClient\|catch.*Exception\|connectionBackoff\|reconnect\|retry" || true)
 has_try_create=$(echo "$CODE" | grep -B2 -A2 "createClient" | grep -ci "try\|catch" || true)
 check "Connection error handling" "$([ "$has_error_handling" -gt 0 ] || [ "$has_try_create" -gt 0 ] && echo 1 || echo 0)"
 
-# Check 7: SORT anti-pattern addressed (use server-side sorted sets or search)
-has_server_sort=$(echo "$CODE" | grep -ci "zadd\|zrange\|ZADD\|ZRANGE\|FT\.SEARCH\|FT\.CREATE\|customCommand.*ZADD\|customCommand.*ZRANGE" || true)
-check "Client-side sort replaced with server-side structure" "$([ "$has_server_sort" -gt 0 ] && echo 1 || echo 0)"
+# Check 8: SORT replaced with sorted set (ZADD/ZRANGE)
+has_sorted_set=$(echo "$CODE" | grep -ci "zadd\|zrange\|ZADD\|ZRANGE\|\"ZRANGEBYSCORE\"\|customCommand.*ZADD\|customCommand.*ZRANGE" || true)
+check "SORT replaced with sorted set" "$([ "$has_sorted_set" -gt 0 ] && echo 1 || echo 0)"
+
+# Check 9: Category counting uses secondary index or set, not full scan
+no_full_scan=$(echo "$CODE" | grep -A10 "countProducts" | grep -ci "SCARD\|SMEMBERS\|FT\.SEARCH\|scard\|secondary.*index\|category:.*set" || true)
+check "Category count uses index/set instead of full scan" "$([ "$no_full_scan" -gt 0 ] && echo 1 || echo 0)"
 
 echo ""
 echo "Result: $PASS/$TOTAL passed"

@@ -1,13 +1,16 @@
-# Production Valkey Cluster on Kubernetes
+# Production Valkey Cluster on Kubernetes using Valkey Operator
 
-Deploy a production-ready Valkey cluster on a local Kubernetes cluster (kind).
+Deploy a production-ready Valkey cluster on a local Kubernetes cluster (kind) using the Valkey ecosystem's Kubernetes operator.
 
 ## Requirements
+
+### Operator-based deployment
+- Use the Valkey Kubernetes Operator (or Bitnami Helm chart for Valkey) - NOT hand-crafted StatefulSets
+- If no official Valkey operator exists yet, use the closest ecosystem tool and document your choice
 
 ### Cluster Topology
 - 3 primary nodes, 3 replica nodes
 - Cluster mode enabled
-- Automatic slot assignment
 
 ### Security
 - ACL with 3 users:
@@ -35,9 +38,10 @@ Deploy a production-ready Valkey cluster on a local Kubernetes cluster (kind).
 - Service for scraping metrics
 
 ### Deliverables
-1. All Kubernetes YAML manifests
-2. A script to create the kind cluster and deploy everything
-3. A test script that:
+1. Operator installation manifests or Helm values
+2. Custom resource definition for the Valkey cluster
+3. A script to create the kind cluster and deploy everything
+4. A test script that:
    - Connects as the `app` user
    - Writes data
    - Creates a search index with a vector field
