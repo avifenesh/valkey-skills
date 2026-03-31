@@ -1,29 +1,29 @@
 ---
 name: valkey-search-dev
-description: "Use when contributing to the valkey-search module codebase (valkey-io/valkey-search), understanding its C++ architecture, building from source, writing tests, working with index types (HNSW, FLAT, Numeric, Tag, Text), query parsing, filter evaluation, cluster coordination, or reviewing PRs."
+description: "Contributing to valkey-io/valkey-search C++ module - index internals (HNSW, FLAT, numeric, tag, text), query engine, vector similarity, hybrid search, build system, tests, cluster coordinator, and PR review."
 version: 1.0.0
 argument-hint: "[area or task]"
 ---
 
 # Valkey Search Module - Contributor Reference
 
-C++ module providing vector similarity search, full-text search, and hybrid queries for Valkey.
+C++ module providing vector similarity search (ANN/KNN), full-text search, and hybrid queries for Valkey. Does NOT cover user-facing FT.SEARCH usage or application patterns - see the `valkey-modules` skill for that.
 
 ## Routing
 
-- Index types, HNSW, FLAT, numeric, tag, text, VectorBase, IndexBase -> Architecture
-- Query parsing, filter expressions, predicates, hybrid search, pre-filter, FT.SEARCH, FT.AGGREGATE -> Query Engine
-- Build from source, cmake, tests, CI, sanitizers, integration tests -> Build and Test
-- Code structure, adding features, adding index types, coordinator, contributing -> Contributing
+- Index types, HNSW, FLAT, numeric, tag, text, VectorBase, IndexBase, embedding, ANN, KNN, vector similarity -> Architecture
+- Query parsing, filter expressions, predicates, hybrid search, pre-filter, FT.SEARCH internals, FT.AGGREGATE pipeline -> Query Engine
+- Build from source, cmake, tests, CI, sanitizers, integration tests, ASAN, TSAN -> Build and Test
+- Code structure, adding features, adding index types, coordinator, contributing, RDB, AOF, replication, RediSearch differences -> Contributing
 
 ## Reference
 
 | Topic | Reference |
 |-------|-----------|
-| Index types (HNSW, FLAT, Numeric, Tag, Text), shard design, cluster coordination | [architecture](reference/architecture.md) |
-| Query parsing, filter evaluation, hybrid queries, FT.AGGREGATE pipeline | [query-engine](reference/query-engine.md) |
-| Building from source, running tests, CI workflows, sanitizers | [build-and-test](reference/build-and-test.md) |
-| Code structure, adding index types, adding query features, PR workflow | [contributing](reference/contributing.md) |
+| Index internals (HNSW, FLAT, Numeric, Tag, Text), shard design, cluster coordinator, embedding storage | [architecture](reference/architecture.md) |
+| Query parsing, filter evaluation, hybrid queries, FT.AGGREGATE pipeline, pre-filter vs post-filter | [query-engine](reference/query-engine.md) |
+| Building from source, running tests, CI workflows, sanitizers (ASAN/TSAN) | [build-and-test](reference/build-and-test.md) |
+| Code structure, adding index types, adding query features, RDB/AOF, PR workflow | [contributing](reference/contributing.md) |
 
 ## Quick Reference
 
