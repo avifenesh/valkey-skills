@@ -1,14 +1,16 @@
-`ANSWERS.md` written. Here's a summary of the assessments:
+Written to `ANSWERS.md`. Here's a summary of findings:
 
 | # | Scenario | Verdict | Core Issue |
 |---|----------|---------|------------|
-| 1 | Session Management | Problematic | `KEYS session:*` blocks entire server; use `EXPIRE` for TTL + renewal instead of cron |
-| 2 | Product Catalog Cache | Mostly OK / Scale issue | Loop DEL = N round trips; batch with `UNLINK key1 key2 ...` |
-| 3 | Real-time Inventory | Problematic | `KEYS` on every page load will take down the cluster; replace with `HSET inventory:{sku} {warehouse} {count}` + `HVALS` |
-| 4 | Rate Limiting | Correct but memory-heavy | Storing UUIDs as members; use timestamp as member, or switch to sliding window counter (2 integer keys vs N-entry sorted set) |
-| 5 | Leaderboard | Cluster-unsafe | Global + regional keys land on different slots; `MULTI/EXEC` across them raises `CROSSSLOT` — add hash tags `{leaderboard}:global` |
-| 6 | Job Queue | Problematic | `BRPOPLPUSH` is deprecated; no ACK mechanism causes duplicates — migrate to Streams with `XREADGROUP`/`XACK`/`XAUTOCLAIM` |
-| 7 | Distributed Lock | Problematic | GET+DEL race condition allows wrong owner to release; use `DELIFEQ lock:{r} {token}` (Valkey 9.0+) or Lua script |
-| 8 | Analytics Counters | Critically problematic | `KEYS` on 500K keys = server freeze; replace with `HSCAN` or restructure to 3 hashes (`counters:{date}:{event}`) |
-| 9 | Full-text Search | Critically problematic | Load-all + app-side match doesn't scale; use `FT.CREATE/FT.SEARCH` (ValkeySearch module) or inverted index with `SINTER` |
-| 10 | Pub/Sub | Wrong tool | Pub/Sub is fire-and-forget — missed messages are gone; replace with Streams (`XADD`/`XREADGROUP`/`XACK`) for at-least-once delivery |
+| 1 | Session Management | **Problematic** | `KEYS` blocks server; use `EXPIRE`/`EXPIREAT` instead |
+| 2 | Product Catalog Cache | **Minor issue** | Loop DEL → batch into single variadic `DEL` or pipeline |
+| 3 | User Profiles with Field TTL | **Outdated** | Valkey 9.0.3 has `HEXPIRE` — keep everything in one hash |
+| 4 | Rate Limiting | **Problematic** | Non-atomic 3-step sequence + high memory from UUIDs; use Lua script |
+| 5 | Distributed Lock | **Problematic** | GET→DEL race condition; use atomic Lua compare-and-delete |
+| 6 | Real-time Inventory | **Critical** | `KEYS` on every page load; use a Hash (`HSET inventory:{sku} {wh} {count}`) |
+| 7 | Job Queue | **Partially problematic** | `BRPOPLPUSH` deprecated; use Streams with consumer groups for reliability |
+| 8 | Conditional Updates | **Wrong implementation** | WATCH/MULTI/EXEC retry storms; replace with atomic Lua CAS |
+| 9 | Full-text Search | **Critical** | `KEYS`+app-side scan; use inverted index Sets or external search engine |
+| 10 | Pub/Sub Notifications | **Wrong tool** | Pub/Sub has no persistence; use Streams with `XREADGROUP`/`XACK` |
+| 11 | Monitoring | **Incomplete** | Lower `slowlog-log-slower-than`; use `CLIENT SETNAME` for identification |
+| 12 | Leaderboard TTL | **False premise** | `EXPIRE` works on sorted sets; drop the cleanup job, set TTL directly |

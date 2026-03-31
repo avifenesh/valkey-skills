@@ -1,12 +1,12 @@
 === Task 1: Bug Investigation Validation ===
-  [FAIL] Identifies cluster_legacy.c
-  [FAIL] References failover auth mechanism
-  [FAIL] References currentEpoch
-  [FAIL] Explains epoch must increment during failover
-  [FAIL] References vote/auth request function
-  [FAIL] Contains concrete code fix (diff/sed/C code)
-  [FAIL] Fix targets correct location (failover auth block)
-  [FAIL] Fix is a source code change (not Docker workaround)
+  [PASS] Source fixed: deferral call removed or disabled
+  [PASS] Epoch collision handler preserved with bump
+  [PASS] Identifies epoch collision handler
+  [PASS] Identifies deferral function as the bug
+  [PASS] Explains why deferral always triggers
+  [FAIL] Explains currentEpoch/configEpoch relationship
+  [PASS] Explains split-brain from unresolved collision
+  [PASS] Identifies cluster_legacy.c
 
-Result: 0/8 passed
-SCORE=0/8
+Result: 7/10 passed
+SCORE=7/10

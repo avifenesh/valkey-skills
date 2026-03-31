@@ -1,14 +1,16 @@
-Written `ANSWERS.md` with assessments for all 10 scenarios. Summary of findings:
+Written to `ANSWERS.md`. Here's a summary of the findings:
 
 | # | Scenario | Verdict | Core Issue |
 |---|----------|---------|------------|
-| 1 | Session Management | Problematic | `KEYS` blocks server; use `EXPIRE` + `SCAN` |
-| 2 | Product Catalog Cache | Partially problematic | Loop `DEL` = N round trips; batch with `UNLINK` + hash tags |
-| 3 | Real-time Inventory | Problematic | `KEYS` on every page load; replace with `HSET inventory:{sku} warehouse count` |
-| 4 | Rate Limiting | Correct but fixable | Non-atomic 3-op sequence + memory waste; use Lua script |
-| 5 | Leaderboard | Mostly correct | Dual-write not atomic; wrap in Lua with hash-tagged keys |
-| 6 | Job Queue | Problematic | `BRPOPLPUSH` deprecated; ordering/dedup broken; migrate to Streams |
-| 7 | Distributed Lock | Problematic | `GET→check→DEL` race condition; use Lua `if GET==owner then DEL` |
-| 8 | Analytics Counters | Problematic | `KEYS` with 500K keys; restructure as `HINCRBY counters:{date} event:product 1` |
-| 9 | Full-text Search | Completely wrong | Full scan + app-side matching; use Valkey Search module or dedicated search engine |
-| 10 | Pub/Sub Notifications | Wrong tool | Pub/Sub is fire-and-forget; migrate to Streams with consumer groups |
+| 1 | Session Management | **Problematic** | `KEYS session:*` blocks server; use TTL + `EXPIRE` to extend |
+| 2 | Product Catalog Cache | **Partially problematic** | Loop DEL → single `UNLINK key1 key2 ...` (async, batched) |
+| 3 | Field-Level TTL | **Outdated workaround** | Valkey 9.0 has `HEXPIRE` — set TTL on the hash field directly |
+| 4 | Rate Limiting | **Two bugs** | Non-atomic 3-op sequence → Lua script; no key expiry → memory leak |
+| 5 | Distributed Lock | **Problematic** | TOCTOU race on GET+DEL → atomic Lua compare-and-delete |
+| 6 | Real-time Inventory | **Problematic** | `KEYS` blocks + misses cluster shards → `HSET inventory:{sku} warehouse val` |
+| 7 | Job Queue | **Partially problematic** | `BRPOPLPUSH` deprecated → `BLMOVE`; missing explicit `LREM` on completion causes duplicates |
+| 8 | Conditional Updates | **Inefficient** | WATCH retries under contention → Lua compare-and-swap eliminates retries |
+| 9 | Full-text Search | **Problematic** | `KEYS` + app-layer scan → `FT.CREATE` index + `FT.SEARCH` (Valkey Search) |
+| 10 | Pub/Sub Notifications | **Wrong tool** | Pub/Sub is fire-and-forget → Streams with consumer groups for durable delivery |
+| 11 | Monitoring | **Incomplete** | Threshold too high; no client names → lower `slowlog-log-slower-than`, use `CLIENT SETNAME` |
+| 12 | Leaderboard TTL | **False premise** | Sorted sets *can* have TTL → `EXPIREAT leaderboard:{date} <midnight>`; `ZREVRANGE` deprecated |

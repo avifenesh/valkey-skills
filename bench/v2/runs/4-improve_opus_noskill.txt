@@ -1,14 +1,16 @@
-Done. ANSWERS.md has been written with assessments for all 10 scenarios. Here's a summary:
+Done. ANSWERS.md has been written with assessments for all 12 scenarios. Here's a summary of the findings:
 
 | # | Scenario | Verdict | Core Issue |
 |---|----------|---------|------------|
-| 1 | Session Management | Problematic | `KEYS` in production blocks server; use `EXPIRE`/`TTL` instead of cron |
-| 2 | Product Catalog Cache | Mostly correct | Use `UNLINK` instead of `DEL`; batch keys; consider Hash per product |
-| 3 | Real-time Inventory | Problematic | `KEYS` on every page load; use Hash per SKU (`HSET`/`HVALS`) |
-| 4 | Rate Limiting | Partially correct | Non-atomic operations cause races; wrap in Lua; use timestamps not UUIDs |
-| 5 | Leaderboard | Correct | Dual sorted sets is valid; add hash tags for atomic Lua updates |
-| 6 | Job Queue | Problematic | `BRPOPLPUSH` is deprecated; switch to Streams with `XREADGROUP`/`XACK` |
-| 7 | Distributed Lock | Problematic | GET-check-DEL race condition; use atomic Lua script for release |
-| 8 | Analytics Counters | Problematic | 500K individual keys + `KEYS` scan; use Hashes grouped by event+date |
-| 9 | Full-text Search | Problematic | Loading all keys for app-side matching; use Search module or inverted index |
-| 10 | Pub/Sub Notifications | Problematic | Pub/Sub is fire-and-forget; switch to Streams for durable messaging |
+| 1 | Session Management | Problematic | `KEYS` blocks server; use `SET ... EX` + `EXPIRE` to extend |
+| 2 | Product Catalog Cache | Problematic | `DEL` blocks; use `UNLINK` + pipeline batching |
+| 3 | Field-Level TTL | Problematic (outdated) | Valkey 9.0.3 supports `HEXPIRE` on hash fields natively |
+| 4 | Rate Limiting | Problematic | Wrong op order, non-atomic, bloated members; use Lua script |
+| 5 | Distributed Lock | Problematic | GET+DEL race condition; use atomic Lua check-and-delete |
+| 6 | Real-time Inventory | Problematic | `KEYS` on every page load; use a Hash per SKU |
+| 7 | Job Queue | Problematic | `BRPOPLPUSH` deprecated, no ack; switch to Streams |
+| 8 | Conditional Updates | Problematic | WATCH contention; use Lua compare-and-set |
+| 9 | Full-text Search | Problematic | Brute-force scan; offload to search engine or inverted index |
+| 10 | Pub/Sub | Problematic | Fire-and-forget loses messages; switch to Streams |
+| 11 | Monitoring | Problematic | Threshold too high, no client names; tune config + `CLIENT SETNAME` |
+| 12 | Leaderboard TTL | Problematic (false premise) | `EXPIRE` works on any key type including sorted sets |
