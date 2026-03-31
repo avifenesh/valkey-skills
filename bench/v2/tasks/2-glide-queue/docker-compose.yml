@@ -2,7 +2,7 @@ services:
   valkey:
     image: valkey/valkey:9
     ports:
-      - "6379:6379"
+      - "6380:6379"
     command: valkey-server --save "" --appendonly yes
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
