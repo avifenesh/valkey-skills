@@ -2,6 +2,16 @@
 
 Use when navigating the codebase, adding new index types, adding query features, understanding the code layout, or preparing a PR for valkey-search.
 
+## Contents
+
+- Code Layout (line 15)
+- Adding a New Index Type (line 119)
+- Adding a Query Feature (line 141)
+- Key Patterns (line 153)
+- PR Workflow (line 177)
+- Documentation (`docs/`) (line 187)
+- RFCs (line 197)
+
 ## Code Layout
 
 ```

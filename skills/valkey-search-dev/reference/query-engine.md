@@ -2,6 +2,14 @@
 
 Use when working on query parsing, filter evaluation, hybrid search, the FT.SEARCH or FT.AGGREGATE command implementation, or the predicate tree.
 
+## Contents
+
+- FT.SEARCH Pipeline (line 13)
+- FT.AGGREGATE Pipeline (line 97)
+- Filter Evaluation (line 129)
+- FT._DEBUG TEXTINFO (`src/indexes/text/textinfocmd.cc`) (line 146)
+- Cancellation (`src/utils/cancel.h`) (line 159)
+
 ## FT.SEARCH Pipeline
 
 ```

@@ -2,6 +2,19 @@
 
 Use when building valkey-search from source, running tests, setting up CI, debugging build issues, or working with sanitizers.
 
+## Contents
+
+- Prerequisites (line 18)
+- Build System (line 28)
+- Loading the Module (line 66)
+- Unit Tests (line 74)
+- Integration Tests (line 138)
+- Sanitizers (line 166)
+- Code Formatting (line 179)
+- CI Workflows (`.github/workflows/`) (line 187)
+- Benchmark Scripts (line 204)
+- Protobuf Generation (line 208)
+
 ## Prerequisites
 
 Ubuntu 24.04 (or the devcontainer). Required packages:
