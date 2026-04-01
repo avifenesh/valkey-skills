@@ -1,6 +1,6 @@
 ---
 name: valkey-glide-python
-description: "Python Valkey GLIDE client - async/sync APIs, GlideClient, GlideClusterClient, asyncio, TLS, OpenTelemetry, batching, PubSub, streams, Lua scripting, compression, AZ affinity. Not for redis-py migration - use migrate-redis-py skill."
+description: "Use when building Python apps with Valkey GLIDE - async/sync APIs, GlideClient, GlideClusterClient, asyncio, TLS, OpenTelemetry, batching, PubSub, streams, Lua scripting. Not for redis-py migration - use migrate-redis-py skill."
 version: 2.0.0
 argument-hint: "[API or config question]"
 ---

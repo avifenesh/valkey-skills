@@ -1,6 +1,6 @@
 ---
 name: migrate-lettuce
-description: "Lettuce to Valkey GLIDE migration for Java. Covers Spring Data Valkey path, native rewrite from RedisFuture to CompletableFuture, PubSub, no reactive API or codec equivalent. Not for Jedis migration - use migrate-jedis instead."
+description: "Use when migrating Java from Lettuce to Valkey GLIDE. Covers Spring Data Valkey path, native rewrite from RedisFuture to CompletableFuture, PubSub, no reactive API or codec equivalent. Not for Jedis migration - use migrate-jedis instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---

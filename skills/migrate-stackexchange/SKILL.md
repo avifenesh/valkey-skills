@@ -1,6 +1,6 @@
 ---
 name: migrate-stackexchange
-description: "StackExchange.Redis to Valkey GLIDE migration for C#/.NET. Covers API mapping, async/await Task<T>, no IDatabase layer, PubSub, Batch API (.NET 8.0+, preview). Not for greenfield C# apps - use valkey-glide-csharp instead."
+description: "Use when migrating C#/.NET from StackExchange.Redis to Valkey GLIDE. Covers API mapping, async/await Task, no IDatabase layer, PubSub, Batch API (.NET 8.0+, preview). Not for greenfield C# apps - use valkey-glide-csharp instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---

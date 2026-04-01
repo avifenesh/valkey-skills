@@ -48,7 +48,7 @@ The config registration uses `0` as the min (allowing non-scaling), while the co
 
 **bloom-tightening-ratio** - Controls how the FP rate decreases per scale-out. Each new sub-filter uses `fp_rate * tightening_ratio^N` where N is the filter index. Default: `"0.5"`. Range: exclusive (0, 1) using `BLOOM_TIGHTENING_RATIO_MIN` (0.0) and `BLOOM_TIGHTENING_RATIO_MAX` (1.0). Stored as `BLOOM_TIGHTENING_RATIO: ValkeyGILGuard<ValkeyString>` with parallel `BLOOM_TIGHTENING_F64: Mutex<f64>`.
 
-Both string configs exist because the Valkey module configuration system does not natively support f64 types. The string representation is the external interface; the Mutex<f64> is the internal working value.
+Both string configs exist because the Valkey module configuration system does not natively support f64 types. The string representation is the external interface; the `Mutex<f64>` is the internal working value.
 
 ## Boolean Configs
 

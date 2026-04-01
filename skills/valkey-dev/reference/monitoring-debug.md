@@ -181,9 +181,9 @@ for safety) or `backtrace_symbols_fd()`.
 
 `writeStacktraces()` collects stack traces from all threads:
 
-1. Reads /proc/<pid>/task/ to enumerate thread IDs
+1. Reads `/proc/<pid>/task/` to enumerate thread IDs
 2. Filters threads that block or ignore the signal (reads SigBlk/SigIgn from
-   /proc/<pid>/task/<tid>/status)
+   `/proc/<pid>/task/<tid>/status`)
 3. Uses `ThreadsManager_runOnThreads()` to send a signal to each thread
 4. Each thread's signal handler (`collect_stacktrace_data`) captures its own
    backtrace, thread name, and TID, then writes the data to a pipe

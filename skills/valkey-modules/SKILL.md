@@ -1,6 +1,6 @@
 ---
 name: valkey-modules
-description: "Valkey module usage in applications - valkey-search (FT.CREATE/FT.SEARCH/FT.AGGREGATE), valkey-json (JSON.SET/GET, JSONPath), valkey-bloom (BF.ADD/EXISTS). Not for building custom modules (use valkey-module-dev)."
+description: "Use when building apps with Valkey modules - valkey-search (FT.CREATE/FT.SEARCH/FT.AGGREGATE), valkey-json (JSON.SET/GET, JSONPath), valkey-bloom (BF.ADD/EXISTS). Not for building custom modules (use valkey-module-dev)."
 version: 1.0.0
 argument-hint: "[module name or query type]"
 ---

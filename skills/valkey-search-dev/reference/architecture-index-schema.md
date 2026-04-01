@@ -33,12 +33,12 @@ Key state owned by each IndexSchema:
 | `name_` | string | Index name from FT.CREATE |
 | `db_num_` | uint32_t | Valkey database number |
 | `attributes_` | flat_hash_map<string, Attribute> | Field name to Attribute (holds IndexBase) |
-| `attribute_data_type_` | unique_ptr<AttributeDataType> | Hash or JSON data source |
-| `backfill_job_` | MainThreadAccessGuard<optional<BackfillJob>> | Active backfill scan state |
+| `attribute_data_type_` | `unique_ptr<AttributeDataType>` | Hash or JSON data source |
+| `backfill_job_` | `MainThreadAccessGuard<optional<BackfillJob>>` | Active backfill scan state |
 | `time_sliced_mutex_` | TimeSlicedMRMWMutex | Read/write phase coordination |
 | `mutations_thread_pool_` | ThreadPool* | Writer pool reference (not owned) |
-| `tracked_mutated_records_` | InternedStringHashMap<DocumentMutation> | Pending mutations keyed by interned string |
-| `text_index_schema_` | shared_ptr<TextIndexSchema> | Shared text index state (language, punctuation, stop words) |
+| `tracked_mutated_records_` | `InternedStringHashMap<DocumentMutation>` | Pending mutations keyed by interned string |
+| `text_index_schema_` | `shared_ptr<TextIndexSchema>` | Shared text index state (language, punctuation, stop words) |
 | `stats_` | Stats | Per-index counters |
 
 ## Creation and Initialization

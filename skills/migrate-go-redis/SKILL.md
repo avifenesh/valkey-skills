@@ -1,6 +1,6 @@
 ---
 name: migrate-go-redis
-description: "go-redis to Valkey GLIDE migration for Go. Covers Result[T] nil handling, CGO dependency, PubSub, SetWithOptions, Alpine/MUSL gotchas. Not for greenfield Go apps - use valkey-glide-go instead."
+description: "Use when migrating Go from go-redis to Valkey GLIDE. Covers Result[T] nil handling, CGO dependency, PubSub, SetWithOptions, Alpine/MUSL gotchas. Not for greenfield Go apps - use valkey-glide-go instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---

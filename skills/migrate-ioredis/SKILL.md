@@ -1,6 +1,6 @@
 ---
 name: migrate-ioredis
-description: "ioredis to Valkey GLIDE migration for Node.js. Covers API mapping, creation-time PubSub, reversed publish args, Batch API, TypeScript types. Not for greenfield Node.js apps - use valkey-glide-nodejs instead."
+description: "Use when migrating Node.js from ioredis to Valkey GLIDE. Covers API mapping, creation-time PubSub, reversed publish args, Batch API, TypeScript types. Not for greenfield Node.js apps - use valkey-glide-nodejs instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---

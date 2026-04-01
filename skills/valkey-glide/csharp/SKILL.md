@@ -1,6 +1,6 @@
 ---
 name: valkey-glide-csharp
-description: "C#/.NET Valkey GLIDE client - async/await API, .NET 8.0+ (preview), GlideClient, configuration builders, TLS, PubSub, ConnectionMultiplexer compat. Not for StackExchange.Redis migration - use migrate-stackexchange skill."
+description: "Use when building C#/.NET apps with Valkey GLIDE - async/await API, .NET 8.0+ (preview), GlideClient, configuration builders, TLS, PubSub. Not for StackExchange.Redis migration - use migrate-stackexchange skill."
 version: 2.0.0
 argument-hint: "[API or config question]"
 ---

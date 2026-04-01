@@ -1,6 +1,6 @@
 ---
 name: spring-data-valkey
-description: "Spring Data Valkey integration for Spring Boot - GLIDE as first-class driver. Covers auto-configuration, ValkeyTemplate, caching, Actuator health, IAM auth, Spring Data Redis migration. Not for raw GLIDE Java API - use valkey-glide-java."
+description: "Use when integrating Spring Boot with Valkey via Spring Data Valkey. Covers auto-configuration, ValkeyTemplate, caching, Actuator health, IAM auth, Spring Data Redis migration. Not for raw GLIDE Java API."
 version: 1.1.0
 argument-hint: "[Spring config, template, or migration question]"
 ---

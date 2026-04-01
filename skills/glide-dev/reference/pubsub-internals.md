@@ -6,8 +6,8 @@ Use when working on GLIDE's PubSub subscription management, debugging subscripti
 
 The `GlidePubSubSynchronizer` (in `glide-core/src/pubsub/synchronizer.rs`) implements an observer pattern:
 
-- `desired_subscriptions` (RwLock<PubSubSubscriptionInfo>) - what the user wants
-- `current_subscriptions_by_address` (RwLock<HashMap<String, PubSubSubscriptionInfo>>) - what's actually subscribed, tracked per server address
+- `desired_subscriptions` (`RwLock<PubSubSubscriptionInfo>`) - what the user wants
+- `current_subscriptions_by_address` (`RwLock<HashMap<String, PubSubSubscriptionInfo>>`) - what's actually subscribed, tracked per server address
 
 A background reconciliation task runs at a configurable interval (default: 3 seconds) to align current with desired.
 

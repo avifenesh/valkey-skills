@@ -1,6 +1,6 @@
 ---
 name: migrate-redis-py
-description: "redis-py to Valkey GLIDE migration for Python. Covers async-first API, bytes returns (no decode_responses), list args, PubSub, ExpirySet/ConditionalChange. Not for greenfield Python apps - use valkey-glide-python instead."
+description: "Use when migrating Python from redis-py to Valkey GLIDE. Covers async-first API, bytes returns (no decode_responses), list args, PubSub, ExpirySet/ConditionalChange. Not for greenfield Python apps - use valkey-glide-python instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
