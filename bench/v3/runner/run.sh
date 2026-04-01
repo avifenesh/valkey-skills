@@ -69,12 +69,71 @@ declare -A TASK_MODELS=(
 # time_score: 1.0 if under budget, linear decay to 0 at 3x budget
 # cost_score: 1.0 if under $1, linear decay to 0 at $5
 
+PLUGIN_CACHE_DIR="$HOME/.claude/plugins/cache"
+PLUGIN_CACHE_BACKUP="$HOME/.claude/plugins/cache_backup_bench"
+CODEX_SKILLS_DIR="$HOME/.codex/skills"
+CODEX_SKILLS_BACKUP="$HOME/.codex/skills_backup_bench"
+AGENTS_SKILLS_DIR=".agents/skills"
+AGENTS_SKILLS_BACKUP=".agents/skills_backup_bench"
+
 clean_global_cache() {
   echo "[CLEAN] Clearing global Claude cache..."
-  rm -rf ~/.claude/plugins/cache/* 2>/dev/null || true
   rm -rf ~/.claude/statsig_cache/* 2>/dev/null || true
   echo "[CLEAN] Done"
 }
+
+hide_skill_caches() {
+  echo "[ISOLATE] Moving skill caches out of agent reach..."
+
+  # Claude plugin cache - move to backup
+  if [[ -d "$PLUGIN_CACHE_DIR" ]]; then
+    rm -rf "$PLUGIN_CACHE_BACKUP" 2>/dev/null || true
+    mv "$PLUGIN_CACHE_DIR" "$PLUGIN_CACHE_BACKUP"
+    mkdir -p "$PLUGIN_CACHE_DIR"
+    echo "[ISOLATE] Claude plugin cache moved to backup"
+  fi
+
+  # Codex skills - move to backup
+  if [[ -d "$CODEX_SKILLS_DIR" ]]; then
+    rm -rf "$CODEX_SKILLS_BACKUP" 2>/dev/null || true
+    mv "$CODEX_SKILLS_DIR" "$CODEX_SKILLS_BACKUP"
+    mkdir -p "$CODEX_SKILLS_DIR"
+    echo "[ISOLATE] Codex skills moved to backup"
+  fi
+
+  # .agents/skills in repo - move to backup
+  if [[ -d "$AGENTS_SKILLS_DIR" ]]; then
+    rm -rf "$AGENTS_SKILLS_BACKUP" 2>/dev/null || true
+    mv "$AGENTS_SKILLS_DIR" "$AGENTS_SKILLS_BACKUP"
+    mkdir -p "$AGENTS_SKILLS_DIR"
+    echo "[ISOLATE] .agents/skills moved to backup"
+  fi
+}
+
+restore_skill_caches() {
+  echo "[RESTORE] Restoring skill caches..."
+
+  if [[ -d "$PLUGIN_CACHE_BACKUP" ]]; then
+    rm -rf "$PLUGIN_CACHE_DIR" 2>/dev/null || true
+    mv "$PLUGIN_CACHE_BACKUP" "$PLUGIN_CACHE_DIR"
+    echo "[RESTORE] Claude plugin cache restored"
+  fi
+
+  if [[ -d "$CODEX_SKILLS_BACKUP" ]]; then
+    rm -rf "$CODEX_SKILLS_DIR" 2>/dev/null || true
+    mv "$CODEX_SKILLS_BACKUP" "$CODEX_SKILLS_DIR"
+    echo "[RESTORE] Codex skills restored"
+  fi
+
+  if [[ -d "$AGENTS_SKILLS_BACKUP" ]]; then
+    rm -rf "$AGENTS_SKILLS_DIR" 2>/dev/null || true
+    mv "$AGENTS_SKILLS_BACKUP" "$AGENTS_SKILLS_DIR"
+    echo "[RESTORE] .agents/skills restored"
+  fi
+}
+
+# Restore on exit (even on error/ctrl-c)
+trap restore_skill_caches EXIT
 
 run_single() {
   local task="$1" model="$2" condition="$3" run_num="$4"
@@ -108,8 +167,10 @@ run_single() {
 
   echo "[RUN] $run_id (max_turns=$max_turns, model=$model)"
 
-  # Run agent
+  # Run agent (--bare prevents auto-discovery of CLAUDE.md, skills, hooks)
+  # Skills only come via explicit --plugin-dir flags for "skill" condition
   claude -p "$prompt" \
+    --bare \
     --max-turns "$max_turns" \
     --model "$model" \
     --output-format json \
@@ -241,6 +302,9 @@ echo ""
 
 # Clean cache if requested
 [[ "${CLEAN_CACHE:-0}" == "1" ]] && clean_global_cache
+
+# Hide all skill caches so agents only access skills via --plugin-dir
+hide_skill_caches
 
 # Run in batches
 batch_num=0
