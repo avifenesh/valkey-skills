@@ -58,9 +58,11 @@ declare -A TASK_SKILLS=(
   [10-spring-java]="skills/spring-data-valkey,skills/valkey-glide/java"
 )
 
-declare -A TASK_MODELS=(
-  [sonnet]="sonnet"
-  [opus]="opus"
+# Model ID mapping - update these if your environment uses different IDs
+# Run `claude -p "test" --model <id>` to verify
+declare -A MODEL_IDS=(
+  [sonnet]="${CLAUDE_SONNET_MODEL:-us.anthropic.claude-sonnet-4-5-20250929-v1:0}"
+  [opus]="${CLAUDE_OPUS_MODEL:-us.anthropic.claude-opus-4-6-v1}"
 )
 
 # Scoring weights
@@ -86,27 +88,33 @@ hide_skill_caches() {
   echo "[ISOLATE] Moving skill caches out of agent reach..."
 
   # Claude plugin cache - move to backup
-  if [[ -d "$PLUGIN_CACHE_DIR" ]]; then
-    rm -rf "$PLUGIN_CACHE_BACKUP" 2>/dev/null || true
-    mv "$PLUGIN_CACHE_DIR" "$PLUGIN_CACHE_BACKUP"
+  if [[ -d "$PLUGIN_CACHE_DIR" ]] && [[ ! -d "$PLUGIN_CACHE_BACKUP" ]]; then
+    mv "$PLUGIN_CACHE_DIR" "$PLUGIN_CACHE_BACKUP" 2>/dev/null || true
     mkdir -p "$PLUGIN_CACHE_DIR"
     echo "[ISOLATE] Claude plugin cache moved to backup"
+  elif [[ -d "$PLUGIN_CACHE_DIR" ]]; then
+    rm -r "$PLUGIN_CACHE_DIR"/* 2>/dev/null || true
+    echo "[ISOLATE] Claude plugin cache emptied (backup already exists)"
   fi
 
   # Codex skills - move to backup
-  if [[ -d "$CODEX_SKILLS_DIR" ]]; then
-    rm -rf "$CODEX_SKILLS_BACKUP" 2>/dev/null || true
-    mv "$CODEX_SKILLS_DIR" "$CODEX_SKILLS_BACKUP"
+  if [[ -d "$CODEX_SKILLS_DIR" ]] && [[ ! -d "$CODEX_SKILLS_BACKUP" ]]; then
+    mv "$CODEX_SKILLS_DIR" "$CODEX_SKILLS_BACKUP" 2>/dev/null || true
     mkdir -p "$CODEX_SKILLS_DIR"
     echo "[ISOLATE] Codex skills moved to backup"
+  elif [[ -d "$CODEX_SKILLS_DIR" ]]; then
+    rm -r "$CODEX_SKILLS_DIR"/* 2>/dev/null || true
+    echo "[ISOLATE] Codex skills emptied (backup already exists)"
   fi
 
   # .agents/skills in repo - move to backup
-  if [[ -d "$AGENTS_SKILLS_DIR" ]]; then
-    rm -rf "$AGENTS_SKILLS_BACKUP" 2>/dev/null || true
-    mv "$AGENTS_SKILLS_DIR" "$AGENTS_SKILLS_BACKUP"
+  if [[ -d "$AGENTS_SKILLS_DIR" ]] && [[ ! -d "$AGENTS_SKILLS_BACKUP" ]]; then
+    mv "$AGENTS_SKILLS_DIR" "$AGENTS_SKILLS_BACKUP" 2>/dev/null || true
     mkdir -p "$AGENTS_SKILLS_DIR"
     echo "[ISOLATE] .agents/skills moved to backup"
+  elif [[ -d "$AGENTS_SKILLS_DIR" ]]; then
+    rm -r "$AGENTS_SKILLS_DIR"/* 2>/dev/null || true
+    echo "[ISOLATE] .agents/skills emptied (backup already exists)"
   fi
 }
 
@@ -169,44 +177,43 @@ run_single() {
 
   # Run agent (--bare prevents auto-discovery of CLAUDE.md, skills, hooks)
   # Skills only come via explicit --plugin-dir flags for "skill" condition
-  claude -p "$prompt" \
+  # cd into work_dir since claude uses cwd as workspace
+  local model_id="${MODEL_IDS[$model]}"
+  (cd "$work_dir" && claude -p "$prompt" \
     --bare \
     --max-turns "$max_turns" \
-    --model "$model" \
+    --model "$model_id" \
     --output-format json \
-    --cwd "$work_dir" \
     $skill_args \
-    > "$run_dir/agent_output.json" 2>"$run_dir/agent_stderr.log" || true
+    > "$run_dir/agent_output.json" 2>"$run_dir/agent_stderr.log") || true
 
   local end_time
   end_time=$(date +%s)
   local duration=$((end_time - start_time))
 
-  # Extract cost from output
-  local cost
-  cost=$(python3 -c "
-import json, sys
+  # Extract cost, turns, duration from agent output JSON
+  local cost turns agent_dur
+  read -r cost turns agent_dur <<< $(python3 -c "
+import json
 try:
     d = json.load(open('$run_dir/agent_output.json'))
-    print(d.get('cost_usd', d.get('usage', {}).get('cost_usd', 0)))
-except: print(0)
-" 2>/dev/null || echo "0")
+    cost = d.get('total_cost_usd', 0)
+    turns = d.get('num_turns', 0)
+    dur = d.get('duration_ms', 0) / 1000
+    print(f'{cost} {turns} {dur:.0f}')
+except: print('0 0 0')
+" 2>/dev/null || echo "0 0 0")
 
-  local turns
-  turns=$(python3 -c "
-import json, sys
-try:
-    d = json.load(open('$run_dir/agent_output.json'))
-    print(d.get('num_turns', 0))
-except: print(0)
-" 2>/dev/null || echo "0")
+  # Use agent-reported duration if available, otherwise wall clock
+  [[ "$agent_dur" != "0" ]] && duration="$agent_dur"
+
 
   # Run tests
   echo "[TEST] $run_id"
   bash "$task_dir/test.sh" "$work_dir" > "$run_dir/test_output.txt" 2>&1 || true
   local test_passed test_total
   test_passed=$(grep -c "^PASS:" "$run_dir/test_output.txt" 2>/dev/null || echo "0")
-  test_total=$(grep -c "^PASS:\|^FAIL:" "$run_dir/test_output.txt" 2>/dev/null || echo "0")
+  test_total=$(grep -cE "^PASS:|^FAIL:" "$run_dir/test_output.txt" 2>/dev/null || echo "0")
 
   # Write metadata
   cat > "$run_dir/metadata.json" <<EOFMETA
@@ -263,7 +270,12 @@ $(cat "$run_dir/test_output.txt" 2>/dev/null || echo "No test output")
 
   # Extract score
   local judge_score
-  judge_score=$(grep -oP 'SCORE:\s*(\d+(\.\d+)?)' "$run_dir/judge_output.txt" | head -1 | grep -oP '[\d.]+' || echo "0")
+  judge_score=$(python3 -c "
+import re
+text = open('$run_dir/judge_output.txt').read()
+m = re.search(r'SCORE:\s*([\d.]+)', text)
+print(m.group(1) if m else '0')
+" 2>/dev/null || echo "0")
 
   # Append to metadata
   python3 -c "
