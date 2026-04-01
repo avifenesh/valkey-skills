@@ -14,7 +14,7 @@
 | `skills/valkey-modules/` | valkey-modules | Module usage: search, JSON, bloom | 6 |
 | `skills/glide-dev/` | glide-dev | GLIDE client library contributors - Rust core, language bindings, build system | 7 |
 | `skills/valkey-module-dev/` | valkey-module-dev | Custom Valkey module developers - ValkeyModule_* C API | 46 |
-| `skills/valkey-json-dev/` | valkey-json-dev | valkey-json module contributors - architecture, JSONPath engine, RDB serialization | 4 |
+| `skills/valkey-json-dev/` | valkey-json-dev | valkey-json module contributors - architecture, JSONPath engine, RDB serialization | 15 |
 | `skills/valkey-search-dev/` | valkey-search-dev | valkey-search module contributors - C++ architecture, index types, query engine, build | 5 |
 | `skills/valkey-bloom-dev/` | valkey-bloom-dev | valkey-bloom module contributors - Rust scalable bloom filters, build, replication | 13 |
 
