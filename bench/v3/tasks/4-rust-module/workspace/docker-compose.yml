@@ -1,0 +1,36 @@
+services:
+  valkey-primary:
+    image: valkey/valkey:8.1
+    ports:
+      - "6400:6379"
+    volumes:
+      - ./target/release:/modules:ro
+      - primary-data:/data
+    command: >
+      valkey-server
+      --loadmodule /modules/libcounter_module.so
+      --save 1 1
+      --dbfilename dump.rdb
+      --dir /data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  valkey-replica:
+    image: valkey/valkey:8.1
+    ports:
+      - "6401:6379"
+    volumes:
+      - ./target/release:/modules:ro
+    command: >
+      valkey-server
+      --loadmodule /modules/libcounter_module.so
+      --replicaof valkey-primary 6379
+    depends_on:
+      valkey-primary:
+        condition: service_healthy
+
+volumes:
+  primary-data:

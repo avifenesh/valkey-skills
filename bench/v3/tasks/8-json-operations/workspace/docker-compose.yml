@@ -1,0 +1,13 @@
+services:
+  valkey:
+    image: valkey/valkey:8.1
+    ports:
+      - "6379:6379"
+    command: >
+      valkey-server
+      --loadmodule /usr/lib/valkey/modules/json.so
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 10

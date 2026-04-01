@@ -1,0 +1,76 @@
+services:
+  valkey-node-1:
+    image: valkey/valkey:8.1
+    command: >
+      valkey-server
+      --port 7000
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --protected-mode no
+      --bind 0.0.0.0
+    ports:
+      - "7000:7000"
+    networks:
+      valkey-cluster:
+        ipv4_address: 172.30.0.11
+
+  valkey-node-2:
+    image: valkey/valkey:8.1
+    command: >
+      valkey-server
+      --port 7001
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --protected-mode no
+      --bind 0.0.0.0
+    ports:
+      - "7001:7001"
+    networks:
+      valkey-cluster:
+        ipv4_address: 172.30.0.12
+
+  valkey-node-3:
+    image: valkey/valkey:8.1
+    command: >
+      valkey-server
+      --port 7002
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --protected-mode no
+      --bind 0.0.0.0
+    ports:
+      - "7002:7002"
+    networks:
+      valkey-cluster:
+        ipv4_address: 172.30.0.13
+
+  cluster-init:
+    image: valkey/valkey:8.1
+    depends_on:
+      - valkey-node-1
+      - valkey-node-2
+      - valkey-node-3
+    command: >
+      bash -c "
+        sleep 3 &&
+        valkey-cli --cluster create
+          172.30.0.11:7000
+          172.30.0.12:7001
+          172.30.0.13:7002
+          --cluster-replicas 0 --cluster-yes
+      "
+    networks:
+      valkey-cluster:
+
+networks:
+  valkey-cluster:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

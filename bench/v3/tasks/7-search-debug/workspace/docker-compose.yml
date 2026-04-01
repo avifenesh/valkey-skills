@@ -1,0 +1,18 @@
+services:
+  valkey:
+    image: valkey/valkey:8.1
+    ports:
+      - "6379:6379"
+    command: >
+      valkey-server
+      --loadmodule /usr/lib/valkey/modules/search.so
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  valkey-data:

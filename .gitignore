@@ -4,3 +4,4 @@
 .junie/
 skills-lock.json
 node_modules/
+bench/v3/tasks/5-bloom-feature/workspace/valkey-bloom/
