@@ -187,7 +187,7 @@ algo_->markDelete(internal_id);
 algo_->addPoint((T*)record.data(), internal_id, algo_->allow_replace_deleted_);
 ```
 
-The TODO notes that `updatePoint` was considered but concerns about search accuracy led to the mark-delete-then-add approach.
+The `updatePoint` API was considered but concerns about search accuracy led to the mark-delete-then-add approach.
 
 **Remove**: `RemoveRecordImpl()` only calls `markDelete()` - vectors are never physically removed from the HNSW graph, only tombstoned. `UnTrackVector()` is a no-op for HNSW (unlike FLAT which erases from its map).
 

@@ -116,7 +116,7 @@ The `clang_tidy_format.yml` workflow only checks files modified in the PR (not t
 3. Finds modified `.cc` and `.h` files (excluding `third_party/` and `src/indexes/text/rax/`)
 4. Runs `ci/check_clang_format.sh` on each file
 
-Clang-tidy is defined in the workflow but currently disabled (`TODO: Enable clang tidy after the existing code is tidied`).
+Clang-tidy is defined in the workflow but currently disabled (pending codebase-wide tidy pass).
 
 To format locally before pushing:
 

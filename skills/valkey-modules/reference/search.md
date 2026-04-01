@@ -4,19 +4,19 @@ Use when implementing vector similarity search, full-text search, hybrid queries
 
 ## Contents
 
-- Overview (line 24)
-- Full-Text Search (1.2.0+) (line 48)
-- Tag and Numeric Search (1.2.0+) (line 63)
-- FT.AGGREGATE (1.1.0+) (line 72)
-- Vector Search Algorithms (line 85)
-- Performance (line 116)
-- Supported Data Types (line 123)
-- Index Creation (line 130)
-- Query Syntax (line 176)
-- Client Integration via GLIDE (line 254)
-- Feature Comparison: valkey-search vs RediSearch (line 266)
-- Commands (line 285)
-- Use Cases (line 296)
+- Overview (line 23)
+- Full-Text Search (1.2.0+) (line 44)
+- Tag and Numeric Search (1.2.0+) (line 59)
+- FT.AGGREGATE (1.1.0+) (line 68)
+- Vector Search Algorithms (line 81)
+- Performance (line 112)
+- Supported Data Types (line 119)
+- Index Creation (line 123)
+- Query Syntax (line 169)
+- Client Integration via GLIDE (line 247)
+- Feature Comparison: valkey-search vs RediSearch (line 259)
+- Commands (line 278)
+- Use Cases (line 289)
 
 ---
 
@@ -37,10 +37,7 @@ valkey-search is a search module for Valkey. Originally contributed by Google Cl
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.0.0-rc1 | 2025-03-29 | First release candidate |
 | 1.0.0 GA | 2025-05-28 | Vector search GA |
-| 1.0.1 | 2025-06-11 | Bug fixes |
-| 1.0.2 | 2025-11-25 | Stability |
 | 1.1.0 | 2025-12-24 | FT.AGGREGATE, non-vector indexes, cluster consistency |
 | 1.2.0 GA | 2026-03-17 | Full-text search, tag search, numeric ranges, hybrid queries |
 
@@ -121,10 +118,7 @@ HNSW parameters:
 
 ## Supported Data Types
 
-valkey-search indexes fields stored in:
-
-- **Hash** data type - vector stored as a binary blob field
-- **JSON** data type (via valkey-json) - vector stored as a JSON array field
+Indexes fields in **Hash** (vector as binary blob) and **JSON** (vector as JSON array, via valkey-json).
 
 ## Index Creation
 
@@ -302,4 +296,3 @@ FT.CURSOR, FT.EXPLAINCLI, and INFIELDS/INKEYS are open feature requests for futu
 | Catalog filtering | Combine tag, numeric, and text filters for product/content search |
 | Analytics | FT.AGGREGATE with GROUPBY and REDUCE for real-time aggregations |
 | Hybrid search | Combine any of text, tag, numeric, and vector in a single query |
-

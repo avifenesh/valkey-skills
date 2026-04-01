@@ -287,16 +287,12 @@ client.xadd("tasks", Map.of("job", "process-image", "url", "img.png")).get();
 while (true) {
     var messages = client.xreadgroup(
         Map.of("tasks", ">"), "workers", "worker-1",
-        StreamReadGroupOptions.builder().count(5L).block(2000L).build()
-    ).get();
-
+        StreamReadGroupOptions.builder().count(5L).block(2000L).build()).get();
     if (messages == null) continue;
-
     for (var stream : messages.values()) {
         for (var entry : stream.entrySet()) {
-            String entryId = entry.getKey();
-            // process entry.getValue() fields...
-            client.xack("tasks", "workers", new String[]{entryId}).get();
+            // process entry.getValue() fields, then acknowledge
+            client.xack("tasks", "workers", new String[]{entry.getKey()}).get();
         }
     }
 }

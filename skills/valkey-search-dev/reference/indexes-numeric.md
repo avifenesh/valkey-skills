@@ -102,7 +102,7 @@ Range counting uses two `CountGreaterThan` calls with clever inclusive flag inve
 
 The tree self-balances via AVL rotations (`RotateLeft`, `RotateRight`) triggered after every `Add` or `Remove`. New values are inserted at leaf positions; removal of a leaf with count 0 collapses it and promotes the remaining child.
 
-Memory overhead is approximately 80 bytes per entry (40 bytes per node, roughly 2 nodes per entry in a balanced tree). The TODO in the source notes the possibility of a unified data structure to eliminate this overhead.
+Memory overhead is approximately 80 bytes per entry (40 bytes per node, roughly 2 nodes per entry in a balanced tree). A unified data structure could eliminate this overhead but is not yet implemented.
 
 ## Range Queries
 

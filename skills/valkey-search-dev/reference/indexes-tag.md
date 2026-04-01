@@ -156,7 +156,7 @@ std::unique_ptr<Tag::EntriesFetcher> Tag::Search(
 }
 ```
 
-Multiple tags in a single predicate produce a union - `entries` collects unique nodes from all tag lookups (deduplication via `flat_hash_set`). A source TODO notes suffix/infix search support is planned.
+Multiple tags in a single predicate produce a union - `entries` collects unique nodes from all tag lookups (deduplication via `flat_hash_set`). Suffix and infix search support is planned but not yet implemented.
 
 ## Tag Predicate Evaluation
 

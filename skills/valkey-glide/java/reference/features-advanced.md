@@ -38,15 +38,11 @@ GlideClientConfiguration.builder()
 
 // Custom root certificates from PEM
 TlsAdvancedConfiguration tlsConfig = TlsAdvancedConfiguration.builder()
-    .rootCertificates(Files.readAllBytes(Path.of("/path/to/ca.pem")))
-    .build();
+    .rootCertificates(Files.readAllBytes(Path.of("/path/to/ca.pem"))).build();
 
 // From Java KeyStore (JKS or PKCS12)
 TlsAdvancedConfiguration tlsConfig = TlsAdvancedConfiguration.fromKeyStore(
     "/path/to/truststore.jks", "password".toCharArray(), "JKS");
-
-// Connection timeout (default 2000ms)
-AdvancedGlideClientConfiguration.builder().connectionTimeout(500).build();
 ```
 
 ## Authentication

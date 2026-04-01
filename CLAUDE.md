@@ -8,9 +8,9 @@
 
 | Directory | Skill | Audience | Files |
 |-----------|-------|----------|-------|
-| `skills/valkey/` | valkey | Application developers - Valkey-specific features, patterns, best practices | 29 |
+| `skills/valkey/` | valkey | Application developers - Valkey-specific features, patterns, best practices | 36 |
 | `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 65 |
-| `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 54 |
+| `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 61 |
 | `skills/valkey-modules/` | valkey-modules | Module usage: search, JSON, bloom | 6 |
 | `skills/glide-dev/` | glide-dev | GLIDE client library contributors - Rust core, language bindings, build system | 7 |
 | `skills/valkey-module-dev/` | valkey-module-dev | Custom Valkey module developers - ValkeyModule_* C API | 46 |
