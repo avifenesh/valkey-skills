@@ -16,7 +16,6 @@ Source: `src/bio.c`, `src/bio.h`
 - Job Creation Functions (line 189)
 - Monitoring and Control (line 249)
 - Key Differences from I/O Threads (line 293)
-- See Also (line 305)
 
 ---
 
@@ -292,12 +291,6 @@ variable set during worker initialization.
 
 ## Key Differences from I/O Threads
 
-| Aspect | BIO Threads | I/O Threads |
-|--------|-------------|-------------|
-| Purpose | OS-level blocking ops | Network read/write/parse |
-| Queue type | mutexQueue (mutex+condvar) | Lock-free ring buffer |
-| Count | 5 fixed workers | 1 to `IO_THREADS_MAX_NUM`, dynamic |
-| Job routing | By job type | By client ID hash |
-| When idle | Block on condvar | Spin then park on mutex |
+BIO threads handle OS-level blocking ops (fsync, close, lazy free) using mutex+condvar queues with 5 fixed workers routed by job type. I/O threads handle network read/write/parse using lock-free ring buffers with a configurable thread count, routed by client ID hash. BIO workers block on condvar when idle; I/O threads spin then park.
 
 ---

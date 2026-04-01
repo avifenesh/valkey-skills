@@ -9,7 +9,7 @@
 | Directory | Skill | Audience | Files |
 |-----------|-------|----------|-------|
 | `skills/valkey/` | valkey | Application developers - Valkey-specific features, patterns, best practices | 29 |
-| `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 60 |
+| `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 65 |
 | `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 54 |
 | `skills/valkey-modules/` | valkey-modules | Module usage: search, JSON, bloom | 6 |
 | `skills/glide-dev/` | glide-dev | GLIDE client library contributors - Rust core, language bindings, build system | 7 |
@@ -32,15 +32,15 @@
 
 ### Migration Skills (6 standalone + 1 framework)
 
-| Directory | Skill | Content |
-|-----------|-------|---------|
-| `skills/migrate-jedis/` | migrate-jedis | Jedis to GLIDE Java migration |
-| `skills/migrate-lettuce/` | migrate-lettuce | Lettuce to GLIDE Java migration |
-| `skills/migrate-ioredis/` | migrate-ioredis | ioredis to GLIDE Node.js migration |
-| `skills/migrate-redis-py/` | migrate-redis-py | redis-py to GLIDE Python migration |
-| `skills/migrate-go-redis/` | migrate-go-redis | go-redis to GLIDE Go migration |
-| `skills/migrate-stackexchange/` | migrate-stackexchange | StackExchange.Redis to GLIDE C# migration |
-| `skills/spring-data-valkey/` | spring-data-valkey | Spring Boot + Spring Data Valkey integration |
+| Directory | Skill | Content | Files |
+|-----------|-------|---------|-------|
+| `skills/migrate-jedis/` | migrate-jedis | Jedis to GLIDE Java migration | 3 |
+| `skills/migrate-lettuce/` | migrate-lettuce | Lettuce to GLIDE Java migration | 3 |
+| `skills/migrate-ioredis/` | migrate-ioredis | ioredis to GLIDE Node.js migration | 3 |
+| `skills/migrate-redis-py/` | migrate-redis-py | redis-py to GLIDE Python migration | 3 |
+| `skills/migrate-go-redis/` | migrate-go-redis | go-redis to GLIDE Go migration | 3 |
+| `skills/migrate-stackexchange/` | migrate-stackexchange | StackExchange.Redis to GLIDE C# migration | 3 |
+| `skills/spring-data-valkey/` | spring-data-valkey | Spring Boot + Spring Data Valkey integration | 3 |
 
 ### Glide-MQ (3 skills under glide-mq/)
 
@@ -52,11 +52,11 @@
 
 ## Architecture
 
-Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-modules, glide-dev, valkey-module-dev, valkey-json-dev, valkey-search-dev, valkey-bloom-dev) and per-language GLIDE skills all follow the router pattern:
-- `SKILL.md` - concise router (<500 lines) with trigger phrases and reference tables
-- `reference/` - deep RAG library of focused docs (most under 300 lines)
+Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-modules, glide-dev, valkey-module-dev, valkey-json-dev, valkey-search-dev, valkey-bloom-dev), migration skills (migrate-jedis, migrate-lettuce, migrate-ioredis, migrate-redis-py, migrate-go-redis, migrate-stackexchange), spring-data-valkey, and per-language GLIDE skills all follow the router pattern:
+- `SKILL.md` - concise router (<200 lines) with trigger phrases and reference tables
+- `reference/` - deep RAG library of focused docs (each under 300 lines)
 
-Per-language GLIDE skills (Python, Java, Node.js, Go have 9 files; C#, PHP, Ruby have 4 files) are fully language-specific - each contains its own complete API reference, patterns, and examples with no shared reference files. Migration skills and Glide-MQ skills are self-contained single-file SKILL.md documents.
+Per-language GLIDE skills (Python, Java, Node.js, Go have 9 files; C#, PHP, Ruby have 4 files) are fully language-specific - each contains its own complete API reference, patterns, and examples with no shared reference files. Migration skills each have 2 reference files (api-mapping and advanced-patterns). Glide-MQ skills are self-contained single-file SKILL.md documents.
 
 The AI loads SKILL.md into context, scans the tables, and reads only the specific reference file needed. No context bloat.
 

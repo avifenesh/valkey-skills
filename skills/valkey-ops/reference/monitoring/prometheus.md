@@ -1,7 +1,6 @@
-Use when configuring Prometheus to scrape Valkey metrics - exporter deployment,
+Use when configuring Prometheus to scrape Valkey metrics - exporter deployment, scrape configuration, metric naming, and multi-instance setups.
 
 # Prometheus Exporter Setup
-scrape configuration, metric naming, and multi-instance setups.
 
 ## Contents
 
@@ -48,11 +47,7 @@ curl -s http://localhost:9121/metrics | grep redis_connected_clients
 
 ## Exporter: oliver006/redis_exporter
 
-The `oliver006/redis_exporter` is the standard
-Prometheus exporter for Valkey. Officially branded as "Prometheus Valkey &
-Redis Metrics Exporter". It natively supports `valkey://` and `valkeys://`
-URI schemes in addition to `redis://` and `rediss://`. Available on Docker
-Hub, ghcr.io, and quay.io. Supports Valkey 7.x, 8.x, and 9.x.
+The `oliver006/redis_exporter` is the standard Prometheus exporter for Valkey. Officially branded as "Prometheus Valkey & Redis Metrics Exporter". It natively supports `valkey://` and `valkeys://` URI schemes in addition to `redis://` and `rediss://`. Available on Docker Hub, ghcr.io, and quay.io. Supports Valkey 7.x, 8.x, and 9.x.
 
 ### Docker deployment
 
@@ -274,7 +269,6 @@ The exporter uses the `redis_` prefix by default (configurable via
 | Standard INFO metrics | 15s-30s | Low overhead, good resolution |
 | Key-level metrics (`check-keys`) | 60s-120s | SCAN can be expensive on large keyspaces |
 | Key group aggregation | 120s-300s | Full keyspace scan with Lua |
-| Slowlog metrics | 30s | Catch transient slow commands |
 
 ---
 
@@ -293,8 +287,6 @@ granting data access or dangerous operations.
 
 ## Verification
 
-After setup, verify the exporter is working:
-
 ```bash
 # Check exporter health
 curl http://exporter-host:9121/health
@@ -302,8 +294,5 @@ curl http://exporter-host:9121/health
 # View raw metrics
 curl http://exporter-host:9121/metrics
 
-# Check Prometheus targets
-# Navigate to Prometheus UI -> Status -> Targets
+# Check targets in Prometheus UI -> Status -> Targets
 ```
-
----

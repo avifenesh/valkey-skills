@@ -281,13 +281,7 @@ Rarely beneficial above 8. Profile with `valkey-benchmark` to find the sweet spo
 
 ### maxmemory-clients
 
-For all workloads, consider setting `maxmemory-clients` to prevent a single misbehaving client from consuming all memory:
-
-```
-maxmemory-clients 5%
-```
-
-This caps aggregate client buffer memory at 5% of `maxmemory`. Default is `0` (disabled).
+For all workloads, set `maxmemory-clients` to prevent a single misbehaving client from consuming all memory. `maxmemory-clients 5%` caps aggregate client buffer memory at 5% of `maxmemory`. Default is `0` (disabled).
 
 ### Replication Add-On
 

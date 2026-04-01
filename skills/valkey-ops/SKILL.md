@@ -7,7 +7,7 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 
 # Valkey Operations Reference
 
-53 source-verified reference docs for deploying and operating self-hosted Valkey. All config defaults verified against actual Valkey source code.
+60 source-verified reference docs for deploying and operating self-hosted Valkey. All config defaults verified against actual Valkey source code.
 
 ## Routing
 
@@ -32,7 +32,8 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 | Topic | Reference |
 |-------|-----------|
 | Package managers, building from source, build flags | [install](reference/deployment/install.md) |
-| Docker images, Compose patterns, volume mounts | [docker](reference/deployment/docker.md) |
+| Docker images (official, Bitnami), cluster example | [docker-images](reference/deployment/docker-images.md) |
+| Compose patterns, volumes, networking, config injection | [docker-patterns](reference/deployment/docker-patterns.md) |
 | systemd service, kernel tuning, multi-instance | [bare-metal](reference/deployment/bare-metal.md) |
 
 
@@ -54,7 +55,8 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 | Topic | Reference |
 |-------|-----------|
 | How Sentinel works, failure detection, election | [architecture](reference/sentinel/architecture.md) |
-| Step-by-step deployment, config directives | [deployment-runbook](reference/sentinel/deployment-runbook.md) |
+| Step-by-step deployment, config directives | [sentinel-deployment](reference/sentinel/sentinel-deployment.md) |
+| Tuning, cross-DC, Docker/NAT, coordinated failover, systemd | [sentinel-advanced](reference/sentinel/sentinel-advanced.md) |
 | Split-brain prevention, min-replicas settings | [split-brain](reference/sentinel/split-brain.md) |
 
 
@@ -74,7 +76,8 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 |-------|-----------|
 | RDB configuration, save directives, BGSAVE | [rdb](reference/persistence/rdb.md) |
 | AOF configuration, fsync policies, hybrid mode | [aof](reference/persistence/aof.md) |
-| Backup scripts, disaster recovery, FLUSHALL recovery | [backup-recovery](reference/persistence/backup-recovery.md) |
+| Automated backup scripts, off-site backup, retention | [backup-strategies](reference/persistence/backup-strategies.md) |
+| Disaster recovery, FLUSHALL recovery, verification | [disaster-recovery](reference/persistence/disaster-recovery.md) |
 
 
 ## Replication
@@ -103,7 +106,8 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 | INFO sections, critical metrics, diagnostic commands | [metrics](reference/monitoring/metrics.md) |
 | Prometheus exporter setup, scrape configs | [prometheus](reference/monitoring/prometheus.md) |
 | Grafana dashboards, panel definitions, PromQL queries | [grafana](reference/monitoring/grafana.md) |
-| Alert rules YAML, thresholds, Alertmanager routing | [alerting](reference/monitoring/alerting.md) |
+| Alert rules YAML (complete rule set) | [alerting-rules](reference/monitoring/alerting-rules.md) |
+| Threshold tuning, recording rules, Alertmanager routing | [alerting-config](reference/monitoring/alerting-config.md) |
 | Commandlog (slow/large request/reply tracking) | [commandlog](reference/monitoring/commandlog.md) |
 
 
@@ -128,7 +132,8 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 | Replication lag: diagnosis, backlog, buffer tuning | [replication-lag](reference/troubleshooting/replication-lag.md) |
 | Slow commands: commandlog, common culprits, fixes | [slow-commands](reference/troubleshooting/slow-commands.md) |
 | Cluster partitions: network splits, recovery | [cluster-partitions](reference/troubleshooting/cluster-partitions.md) |
-| Fork latency, memory testing, diagnostic commands | [diagnostics](reference/troubleshooting/diagnostics.md) |
+| 7-phase runbook, fork latency, memory testing | [diagnostics-runbook](reference/troubleshooting/diagnostics-runbook.md) |
+| Diagnostic commands, incident patterns, health script | [diagnostics-commands](reference/troubleshooting/diagnostics-commands.md) |
 
 
 ## Upgrades
@@ -145,8 +150,10 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 | Topic | Reference |
 |-------|-----------|
 | Official and Bitnami Helm charts, key values | [helm](reference/kubernetes/helm.md) |
-| Official, Hyperspike, and SAP operators, CRD examples | [operators](reference/kubernetes/operators.md) |
-| StatefulSet patterns, PVCs, probes, resource sizing, PDB | [statefulset](reference/kubernetes/statefulset.md) |
+| Official and Hyperspike operators, CRD examples | [operators-overview](reference/kubernetes/operators-overview.md) |
+| SAP operator, day-2 operations, choosing operators | [operators-day2](reference/kubernetes/operators-day2.md) |
+| StatefulSet PVCs, probes, resource sizing, PDB | [statefulset-config](reference/kubernetes/statefulset-config.md) |
+| Complete StatefulSet manifest, common gotchas | [statefulset-example](reference/kubernetes/statefulset-example.md) |
 | Kernel tuning, Docker/NAT, monitoring sidecars | [tuning-k8s](reference/kubernetes/tuning-k8s.md) |
 
 

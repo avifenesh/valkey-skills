@@ -9,29 +9,13 @@ argument-hint: "[API or pattern to migrate]"
 
 Use when migrating a Node.js application from ioredis to the GLIDE client library.
 
----
+## Routing
 
-## Contents
-
-- [Key Differences](#key-differences)
-- [Connection Setup](#connection-setup)
-- [Configuration Mapping](#configuration-mapping)
-- [String Operations](#string-operations)
-- [Hash Operations](#hash-operations)
-- [List Operations](#list-operations)
-- [Set Operations](#set-operations)
-- [Sorted Set Operations](#sorted-set-operations)
-- [Delete and Exists](#delete-and-exists)
-- [Cluster Mode](#cluster-mode)
-- [Lua Scripting](#lua-scripting)
-- [Pipelines and Transactions](#pipelines-and-transactions)
-- [Pub/Sub](#pubsub)
-- [Event Handling](#event-handling)
-- [TypeScript Support](#typescript-support)
-- [Incremental Migration Strategy](#incremental-migration-strategy)
-- [Gotchas](#gotchas)
-
----
+- String, hash, list, set, sorted set, delete, exists, cluster -> API Mapping
+- Pipeline, transaction, Batch API, multi -> Advanced Patterns
+- PubSub, subscribe, publish, reversed args -> Advanced Patterns
+- Lua scripting, defineCommand, evalsha -> Advanced Patterns
+- Event handling, TypeScript -> Advanced Patterns
 
 ## Key Differences
 
@@ -46,29 +30,22 @@ Use when migrating a Node.js application from ioredis to the GLIDE client librar
 | Script caching | Manual defineCommand | Automatic via Script class |
 | Events | EventEmitter (on("error")) | No event emitter - errors surface per-command |
 
----
-
-## Connection Setup
+## Quick Start - Connection Setup
 
 **ioredis:**
 ```javascript
 const Redis = require("ioredis");
 const redis = new Redis({ host: "localhost", port: 6379 });
-await redis.ping();
 ```
 
 **GLIDE:**
 ```javascript
 import { GlideClient } from "@valkey/valkey-glide";
-
 const client = await GlideClient.createClient({
     addresses: [{ host: "localhost", port: 6379 }],
     requestTimeout: 5000,
 });
-await client.ping();
 ```
-
----
 
 ## Configuration Mapping
 
@@ -84,312 +61,6 @@ await client.ping();
 | maxRetriesPerRequest | Not applicable - GLIDE handles retries internally |
 | lazyConnect: true | Default behavior in GLIDE |
 
----
-
-## String Operations
-
-**ioredis:**
-```javascript
-await redis.set("key", "value");
-await redis.set("key", "value", "EX", 60);
-await redis.set("key", "value", "NX");
-await redis.setex("key", 60, "value");
-const val = await redis.get("key");
-```
-
-**GLIDE:**
-```javascript
-import { TimeUnit } from "@valkey/valkey-glide";
-
-await client.set("key", "value");
-await client.set("key", "value", { expiry: { type: TimeUnit.Seconds, count: 60 } });
-await client.set("key", "value", { conditionalSet: "onlyIfDoesNotExist" });
-// No separate setex - use set() with expiry option
-const val = await client.get("key");
-```
-
----
-
-## Hash Operations
-
-**ioredis:**
-```javascript
-await redis.hset("hash", "f1", "v1", "f2", "v2");    // spread pairs
-await redis.hset("hash", { f1: "v1", f2: "v2" });     // also works
-const val = await redis.hget("hash", "f1");
-const all = await redis.hgetall("hash");                // {f1: "v1", f2: "v2"}
-```
-
-**GLIDE:**
-```javascript
-// Object form or HashDataType array form
-await client.hset("hash", { f1: "v1", f2: "v2" });
-await client.hset("hash", [{ field: "f1", value: "v1" }, { field: "f2", value: "v2" }]);
-const val = await client.hget("hash", "f1");
-const all = await client.hgetall("hash");               // Record<string, string>
-```
-
----
-
-## List Operations
-
-**ioredis:**
-```javascript
-await redis.lpush("list", "a", "b", "c");
-await redis.rpush("list", "x", "y");
-const val = await redis.lpop("list");
-const range = await redis.lrange("list", 0, -1);
-```
-
-**GLIDE:**
-```javascript
-await client.lpush("list", ["a", "b", "c"]);            // array arg
-await client.rpush("list", ["x", "y"]);
-const val = await client.lpop("list");
-const range = await client.lrange("list", 0, -1);
-```
-
----
-
-## Set Operations
-
-**ioredis:**
-```javascript
-await redis.sadd("set", "a", "b", "c");
-await redis.srem("set", "a", "b");
-const members = await redis.smembers("set");
-```
-
-**GLIDE:**
-```javascript
-await client.sadd("set", ["a", "b", "c"]);              // array arg
-await client.srem("set", ["a", "b"]);
-const members = await client.smembers("set");
-```
-
----
-
-## Sorted Set Operations
-
-**ioredis:**
-```javascript
-await redis.zadd("zset", 1, "alice", 2, "bob");         // score, member pairs
-await redis.zadd("zset", "NX", 1, "alice");              // NX flag
-const score = await redis.zscore("zset", "alice");
-const range = await redis.zrange("zset", 0, -1, "WITHSCORES");
-```
-
-**GLIDE:**
-```javascript
-import { ConditionalChange } from "@valkey/valkey-glide";
-
-// Array of {element, score} objects or Record<string, number>
-await client.zadd("zset", [
-    { element: "alice", score: 1 },
-    { element: "bob", score: 2 },
-]);
-await client.zadd("zset", { alice: 1 }, { conditionalChange: ConditionalChange.ONLY_IF_DOES_NOT_EXIST });
-const score = await client.zscore("zset", "alice");
-const range = await client.zrangeWithScores("zset", { start: 0, end: -1 });
-```
-
----
-
-## Delete and Exists
-
-**ioredis:**
-```javascript
-await redis.del("k1", "k2", "k3");
-const count = await redis.exists("k1", "k2");
-```
-
-**GLIDE:**
-```javascript
-await client.del(["k1", "k2", "k3"]);                   // array arg
-const count = await client.exists(["k1", "k2"]);
-```
-
----
-
-## Cluster Mode
-
-**ioredis:**
-```javascript
-const cluster = new Redis.Cluster([
-    { host: "node1.example.com", port: 6379 },
-    { host: "node2.example.com", port: 6380 },
-], { scaleReads: "slave" });
-```
-
-**GLIDE:**
-```javascript
-import { GlideClusterClient } from "@valkey/valkey-glide";
-
-const client = await GlideClusterClient.createClient({
-    addresses: [
-        { host: "node1.example.com", port: 6379 },
-        { host: "node2.example.com", port: 6380 },
-    ],
-    readFrom: "preferReplica",
-});
-```
-
-GLIDE auto-discovers the full topology from seed nodes. No natMap or manual slot configuration needed.
-
----
-
-## Lua Scripting
-
-**ioredis:**
-```javascript
-// Manual defineCommand
-redis.defineCommand("mycommand", {
-    numberOfKeys: 1,
-    lua: "return redis.call('GET', KEYS[1])",
-});
-const result = await redis.mycommand("key1");
-
-// Or evalsha manually
-const sha = await redis.script("LOAD", luaScript);
-const result2 = await redis.evalsha(sha, 1, "key1");
-```
-
-**GLIDE:**
-```javascript
-import { Script } from "@valkey/valkey-glide";
-
-// Automatic caching - SCRIPT LOAD on first call, EVALSHA on subsequent
-const script = new Script("return redis.call('GET', KEYS[1])");
-const result = await client.invokeScript(script, { keys: ["key1"] });
-```
-
-No manual SHA management. GLIDE caches the script automatically and uses EVALSHA on repeat calls.
-
----
-
-## Pipelines and Transactions
-
-**ioredis:**
-```javascript
-// Pipeline
-const pipeline = redis.pipeline();
-pipeline.set("k1", "v1");
-pipeline.get("k1");
-const results = await pipeline.exec();  // [[null, "OK"], [null, "v1"]]
-
-// Transaction
-const multi = redis.multi();
-multi.set("k1", "v1");
-multi.get("k1");
-const results2 = await multi.exec();    // [[null, "OK"], [null, "v1"]]
-```
-
-**GLIDE:**
-```javascript
-import { Batch } from "@valkey/valkey-glide";
-
-// Transaction (atomic)
-const tx = new Batch(true);
-tx.set("k1", "v1");
-tx.get("k1");
-const results = await client.exec(tx, false);  // ["OK", "v1"]
-
-// Pipeline (non-atomic)
-const pipe = new Batch(false);
-pipe.set("k1", "v1");
-pipe.get("k1");
-const results2 = await client.exec(pipe, false);  // ["OK", "v1"]
-```
-
-Note: GLIDE returns flat result arrays, not the [error, result] tuple format that ioredis uses.
-
----
-
-## Pub/Sub
-
-**ioredis:**
-```javascript
-const sub = redis.duplicate();
-sub.subscribe("channel");
-sub.psubscribe("events:*");
-sub.on("message", (channel, message) => {
-    console.log(`${channel}: ${message}`);
-});
-sub.on("pmessage", (pattern, channel, message) => {
-    console.log(`[${pattern}] ${channel}: ${message}`);
-});
-```
-
-**GLIDE (static subscriptions - at client creation):**
-```javascript
-import { GlideClusterClient, GlideClusterClientConfiguration } from "@valkey/valkey-glide";
-
-const subscriber = await GlideClusterClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-    pubsubSubscriptions: {
-        channelsAndPatterns: {
-            [GlideClusterClientConfiguration.PubSubChannelModes.Exact]: new Set(["channel"]),
-            [GlideClusterClientConfiguration.PubSubChannelModes.Pattern]: new Set(["events:*"]),
-        },
-        callback: (msg) => {
-            console.log(`[${msg.channel}] ${msg.message} (pattern: ${msg.pattern ?? "none"})`);
-        },
-    },
-});
-```
-
-**GLIDE (polling - no callback):**
-```javascript
-const subscriber = await GlideClusterClient.createClient({
-    addresses,
-    pubsubSubscriptions: {
-        channelsAndPatterns: {
-            [GlideClusterClientConfiguration.PubSubChannelModes.Exact]: new Set(["channel"]),
-        },
-        // No callback - use polling
-    },
-});
-
-const msg = await subscriber.getPubSubMessage();    // awaits until message arrives
-const next = subscriber.tryGetPubSubMessage();       // returns null if no message
-```
-
-**Publishing - argument order is reversed:**
-```javascript
-// ioredis: channel first, message second
-await cluster.publish("events:order", JSON.stringify({ id: 1, status: "created" }));
-
-// GLIDE: message first, channel second
-await publisher.publish(JSON.stringify({ id: 1, status: "created" }), "events:order");
-```
-
-The publisher must be a separate client from the subscriber. Any standard `GlideClusterClient` (without `pubsubSubscriptions`) can publish.
-
-Node.js GLIDE has NO runtime `subscribe()` / `psubscribe()` methods. All subscriptions must be declared at client creation time. To change subscriptions, close and recreate the client. Use callbacks (set at creation time) or polling (`getPubSubMessage` / `tryGetPubSubMessage`). Callback and polling are mutually exclusive. RESP3 required for PubSub.
-
----
-
-## Event Handling
-
-**ioredis:**
-```javascript
-redis.on("error", (err) => console.error("Connection error:", err));
-redis.on("connect", () => console.log("Connected"));
-redis.on("close", () => console.log("Disconnected"));
-redis.on("reconnecting", () => console.log("Reconnecting"));
-```
-
-**GLIDE:**
-GLIDE does not expose an EventEmitter interface. Connection management and reconnection are handled internally by the Rust core. Errors surface per-command as rejected promises. Configure reconnection behavior via connectionBackoff in the client configuration.
-
----
-
-## TypeScript Support
-
-GLIDE provides full TypeScript types out of the box via `@valkey/valkey-glide`. The package supports TypeScript, CommonJS, and ESM module formats. Return types are fully typed as `Promise<string | null>` etc. - no `@types/` packages needed.
-
----
-
 ## Incremental Migration Strategy
 
 No drop-in compatibility layer exists for Node.js. The recommended approach:
@@ -400,9 +71,13 @@ No drop-in compatibility layer exists for Node.js. The recommended approach:
 4. Use GLIDE's Batch API for bulk operations previously handled by ioredis pipelines
 5. Swap the wrapper implementation once all call sites are migrated
 6. Remove `ioredis` dependency
-7. Review `best-practices/production.md` for timeout tuning, connection management, and observability setup
 
----
+## Reference
+
+| Topic | File |
+|-------|------|
+| Command-by-command API mapping (strings, hashes, lists, sets, sorted sets, delete, exists, cluster) | [api-mapping](reference/api-mapping.md) |
+| Pipelines, transactions, Pub/Sub, Lua scripting, events, TypeScript | [advanced-patterns](reference/advanced-patterns.md) |
 
 ## See Also
 
@@ -410,34 +85,16 @@ No drop-in compatibility layer exists for Node.js. The recommended approach:
 - Scripting (see valkey-glide skill) - Lua scripting and the Script class
 - PubSub (see valkey-glide skill) - subscription patterns and dynamic PubSub
 - Batching (see valkey-glide skill) - pipeline and transaction patterns
-- TLS and authentication (see valkey-glide skill) - TLS setup and credential management
-- Production deployment (see valkey-glide skill) - timeout tuning, connection management, observability
-- Error handling (see valkey-glide skill) - error types, reconnection, batch error semantics
-
----
 
 ## Gotchas
 
-1. **Hash argument format.** ioredis accepts spread key-value pairs ("k1", "v1", "k2", "v2"). GLIDE requires an object {k1: "v1"} or HashDataType array.
-
-2. **Sorted set format.** ioredis uses interleaved score, member pairs. GLIDE uses {element, score} objects or a Record<string, number> map.
-
-3. **No setex/psetex/setnx.** Use set() with the expiry and conditionalSet options instead.
-
+1. **Hash argument format.** ioredis accepts spread key-value pairs. GLIDE requires an object or HashDataType array.
+2. **Sorted set format.** ioredis uses interleaved score, member pairs. GLIDE uses {element, score} objects.
+3. **No setex/psetex/setnx.** Use set() with the expiry and conditionalSet options.
 4. **Array args for multi-key commands.** del, exists, lpush, sadd all take arrays, not rest parameters.
-
-5. **Pipeline result format.** ioredis returns [[error, result], ...]. GLIDE returns a flat array of results. Errors are thrown or returned as RequestError objects depending on the raiseOnError flag.
-
-6. **No event emitter.** If you relied on on("error") for monitoring, you need to handle errors per-command or set up external health checks.
-
-7. **Module imports.** GLIDE uses named imports from @valkey/valkey-glide. TypeScript types are included.
-
----
-
-## Additional Notes
-
-1. **Node.js PubSub is creation-time only.** Unlike Java/Python/Go (which have runtime subscribe/unsubscribe in GLIDE 2.3+), the Node.js client requires all subscriptions to be defined at connection time. To change subscriptions, close and recreate the client.
-
-2. **protobufjs bundle size.** GLIDE's Node.js client depends on protobufjs, which adds approximately 19KB gzipped (6.5KB with tree shaking). This can be significant for serverless deployments where bundle size affects cold start times.
-
-3. **npm version on Linux.** npm 11+ is recommended on Linux for proper optional dependency handling based on libc detection. Older npm versions may pull the wrong native binary.
+5. **Pipeline result format.** ioredis returns [[error, result], ...]. GLIDE returns a flat result array.
+6. **No event emitter.** Handle errors per-command or set up external health checks.
+7. **Node.js PubSub is creation-time only.** Unlike Java/Python/Go, the Node.js client requires all subscriptions at connection time.
+8. **Publish arg order reversed.** ioredis: publish(channel, message). GLIDE: publish(message, channel).
+9. **protobufjs bundle size.** Adds ~19KB gzipped - relevant for serverless cold starts.
+10. **npm version on Linux.** npm 11+ recommended for proper optional dependency handling.

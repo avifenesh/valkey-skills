@@ -1,8 +1,6 @@
-Use when sizing Valkey instances, planning memory allocation, estimating
+Use when sizing Valkey instances, planning memory allocation, estimating connection requirements, or deciding when to scale a cluster. All config defaults verified against `src/config.c` in valkey-io/valkey.
 
 # Capacity Planning
-connection requirements, or deciding when to scale a cluster. All config
-defaults verified against `src/config.c` in valkey-io/valkey.
 
 ## Contents
 
@@ -88,14 +86,7 @@ When Valkey forks for BGSAVE or AOF rewrite:
 - Worst case: fork doubles memory usage temporarily
 - `disable-thp yes` (default) helps reduce COW amplification
 
-**Page table overhead formula** (from official Valkey latency docs):
-
-```
-page_table_size = dataset_size / 4KB * 8 bytes
-```
-
-A 24 GB instance requires a 48 MB page table. This memory is allocated
-during fork and contributes to the fork latency.
+**Page table overhead formula**: `page_table_size = dataset_size / 4KB * 8 bytes`. A 24 GB instance requires a 48 MB page table, allocated during fork.
 
 **COW memory ranges by write pattern:**
 

@@ -22,7 +22,7 @@ Source files: `src/eval.c`, `src/script.c`, `src/script.h`
 
 ## Overview
 
-The EVAL subsystem handles ad-hoc script execution via the `EVAL`, `EVALSHA`, `EVAL_RO`, and `EVALSHA_RO` commands, plus the `SCRIPT` management commands (LOAD, EXISTS, FLUSH, KILL, SHOW, DEBUG). Scripts are identified by their SHA1 hash and cached in an LRU-bounded dictionary. The subsystem does not embed a Lua interpreter directly - it delegates to the pluggable scripting engine layer (see `scripting-engine.md`).
+The EVAL subsystem handles ad-hoc script execution via the `EVAL`, `EVALSHA`, `EVAL_RO`, and `EVALSHA_RO` commands, plus the `SCRIPT` management commands (LOAD, EXISTS, FLUSH, KILL, SHOW, DEBUG). Scripts are identified by their SHA1 hash and cached in an LRU-bounded dictionary. The subsystem does not embed a Lua interpreter directly - it delegates to the pluggable scripting engine layer (see `scripting-engine-architecture.md`).
 
 ## Key Data Structures
 

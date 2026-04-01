@@ -9,29 +9,12 @@ argument-hint: "[API or pattern to migrate]"
 
 Use when migrating a Java application from Jedis to the GLIDE client library.
 
----
+## Routing
 
-## Contents
-
-- [Key Differences](#key-differences)
-- [Migration Paths](#migration-paths)
-- [Connection Setup](#connection-setup)
-- [Configuration Mapping](#configuration-mapping)
-- [String Operations](#string-operations)
-- [Hash Operations](#hash-operations)
-- [List Operations](#list-operations)
-- [Set Operations](#set-operations)
-- [Sorted Set Operations](#sorted-set-operations)
-- [Delete and Exists](#delete-and-exists)
-- [Cluster Mode](#cluster-mode)
-- [Transactions and Pipelines](#transactions-and-pipelines)
-- [Pub/Sub](#pubsub)
-- [Error Handling](#error-handling)
-- [Spring Data Valkey as an Alternative](#spring-data-valkey-as-an-alternative)
-- [Incremental Migration Strategy](#incremental-migration-strategy)
-- [Gotchas](#gotchas)
-
----
+- String, hash, list, set, sorted set, delete, exists, cluster, error handling -> API Mapping
+- Pipeline, transaction, Batch API, MULTI/EXEC -> Advanced Patterns
+- PubSub, subscribe, publish, JedisPubSub -> Advanced Patterns
+- Spring Data Valkey, Spring Boot -> Advanced Patterns
 
 ## Key Differences
 
@@ -45,8 +28,6 @@ Use when migrating a Java application from Jedis to the GLIDE client library.
 | Conditional SET | Separate setnx() | SetOptions.builder().conditionalSetOnlyIfNotExist() |
 | Transactions | Transaction (extends Pipeline) | Batch(true) for atomic, Batch(false) for pipeline |
 
----
-
 ## Migration Paths
 
 ### Path 1: Jedis Compatibility Layer (Zero-Code-Change)
@@ -57,46 +38,28 @@ Drop-in wrapper implementing the Jedis API backed by GLIDE (GLIDE 2.1+). Add `io
 
 ### Path 2: Full Native Migration
 
-Migrate directly to the GLIDE native API for full feature access. This guide covers this path.
+Migrate directly to the GLIDE native API for full feature access. See the API Mapping and Advanced Patterns reference files.
 
----
-
-## Connection Setup
+## Quick Start - Connection Setup
 
 **Jedis:**
 ```java
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
-
 JedisPoolConfig poolConfig = new JedisPoolConfig();
 poolConfig.setMaxTotal(10);
 JedisPool pool = new JedisPool(poolConfig, "localhost", 6379);
-
-try (Jedis jedis = pool.getResource()) {
-    jedis.ping();
-}
+try (Jedis jedis = pool.getResource()) { jedis.ping(); }
 ```
 
 **GLIDE:**
 ```java
-import glide.api.GlideClient;
-import glide.api.models.configuration.GlideClientConfiguration;
-import glide.api.models.configuration.NodeAddress;
-
 GlideClientConfiguration config = GlideClientConfiguration.builder()
     .address(NodeAddress.builder().host("localhost").port(6379).build())
     .requestTimeout(5000)
     .build();
-
-try (GlideClient client = GlideClient.createClient(config).get()) {
-    client.ping().get();
-}
+try (GlideClient client = GlideClient.createClient(config).get()) { client.ping().get(); }
 ```
 
 No connection pool configuration needed. GLIDE uses a single multiplexed connection.
-
----
 
 ## Configuration Mapping
 
@@ -108,301 +71,6 @@ No connection pool configuration needed. GLIDE uses a single multiplexed connect
 | database | databaseId() |
 | ssl = true | useTLS(true) |
 | timeout (ms) | requestTimeout() (ms) |
-
----
-
-## String Operations
-
-**Jedis:**
-```java
-jedis.set("key", "value");
-jedis.setex("key", 60, "value");           // set + 60s expiry
-jedis.setnx("key", "value");               // set if not exists
-String val = jedis.get("key");
-```
-
-**GLIDE:**
-```java
-import glide.api.models.commands.SetOptions;
-import static glide.api.models.commands.SetOptions.Expiry;
-
-client.set("key", "value").get();
-client.set("key", "value",
-    SetOptions.builder().expiry(Expiry.Seconds(60L)).build()).get();
-client.set("key", "value",
-    SetOptions.builder().conditionalSetOnlyIfNotExist().build()).get();
-String val = client.get("key").get();
-```
-
----
-
-## Hash Operations
-
-**Jedis:**
-```java
-jedis.hset("hash", "field1", "value1");
-Map<String, String> map = new HashMap<>();
-map.put("f1", "v1");
-map.put("f2", "v2");
-jedis.hset("hash", map);
-String val = jedis.hget("hash", "field1");
-Map<String, String> all = jedis.hgetAll("hash");
-```
-
-**GLIDE:**
-```java
-import java.util.Map;
-
-client.hset("hash", Map.of("field1", "value1")).get();
-client.hset("hash", Map.of("f1", "v1", "f2", "v2")).get();
-String val = client.hget("hash", "field1").get();
-Map<String, String> all = client.hgetall("hash").get();
-```
-
----
-
-## List Operations
-
-**Jedis:**
-```java
-jedis.lpush("list", "a", "b", "c");        // varargs
-jedis.rpush("list", "x", "y");
-String val = jedis.lpop("list");
-List<String> range = jedis.lrange("list", 0, -1);
-```
-
-**GLIDE:**
-```java
-client.lpush("list", new String[]{"a", "b", "c"}).get();  // array
-client.rpush("list", new String[]{"x", "y"}).get();
-String val = client.lpop("list").get();
-String[] range = client.lrange("list", 0, -1).get();
-```
-
----
-
-## Set Operations
-
-**Jedis:**
-```java
-jedis.sadd("set", "a", "b", "c");
-jedis.srem("set", "a");
-Set<String> members = jedis.smembers("set");
-```
-
-**GLIDE:**
-```java
-client.sadd("set", new String[]{"a", "b", "c"}).get();
-client.srem("set", new String[]{"a"}).get();
-Set<String> members = client.smembers("set").get();
-```
-
----
-
-## Sorted Set Operations
-
-**Jedis:**
-```java
-jedis.zadd("zset", 1.0, "alice");
-Map<String, Double> scoreMembers = Map.of("alice", 1.0, "bob", 2.0);
-jedis.zadd("zset", scoreMembers);
-Double score = jedis.zscore("zset", "alice");
-```
-
-**GLIDE:**
-```java
-import java.util.Map;
-
-client.zadd("zset", Map.of("alice", 1.0, "bob", 2.0)).get();
-Double score = client.zscore("zset", "alice").get();
-```
-
----
-
-## Delete and Exists
-
-**Jedis:**
-```java
-jedis.del("k1", "k2", "k3");              // varargs
-long count = jedis.exists("k1", "k2");
-```
-
-**GLIDE:**
-```java
-client.del(new String[]{"k1", "k2", "k3"}).get();  // array
-long count = client.exists(new String[]{"k1", "k2"}).get();
-```
-
----
-
-## Cluster Mode
-
-**Jedis:**
-```java
-import redis.clients.jedis.JedisCluster;
-
-Set<HostAndPort> nodes = new HashSet<>();
-nodes.add(new HostAndPort("node1.example.com", 6379));
-nodes.add(new HostAndPort("node2.example.com", 6380));
-JedisCluster cluster = new JedisCluster(nodes);
-```
-
-**GLIDE:**
-```java
-import glide.api.GlideClusterClient;
-import glide.api.models.configuration.GlideClusterClientConfiguration;
-import glide.api.models.configuration.ReadFrom;
-
-GlideClusterClientConfiguration config = GlideClusterClientConfiguration.builder()
-    .address(NodeAddress.builder().host("node1.example.com").port(6379).build())
-    .address(NodeAddress.builder().host("node2.example.com").port(6380).build())
-    .readFrom(ReadFrom.PREFER_REPLICA)
-    .build();
-
-GlideClusterClient client = GlideClusterClient.createClient(config).get();
-```
-
----
-
-## Transactions and Pipelines
-
-**Jedis:**
-```java
-// Pipeline
-Pipeline pipe = jedis.pipelined();
-pipe.set("k1", "v1");
-pipe.get("k1");
-List<Object> results = pipe.syncAndReturnAll();
-
-// Transaction
-Transaction tx = jedis.multi();
-tx.set("k1", "v1");
-tx.get("k1");
-List<Object> results2 = tx.exec();
-```
-
-**GLIDE:**
-```java
-import glide.api.models.Batch;
-
-// Pipeline (non-atomic)
-Batch pipeline = new Batch(false);
-pipeline.set("k1", "v1");
-pipeline.get("k1");
-Object[] results = client.exec(pipeline, false).get();
-
-// Transaction (atomic)
-Batch tx = new Batch(true);
-tx.set("k1", "v1");
-tx.get("k1");
-Object[] results2 = client.exec(tx, false).get();
-```
-
-The second parameter to exec() is raiseOnError - when true, throws on the first error; when false, returns errors inline in the result array.
-
----
-
-## Pub/Sub
-
-**Jedis:**
-```java
-JedisPubSub listener = new JedisPubSub() {
-    @Override
-    public void onMessage(String channel, String message) {
-        System.out.println(channel + ": " + message);
-    }
-    @Override
-    public void onPMessage(String pattern, String channel, String message) {
-        System.out.println("[" + pattern + "] " + channel + ": " + message);
-    }
-};
-
-// Blocking call - runs in a separate thread
-new Thread(() -> jedis.psubscribe(listener, "events.*")).start();
-```
-
-**GLIDE (static subscriptions - at client creation):**
-```java
-import glide.api.models.configuration.*;
-import glide.api.models.configuration.StandaloneSubscriptionConfiguration.PubSubChannelMode;
-
-BaseSubscriptionConfiguration.MessageCallback callback = (msg, ctx) -> {
-    System.out.println("Channel: " + msg.getChannel());
-    System.out.println("Message: " + msg.getMessage());
-    msg.getPattern().ifPresent(p -> System.out.println("Pattern: " + p));
-};
-
-StandaloneSubscriptionConfiguration subConfig =
-    StandaloneSubscriptionConfiguration.builder()
-        .subscription(PubSubChannelMode.EXACT, "channel")
-        .subscription(PubSubChannelMode.PATTERN, "events.*")
-        .callback(callback)
-        .build();
-
-GlideClientConfiguration config = GlideClientConfiguration.builder()
-    .address(NodeAddress.builder().port(6379).build())
-    .subscriptionConfiguration(subConfig)
-    .build();
-
-GlideClient subscriber = GlideClient.createClient(config).get();
-```
-
-**GLIDE (dynamic subscriptions - GLIDE 2.3+):**
-```java
-// Subscribe (non-blocking)
-client.subscribe(Set.of("news", "events")).get();
-client.psubscribe(Set.of("events.*")).get();
-
-// Subscribe with timeout (blocking, waits for server confirmation)
-client.subscribe(Set.of("alerts"), 5000).get();
-client.psubscribe(Set.of("logs.*"), 5000).get();
-
-// Receive via polling (when no callback configured)
-PubSubMessage msg = client.tryGetPubSubMessage();      // non-blocking, returns null
-CompletableFuture<PubSubMessage> future = client.getPubSubMessage();  // async wait
-
-// Unsubscribe
-client.unsubscribe(Set.of("news")).get();
-client.punsubscribe(Set.of("events.*")).get();
-client.unsubscribe();     // all channels
-client.punsubscribe();    // all patterns
-```
-
-Use a dedicated client for subscriptions - a subscribing client enters a special mode where most regular commands are unavailable. GLIDE automatically resubscribes on reconnection. Callback and polling modes are mutually exclusive on the same client.
-
----
-
-## Error Handling
-
-**Jedis:**
-```java
-try {
-    jedis.get("key");
-} catch (JedisException e) {
-    // handle
-}
-```
-
-**GLIDE:**
-```java
-try {
-    client.get("key").get();
-} catch (java.util.concurrent.ExecutionException e) {
-    if (e.getCause() instanceof RequestException) {
-        // command-level error
-    }
-}
-```
-
-All GLIDE commands return CompletableFuture. Exceptions are wrapped in ExecutionException when calling .get().
-
----
-
-## Spring Data Valkey as an Alternative
-
-If your application uses Spring Data Redis with Jedis, consider Spring Data Valkey instead of a direct migration. Set `spring.data.valkey.client-type=valkeyglide` in your properties. The migration involves a package rename (`redis` to `valkey`) and class rename (`RedisTemplate` to `ValkeyTemplate`). An automated `sed` script is provided in the Spring Data Valkey MIGRATION.md.
-
----
 
 ## Incremental Migration Strategy
 
@@ -419,7 +87,12 @@ For native GLIDE migration (not using the compatibility layer):
 
 For the zero-code-change path using the Jedis compatibility layer, see the Migration Paths section above.
 
----
+## Reference
+
+| Topic | File |
+|-------|------|
+| Command-by-command API mapping (strings, hashes, lists, sets, sorted sets, delete, exists, cluster, errors) | [api-mapping](reference/api-mapping.md) |
+| Transactions, pipelines, Pub/Sub, Spring Data Valkey alternative | [advanced-patterns](reference/advanced-patterns.md) |
 
 ## See Also
 
@@ -427,25 +100,14 @@ For the zero-code-change path using the Jedis compatibility layer, see the Migra
 - Batching (see valkey-glide skill) - pipeline and transaction patterns
 - TLS and authentication (see valkey-glide skill) - TLS setup and credential management
 - Production deployment (see valkey-glide skill) - timeout tuning, connection management, observability
-- Error handling (see valkey-glide skill) - error types, reconnection, batch error semantics
-- OpenTelemetry (see valkey-glide skill) - observability integration
-
----
 
 ## Gotchas
 
-1. **Every command returns CompletableFuture.** You must call .get() for synchronous behavior. Forgetting .get() means the command fires but you never wait for the result.
-
+1. **Every command returns CompletableFuture.** You must call .get() for synchronous behavior.
 2. **Array args, not varargs.** Multi-key commands take String[] arrays, not varargs.
-
-3. **No connection pool management.** Drop JedisPool and JedisPoolConfig entirely. GLIDE handles connection multiplexing internally.
-
+3. **No connection pool management.** Drop JedisPool and JedisPoolConfig entirely.
 4. **Builder pattern everywhere.** Configuration, set options, and batch options all use the builder pattern.
-
-5. **Batch replaces Transaction and Pipeline.** The Transaction class is deprecated since GLIDE 2.0. Use new Batch(true) for atomic (transactional) and new Batch(false) for non-atomic (pipeline) running.
-
-6. **Classifier required in Maven/Gradle.** The GLIDE artifact requires an OS-specific classifier. Use os-maven-plugin or osdetector-gradle-plugin to detect it automatically. An uber JAR (GLIDE 2.3+) bundles all native libraries. JDK 8 support also starts at GLIDE 2.3 - earlier versions require JDK 11+.
-
-7. **Compatibility layer gotchas.** After calling `multi()`, you must use the returned `Transaction` object for subsequent commands - calling `jedis.set()` directly does NOT queue to the transaction. Also, `HashSet<byte[]>` operations (smembers, sinter, sunion, sdiff) degrade to O(n) because `byte[].hashCode()` returns identity hash.
-
-8. **No Sentinel support.** Jedis supports Redis Sentinel for HA discovery. GLIDE does not - use cluster mode or direct connection instead.
+5. **Batch replaces Transaction and Pipeline.** Use new Batch(true) for atomic and new Batch(false) for non-atomic.
+6. **Classifier required in Maven/Gradle.** Use os-maven-plugin or osdetector-gradle-plugin. An uber JAR (GLIDE 2.3+) bundles all native libraries.
+7. **Compatibility layer gotchas.** After calling `multi()`, you must use the returned `Transaction` object. `HashSet<byte[]>` operations degrade to O(n) because `byte[].hashCode()` returns identity hash.
+8. **No Sentinel support.** GLIDE does not support Redis Sentinel - use cluster mode or direct connection.

@@ -110,7 +110,7 @@ commands: [
 ]
 ```
 
-The flags string uses the same space-separated format as the C API: `"write deny-oom"`, `"readonly fast"`, etc. See `api-overview.md` for the full flag list.
+The flags string uses the same space-separated format as the C API: `"write deny-oom"`, `"readonly fast"`, etc. See `module-lifecycle.md` for the full flag list.
 
 ---
 
@@ -207,7 +207,7 @@ Use `ValkeyType::new()` with the 9-character type name, encoding version, and a 
 
 Note: Older versions of the Rust SDK used the name `raw::RedisModuleTypeMethods` from the Redis-era API. Current versions use `raw::ValkeyModuleTypeMethods`.
 
-See `types-and-commands.md` for the full C callback signatures - the Rust wrappers mirror them exactly via FFI.
+See `custom-types.md` for the full C callback signatures - the Rust wrappers mirror them exactly via FFI.
 
 ---
 
@@ -272,7 +272,7 @@ fn slow_cmd(ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
 ## Configuration and Options
 
-Register module configs via `ctx.register_string_config`, `register_numeric_config`, `register_bool_config`, or `register_enum_config`, then call `ctx.load_configs()`. These map to the C API's `ValkeyModule_Register*Config` family. Set module-wide options with `ctx.set_module_options(ModuleOptions::HANDLE_IO_ERRORS)` - see `api-overview.md` for the full options list.
+Register module configs via `ctx.register_string_config`, `register_numeric_config`, `register_bool_config`, or `register_enum_config`, then call `ctx.load_configs()`. These map to the C API's `ValkeyModule_Register*Config` family. Set module-wide options with `ctx.set_module_options(ModuleOptions::HANDLE_IO_ERRORS)` - see `module-patterns.md` for the full options list.
 
 ---
 

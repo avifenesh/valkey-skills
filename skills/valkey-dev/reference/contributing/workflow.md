@@ -2,7 +2,7 @@
 
 Use when you need to submit a patch, understand coding conventions, or navigate the PR process for the Valkey project.
 
-**Contributor path**: this guide -> [build](../build/building.md) -> code -> [test](../testing/tcl-tests.md) -> [CI](../testing/ci-pipeline.md) -> review -> merge.
+**Contributor path**: this guide -> [build](../build/building.md) -> code -> [test](../testing/tcl-test-runner.md) -> [CI](../testing/ci-pipeline.md) -> review -> merge.
 
 ## Contents
 
@@ -45,7 +45,7 @@ make -j$(nproc)
 make test-unit
 ```
 
-Add appropriate tests - [unit tests](../testing/unit-tests.md) for data structure changes, [integration tests](../testing/tcl-tests.md) for command changes. For memory-safety validation, see [Sanitizer Builds](../build/sanitizers.md).
+Add appropriate tests - [unit tests](../testing/unit-tests.md) for data structure changes, [integration tests](../testing/tcl-test-runner.md) for command changes. For memory-safety validation, see [Sanitizer Builds](../build/sanitizers.md).
 
 5. **Commit with DCO sign-off.**
 

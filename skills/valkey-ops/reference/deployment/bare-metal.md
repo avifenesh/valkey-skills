@@ -266,9 +266,9 @@ sudo systemctl enable --now valkey@6380
 
 ## EC2 and Cloud VM Considerations
 
-- Use **HVM-based instances**, not PV (paravirtual) - PV has poor fork() performance affecting BGSAVE/BGREWRITEAOF
-- EBS volumes can have high latency - consider `repl-diskless-sync yes` to avoid EBS I/O bottleneck for replication
-- **Memory sizing for write-heavy workloads with persistence**: BGSAVE/BGREWRITEAOF fork causes copy-on-write. A write-heavy workload can use up to 2x normal memory during the save. Size `maxmemory` to at most 50% of available RAM in this scenario. Cache-only deployments (`save ""`, `appendonly no`) do not have this overhead.
+- Use **HVM-based instances**, not PV (paravirtual) - PV has poor fork() performance
+- EBS volumes can have high latency - consider `repl-diskless-sync yes` for replication
+- Write-heavy workloads with persistence: fork COW can use up to 2x memory. Size `maxmemory` to at most 50% of available RAM. Cache-only deployments (`save ""`, `appendonly no`) skip this.
 - Modern instances (m3.medium and newer) have adequate fork performance
 
 
@@ -281,14 +281,7 @@ On dedicated hosts, use OS-level tools for latency isolation:
 - `chrt -r 99 valkey-server ...` - set real-time process priority (use with caution)
 - `taskset` - CPU pinning, but do NOT pin to a single core. Valkey forks background tasks (BGSAVE, AOF rewrite) that are CPU-intensive and need their own cores.
 
-For diagnostic commands:
-- `MEMORY DOCTOR` - runtime memory diagnostics, available without special config
-- `LATENCY DOCTOR` - requires `latency-monitor-threshold > 0` to be set first
-
-
 ## Health Checks
-
-After deployment, verify the instance is healthy:
 
 ```bash
 # Basic connectivity

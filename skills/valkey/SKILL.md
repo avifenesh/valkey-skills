@@ -58,15 +58,20 @@ argument-hint: "[feature, pattern, or scenario]"
 
 | Topic | Reference |
 |-------|-----------|
-| Cache-aside, write-through, write-behind, client-side caching, stampede prevention | [caching](reference/patterns/caching.md) |
-| Session hashes, sliding TTL, per-field expiration (HSETEX), multi-device | [sessions](reference/patterns/sessions.md) |
+| Cache-aside, write-through, write-behind, client-side caching, stampede prevention | [caching-strategies](reference/patterns/caching-strategies.md) |
+| Cache invalidation, TTL patterns, eviction policies, keyspace notifications | [caching-invalidation](reference/patterns/caching-invalidation.md) |
+| Session hashes, sliding TTL, session rotation, basic session store | [sessions-basics](reference/patterns/sessions-basics.md) |
+| Per-field TTL sessions (Valkey 9.0+), session counting, concurrent session limits | [sessions-field-expiry](reference/patterns/sessions-field-expiry.md) |
 | SET NX with TTL, safe release (DELIFEQ), Redlock algorithm | [locks](reference/patterns/locks.md) |
-| Fixed window, sliding window, token bucket, API throttling | [rate-limiting](reference/patterns/rate-limiting.md) |
-| FIFO with lists, reliable queues with streams, consumer groups, dead letter | [queues](reference/patterns/queues.md) |
+| Fixed window, sliding window counter, sliding window log | [rate-limiting-windows](reference/patterns/rate-limiting-windows.md) |
+| Token bucket, per-field rate limiting (Valkey 9.0+), algorithm comparison | [rate-limiting-advanced](reference/patterns/rate-limiting-advanced.md) |
+| Simple FIFO queues (LPUSH/BRPOP), reliable queues (LMOVE) | [queues-list-based](reference/patterns/queues-list-based.md) |
+| Stream-based queues (XREADGROUP), consumer groups, dead letter, priority queues | [queues-streams](reference/patterns/queues-streams.md) |
 | Sorted set rankings, pagination, top-N, score updates | [leaderboards](reference/patterns/leaderboards.md) |
 | Pub/Sub patterns, sharded pub/sub, fan-out, notification systems | [pubsub-patterns](reference/patterns/pubsub-patterns.md) |
 | Prefix autocomplete, tag filtering, inverted indexes, faceted search | [search-autocomplete](reference/patterns/search-autocomplete.md) |
-| Atomic counters, sharded counters, idempotency, HyperLogLog | [counters](reference/patterns/counters.md) |
+| Atomic counters, sharded counters, idempotency keys | [counters-atomic](reference/patterns/counters-atomic.md) |
+| HyperLogLog, BITFIELD packed counters, deduplication strategies | [counters-approximate](reference/patterns/counters-approximate.md) |
 
 
 ## Best Practices
@@ -75,9 +80,11 @@ argument-hint: "[feature, pattern, or scenario]"
 |-------|-----------|
 | Key naming, namespaces, hash tags for cluster co-location | [keys](reference/best-practices/keys.md) |
 | Memory reduction, encoding thresholds, TTL strategies, eviction | [memory](reference/best-practices/memory.md) |
-| UNLINK vs DEL, SCAN vs KEYS, pipelining, connection pooling, batching | [performance](reference/best-practices/performance.md) |
+| UNLINK vs DEL, SCAN vs KEYS, data-type iteration | [performance-commands](reference/best-practices/performance-commands.md) |
+| Pipelining, connection pooling, I/O threading, performance anti-patterns | [performance-throughput](reference/best-practices/performance-throughput.md) |
 | RDB, AOF, hybrid persistence, backup strategy | [persistence](reference/best-practices/persistence.md) |
-| Hash tags, cross-slot errors, MOVED/ASK, replica reads, CLUSTERSCAN | [cluster](reference/best-practices/cluster.md) |
+| Hash tags, cross-slot errors, CROSSSLOT fixes | [cluster-hash-tags](reference/best-practices/cluster-hash-tags.md) |
+| MOVED/ASK redirects, replica reads, pipelining in cluster, CLUSTERSCAN | [cluster-operations](reference/best-practices/cluster-operations.md) |
 | Sentinel, failover, retries, WAIT/WAITAOF, replication lag | [high-availability](reference/best-practices/high-availability.md) |
 
 

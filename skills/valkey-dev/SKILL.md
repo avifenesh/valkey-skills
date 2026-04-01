@@ -7,7 +7,7 @@ argument-hint: "[subsystem or source file]"
 
 # Valkey Contributor Reference
 
-59 source-verified reference docs covering every major subsystem of the Valkey server.
+64 source-verified reference docs covering every major subsystem of the Valkey server.
 
 Browse by subsystem below or ask about a specific topic. Each link leads to a focused reference doc with struct definitions, function signatures, and implementation details verified against the actual C source.
 
@@ -19,14 +19,14 @@ Browse by subsystem below or ask about a specific topic. Each link leads to a fo
 - Eviction/maxmemory/LRU/LFU -> Memory (eviction)
 - Memory fragmentation/allocation -> Memory (defragmentation, zmalloc, lazy-free)
 - Performance work -> Threading (io-threads, prefetch), Memory, Monitoring (latency)
-- New command implementation -> Architecture (command-dispatch), Modules (api-overview)
-- Test writing -> Build & Test (tcl-tests, unit-tests), Testing (ci-pipeline)
+- New command implementation -> Architecture (command-dispatch), Modules (module-lifecycle)
+- Test writing -> Build & Test (tcl-test-runner, tcl-test-api, unit-tests), Testing (ci-pipeline)
 - CI failures -> Testing (ci-pipeline), Build (sanitizers)
 - Security/auth -> Security (acl, tls)
 - Replication/HA -> Replication, Cluster (failover), Sentinel
 - Slot migration -> Cluster (slot-migration)
 - Persistence/snapshots/durability -> Persistence (rdb, aof)
-- Lua scripting/EVAL -> Scripting (eval, functions, scripting-engine)
+- Lua scripting/EVAL -> Scripting (eval, functions, scripting-engine-architecture)
 - Pub/Sub internals -> Pub/Sub (pubsub, notifications)
 - MULTI/EXEC/blocking commands -> Transactions (multi-exec, blocking)
 - Networking/RESP/client connections -> Architecture (networking, resp-protocol)
@@ -34,7 +34,7 @@ Browse by subsystem below or ask about a specific topic. Each link leads to a fo
 - CONFIG system/runtime settings -> Config (config-system)
 - Client-side caching -> Monitoring (tracking)
 - Logging/commandlog -> Monitoring (commandlog)
-- Module development -> Modules (api-overview, types-and-commands, rust-sdk)
+- Module development -> Modules (module-lifecycle, module-patterns, custom-types, key-api-and-blocking, rust-sdk)
 - RDMA/transport -> Valkey-Specific (rdma, transport-layer)
 - KVStore/object internals -> Valkey-Specific (kvstore, object-lifecycle, vset)
 - Contributing/PR process -> Contributing (workflow, governance)
@@ -61,7 +61,7 @@ Browse by subsystem below or ask about a specific topic. Each link leads to a fo
 
 1. **DCO sign-off required** - every commit needs `Signed-off-by` ([workflow](reference/contributing/workflow.md))
 2. **clang-format-18** - CI rejects formatting violations ([workflow](reference/contributing/workflow.md))
-3. **Tests are non-negotiable** - every contribution must include tests ([tcl-tests](reference/testing/tcl-tests.md))
+3. **Tests are non-negotiable** - every contribution must include tests ([tcl-test-runner](reference/testing/tcl-test-runner.md))
 4. **camelCase functions, snake_case variables** - see coding style in [workflow](reference/contributing/workflow.md)
 5. **No anonymous contributions** - real identity required
 
@@ -120,7 +120,8 @@ Browse by subsystem below or ask about a specific topic. Each link leads to a fo
 
 | Topic | Reference |
 |-------|-----------|
-| Full sentinel mode - monitoring, failover, state machine | [sentinel-mode](reference/sentinel/sentinel-mode.md) |
+| Activation, data structures, monitoring, failure detection | [sentinel-monitoring](reference/sentinel/sentinel-monitoring.md) |
+| Leader election, failover state machine, commands, config | [sentinel-failover](reference/sentinel/sentinel-failover.md) |
 
 
 ## Memory Management
@@ -148,7 +149,8 @@ Browse by subsystem below or ask about a specific topic. Each link leads to a fo
 |-------|-----------|
 | EVAL/EVALSHA, Lua integration, script caching | [eval](reference/scripting/eval.md) |
 | FUNCTION LOAD/CALL, library-grouped persistent functions | [functions](reference/scripting/functions.md) |
-| Pluggable scripting engine architecture, 4-version ABI | [scripting-engine](reference/scripting/scripting-engine.md) |
+| Scripting engine data structures, ABI versions, method table | [scripting-engine-architecture](reference/scripting/scripting-engine-architecture.md) |
+| Engine registration, unregistration, debugger, adding engines | [scripting-engine-lifecycle](reference/scripting/scripting-engine-lifecycle.md) |
 
 
 ## Security
@@ -198,8 +200,10 @@ Browse by subsystem below or ask about a specific topic. Each link leads to a fo
 
 | Topic | Reference |
 |-------|-----------|
-| ValkeyModule API lifecycle, command registration, context | [api-overview](reference/modules/api-overview.md) |
-| Custom data types, RDB callbacks, blocking commands | [types-and-commands](reference/modules/types-and-commands.md) |
+| Module load/unload lifecycle, command registration, context | [module-lifecycle](reference/modules/module-lifecycle.md) |
+| Error handling, memory management, versioning, example, replies | [module-patterns](reference/modules/module-patterns.md) |
+| Custom data types, RDB serialization, type methods | [custom-types](reference/modules/custom-types.md) |
+| Key access API, blocking commands, thread-safe contexts | [key-api-and-blocking](reference/modules/key-api-and-blocking.md) |
 | Rust module SDK, valkey-module crate, C-vs-Rust comparison | [rust-sdk](reference/modules/rust-sdk.md) |
 
 
@@ -220,7 +224,8 @@ Browse by subsystem below or ask about a specific topic. Each link leads to a fo
 |-------|-----------|
 | Make/CMake, flags, dependencies, cross-platform | [building](reference/build/building.md) |
 | ASan, UBSan, TSan, Valgrind, Helgrind | [sanitizers](reference/build/sanitizers.md) |
-| Tcl integration tests, tags, helpers, writing tests | [tcl-tests](reference/testing/tcl-tests.md) |
+| Tcl test runner, directory structure, tags system | [tcl-test-runner](reference/testing/tcl-test-runner.md) |
+| Tcl test framework API, assertions, writing new tests | [tcl-test-api](reference/testing/tcl-test-api.md) |
 | Google Test C++ unit tests | [unit-tests](reference/testing/unit-tests.md) |
 | CI pipeline - PR gates, daily matrix, skip tokens | [ci-pipeline](reference/testing/ci-pipeline.md) |
 

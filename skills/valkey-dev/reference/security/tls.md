@@ -9,19 +9,17 @@ The entire file is conditionally compiled behind `USE_OPENSSL`.
 
 ## Contents
 
-- Build Modes (line 28)
-- Configuration Struct (line 44)
-- SSL Context Architecture (line 80)
-- Connection Type Registration (line 120)
-- TLS Connection Struct (line 131)
-- Client Certificate Authentication (line 163)
-- Replication and Cluster Bus (line 202)
-- Background Certificate Reloading (line 214)
-- Pending Data Handling (line 251)
-- OpenSSL Version Handling (line 260)
-- Key Functions (line 276)
-- Certificate Monitoring (line 297)
-- See Also (line 306)
+- Build Modes (line 27)
+- Configuration Struct (line 43)
+- SSL Context Architecture (line 79)
+- Connection Type Registration (line 119)
+- TLS Connection Struct (line 130)
+- Client Certificate Authentication (line 162)
+- Replication and Cluster Bus (line 201)
+- Background Certificate Reloading (line 213)
+- Pending Data Handling (line 250)
+- Key Functions (line 260)
+- Certificate Monitoring (line 281)
 
 ---
 
@@ -257,22 +255,6 @@ this list and calls read handlers, ensuring no decrypted data is lost.
 
 ---
 
-## OpenSSL Version Handling
-
-The code supports multiple OpenSSL versions with preprocessor conditionals:
-
-- **< 1.0.2**: Legacy `OPENSSL_config()`, explicit crypto locks
-- **1.0.2 - 1.1.0**: `ASN1_TIME_to_tm()` available
-- **1.1.0+**: Auto-init, no manual locking needed
-- **3.0.0+**: New decoder API for DH params, `SSL_get0_peer_certificate()`
-  (does not increment refcount vs old `SSL_get_peer_certificate()`)
-- **TLS 1.3**: Conditional ciphersuite configuration via `SSL_CTX_set_ciphersuites()`
-
-The `USE_CRYPTO_LOCKS` path (OpenSSL < 1.1.0) sets up per-lock mutexes for
-thread safety via `CRYPTO_set_locking_callback()`.
-
----
-
 ## Key Functions
 
 | Function | Purpose |
@@ -297,8 +279,8 @@ thread safety via `CRYPTO_set_locking_callback()`.
 ## Certificate Monitoring
 
 The server tracks `tls_server_cert_expire_time`, `tls_client_cert_expire_time`,
-`tls_ca_cert_expire_time`, and corresponding serial numbers as SDS strings.
-Exposed via INFO for monitoring. For CA certs loaded from a directory, the
-earliest expiry across all certificates is reported.
+`tls_ca_cert_expire_time`, and corresponding serial numbers as SDS strings
+exposed via INFO. For CA certs loaded from a directory, the earliest expiry
+across all certificates is reported.
 
 ---
