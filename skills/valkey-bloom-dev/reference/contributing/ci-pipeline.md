@@ -174,9 +174,3 @@ cargo clippy --profile release --all-targets -- -D clippy::all
 **ASAN leak reports** - the leak is in the Valkey server process. Check if the leak originates from module code (bloom allocations) or server internals. Module allocations use ValkeyAlloc, so leaks show up under `zmalloc` in the stack trace.
 
 **Flaky FP-rate tests** - correctness tests use a margin above the configured FP rate. If a test fails intermittently, the margin may need adjustment for the specific capacity/expansion combination. See `reference/architecture/bloom-object.md` for FP tightening details.
-
-## See Also
-
-- `reference/contributing/build.md` - build system, feature flags, and build.sh vs CI differences
-- `reference/contributing/testing.md` - test framework and test file inventory
-- `reference/commands/replication.md` - must_obey_client and valkey_8_0 conditional compilation

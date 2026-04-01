@@ -210,11 +210,3 @@ pub unsafe extern "C" fn bloom_mem_usage(value: *const c_void) -> usize {
 Delegates to `BloomObject::memory_usage()`, which sums: the object struct overhead (`compute_size` with vec capacity) plus `number_of_bytes()` for each filter.
 
 The `bloom_free_effort` callback (line 138) returns `self.filters.len()` - the filter count. Valkey uses this to decide whether to free the object asynchronously (higher effort = more likely async).
-
-## See Also
-
-- [bloom-object.md](bloom-object.md) - BloomObject struct, memory_usage, Drop impl
-- [bloom-filter.md](bloom-filter.md) - BloomFilter struct, number_of_bytes, Drop impl
-- [persistence.md](persistence.md) - Data type registration where defrag callback is wired
-- [../commands/module-configs.md](../commands/module-configs.md) - bloom-defrag-enabled and other runtime configs
-- [../contributing/code-structure.md](../contributing/code-structure.md) - Module file layout and callback organization

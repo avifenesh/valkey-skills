@@ -207,13 +207,3 @@ int ValkeyModule_OnLoad(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int arg
     return VALKEYMODULE_OK;
 }
 ```
-
-## See Also
-
-- [keyspace-notifications.md](keyspace-notifications.md) - Key-level change notifications
-- [timers.md](timers.md) - Periodic callbacks via CreateTimer
-- [eventloop.md](eventloop.md) - Low-level event loop integration
-- [../advanced/replication.md](../advanced/replication.md) - Replicate and ReplicateVerbatim for active propagation
-- [../lifecycle/context.md](../lifecycle/context.md) - Module context types and lifetimes
-- [../commands/registration.md](../commands/registration.md) - Registering module commands
-- [../lifecycle/api-importing.md](../lifecycle/api-importing.md) - MODULE_CHANGE event for detecting shared API provider load/unload

@@ -233,12 +233,3 @@ When a replica receives an RDB from its primary, metadata must not be applied pi
 5. Staged metadata is cleared; `is_loading_` is reset
 
 For non-replication loads (server restart from RDB), `LoadMetadata` merges directly into `metadata_` via `ReconcileMetadata` with `prefer_incoming = true`, allowing the existing state (if any) to be merged with the loaded data.
-
-## See Also
-
-- [coordinator.md](coordinator.md) - gRPC coordinator service and reconciliation
-- [metrics.md](metrics.md) - RDB load/save metrics tracking
-- [../architecture/module-overview.md](../architecture/module-overview.md) - module loading and registration
-- [../architecture/schema-manager.md](../architecture/schema-manager.md) - SchemaManager RDB callbacks and index restore
-- [../architecture/index-schema.md](../architecture/index-schema.md) - IndexSchema protobuf and attribute persistence
-- [../query/execution.md](../query/execution.md) - content resolution and contention checking

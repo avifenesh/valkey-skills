@@ -187,13 +187,3 @@ if (flags & VALKEYMODULE_CTX_FLAGS_OOM) {
     return ValkeyModule_ReplyWithError(ctx, "OOM");
 }
 ```
-
-## See Also
-
-- [module-loading.md](module-loading.md) - Module loading and OnLoad initialization
-- [module-options.md](module-options.md) - SetModuleOptions for IO errors and async replication
-- [memory.md](memory.md) - Pool allocator and auto-memory tracked via context fields
-- [server-info.md](server-info.md) - Server version, time, and utility APIs
-- [../commands/registration.md](../commands/registration.md) - Command creation and dispatch
-- [../advanced/threading.md](../advanced/threading.md) - Thread-safe contexts and GIL locking
-- [../events/blocking-clients.md](../events/blocking-clients.md) - Blocked client context flags

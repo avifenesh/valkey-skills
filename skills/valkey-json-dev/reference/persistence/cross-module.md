@@ -239,11 +239,3 @@ size_t hash_function(const char *text, size_t length) {
 ```
 
 The 38-bit result is split between shard selection (upper bits) and per-shard indexing (lower bits). The XOR-folding improves low-order bit distribution compared to simple truncation.
-
-## See Also
-
-- [rdb-format.md](rdb-format.md) - Data type registration and persistence
-- [defrag.md](defrag.md) - Defragmentation callback and threshold interaction
-- [keytable.md](../document/keytable.md) - KeyTable shard architecture and string interning details
-- [object-hashtable.md](../document/object-hashtable.md) - Object hash table design and tuning factors
-- [selector.md](../jsonpath/selector.md) - JSONPath engine used by SharedJSON_Get path evaluation

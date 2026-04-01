@@ -15,7 +15,6 @@ Source: `src/module_loader.cc`, `src/valkey_search.h`, `src/valkey_search.cc`, `
 - [Registered Commands](#registered-commands)
 - [Configuration System](#configuration-system)
 - [INFO Sections](#info-sections)
-- [See Also](#see-also)
 
 ## Module Identity
 
@@ -236,12 +235,3 @@ The module registers declarative INFO fields using `vmsdk::info_field` builders.
 | `query` | Success/failure counts, hybrid/prefilter/vector/text/nonvector breakdowns | App |
 
 `App` fields appear in standard INFO output; `Dev` fields appear only when `search.log-level` is set to debug or via `FT._DEBUG` commands. Fields marked `CrashSafe` can be emitted during crash reports (no locks, no allocations).
-
-## See Also
-
-- [index-schema](index-schema.md) - IndexSchema class, per-index state management
-- [schema-manager](schema-manager.md) - SchemaManager CRUD and lifecycle events
-- [thread-model](thread-model.md) - Concurrency primitives and fork handling details
-- [code-structure](../contributing/code-structure.md) - Source tree layout and build targets
-- [coordinator](../cluster/coordinator.md) - gRPC coordinator for cluster mode
-- [execution](../query/execution.md) - Query execution pipeline using thread pools

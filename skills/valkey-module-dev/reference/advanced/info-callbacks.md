@@ -279,11 +279,3 @@ ValkeyModule_Log(ctx, "notice", "Server %s, up %lld sec, %llu clients",
 
 ValkeyModule_FreeServerInfo(ctx, info);
 ```
-
-## See Also
-
-- [module-configs.md](module-configs.md) - Module configuration parameters exposed via CONFIG
-- [fork.md](fork.md) - Fork heartbeat progress visible in INFO persistence
-- [../lifecycle/server-info.md](../lifecycle/server-info.md) - Server version, time, database selection, and utility APIs
-- [../lifecycle/module-loading.md](../lifecycle/module-loading.md) - OnLoad where RegisterInfoFunc is typically called
-- [../testing.md](../testing.md) - Using getInfoProperty in Tcl tests to verify INFO fields

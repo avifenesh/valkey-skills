@@ -164,12 +164,3 @@ ValkeyModuleTypeMethods tm = {
 ## IO Error Handling
 
 See [rdb-callbacks.md - Error Handling](rdb-callbacks.md#error-handling) for the full `VALKEYMODULE_OPTIONS_HANDLE_IO_ERRORS` reference and code example. The same error handling applies to aux_load callbacks and `LoadDataTypeFromString` / `LoadDataTypeFromStringEncver`. The flag is also required for diskless replication - the server checks `moduleAllDatatypesHandleErrors()` and disables diskless loading if any module type lacks it.
-
-## See Also
-
-- [registration.md](registration.md) - ValkeyModuleTypeMethods struct with aux fields and version history
-- [rdb-callbacks.md](rdb-callbacks.md) - RDB save/load primitives used in aux callbacks
-- [digest.md](digest.md) - Similar metadata accessors (GetKeyNameFromDigest, GetDbIdFromDigest)
-- [rdb-stream.md](rdb-stream.md) - Full-file RDB API for module-driven persistence
-- [../lifecycle/module-options.md](../lifecycle/module-options.md) - HANDLE_IO_ERRORS and other module option flags
-- [../defrag.md](../defrag.md) - Defrag callback that also uses ValkeyModuleKeyOptCtx-style context

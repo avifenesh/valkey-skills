@@ -18,7 +18,6 @@ Source: `src/commands/ft_search.cc`, `src/commands/ft_search_parser.cc`, `src/co
 - Vector Query Responses (line 166)
 - Non-Vector Query Responses (line 182)
 - SORTBY Processing (line 205)
-- See Also (line 218)
 
 ## Command Overview
 
@@ -214,13 +213,3 @@ When `WITHSORTKEYS` is set, each result gets an extra element - the sort key val
 The sort respects ASC/DESC order from the SORTBY clause. Documents missing the sort field are pushed to the end. The `expr::Compare` function returns `Ordering::kLESS`, `kGREATER`, `kEQUAL`, or `kUNORDERED`.
 
 Note: SORTBY requires `RequiresCompleteResults() = true`, which disables background trimming - the full result set must be available for sorting.
-
-## See Also
-
-- [parsing.md](parsing.md) - filter expression parser and predicate AST
-- [execution.md](execution.md) - search execution flow, prefilter vs inline
-- [ft-aggregate.md](ft-aggregate.md) - FT.AGGREGATE pipeline
-- [../architecture/module-overview.md](../architecture/module-overview.md) - module design and registered commands
-- [../architecture/index-schema.md](../architecture/index-schema.md) - IndexSchema class and attribute lookup
-- [../cluster/coordinator.md](../cluster/coordinator.md) - cluster-mode search fanout via gRPC
-- [../cluster/metrics.md](../cluster/metrics.md) - query success/failure counters

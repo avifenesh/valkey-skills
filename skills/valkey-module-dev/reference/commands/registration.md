@@ -205,14 +205,3 @@ int ValkeyModule_SetCommandACLCategories(ValkeyModuleCommand *command,
 ```
 
 `AddACLCategory` creates a new category (max 64 total). `SetCommandACLCategories` assigns categories as space-separated string. Both must be called during `OnLoad`.
-
-## See Also
-
-- [reply-building.md](reply-building.md) - Reply functions for command implementations
-- [string-objects.md](string-objects.md) - Parsing command arguments with ValkeyModuleString
-- [key-generic.md](key-generic.md) - Opening and manipulating keys from commands
-- [../lifecycle/context.md](../lifecycle/context.md) - Module context and context flags
-- [../lifecycle/module-loading.md](../lifecycle/module-loading.md) - OnLoad where commands must be registered
-- [../lifecycle/memory.md](../lifecycle/memory.md) - AutoMemory for automatic cleanup in command handlers
-- [../advanced/acl.md](../advanced/acl.md) - ACL checking and authentication for commands
-- [../scripting-engine.md](../scripting-engine.md) - Custom scripting engines as an alternative to commands

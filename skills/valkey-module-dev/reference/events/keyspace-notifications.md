@@ -173,12 +173,3 @@ int ValkeyModule_OnLoad(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int arg
     return VALKEYMODULE_OK;
 }
 ```
-
-## See Also
-
-- [server-events.md](server-events.md) - Server-level lifecycle events (ValkeyModuleEvent_Key for removal events)
-- [blocking-on-keys.md](blocking-on-keys.md) - Blocking until keys receive new data
-- [../advanced/replication.md](../advanced/replication.md) - Replication concerns for write-safe callbacks
-- [../commands/registration.md](../commands/registration.md) - Registering module commands that emit notifications
-- [../lifecycle/context.md](../lifecycle/context.md) - Context types and constraints in callbacks
-- [../advanced/pubsub.md](../advanced/pubsub.md) - PublishMessage and PublishMessageShard for module-driven notifications

@@ -15,7 +15,6 @@ Source: `src/index_schema.h`, `src/index_schema.cc`
 - [Backfill Job](#backfill-job)
 - [TimeSlicedMRMWMutex Usage](#timeslicedmrmwmutex-usage)
 - [Statistics and Info](#statistics-and-info)
-- [See Also](#see-also)
 
 ## Class Overview
 
@@ -229,13 +228,3 @@ The `Stats` struct tracks per-index metrics with atomic counters:
 | `mutations_queue_delay_` | Duration (mutex-guarded) | Sampled queue wait time |
 
 `RespondWithInfo()` formats these for `FT.INFO` responses. `GetInfoIndexPartitionData()` aggregates stats into the `InfoIndexPartitionData` struct for coordinator fanout, including `num_docs`, `num_records`, `backfill_complete_percent`, `mutation_queue_size`, and `state`.
-
-## See Also
-
-- [module-overview](module-overview.md) - Module loading and ValkeySearch singleton
-- [schema-manager](schema-manager.md) - Registry that owns IndexSchema instances
-- [thread-model](thread-model.md) - TimeSlicedMRMWMutex details and fork handling
-- [hnsw](../indexes/hnsw.md) - HNSW vector index implementation
-- [text](../indexes/text.md) - Full-text search index and TextIndexSchema
-- [ft-search](../query/ft-search.md) - FT.SEARCH command flow through IndexSchema
-- [replication](../cluster/replication.md) - How mutations propagate across replicas

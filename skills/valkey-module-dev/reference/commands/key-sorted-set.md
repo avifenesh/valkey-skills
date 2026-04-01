@@ -173,13 +173,3 @@ while (!ValkeyModule_ZsetRangeEndReached(key)) {
 }
 ValkeyModule_ZsetRangeStop(key);
 ```
-
-## See Also
-
-- [key-generic.md](key-generic.md) - OpenKey, CloseKey, KeyType, ValueLength
-- [key-hash-stream.md](key-hash-stream.md) - Hash and stream operations
-- [key-list.md](key-list.md) - List operations
-- [string-objects.md](string-objects.md) - Creating ValkeyModuleString for elements and lex bounds
-- [reply-building.md](reply-building.md) - Replying with scores and element arrays
-- [../lifecycle/memory.md](../lifecycle/memory.md) - AutoMemory for automatic cleanup of returned strings
-- [../advanced/scan.md](../advanced/scan.md) - ScanKey for iterating sorted set elements outside range queries

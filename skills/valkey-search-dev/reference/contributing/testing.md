@@ -239,11 +239,3 @@ gdb --args .build-release/tests/core_test --gtest_filter="*SchemaManager*"
 3. Use `utils.py` helpers for server setup and command execution
 4. Tests are auto-discovered by pytest - no registration needed
 5. Ensure proper cleanup of server processes and temporary files
-
-## See Also
-
-- [build](build.md) - build system, dependencies, and sanitizer flags
-- [ci-pipeline](ci-pipeline.md) - CI workflow details and artifact upload
-- [code-structure](code-structure.md) - source layout for locating components to test
-- [index-schema](../architecture/index-schema.md) - IndexSchema class for understanding test fixtures
-- [schema-manager](../architecture/schema-manager.md) - SchemaManager singleton used in core_test

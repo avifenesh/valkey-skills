@@ -188,13 +188,3 @@ ValkeyModule_Log(ctx, "debug",
                  "Processing key %s with %d fields",
                  keyname, nfields);
 ```
-
-## See Also
-
-- [module-loading.md](module-loading.md) - Module initialization where logging is first available
-- [context.md](context.md) - ValkeyModuleCtx passed to Log
-- [server-info.md](server-info.md) - Milliseconds/Microseconds for timing measurements
-- [module-options.md](module-options.md) - HANDLE_IO_ERRORS flag for RDB error handling with LogIOError
-- [../data-types/rdb-callbacks.md](../data-types/rdb-callbacks.md) - RDB load/save callbacks where LogIOError is used
-- [../data-types/io-context.md](../data-types/io-context.md) - ValkeyModuleIO context for LogIOError
-- [../advanced/threading.md](../advanced/threading.md) - Background threads where Log is called with NULL context

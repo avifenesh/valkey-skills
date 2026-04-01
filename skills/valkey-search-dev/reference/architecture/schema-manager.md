@@ -18,7 +18,6 @@ Source: `src/schema_manager.h`, `src/schema_manager.cc`
 - [Backfill Orchestration](#backfill-orchestration)
 - [RDB Save and Load](#rdb-save-and-load)
 - [Fingerprinting](#fingerprinting)
-- [See Also](#see-also)
 
 ## Singleton and Construction
 
@@ -261,12 +260,3 @@ static absl::StatusOr<uint64_t> ComputeFingerprint(
 ```
 
 The fingerprint is seeded by a fixed 256-bit key (`kHashKey` - four randomly generated 64-bit values). It is used by the coordinator to detect metadata divergence across cluster nodes. Note that protobuf serialization is non-deterministic across versions, so this assumes fleet-wide module version consistency.
-
-## See Also
-
-- [module-overview](module-overview.md) - ValkeySearch singleton and startup
-- [index-schema](index-schema.md) - IndexSchema internals and mutation processing
-- [thread-model](thread-model.md) - Concurrency model and fork suspension
-- [coordinator](../cluster/coordinator.md) - MetadataManager cluster coordination
-- [replication](../cluster/replication.md) - Staging behavior during full sync
-- [build](../contributing/build.md) - Build system and protobuf code generation

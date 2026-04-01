@@ -196,11 +196,3 @@ int MyBlockPop_Command(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int argc
     return VALKEYMODULE_OK;
 }
 ```
-
-## See Also
-
-- [blocking-clients.md](blocking-clients.md) - Thread-based blocking with explicit UnblockClient
-- [../data-types/registration.md](../data-types/registration.md) - Custom data types that can signal readiness
-- [keyspace-notifications.md](keyspace-notifications.md) - Subscribe to key changes that may trigger readiness
-- [../commands/registration.md](../commands/registration.md) - Registering commands that call SignalKeyAsReady
-- [../lifecycle/context.md](../lifecycle/context.md) - Context types in ready and timeout callbacks

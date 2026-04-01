@@ -262,11 +262,3 @@ int MyAuth_Handler(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int argc) {
     /* ... verify credentials ... */
 }
 ```
-
-## See Also
-
-- [acl.md](acl.md) - ACL permission checking, authentication, module users
-- [command-filter.md](command-filter.md) - CommandFilterGetClientId for client identification in filters
-- [lru-lfu.md](lru-lfu.md) - GetUsedMemoryRatio complements memory-aware eviction
-- [../events/server-events.md](../events/server-events.md) - ClientChange event with ValkeyModuleClientInfo data
-- [../lifecycle/context.md](../lifecycle/context.md) - Context flags and GetContextFlags

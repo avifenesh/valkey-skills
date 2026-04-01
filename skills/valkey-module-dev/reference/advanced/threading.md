@@ -288,12 +288,3 @@ int ValkeyModule_OnLoad(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int arg
 | Typical lifetime | Single command | One background task | Module lifetime |
 | Must free | No (auto) | Yes | Yes |
 | GIL for data APIs | Not needed (main thread) | Required | Required |
-
-## See Also
-
-- [fork.md](fork.md) - Fork API for background child processes (alternative to threads)
-- [scan.md](scan.md) - Thread-safe scanning with GIL lock/unlock interleaving
-- [replication.md](replication.md) - Thread-safe context replication behavior
-- [../lifecycle/context.md](../lifecycle/context.md) - Context flags and `GetContextFlags`
-- [../events/blocking-clients.md](../events/blocking-clients.md) - BlockClient/UnblockClient and blocked client lifecycle
-- [../events/eventloop.md](../events/eventloop.md) - EventLoopAddOneShot for scheduling from background threads

@@ -176,17 +176,3 @@ int ValkeyModule_OnLoad(ValkeyModuleCtx *ctx,
     return VALKEYMODULE_OK;
 }
 ```
-
-## See Also
-
-- [context.md](context.md) - ValkeyModuleCtx structure and context flags
-- [module-options.md](module-options.md) - SetModuleOptions flags for IO errors, async replication
-- [memory.md](memory.md) - Heap allocation and auto-memory management
-- [logging.md](logging.md) - Logging during OnLoad and initialization
-- [api-importing.md](api-importing.md) - ExportSharedAPI and cross-module dependencies affecting unload
-- [../commands/registration.md](../commands/registration.md) - Command creation and registration
-- [../advanced/module-configs.md](../advanced/module-configs.md) - LoadConfigs for MODULE LOADEX configuration
-- [../events/server-events.md](../events/server-events.md) - MODULE_CHANGE event fired on load/unload
-- [../testing.md](../testing.md) - Loading and unloading modules in the test harness
-- [../scripting-engine.md](../scripting-engine.md) - Registering custom scripting engines during OnLoad
-- [../rust-sdk.md](../rust-sdk.md) - Rust SDK wrapping the C module loading and init sequence

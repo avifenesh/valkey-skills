@@ -223,11 +223,3 @@ union Data {
 ```
 
 The `Flag` overlay provides access to the `flags` (14 bits), `userFlag` (1 bit), and `noescapeFlag` (1 bit) at the end of the union, regardless of which variant is active. The `noescapeFlag` marks strings that need no JSON escaping during serialization, enabling a fast path in the writer.
-
-## See Also
-
-- [object-hashtable.md](object-hashtable.md) - Vector vs hash table storage for objects
-- [keytable.md](keytable.md) - String interning system used by GenericMember
-- [memory-layers.md](memory-layers.md) - Three-layer allocator behind dom_alloc
-- [rdb-format.md](../persistence/rdb-format.md) - RDB serialization of JDocument trees
-- [build.md](../contributing/build.md) - Build system and compiler flags

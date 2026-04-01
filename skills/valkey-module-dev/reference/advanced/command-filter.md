@@ -182,11 +182,3 @@ void ttl_enforcer(ValkeyModuleCommandFilterCtx *fctx) {
 ```
 
 **Audit logging** - use `CommandFilterGetClientId` to track which client issued a command without modifying it.
-
-## See Also
-
-- [calling-commands.md](calling-commands.md) - ValkeyModule_Call and the NOSELF interaction
-- [acl.md](acl.md) - ACL checks that complement command filtering
-- [client-info.md](client-info.md) - Client ID lookup used alongside CommandFilterGetClientId
-- [../commands/registration.md](../commands/registration.md) - Registering module commands
-- [../lifecycle/module-loading.md](../lifecycle/module-loading.md) - OnLoad where filters are typically registered

@@ -170,11 +170,3 @@ build/
 ## Instrumentation
 
 The `INSTRUMENT_V2PATH` environment variable enables JSONPath v2 instrumentation when set to `yes`. This adds the `INSTRUMENT_V2PATH` compile definition for performance profiling of path evaluation.
-
-## See Also
-
-- [testing.md](testing.md) - Unit and integration test details
-- [ci-pipeline.md](ci-pipeline.md) - GitHub Actions CI configuration
-- [adding-commands.md](adding-commands.md) - Command implementation patterns
-- [rdb-format.md](../persistence/rdb-format.md) - RDB encoding versions and persistence format
-- [memory-layers.md](../document/memory-layers.md) - Three-layer memory architecture (relevant to ASAN builds)

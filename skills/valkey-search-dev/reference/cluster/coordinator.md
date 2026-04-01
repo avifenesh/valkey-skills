@@ -200,13 +200,3 @@ When disabled, the module operates in standalone or basic cluster mode without g
 - `GRPCSuspensionGuard` - RAII guard acquired at the start of every gRPC callback; increments count on construction, decrements on destruction
 
 The suspender uses `absl::Mutex` with two condition variables: one for waiting until in-flight tasks drain, another for blocked callbacks waiting to resume. The singleton uses `absl::NoDestructor` to avoid destruction races with gRPC event engine threads at process exit.
-
-## See Also
-
-- [replication.md](replication.md) - RDB serialization and FT.INTERNAL_UPDATE
-- [metrics.md](metrics.md) - coordinator metrics tracking
-- [../architecture/module-overview.md](../architecture/module-overview.md) - overall module architecture
-- [../architecture/thread-model.md](../architecture/thread-model.md) - thread model and fork suspension
-- [../architecture/schema-manager.md](../architecture/schema-manager.md) - SchemaManager and index CRUD
-- [../query/execution.md](../query/execution.md) - search execution flow and cluster fanout dispatch
-- [../query/ft-search.md](../query/ft-search.md) - FT.SEARCH command handling (SearchMode::kRemote)

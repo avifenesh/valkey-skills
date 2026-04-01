@@ -142,14 +142,3 @@ int ValkeyModule_GetTypeMethodVersion(void);
 Returns the current runtime value of `VALKEYMODULE_TYPE_METHOD_VERSION`. Use when calling `ValkeyModule_CreateDataType` to know which fields of `ValkeyModuleTypeMethods` are supported.
 
 Source: `src/module.c` (lines 14059-14124)
-
-## See Also
-
-- [context.md](context.md) - GetContextFlags for querying server state
-- [module-options.md](module-options.md) - GetModuleOptionsAll for option flag detection
-- [logging.md](logging.md) - Logging and latency monitoring
-- [module-loading.md](module-loading.md) - OnLoad where version checks are typically performed
-- [../commands/reply-building.md](../commands/reply-building.md) - WrongArity and other reply functions for commands
-- [../commands/registration.md](../commands/registration.md) - Command creation and dispatch
-- [../data-types/registration.md](../data-types/registration.md) - GetTypeMethodVersion for data type method support
-- [../advanced/info-callbacks.md](../advanced/info-callbacks.md) - RegisterInfoFunc for custom INFO sections

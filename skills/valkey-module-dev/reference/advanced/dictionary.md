@@ -189,9 +189,3 @@ int ValkeyModule_DictCompare(ValkeyModuleDictIter *di,
 ```
 
 Compare the current iterator position against a key using the same operators as `DictIteratorStart`. Returns `VALKEYMODULE_OK` if the comparison holds, `VALKEYMODULE_ERR` if it does not or the iterator is exhausted. Useful for bounded range iteration.
-
-## See Also
-
-- [scan.md](scan.md) - Scanning the Valkey keyspace (different from dictionary iteration)
-- [../data-types/registration.md](../data-types/registration.md) - Custom data types that may use dictionaries internally
-- [../lifecycle/module-loading.md](../lifecycle/module-loading.md) - Auto-memory management context rules

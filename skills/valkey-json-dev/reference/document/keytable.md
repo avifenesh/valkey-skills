@@ -237,11 +237,3 @@ Factors are validated by `isValidFactors()` before applying. Key constraint: `sh
 `LongStats` provides run-length distribution across shard tables (expensive, debug only).
 
 `validate()` and `validate_counts()` are unit-test functions that verify all invariants across all shards.
-
-## See Also
-
-- [jdocument.md](jdocument.md) - GenericMember using KeyTable_Handle for names
-- [object-hashtable.md](object-hashtable.md) - Object storage modes that use KeyTable handles
-- [memory-layers.md](memory-layers.md) - memory_alloc used by KeyTable for layout allocation
-- [cross-module.md](../persistence/cross-module.md) - CONFIG SET json.key-table-num-shards tuning
-- [defrag.md](../persistence/defrag.md) - Defragmentation interaction with KeyTable handles

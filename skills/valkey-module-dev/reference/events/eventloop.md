@@ -216,11 +216,3 @@ void *workerThread(void *arg) {
     return NULL;
 }
 ```
-
-## See Also
-
-- [timers.md](timers.md) - Millisecond-precision timer callbacks (built on the same event loop)
-- [blocking-clients.md](blocking-clients.md) - Blocking client operations with threads
-- [server-events.md](server-events.md) - Server lifecycle events (EventLoop before/after sleep)
-- [../advanced/threading.md](../advanced/threading.md) - Thread-safe contexts and GIL
-- [../lifecycle/context.md](../lifecycle/context.md) - Context types (one-shot callbacks have no module context)

@@ -143,12 +143,3 @@ ValkeyModule_RetainString(ctx, argv[1]);
 ValkeyModule_TrimStringAllocation(argv[1]);
 /* Now safe to store and access from other threads (with GIL for argv strings) */
 ```
-
-## See Also
-
-- [reply-building.md](reply-building.md) - Using strings in replies (ReplyWithString)
-- [key-string.md](key-string.md) - String key operations (StringSet, StringDMA)
-- [key-generic.md](key-generic.md) - Opening keys that return ValkeyModuleString
-- [registration.md](registration.md) - Command argv is ValkeyModuleString array
-- [../lifecycle/context.md](../lifecycle/context.md) - Context for automatic string memory management
-- [../lifecycle/memory.md](../lifecycle/memory.md) - Manual memory management for strings outside auto-memory

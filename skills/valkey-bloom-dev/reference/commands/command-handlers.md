@@ -15,7 +15,6 @@ Source: `src/bloom/command_handler.rs`, `src/bloom/utils.rs`, `src/lib.rs`
 - BF.INFO Field Queries (line 105)
 - BF.INFO Full Output (line 124)
 - Command Registration (line 146)
-- See Also (line 161)
 
 ---
 
@@ -157,10 +156,3 @@ All commands are registered in the `valkey_module!` macro in `lib.rs`:
 | BF.INFO | `readonly fast` | `fast read bloom` |
 
 All commands use key arguments `1, 1, 1` (first-key=1, last-key=1, key-step=1). All mutative commands include the `bloom` ACL category defined in the module's `acl_categories` block.
-
-## See Also
-
-- [bf-reserve-insert](bf-reserve-insert.md) - BF.RESERVE, BF.INSERT, BF.LOAD command handlers
-- [replication](replication.md) - Deterministic replication strategy and keyspace notifications
-- [bloom-object](../architecture/bloom-object.md) - BloomObject struct, scaling, memory limits
-- [code-structure](../contributing/code-structure.md) - Module registration and error handling patterns

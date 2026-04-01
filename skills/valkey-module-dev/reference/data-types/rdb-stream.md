@@ -155,11 +155,3 @@ int MyModule_SaveRDB(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int argc) 
 The two APIs serve different purposes. The per-key callbacks (`rdb_load`/`rdb_save` in `ValkeyModuleTypeMethods`) define how individual keys of your type are serialized - the server calls these automatically during `BGSAVE`, `BGREWRITEAOF`, replication, etc. The RDB Stream API triggers a full server-level save or load operation that includes all keys of all types.
 
 They also compose: when `ValkeyModule_RdbSave()` writes the dataset, it calls each module type's `rdb_save` callback for keys of that type. When `ValkeyModule_RdbLoad()` reads, it calls each type's `rdb_load` callback.
-
-## See Also
-
-- [rdb-callbacks.md](rdb-callbacks.md) - Per-key rdb_load/rdb_save callbacks and primitives
-- [registration.md](registration.md) - Registering rdb_load/rdb_save in ValkeyModuleTypeMethods
-- [io-context.md](io-context.md) - IO context helpers and error handling
-- [../commands/registration.md](../commands/registration.md) - Registering the backup/restore commands that use this API
-- [../advanced/fork.md](../advanced/fork.md) - Background fork for non-blocking RDB saves

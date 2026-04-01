@@ -216,12 +216,3 @@ int ValkeyModule_OnLoad(ValkeyModuleCtx *ctx,
     return VALKEYMODULE_OK;
 }
 ```
-
-## See Also
-
-- [module-loading.md](module-loading.md) - Module load order and unload constraints
-- [context.md](context.md) - ValkeyModuleCtx needed for GetSharedAPI
-- [memory.md](memory.md) - Allocation for shared data structures across modules
-- [../commands/registration.md](../commands/registration.md) - Creating commands that use shared APIs
-- [../events/server-events.md](../events/server-events.md) - MODULE_CHANGE event to detect provider load/unload
-- [../testing.md](../testing.md) - Testing multi-module dependencies

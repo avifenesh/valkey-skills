@@ -204,11 +204,3 @@ impl Drop for BloomFilter {
 ```
 
 This decrements four counters: filter count, memory bytes, item count, and capacity. Combined with BloomObject's Drop (which handles object count and object-level overhead), all metrics stay accurate through the full lifecycle.
-
-## See Also
-
-- [bloom-object.md](bloom-object.md) - BloomObject struct, scaling mechanism, FP tightening
-- [persistence.md](persistence.md) - RDB save/load format, from_existing usage during restore
-- [defrag-metrics.md](defrag-metrics.md) - Defrag of the internal Bloom struct and bit vector
-- [../commands/bf-reserve-insert.md](../commands/bf-reserve-insert.md) - BF.RESERVE and BF.INSERT command handling that creates BloomFilter instances
-- [../commands/module-configs.md](../commands/module-configs.md) - bloom-use-random-seed and other configs controlling filter creation

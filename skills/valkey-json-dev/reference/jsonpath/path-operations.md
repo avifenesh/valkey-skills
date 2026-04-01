@@ -201,10 +201,3 @@ The Selector produces results that DOM functions consume. The flow:
 **Delete ordering** - `deleteValues()` sorts paths deepest-first using `pathCompare` (selector.cc:611-645). This comparator orders by path depth descending, then by element index descending within the same parent. This ensures children are removed before parents, preventing dangling references.
 
 **Document size tracking** - DOM mutation functions use `CHECK_DOCUMENT_SIZE_LIMIT` and `CHECK_DOCUMENT_PATH_LIMIT` macros before committing changes. The two-stage write pattern in `dom_set_value()` is specifically designed to allow these checks between path evaluation and actual mutation.
-
-## See Also
-
-- [selector.md](selector.md) - Selector class, entry points, safety limits, EBNF grammar
-- [expressions.md](expressions.md) - Filter expressions, comparison operators, type coercion
-- [jdocument.md](../document/jdocument.md) - JDocument/JValue DOM, RapidJSON allocator
-- [adding-commands.md](../contributing/adding-commands.md) - How commands invoke DOM mutation functions

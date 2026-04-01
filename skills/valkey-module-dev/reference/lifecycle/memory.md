@@ -223,14 +223,3 @@ See [../commands/string-objects.md](../commands/string-objects.md) for `ValkeyMo
 | Small temporary buffers within a single callback | `ValkeyModule_PoolAlloc` |
 | Strings, keys, reply objects within a callback | `ValkeyModule_AutoMemory` |
 | Tight loops creating many temporary objects | Manual `Free` even with AutoMemory |
-
-## See Also
-
-- [context.md](context.md) - ValkeyModuleCtx fields for pool allocator and auto-memory
-- [module-loading.md](module-loading.md) - Module initialization sequence
-- [module-options.md](module-options.md) - HANDLE_IO_ERRORS for safe cleanup on RDB read failures
-- [logging.md](logging.md) - Logging from within modules
-- [../data-types/registration.md](../data-types/registration.md) - Memory management for custom data types
-- [../defrag.md](../defrag.md) - DefragAlloc for reallocating module memory during defragmentation
-- [../advanced/lru-lfu.md](../advanced/lru-lfu.md) - mem_usage callback for memory reporting to eviction
-- [../advanced/dictionary.md](../advanced/dictionary.md) - Module-private radix tree dictionary with auto-memory support

@@ -229,11 +229,3 @@ docker run --privileged --rm -v "$(pwd):/workspace" \
   --user "ubuntu:ubuntu" presubmit-image \
   sudo ci/build_ubuntu.sh --run-integration-tests
 ```
-
-## See Also
-
-- [build](build.md) - build system, build.sh options, and sanitizer flags
-- [testing](testing.md) - test framework details, test tiers, and adding tests
-- [code-structure](code-structure.md) - source layout
-- [coordinator](../cluster/coordinator.md) - gRPC coordinator tested by coordinator_test
-- [metrics](../cluster/metrics.md) - FT.INFO and metrics tested in CI

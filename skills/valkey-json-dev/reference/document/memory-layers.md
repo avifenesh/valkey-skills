@@ -252,11 +252,3 @@ The stats module (`stats.h` / `stats.cc`) provides:
 **Logical stats** (`LogicalStats`): Atomic counters for billing - boolean/number/string/null/array/object counts and character sums.
 
 All histogram data is formatted by `jsonstats_sprint_*_hist()` functions for the `JSON.DEBUG` / INFO output.
-
-## See Also
-
-- [jdocument.md](jdocument.md) - JDocument size/bucket_id fields maintained by stats
-- [keytable.md](keytable.md) - KeyTable uses memory_alloc directly for layout storage
-- [object-hashtable.md](object-hashtable.md) - Hash table allocations flow through RapidJsonAllocator
-- [defrag.md](../persistence/defrag.md) - Defrag stats (defrag_count, defrag_bytes) in the stats module
-- [cross-module.md](../persistence/cross-module.md) - CONFIG SET json.* parameters affecting memory

@@ -221,11 +221,3 @@ Type name is `"bloomfltr"` (9 characters, the Valkey maximum). Callbacks wired t
 The `digest` callback (line 130 of `bloom_callback.rs`) implements `DEBUG DIGEST` by hashing `expansion`, `fp_rate`, `tightening_ratio`, `is_seed_random`, and each filter's raw bitmap, `num_items`, and `capacity` via the `Digest` API. The `free` callback (line 104) drops the BloomObject box, triggering the `Drop` impls for both BloomObject and its BloomFilter children.
 
 Callbacks set to `None`: `unlink`, `mem_usage2`, `free_effort2`, `unlink2`, `copy2`, `aux_save`, `aux_save2`. The version 1 variants are used where both exist.
-
-## See Also
-
-- [bloom-object.md](bloom-object.md) - BloomObject struct fields, from_existing constructor
-- [bloom-filter.md](bloom-filter.md) - BloomFilter::from_existing, serde integration
-- [defrag-metrics.md](defrag-metrics.md) - Defrag callback registered alongside these callbacks
-- [../commands/replication.md](../commands/replication.md) - Deterministic replication using BF.INSERT with SEED
-- [../contributing/code-structure.md](../contributing/code-structure.md) - Module file layout including data_type.rs

@@ -16,7 +16,6 @@ Source: `src/bloom/command_handler.rs` (replicate_and_notify_events, ReplicateAr
 - Size Limit Bypass on Replicas (line 133)
 - Keyspace Notifications (line 151)
 - Replication in Each Command (line 173)
-- See Also (line 185)
 
 ---
 
@@ -181,10 +180,3 @@ Both events can fire in the same call - when BF.ADD or BF.INSERT creates a new o
 | BF.LOAD | BF.INSERT with full props | Never | AOF rewrite path, creation-only |
 
 All creation paths use the same `replicate_and_notify_events` function. The replicated BF.INSERT always includes SEED and TIGHTENING, ensuring the replica's bloom object is bit-for-bit identical in hash behavior.
-
-## See Also
-
-- [command-handlers](command-handlers.md) - BF.ADD, BF.EXISTS handler details
-- [bf-reserve-insert](bf-reserve-insert.md) - BF.INSERT argument parsing, SEED/TIGHTENING internals
-- [bloom-filter](../architecture/bloom-filter.md) - Seed modes, hash behavior, random vs fixed seeds
-- [build](../contributing/build.md) - Valkey 8.0 vs 8.1 feature flag (`valkey_8_0`)

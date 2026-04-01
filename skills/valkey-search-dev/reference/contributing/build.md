@@ -214,11 +214,3 @@ Google Benchmark is disabled for sanitizer builds since instrumentation distorts
 | Link errors about multiple definitions | Missing `--start-group` | Ensure Linux build uses the CMake-generated link flags |
 | `GCC version too old` | GCC below 12 | Upgrade to GCC 12+ or use the dev container |
 | Benchmark disabled warning | SAN_BUILD is set | Expected - Google Benchmark is skipped for sanitizer builds |
-
-## See Also
-
-- [testing](testing.md) - running unit and integration tests
-- [ci-pipeline](ci-pipeline.md) - CI workflow details and pre-built dependency packages
-- [code-structure](code-structure.md) - source layout and adding features
-- [module-overview](../architecture/module-overview.md) - VALKEY_MODULE macro, ValkeySearch singleton, startup sequence
-- [thread-model](../architecture/thread-model.md) - concurrency architecture and TimeSlicedMRMWMutex

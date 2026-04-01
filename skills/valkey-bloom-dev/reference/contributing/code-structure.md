@@ -276,10 +276,3 @@ Step-by-step process for adding a hypothetical `BF.NEWCMD`:
 5. **Write tests** - add unit tests in `src/bloom/utils.rs` if the command involves new BloomObject logic. Add integration tests in a new or existing `tests/test_bloom_*.py` file.
 
 6. **Update test_basic** - add the new command name to the `bf_cmds` list in `test_bloom_basic.py::test_basic` so module loading validation includes it.
-
-## See Also
-
-- `reference/architecture/bloom-object.md` - bloom filter internals, scaling, memory layout
-- `reference/commands/command-handlers.md` - command handler implementations
-- `reference/contributing/build.md` - build system and feature flags
-- `reference/contributing/testing.md` - test framework and running tests

@@ -271,12 +271,3 @@ Multiple locking levels:
 The design separates tree structure locks from target mutation locks. Reading the Rax tree during search takes `text_index_mutex_` as a reader lock, while target mutations only need the per-word bucket lock. This allows high concurrency for queries that touch different words.
 
 `Text::EntriesFetcher` bridges to the `TextIterator` hierarchy - `Begin()` calls `predicate_->BuildTextIterator()` and wraps it in a `TextFetcher` adapter (`text_fetcher.h`). `TextIteratorFetcher` (in `text.h`) provides the same bridge for composed AND queries where a `TextIterator` is already built.
-
-## See Also
-
-- [numeric.md](numeric.md) - Numeric range index
-- [tag.md](tag.md) - Tag categorical index
-- [Module overview](../architecture/module-overview.md) - Module architecture overview
-- [Query execution](../query/execution.md) - Query execution and text predicate types
-- [Query parsing](../query/parsing.md) - How text queries are parsed into predicate trees
-- [Thread model](../architecture/thread-model.md) - Threading and concurrency architecture

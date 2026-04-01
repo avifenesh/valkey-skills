@@ -220,11 +220,3 @@ int MyCommand(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int argc) {
     return VALKEYMODULE_OK;
 }
 ```
-
-## See Also
-
-- [blocking-on-keys.md](blocking-on-keys.md) - Blocking until keys become ready (server-driven unblock)
-- [../advanced/threading.md](../advanced/threading.md) - Thread-safe contexts and GIL for background work
-- [eventloop.md](eventloop.md) - Event loop integration, one-shot callbacks, and Yield
-- [../commands/registration.md](../commands/registration.md) - Registering module commands
-- [../lifecycle/context.md](../lifecycle/context.md) - Context types available in reply and timeout callbacks

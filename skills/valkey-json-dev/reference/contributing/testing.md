@@ -191,11 +191,3 @@ class TestMyFeature(JsonTestCase):
             'SYNTAXERR ...'
         )
 ```
-
-## See Also
-
-- [build.md](build.md) - CMake configuration and build options
-- [ci-pipeline.md](ci-pipeline.md) - How tests run in CI
-- [adding-commands.md](adding-commands.md) - When tests are needed for new commands
-- [jdocument.md](../document/jdocument.md) - JDocument/JValue types tested in dom_test.cc
-- [selector.md](../jsonpath/selector.md) - JSONPath selector tested in selector_test.cc

@@ -261,14 +261,3 @@ ValkeyModule_StringToStreamID(argv[1], &id);
 /* StreamID to String */
 ValkeyModuleString *str = ValkeyModule_CreateStringFromStreamID(ctx, &id);
 ```
-
-## See Also
-
-- [key-generic.md](key-generic.md) - OpenKey, CloseKey, KeyType, ValueLength
-- [key-sorted-set.md](key-sorted-set.md) - Sorted set operations
-- [key-list.md](key-list.md) - List operations
-- [string-objects.md](string-objects.md) - String conversion functions for stream IDs (CreateStringFromStreamID, StringToStreamID)
-- [reply-building.md](reply-building.md) - Building hash/stream result replies
-- [../lifecycle/memory.md](../lifecycle/memory.md) - AutoMemory for automatic cleanup of returned strings and key handles
-- [../events/blocking-on-keys.md](../events/blocking-on-keys.md) - BlockClientOnKeys for XREAD-style blocking on streams
-- [../advanced/calling-commands.md](../advanced/calling-commands.md) - Alternative: call HSET/XADD via ValkeyModule_Call

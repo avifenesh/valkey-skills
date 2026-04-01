@@ -19,7 +19,6 @@ Source: `src/query/search.h`, `src/query/search.cc`, `src/query/planner.h`, `src
 - ContentProcessing Modes (line 177)
 - Contention Checking (line 189)
 - Result Trimming and Serialization (line 200)
-- See Also (line 213)
 
 ## Execution Overview
 
@@ -209,14 +208,3 @@ This ensures that the final response reflects a consistent snapshot - if a docum
 `ShouldReturnNoResults()` short-circuits when `limit.number == 0` or vector queries with `limit.first_index >= k`.
 
 Default timeout is 50 seconds (`kTimeoutMS`), maximum 60 seconds (`kMaxTimeoutMs`). Default LIMIT is offset 0, count 10.
-
-## See Also
-
-- [parsing.md](parsing.md) - filter expression parser and predicate AST
-- [ft-search.md](ft-search.md) - FT.SEARCH command handler and parameters
-- [ft-aggregate.md](ft-aggregate.md) - FT.AGGREGATE pipeline execution
-- [../architecture/thread-model.md](../architecture/thread-model.md) - thread pools, TimeSlicedMRMWMutex, fork suspension
-- [../architecture/module-overview.md](../architecture/module-overview.md) - module design and startup
-- [../indexes/hnsw.md](../indexes/hnsw.md) - HNSW vector index search internals
-- [../indexes/flat.md](../indexes/flat.md) - FLAT vector index search internals
-- [../cluster/coordinator.md](../cluster/coordinator.md) - SearchMode::kRemote and cluster fanout

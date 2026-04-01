@@ -253,13 +253,3 @@ Both `ValkeySearch` and `KeyspaceEventManager` are initialized in `module_loader
 | `src/coordinator/coordinator.proto` | gRPC service for cluster coordination |
 
 Proto files are compiled to C++ via CMake's `valkey_search_create_proto_library` function defined in `cmake/Modules/valkey_search.cmake`.
-
-## See Also
-
-- [build](build.md) - build system, CMake targets, and dependencies
-- [testing](testing.md) - test framework, test binaries, and adding tests
-- [ci-pipeline](ci-pipeline.md) - CI workflow details
-- [module-overview](../architecture/module-overview.md) - VALKEY_MODULE macro, startup sequence, ValkeySearch singleton
-- [index-schema](../architecture/index-schema.md) - IndexSchema class and attribute management
-- [execution](../query/execution.md) - search execution flow and query planner
-- [coordinator](../cluster/coordinator.md) - gRPC service definition and coordinator architecture

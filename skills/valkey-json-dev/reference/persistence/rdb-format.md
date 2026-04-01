@@ -204,10 +204,3 @@ Both load paths set error codes on failure:
 The load callback checks for errors and returns nullptr on failure, which tells Valkey to skip the key. The save callback checks `ValkeyModule_IsIOError` after writing and logs a warning.
 
 The module also sets `VALKEYMODULE_OPTIONS_HANDLE_IO_ERRORS | VALKEYMODULE_OPTIONS_HANDLE_REPL_ASYNC_LOAD` at load time (json.cc line 2674), telling Valkey the module handles I/O errors gracefully and supports async replication loading rather than aborting.
-
-## See Also
-
-- [defrag.md](defrag.md) - Defragmentation callback registered alongside RDB callbacks
-- [cross-module.md](cross-module.md) - Module config and data type registration context
-- [jdocument.md](../document/jdocument.md) - JDocument/JValue type hierarchy used by dom_save/dom_load
-- [memory-layers.md](../document/memory-layers.md) - Three-layer memory architecture and TLS tracking during RDB load

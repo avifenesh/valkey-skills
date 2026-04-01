@@ -175,13 +175,3 @@ int ValkeyModule_GetTypeMethodVersion(void);
 ```
 
 Returns the server's runtime `VALKEYMODULE_TYPE_METHOD_VERSION`. Use this to check which callback fields the running server supports before registration.
-
-## See Also
-
-- [rdb-callbacks.md](rdb-callbacks.md) - RDB save/load primitives for rdb_save and rdb_load callbacks
-- [aof-rewrite.md](aof-rewrite.md) - AOF rewrite callback and EmitAOF
-- [digest.md](digest.md) - DEBUG DIGEST callback implementation
-- [io-context.md](io-context.md) - IO context helpers and aux data callbacks
-- [../lifecycle/module-loading.md](../lifecycle/module-loading.md) - OnLoad where CreateDataType must be called
-- [../lifecycle/module-options.md](../lifecycle/module-options.md) - Module option flags including IO error handling
-- [../defrag.md](../defrag.md) - Defragmentation callback registered in ValkeyModuleTypeMethods

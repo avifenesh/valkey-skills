@@ -270,11 +270,3 @@ void Tag::EntriesFetcherIterator::NextNegate() {
 ```
 
 Size estimation for negated queries: `tracked_tags_by_keys_.size() - matched_size + untracked_keys_.size()` (clamped to avoid underflow when matched_size exceeds tracked count).
-
-## See Also
-
-- [numeric.md](numeric.md) - Numeric range index
-- [text.md](text.md) - Full-text search index
-- [Module overview](../architecture/module-overview.md) - Module architecture overview
-- [Query execution](../query/execution.md) - Predicate evaluation and filter planning
-- [Index schema](../architecture/index-schema.md) - Schema management and index creation

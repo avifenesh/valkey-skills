@@ -127,10 +127,3 @@ The defrag threshold is currently a compile-time default with a runtime accessor
 The defrag callback does not update `jsonstats_update_stats_on_insert` or `jsonstats_update_stats_on_delete` because the document count and total memory remain the same - only the physical memory layout changes. The `dom_copy` + `dom_free_doc` sequence results in the same tracked `doc_size` because `dom_set_bucket_id` preserves the histogram bucket from the original.
 
 The `DocumentType_Copy` callback (json.cc line 2342) - used by the `COPY` command - does call `jsonstats_update_stats_on_insert` because it creates a new key, unlike defrag which replaces in-place.
-
-## See Also
-
-- [rdb-format.md](rdb-format.md) - RDB persistence and type registration
-- [cross-module.md](cross-module.md) - Module configs including defrag threshold default
-- [memory-layers.md](../document/memory-layers.md) - Three-layer memory architecture and per-document stats
-- [jdocument.md](../document/jdocument.md) - JDocument type hierarchy used by dom_copy

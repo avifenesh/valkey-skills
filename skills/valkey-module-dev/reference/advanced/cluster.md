@@ -171,10 +171,3 @@ unsigned int slot = ValkeyModule_ClusterKeySlot(keyname);
 const char *tag = ValkeyModule_ClusterCanonicalKeyNameInSlot(slot);
 /* tag can be used as "{tag}:suffix" to ensure same-slot keys */
 ```
-
-## See Also
-
-- [calling-commands.md](calling-commands.md) - Cluster-aware command execution and EPERM/EROFS/ENETDOWN errors
-- [pubsub.md](pubsub.md) - PublishMessageShard for shard-scoped messaging
-- [../events/server-events.md](../events/server-events.md) - Cluster topology change events
-- [../lifecycle/module-loading.md](../lifecycle/module-loading.md) - Module initialization

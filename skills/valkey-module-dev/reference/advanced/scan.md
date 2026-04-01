@@ -168,10 +168,3 @@ Unsafe operations during scanning:
 A safe pattern for batch modifications is to collect key names during the scan and process them after iteration completes. For memory-constrained scenarios, operating on the current key during the callback is safe.
 
 For compact-encoded data types (listpack-encoded hashes and sorted sets, listpack-encoded or setlistpack-encoded sets), the scan iterates all elements in one call and returns 0. For hashtable-backed encodings, it uses incremental cursor-based scanning.
-
-## See Also
-
-- [dictionary.md](dictionary.md) - Module-private dictionary with similar iteration patterns
-- [threading.md](threading.md) - Thread-safe scanning with GIL lock/unlock interleaving
-- [../data-types/registration.md](../data-types/registration.md) - Custom data types and key access
-- [calling-commands.md](calling-commands.md) - Alternative: call SCAN/HSCAN via ValkeyModule_Call

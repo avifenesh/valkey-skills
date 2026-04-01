@@ -175,10 +175,3 @@ int ValkeyModule_OnLoad(ValkeyModuleCtx *ctx, ValkeyModuleString **argv,
     return VALKEYMODULE_OK;
 }
 ```
-
-## See Also
-
-- [cluster.md](cluster.md) - Cluster messaging and shard channel propagation
-- [acl.md](acl.md) - ACL channel permission checking for publish operations
-- [../events/keyspace-notifications.md](../events/keyspace-notifications.md) - Subscribe to key change events within the module
-- [calling-commands.md](calling-commands.md) - ValkeyModule_Call for executing commands including PUBLISH

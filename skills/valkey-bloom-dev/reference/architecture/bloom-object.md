@@ -211,11 +211,3 @@ impl Drop for BloomObject {
 ```
 
 This decrements the object-level overhead only. Each `BloomFilter` in the vec has its own `Drop` that decrements filter-level metrics separately.
-
-## See Also
-
-- [bloom-filter.md](bloom-filter.md) - BloomFilter struct, bloomfilter crate, seed handling
-- [persistence.md](persistence.md) - RDB save/load, AOF rewrite, bincode encoding
-- [defrag-metrics.md](defrag-metrics.md) - Defragmentation callbacks, INFO metrics
-- [../commands/bf-reserve-insert.md](../commands/bf-reserve-insert.md) - BF.RESERVE and BF.INSERT command handling
-- [../commands/replication.md](../commands/replication.md) - Deterministic replication of bloom object creation

@@ -20,7 +20,6 @@ Source: `src/commands/ft_aggregate.cc`, `src/commands/ft_aggregate_parser.cc`, `
 - Expression Engine (line 231)
 - Record and RecordSet Types (line 241)
 - Response Generation (line 263)
-- See Also (line 280)
 
 ## Command Overview
 
@@ -276,13 +275,3 @@ For each record, iterate both `fields_` and `extra_fields_`, calling `ReplyWithV
 - Dialect 3/4: values are wrapped in brackets (`[value]`)
 
 Numeric values are formatted with `%.11g` precision. Nil values are skipped entirely (no field name or value emitted).
-
-## See Also
-
-- [parsing.md](parsing.md) - filter expression parser shared with FT.SEARCH
-- [execution.md](execution.md) - search execution flow (shared query phase)
-- [ft-search.md](ft-search.md) - FT.SEARCH command handling
-- [../architecture/module-overview.md](../architecture/module-overview.md) - module design and registered commands
-- [../architecture/index-schema.md](../architecture/index-schema.md) - IndexSchema attributes and field types
-- [../cluster/coordinator.md](../cluster/coordinator.md) - cluster-mode search fanout via gRPC
-- [../cluster/metrics.md](../cluster/metrics.md) - query counters and latency samplers

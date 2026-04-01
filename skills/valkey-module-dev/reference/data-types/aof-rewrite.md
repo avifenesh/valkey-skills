@@ -136,12 +136,3 @@ void MyType_AofRewrite(ValkeyModuleIO *aof, ValkeyModuleString *key, void *value
 During normal operation (outside of AOF rewrite), module commands must propagate themselves to the AOF using `ValkeyModule_ReplicateVerbatim()` or `ValkeyModule_Replicate()`. The `aof_rewrite` callback is separate - it handles AOF compaction by emitting the minimal set of commands to reconstruct the current state.
 
 See [../advanced/replication.md](../advanced/replication.md) for the full `ReplicateVerbatim` and `Replicate` API reference and strategy selection guide.
-
-## See Also
-
-- [registration.md](registration.md) - Setting up the aof_rewrite callback in ValkeyModuleTypeMethods
-- [rdb-callbacks.md](rdb-callbacks.md) - RDB persistence as the other persistence mechanism
-- [io-context.md](io-context.md) - IO context helpers available during AOF rewrite
-- [../commands/registration.md](../commands/registration.md) - Registering the commands that EmitAOF emits
-- [../advanced/replication.md](../advanced/replication.md) - Replicate and ReplicateVerbatim for ongoing AOF logging
-- [../advanced/calling-commands.md](../advanced/calling-commands.md) - ValkeyModule_Call format specifiers shared with EmitAOF

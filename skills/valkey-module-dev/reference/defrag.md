@@ -281,11 +281,3 @@ start_server {tags {"modules"} overrides {{save ""}}} {
     }
 }
 ```
-
-## See Also
-
-- [data-types/registration.md](data-types/registration.md) - ValkeyModuleTypeMethods struct and free_effort callback
-- [lifecycle/memory.md](lifecycle/memory.md) - ValkeyModule_Alloc/Free used with DefragAlloc
-- [advanced/lru-lfu.md](advanced/lru-lfu.md) - mem_usage callback and eviction metadata APIs
-- [advanced/info-callbacks.md](advanced/info-callbacks.md) - Exposing defrag statistics via INFO
-- [testing.md](testing.md) - Test framework and defragtest.c harness patterns

@@ -127,12 +127,3 @@ ValkeyModule_CloseKey(key);
 ## Value Length
 
 Use `ValkeyModule_ValueLength(key)` from the generic key API to get the byte length of a string value without DMA. See [key-generic.md](key-generic.md).
-
-## See Also
-
-- [key-generic.md](key-generic.md) - OpenKey, KeyType, ValueLength, expiry
-- [string-objects.md](string-objects.md) - ValkeyModuleString creation and parsing (distinct from key string values)
-- [key-list.md](key-list.md) - List key operations
-- [key-hash-stream.md](key-hash-stream.md) - Hash and stream key operations
-- [../advanced/calling-commands.md](../advanced/calling-commands.md) - Alternative to DMA: call SET/GET via ValkeyModule_Call
-- [../lifecycle/memory.md](../lifecycle/memory.md) - Memory management for DMA buffers and key handles

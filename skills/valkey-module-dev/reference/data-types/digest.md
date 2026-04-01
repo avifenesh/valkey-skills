@@ -142,11 +142,3 @@ void MyHash_Digest(ValkeyModuleDigest *md, void *value) {
     }
 }
 ```
-
-## See Also
-
-- [registration.md](registration.md) - Setting the digest callback in ValkeyModuleTypeMethods
-- [rdb-callbacks.md](rdb-callbacks.md) - RDB persistence callbacks for the same data types
-- [io-context.md](io-context.md) - Similar metadata accessors (GetKeyNameFromIO, GetDbIdFromIO)
-- [../testing.md](../testing.md) - Testing modules including DEBUG DIGEST verification
-- [../advanced/replication.md](../advanced/replication.md) - Replication where digest checks verify consistency

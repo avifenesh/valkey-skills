@@ -221,12 +221,3 @@ Subcommand info uses pipe-delimited names: `"JSON.DEBUG|MEMORY"`.
 7. **Write integration tests** in `tst/integration/test_json_basic.py` testing the command end-to-end, including error cases and v1/v2 path variants.
 
 8. **Verify CI** - the command must pass all 16 CI matrix jobs (4 job types x 4 server versions).
-
-## See Also
-
-- [build.md](build.md) - Building the module after adding commands
-- [testing.md](testing.md) - Unit and integration test patterns
-- [ci-pipeline.md](ci-pipeline.md) - CI validation requirements
-- [jdocument.md](../document/jdocument.md) - JDocument/JValue types used in DOM operations
-- [path-operations.md](../jsonpath/path-operations.md) - How JSONPath maps to DOM mutations in command handlers
-- [cross-module.md](../persistence/cross-module.md) - Module config registration for new configurable parameters

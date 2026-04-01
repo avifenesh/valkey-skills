@@ -289,12 +289,3 @@ Build with `make SANITIZER=address` (ASan) or `SANITIZER=undefined` (UBSan) to c
 **Log from callbacks**: `ValkeyModule_Log(ctx, "warning", "debug: %s", msg)` - output appears in the server log.
 
 **API availability**: `RMAPI_FUNC_SUPPORTED(ValkeyModule_SomeFunc)` before calling APIs that may not exist on older versions.
-
-## See Also
-
-- [lifecycle/module-loading.md](lifecycle/module-loading.md) - OnLoad/OnUnload lifecycle
-- [commands/registration.md](commands/registration.md) - Command registration for test commands
-- [data-types/registration.md](data-types/registration.md) - Data type setup patterns
-- [advanced/info-callbacks.md](advanced/info-callbacks.md) - Registering INFO callbacks verified with getInfoProperty in tests
-- [defrag.md](defrag.md) - Defrag testing with defragtest.c example
-- [rust-sdk.md](rust-sdk.md) - Rust SDK for building modules with cargo test and Tcl harness

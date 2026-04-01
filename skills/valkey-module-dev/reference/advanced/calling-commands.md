@@ -190,11 +190,3 @@ const char *ValkeyModule_CallReplyProto(ValkeyModuleCallReply *reply, size_t *le
 ```
 
 Returns a pointer to the raw RESP protocol of the reply, useful for forwarding replies directly.
-
-## See Also
-
-- [replication.md](replication.md) - Replication via Call flags (`!`, `A`, `R`) vs Replicate API
-- [acl.md](acl.md) - ACL checking with the `C` flag
-- [../commands/reply-building.md](../commands/reply-building.md) - Building replies to send to clients
-- [../commands/registration.md](../commands/registration.md) - Registering commands that use Call
-- [threading.md](threading.md) - Using ValkeyModule_Call from background threads with the GIL

@@ -17,7 +17,6 @@ Source: `src/valkey_search.cc`, `src/server_events.cc`, `src/index_schema.cc`, `
 - [Writer Suspension and Resumption](#writer-suspension-and-resumption)
 - [Server Cron Maintenance](#server-cron-maintenance)
 - [Thread Safety Annotations](#thread-safety-annotations)
-- [See Also](#see-also)
 
 ## Thread Architecture
 
@@ -288,12 +287,3 @@ The codebase uses Clang's thread safety analysis annotations extensively:
 | `ABSL_UNLOCK_FUNCTION()` | Function releases a lock |
 
 These annotations enable compile-time verification of lock discipline. When modifying concurrent code, ensure annotations are updated to match the actual locking protocol.
-
-## See Also
-
-- [module-overview](module-overview.md) - Thread pool creation and configuration
-- [index-schema](index-schema.md) - Mutation pipeline using the time-sliced mutex
-- [schema-manager](schema-manager.md) - Backfill orchestration from server cron
-- [execution](../query/execution.md) - Query dispatch to reader threads
-- [hnsw](../indexes/hnsw.md) - Vector index mutations that drive COW overhead
-- [metrics](../cluster/metrics.md) - Thread pool and suspension metrics

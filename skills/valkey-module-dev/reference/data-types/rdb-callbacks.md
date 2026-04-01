@@ -171,12 +171,3 @@ void HelloTypeRdbSave(ValkeyModuleIO *rdb, void *value) {
 ```
 
 Pattern: save element count first, then each element. On load, read count, then loop to restore.
-
-## See Also
-
-- [registration.md](registration.md) - CreateDataType and ValkeyModuleTypeMethods struct
-- [io-context.md](io-context.md) - GetKeyNameFromIO, aux data callbacks, and IO error handling details
-- [aof-rewrite.md](aof-rewrite.md) - AOF rewrite as an alternative persistence path
-- [rdb-stream.md](rdb-stream.md) - Full-file RDB load/save API
-- [../lifecycle/module-options.md](../lifecycle/module-options.md) - HANDLE_IO_ERRORS flag for diskless replication
-- [../lifecycle/memory.md](../lifecycle/memory.md) - Memory allocation for objects created during rdb_load

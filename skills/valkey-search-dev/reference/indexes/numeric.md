@@ -231,11 +231,3 @@ Per indexed key, the numeric index stores:
 Total: approximately 170 bytes per tracked key. The `index_mutex_` is a single `absl::Mutex` protecting all mutations, info queries, and key enumeration (`ForEachTrackedKey`, `ForEachUnTrackedKey`).
 
 `RespondWithInfo()` reports `type=NUMERIC` and `size` (tracked key count) for `FT.INFO`.
-
-## See Also
-
-- [tag.md](tag.md) - Tag index for categorical data
-- [text.md](text.md) - Full-text search index
-- [Module overview](../architecture/module-overview.md) - Module architecture overview
-- [Query execution](../query/execution.md) - Predicate evaluation and filter planning
-- [Index schema](../architecture/index-schema.md) - Schema management and index creation

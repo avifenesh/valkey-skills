@@ -190,9 +190,3 @@ python3 -m pytest --cache-clear -v tests/
 5. Use `self.verify_error_response` for testing error paths
 6. For replication tests, call `self.setup_replication(num_replicas=1)` in the test method, then use `self.replicas[0].client` for replica operations
 7. If the test is incompatible with ASAN builds, mark the class with `@pytest.mark.skip_for_asan(reason="...")`
-
-## See Also
-
-- `reference/contributing/build.md` - build system and feature flags
-- `reference/contributing/ci-pipeline.md` - CI pipeline configuration
-- `reference/architecture/bloom-object.md` - FP rate tightening and scaling behavior tested by correctness tests

@@ -173,12 +173,3 @@ int ValkeyModule_ReplyWithCallReply(ValkeyModuleCtx *ctx,
 ```
 
 Forward the result of `ValkeyModule_Call()` directly to the client. Returns `VALKEYMODULE_ERR` if the reply is RESP3 but the client uses RESP2. Pass `0` as fmt flag in `ValkeyModule_Call()` to match the client's protocol version.
-
-## See Also
-
-- [registration.md](registration.md) - Registering commands that use these reply functions
-- [string-objects.md](string-objects.md) - Creating ValkeyModuleString for ReplyWithString
-- [../advanced/calling-commands.md](../advanced/calling-commands.md) - ValkeyModule_Call and forwarding CallReply
-- [../lifecycle/context.md](../lifecycle/context.md) - Module context passed to reply functions
-- [../lifecycle/memory.md](../lifecycle/memory.md) - AutoMemory tracks ValkeyModuleCallReply objects
-- [../events/blocking-clients.md](../events/blocking-clients.md) - Reply callbacks for blocked clients

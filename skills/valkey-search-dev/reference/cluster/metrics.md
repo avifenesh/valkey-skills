@@ -210,13 +210,3 @@ Each `AttributeInfo` contains identifier, alias, `user_indexed_memory`, and `num
 **LIST_METRICS** distinguishes APP (user-facing) and DEV (internal) metrics. The optional NAMES_ONLY flag returns only metric names without values.
 
 **LIST_CONFIGS** supports VERBOSE mode (detailed metadata per config) and filtering by APP, DEV, or HIDDEN visibility categories.
-
-## See Also
-
-- [coordinator.md](coordinator.md) - gRPC service and metadata reconciliation
-- [replication.md](replication.md) - RDB format and FT.INTERNAL_UPDATE
-- [../architecture/module-overview.md](../architecture/module-overview.md) - module config system
-- [../architecture/thread-model.md](../architecture/thread-model.md) - thread model and fork suspension counters
-- [../query/execution.md](../query/execution.md) - query execution and prefilter/inline metrics
-- [../query/ft-search.md](../query/ft-search.md) - query success/failure counter increments
-- [../contributing/testing.md](../contributing/testing.md) - FT._DEBUG usage in tests

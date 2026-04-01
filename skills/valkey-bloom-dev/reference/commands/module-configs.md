@@ -15,7 +15,6 @@ Source: `src/configs.rs`, `src/lib.rs` (valkey_module! configurations block)
 - module_args_as_configuration (line 115)
 - Fixed Seed Constant (line 134)
 - Other Constants (line 145)
-- See Also (line 150)
 
 ---
 
@@ -146,10 +145,3 @@ Used when `bloom-use-random-seed` is false. Also used as the comparison baseline
 
 - `BLOOM_NUM_FILTERS_PER_OBJECT_LIMIT_MAX: i32 = i32::MAX` - hard cap on sub-filter count per bloom object, checked in `add_item` and `decode_object`
 - `BLOOM_MIN_SUPPORTED_VERSION: &[i64; 3] = &[8, 0, 0]` - minimum Valkey server version, checked in `initialize`
-
-## See Also
-
-- [bloom-object](../architecture/bloom-object.md) - How configs affect scaling, memory sizing, seed modes
-- [replication](replication.md) - Configs replicated via BF.INSERT SEED/TIGHTENING
-- [command-handlers](command-handlers.md) - Where configs are read during auto-creation
-- [defrag-metrics](../architecture/defrag-metrics.md) - bloom-defrag-enabled config and INFO metrics

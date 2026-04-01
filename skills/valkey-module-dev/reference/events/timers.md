@@ -185,11 +185,3 @@ int ValkeyModule_OnUnload(ValkeyModuleCtx *ctx) {
     return VALKEYMODULE_OK;
 }
 ```
-
-## See Also
-
-- [eventloop.md](eventloop.md) - Low-level event loop fd monitoring and one-shot callbacks
-- [server-events.md](server-events.md) - CronLoop event as alternative periodic hook
-- [blocking-clients.md](blocking-clients.md) - Blocking operations with timeouts
-- [../lifecycle/context.md](../lifecycle/context.md) - Context types available in timer callbacks
-- [../lifecycle/memory.md](../lifecycle/memory.md) - ValkeyModule_Alloc/Free for timer private data

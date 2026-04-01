@@ -288,10 +288,3 @@ int MyKillCmd(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int argc) {
 | `KillForkChild` called when no module child is active | Returns `VALKEYMODULE_ERR`, no action taken |
 | Child calls `exit()` instead of `ExitFromChild` | COW stats not reported, done handler still fires but stats are incomplete |
 | `SendChildHeartbeat` called from parent | Sends incorrect data through the info pipe - call only from the child |
-
-## See Also
-
-- [threading.md](threading.md) - Thread-based background processing (alternative to fork)
-- [info-callbacks.md](info-callbacks.md) - Fork heartbeat progress visible in INFO persistence
-- [../events/server-events.md](../events/server-events.md) - Server event subscriptions for monitoring fork lifecycle
-- [../data-types/rdb-callbacks.md](../data-types/rdb-callbacks.md) - RDB persistence callbacks that also use the fork mechanism

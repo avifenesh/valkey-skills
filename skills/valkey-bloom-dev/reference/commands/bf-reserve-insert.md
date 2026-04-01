@@ -15,7 +15,6 @@ Source: `src/bloom/command_handler.rs`
 - BF.INSERT Object Creation vs Existing (line 121)
 - BF.LOAD (line 129)
 - Error Summary (line 151)
-- See Also (line 174)
 
 ---
 
@@ -170,10 +169,3 @@ The response is always a multi-result array since `handle_bloom_add` is called w
 | BF.LOAD | `BUSYKEY Target key name already exists.` | Key already exists |
 | BF.LOAD | `ERR bloom object decoding failed` | Bincode deserialization failure |
 | BF.LOAD | `ERR bloom object decoding failed. Unsupported version` | Version byte != 1 |
-
-## See Also
-
-- [command-handlers](command-handlers.md) - BF.ADD, BF.MADD, BF.EXISTS, BF.MEXISTS, BF.CARD, BF.INFO
-- [replication](replication.md) - How creation replicates as BF.INSERT with SEED/TIGHTENING
-- [bloom-object](../architecture/bloom-object.md) - BloomObject internals, encode/decode, scaling
-- [persistence](../architecture/persistence.md) - RDB save/load, AOF rewrite via BF.LOAD

@@ -184,15 +184,3 @@ if (supported & VALKEYMODULE_OPTIONS_HANDLE_ATOMIC_SLOT_MIGRATION) {
 }
 ValkeyModule_SetModuleOptions(ctx, options);
 ```
-
-## See Also
-
-- [module-loading.md](module-loading.md) - Where to call SetModuleOptions in OnLoad
-- [context.md](context.md) - GetContextFlags for checking ASYNC_LOADING and slot migration state
-- [memory.md](memory.md) - Memory cleanup patterns needed for HANDLE_IO_ERRORS partial loads
-- [server-info.md](server-info.md) - GetModuleOptionsAll for runtime feature detection
-- [../data-types/rdb-callbacks.md](../data-types/rdb-callbacks.md) - RDB load/save callbacks that need HANDLE_IO_ERRORS
-- [../events/server-events.md](../events/server-events.md) - Server event subscriptions
-- [../events/keyspace-notifications.md](../events/keyspace-notifications.md) - Keyspace notifications affected by ALLOW_NESTED
-- [../advanced/replication.md](../advanced/replication.md) - Replication commands affected by SKIP_COMMAND_VALIDATION
-- [../advanced/cluster.md](../advanced/cluster.md) - Cluster slot migration with HANDLE_ATOMIC_SLOT_MIGRATION

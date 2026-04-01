@@ -147,12 +147,3 @@ int MySwap(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int argc) {
 ## Thread-Safe Context Behavior
 
 When calling `ValkeyModule_Replicate` from a thread-safe context, the behavior differs: the command is inserted into the AOF and replication stream immediately without MULTI/EXEC wrapping. This is because thread-safe contexts can live indefinitely and be locked/unlocked at will.
-
-## See Also
-
-- [calling-commands.md](calling-commands.md) - ValkeyModule_Call format specifiers including `!`, `A`, `R` flags
-- [threading.md](threading.md) - Thread-safe context behavior for Replicate calls
-- [../events/server-events.md](../events/server-events.md) - ReplicationRoleChanged, ReplicaChange, and PrimaryLinkChange events
-- [../data-types/aof-rewrite.md](../data-types/aof-rewrite.md) - AOF rewrite callback and EmitAOF for data type persistence
-- [../commands/registration.md](../commands/registration.md) - Command flags that affect replication
-- [../lifecycle/module-loading.md](../lifecycle/module-loading.md) - Module lifecycle and context types

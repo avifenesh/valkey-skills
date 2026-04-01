@@ -218,10 +218,3 @@ Key access methods:
 - `dedupe()` - in-place deduplication of resultSet, called after recursive search
 
 The `dedupe()` method (selector.cc:2416-2424) delegates to `getUniqueResultSet()` (selector.cc:2399-2411) which uses a pointer-based `unordered_set<JValue*>` to remove duplicate entries that can arise from recursive descent matching the same node via different traversal paths.
-
-## See Also
-
-- [expressions.md](expressions.md) - Filter expressions and type coercion
-- [path-operations.md](path-operations.md) - Dot/bracket notation, wildcards, slices, recursive descent
-- [jdocument.md](../document/jdocument.md) - JDocument/JValue DOM, type hierarchy, memory layout
-- [adding-commands.md](../contributing/adding-commands.md) - How new JSON commands use Selector entry points

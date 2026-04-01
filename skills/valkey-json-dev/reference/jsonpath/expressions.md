@@ -205,10 +205,3 @@ This checks the element at a specific index within each element's sub-array. The
 5. Pushes the outer index if the comparison succeeds
 
 This allows filtering based on a specific position within nested arrays.
-
-## See Also
-
-- [selector.md](selector.md) - Selector class, entry points, EBNF grammar
-- [path-operations.md](path-operations.md) - Dot/bracket notation, wildcards, slices
-- [jdocument.md](../document/jdocument.md) - JValue type system and flag definitions
-- [testing.md](../contributing/testing.md) - GoogleTest and pytest for filter expression coverage

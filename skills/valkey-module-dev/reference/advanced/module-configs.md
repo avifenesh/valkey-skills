@@ -221,10 +221,3 @@ Config names must contain only alphanumeric characters, dashes, and underscores.
 The `applyfn` callback is called after one or more `setfn` calls from a single `CONFIG SET`. If multiple configs share the same `applyfn` pointer and `privdata`, the callback is deduplicated and called only once. Use `applyfn` for atomic multi-config validation.
 
 The `setfn` callback can reject a value by returning `VALKEYMODULE_ERR` and setting `*err` to a `ValkeyModuleString *` error message. The server frees this string after consuming it - all config types (string, bool, numeric, enum) use `ValkeyModuleString **err`.
-
-## See Also
-
-- [../lifecycle/module-loading.md](../lifecycle/module-loading.md) - OnLoad and module initialization flow
-- [info-callbacks.md](info-callbacks.md) - Exposing runtime config values via INFO
-- [calling-commands.md](calling-commands.md) - Using CONFIG GET/SET via ValkeyModule_Call
-- [../commands/registration.md](../commands/registration.md) - Command registration during OnLoad

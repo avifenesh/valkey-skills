@@ -195,11 +195,3 @@ ValkeyModule_CreateDataType(ctx, "mytype---", 0, &tm);
 **Protect hot keys from eviction** under LFU - call `ValkeyModule_SetLFU(key, 200)` after writes to boost the frequency counter.
 
 **Background scan without disturbing eviction order** - open keys with `VALKEYMODULE_READ | VALKEYMODULE_OPEN_KEY_NOTOUCH` so inspection does not reset idle time or bump frequency.
-
-## See Also
-
-- [client-info.md](client-info.md) - GetUsedMemoryRatio for memory pressure monitoring
-- [scan.md](scan.md) - NOTOUCH flag relevant for background scan operations
-- [../data-types/registration.md](../data-types/registration.md) - ValkeyModuleTypeMethods struct and type registration
-- [../commands/key-generic.md](../commands/key-generic.md) - Key open modes and generic key operations
-- [../defrag.md](../defrag.md) - Active defragmentation for module data types

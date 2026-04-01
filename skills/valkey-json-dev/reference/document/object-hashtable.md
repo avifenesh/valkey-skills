@@ -207,11 +207,3 @@ Global `HashTableStats` (atomic counters):
 | reserveHT | Reserve call triggered hash table creation |
 
 Accessible via `JSON.DEBUG` commands.
-
-## See Also
-
-- [jdocument.md](jdocument.md) - JValue/JDocument type hierarchy and flag definitions
-- [keytable.md](keytable.md) - KeyTable_Handle used for member name comparison
-- [memory-layers.md](memory-layers.md) - Allocator backing hash table memory
-- [rdb-format.md](../persistence/rdb-format.md) - RDB serialization encodes object mode
-- [defrag.md](../persistence/defrag.md) - Defragmentation traverses object members

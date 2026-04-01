@@ -288,11 +288,3 @@ int ValkeyModule_OnUnload(ValkeyModuleCtx *ctx) {
     return VALKEYMODULE_OK;
 }
 ```
-
-## See Also
-
-- [lifecycle/module-loading.md](lifecycle/module-loading.md) - OnLoad/OnUnload lifecycle
-- [lifecycle/memory.md](lifecycle/memory.md) - Module memory allocation
-- [commands/registration.md](commands/registration.md) - Command registration (alternative to scripting)
-- [advanced/module-configs.md](advanced/module-configs.md) - Module configuration
-- [testing.md](testing.md) - Test framework for module test harnesses

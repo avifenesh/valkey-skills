@@ -183,16 +183,3 @@ const ValkeyModuleString *ValkeyModule_GetToKeyNameFromOptCtx(ValkeyModuleKeyOpt
 int ValkeyModule_GetDbIdFromOptCtx(ValkeyModuleKeyOptCtx *ctx);
 int ValkeyModule_GetToDbIdFromOptCtx(ValkeyModuleKeyOptCtx *ctx);
 ```
-
-## See Also
-
-- [key-string.md](key-string.md) - String value operations (StringSet, StringDMA)
-- [key-list.md](key-list.md) - List value operations (Push, Pop, Get, Set)
-- [key-sorted-set.md](key-sorted-set.md) - Sorted set operations (ZsetAdd, iterators)
-- [key-hash-stream.md](key-hash-stream.md) - Hash and stream operations
-- [registration.md](registration.md) - Key specs in command registration
-- [../lifecycle/server-info.md](../lifecycle/server-info.md) - Server version, time measurement, random bytes
-- [../lifecycle/memory.md](../lifecycle/memory.md) - AutoMemory for automatic key handle cleanup
-- [../data-types/registration.md](../data-types/registration.md) - Custom data types stored in KEYTYPE_MODULE keys
-- [../events/keyspace-notifications.md](../events/keyspace-notifications.md) - Notifications triggered by key operations
-- [../advanced/scan.md](../advanced/scan.md) - Scanning keys and key elements

@@ -192,10 +192,3 @@ Load the module in Valkey:
 ```
 loadmodule /path/to/libvalkey_bloom.so
 ```
-
-## See Also
-
-- `reference/contributing/testing.md` - unit and integration test details
-- `reference/contributing/ci-pipeline.md` - GitHub Actions CI configuration
-- `reference/architecture/bloom-object.md` - memory limits and ValkeyAlloc interaction
-- `reference/commands/replication.md` - must_obey_client and valkey_8_0 feature flag behavior

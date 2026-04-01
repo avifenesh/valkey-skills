@@ -180,11 +180,3 @@ Unlike HNSW, FLAT does not persist `ef_runtime` (there is none). The `block_size
 | Tuning parameters | None (block_size is structural) | M, ef_construction, ef_runtime |
 | Search parameters | count, filter | count, filter, ef_runtime, partial results |
 | `GetMaxInternalLabel` | Not implemented (returns 0) | Iterates `label_lookup_` |
-
-## See Also
-
-- [hnsw.md](hnsw.md) - HNSW approximate vector index
-- [Module overview](../architecture/module-overview.md) - Module architecture overview
-- [Query execution](../query/execution.md) - Query execution and filter planning
-- [Thread model](../architecture/thread-model.md) - Threading and concurrency architecture
-- [Replication](../cluster/replication.md) - How indexes are replicated across nodes

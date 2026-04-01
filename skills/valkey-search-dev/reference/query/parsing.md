@@ -17,7 +17,6 @@ Source: `src/commands/filter_parser.h`, `src/commands/filter_parser.cc`, `src/qu
 - Evaluator Interface (line 167)
 - Safety Limits (line 185)
 - TextParsingOptions (line 199)
-- See Also (line 211)
 
 ## FilterParser Overview
 
@@ -207,14 +206,3 @@ struct TextParsingOptions {
 ```
 
 These options are set from the FT.SEARCH/FT.AGGREGATE command-level VERBATIM, INORDER, and SLOP parameters and passed to `FilterParser` at construction. They affect how `ComposedPredicate` nodes are created - when SLOP or INORDER is set, the top-level AND node carries those values for proximity evaluation.
-
-## See Also
-
-- [execution.md](execution.md) - how the predicate tree is evaluated during search
-- [ft-search.md](ft-search.md) - FT.SEARCH command parameter parsing
-- [ft-aggregate.md](ft-aggregate.md) - FT.AGGREGATE command pipeline stages
-- [../architecture/module-overview.md](../architecture/module-overview.md) - module design and startup
-- [../indexes/text.md](../indexes/text.md) - full-text index internals (Rax trees, postings lists)
-- [../indexes/tag.md](../indexes/tag.md) - tag index internals (PatriciaTree)
-- [../indexes/numeric.md](../indexes/numeric.md) - numeric index internals (BTreeNumeric)
-- [../cluster/coordinator.md](../cluster/coordinator.md) - predicate serialization to gRPC for cluster fanout
