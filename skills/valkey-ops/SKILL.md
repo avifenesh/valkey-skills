@@ -42,10 +42,10 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 | Essential parameters with verified defaults | [essentials](reference/configuration-essentials.md) |
 | Eviction policies, LRU/LFU tuning | [eviction](reference/configuration-eviction.md) |
 | Memory encoding thresholds per data type | [encoding](reference/configuration-encoding.md) |
-| Config presets by workload (cache, store, session, queue) | [workload-presets](reference/configuration-workload-presets.md) |
+| Config presets by workload (cache, store, session, queue, rate limiter) | [workload-presets](reference/configuration-workload-presets.md) |
 | Lazy free config (UNLINK, async eviction/expiry) | [lazyfree](reference/configuration-lazyfree.md) |
-| Logging, OOM score, shutdown, CPU pinning, unix sockets | [advanced](reference/configuration-advanced.md) |
-| Pub/Sub buffer limits, keyspace notifications | [pubsub](reference/configuration-pubsub.md) |
+| Logging, OOM score, shutdown, CPU pinning, unix sockets, active expiration, protocol limits | [advanced](reference/configuration-advanced.md) |
+| Pub/Sub buffer limits, keyspace notifications, sharded pub/sub, subscriber memory | [pubsub](reference/configuration-pubsub.md) |
 
 
 ## Sentinel (High Availability)
@@ -64,7 +64,7 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 |-------|-----------|
 | Network requirements, config, cluster creation, hash slots | [setup](reference/cluster-setup.md) |
 | Resharding, adding/removing nodes, atomic migration (9.0) | [resharding](reference/cluster-resharding.md) |
-| Manual failover, health checks, replica migration, scaling | [operations](reference/cluster-operations.md) |
+| Manual failover, health checks, replica migration, scaling, rolling restart runbook | [operations](reference/cluster-operations.md) |
 | Consistency guarantees, write safety, partition behavior | [consistency](reference/cluster-consistency.md) |
 
 
@@ -92,7 +92,7 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 | Topic | Reference |
 |-------|-----------|
 | ACL users, roles, categories, practical examples | [acl](reference/security-acl.md) |
-| TLS setup, certificates, mutual TLS, auto-reload | [tls](reference/security-tls.md) |
+| TLS setup, certificates, mutual TLS, replication encryption, cluster bus encryption | [tls](reference/security-tls.md) |
 | Defense in depth, protected mode, network hardening | [hardening](reference/security-hardening.md) |
 | Disabling dangerous commands via rename-command and ACL | [rename-commands](reference/security-rename-commands.md) |
 
@@ -116,7 +116,7 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 | I/O threads config, when to enable, thread count | [io-threads](reference/performance-io-threads.md) |
 | maxmemory, eviction, encoding, fragmentation | [memory](reference/performance-memory.md) |
 | Latency diagnosis workflow, LATENCY DOCTOR, watchdog | [latency](reference/performance-latency.md) |
-| Durability vs performance spectrum, TCP tuning | [durability](reference/performance-durability.md) |
+| Durability vs performance spectrum, TCP tuning, client connection tuning, kernel tuning, 9.0 features | [durability](reference/performance-durability.md) |
 | Active defragmentation config and monitoring | [defragmentation](reference/performance-defragmentation.md) |
 | Client-side caching (CLIENT TRACKING) | [client-caching](reference/performance-client-caching.md) |
 | valkey-benchmark, valkey-perf-benchmark, best practices | [benchmarking](reference/performance-benchmarking.md) |

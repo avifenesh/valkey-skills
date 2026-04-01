@@ -20,7 +20,7 @@ argument-hint: "[module name or query type]"
 | Topic | Reference |
 |-------|-----------|
 | valkey-search: vector, full-text, tag, numeric search, FT.CREATE/SEARCH/AGGREGATE, hybrid queries | [search](reference/search.md) |
-| valkey-json: JSON documents, JSONPath, JSON.SET/GET/MGET/MSET/DEL/FORGET/ARRAPPEND, nested objects | [json](reference/json.md) |
-| valkey-bloom: BF.ADD/EXISTS/RESERVE, BF.MADD/MEXISTS, BF.INSERT, BF.INFO/CARD, scalable filters | [bloom](reference/bloom.md) |
-| Module overview: versions, compatibility, valkey-bundle image, loading modules | [overview](reference/overview.md) |
-| Feature gaps: what RediSearch/RedisJSON has that valkey equivalents don't yet | [gaps](reference/gaps.md) |
+| valkey-json: JSON documents, JSONPath, JSON.SET/GET/MGET/MSET/DEL/FORGET/ARRAPPEND, nested objects, RedisJSON compatibility, when to use | [json](reference/json.md) |
+| valkey-bloom: BF.ADD/EXISTS/RESERVE, BF.MADD/MEXISTS, BF.INSERT, BF.INFO/CARD, scalable filters, error rate and memory, use cases | [bloom](reference/bloom.md) |
+| Module overview: versions, compatibility, valkey-bundle image, loading modules, when to use modules vs core features | [overview](reference/overview.md) |
+| Feature gaps: Redis 8 vs Valkey 9 module comparison, time series, graph, probabilistic structures, workarounds | [gaps](reference/gaps.md) |

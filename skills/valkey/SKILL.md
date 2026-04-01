@@ -50,7 +50,7 @@ argument-hint: "[feature, pattern, or scenario]"
 
 | Topic | Reference |
 |-------|-----------|
-| Valkey versions, license, governance, Redis fork history | [what-is-valkey](reference/overview-what-is-valkey.md) |
+| Valkey versions, license, governance, Redis fork history, Valkey vs Redis comparison | [what-is-valkey](reference/overview-what-is-valkey.md) |
 | Redis compatibility, migration strategies, what changed | [compatibility](reference/overview-compatibility.md) |
 
 
@@ -59,17 +59,17 @@ argument-hint: "[feature, pattern, or scenario]"
 | Topic | Reference |
 |-------|-----------|
 | Cache-aside, write-through, write-behind, client-side caching, stampede prevention | [caching-strategies](reference/patterns-caching-strategies.md) |
-| Cache invalidation, TTL patterns, eviction policies, keyspace notifications | [caching-invalidation](reference/patterns-caching-invalidation.md) |
+| Cache invalidation, TTL patterns, eviction policies | [caching-invalidation](reference/patterns-caching-invalidation.md) |
 | Session hashes, sliding TTL, session rotation, basic session store | [sessions-basics](reference/patterns-sessions-basics.md) |
 | Per-field TTL sessions (Valkey 9.0+), session counting, concurrent session limits | [sessions-field-expiry](reference/patterns-sessions-field-expiry.md) |
-| SET NX with TTL, safe release (DELIFEQ), Redlock algorithm | [locks](reference/patterns-locks.md) |
+| SET NX with TTL, safe release (DELIFEQ), Redlock algorithm, fencing tokens, lock renewal | [locks](reference/patterns-locks.md) |
 | Fixed window, sliding window counter, sliding window log | [rate-limiting-windows](reference/patterns-rate-limiting-windows.md) |
 | Token bucket, per-field rate limiting (Valkey 9.0+), algorithm comparison | [rate-limiting-advanced](reference/patterns-rate-limiting-advanced.md) |
 | Simple FIFO queues (LPUSH/BRPOP), reliable queues (LMOVE) | [queues-list-based](reference/patterns-queues-list-based.md) |
-| Stream-based queues (XREADGROUP), consumer groups, dead letter, priority queues | [queues-streams](reference/patterns-queues-streams.md) |
-| Sorted set rankings, pagination, top-N, score updates | [leaderboards](reference/patterns-leaderboards.md) |
-| Pub/Sub patterns, sharded pub/sub, fan-out, notification systems | [pubsub-patterns](reference/patterns-pubsub-patterns.md) |
-| Prefix autocomplete, tag filtering, inverted indexes, faceted search | [search-autocomplete](reference/patterns-search-autocomplete.md) |
+| Stream-based queues (XREADGROUP), consumer groups, dead letter, priority queues, queue pattern comparison | [queues-streams](reference/patterns-queues-streams.md) |
+| Sorted set rankings, pagination, top-N, score updates, composite scoring, time-bucketed | [leaderboards](reference/patterns-leaderboards.md) |
+| Pub/Sub patterns, sharded pub/sub, fan-out, notification systems, keyspace notifications, pub/sub vs streams comparison | [pubsub-patterns](reference/patterns-pubsub-patterns.md) |
+| Prefix autocomplete, tag filtering, inverted indexes, scored search results | [search-autocomplete](reference/patterns-search-autocomplete.md) |
 | Atomic counters, sharded counters, idempotency keys | [counters-atomic](reference/patterns-counters-atomic.md) |
 | HyperLogLog, BITFIELD packed counters, deduplication strategies | [counters-approximate](reference/patterns-counters-approximate.md) |
 
@@ -78,28 +78,28 @@ argument-hint: "[feature, pattern, or scenario]"
 
 | Topic | Reference |
 |-------|-----------|
-| Key naming, namespaces, hash tags for cluster co-location | [keys](reference/best-practices-keys.md) |
+| Key naming, namespaces, hot key and big key avoidance, key expiration strategies, key analysis commands | [keys](reference/best-practices-keys.md) |
 | Memory reduction, encoding thresholds, TTL strategies, eviction | [memory](reference/best-practices-memory.md) |
 | UNLINK vs DEL, SCAN vs KEYS, data-type iteration | [performance-commands](reference/best-practices-performance-commands.md) |
 | Pipelining, connection pooling, I/O threading, performance anti-patterns | [performance-throughput](reference/best-practices-performance-throughput.md) |
-| RDB, AOF, hybrid persistence, backup strategy | [persistence](reference/best-practices-persistence.md) |
+| RDB, AOF, hybrid persistence, latency impact, durability decisions | [persistence](reference/best-practices-persistence.md) |
 | Hash tags, cross-slot errors, CROSSSLOT fixes | [cluster-hash-tags](reference/best-practices-cluster-hash-tags.md) |
 | MOVED/ASK redirects, replica reads, pipelining in cluster, CLUSTERSCAN | [cluster-operations](reference/best-practices-cluster-operations.md) |
-| Sentinel, failover, retries, WAIT/WAITAOF, replication lag | [high-availability](reference/best-practices-high-availability.md) |
+| Sentinel, failover, retries, WAIT/WAITAOF, replication lag, Sentinel vs Cluster decision | [high-availability](reference/best-practices-high-availability.md) |
 
 
 ## Security
 
 | Topic | Reference |
 |-------|-----------|
-| ACL users, key pattern restrictions, TLS encryption, protected mode | [auth-and-acl](reference/security-auth-and-acl.md) |
+| ACL users, key pattern restrictions, TLS encryption, security checklist | [auth-and-acl](reference/security-auth-and-acl.md) |
 
 
 ## Anti-Patterns
 
 | Topic | Reference |
 |-------|-----------|
-| KEYS in production, DEL on big keys, missing maxmemory, hot keys, unbounded collections | [quick-reference](reference/anti-patterns-quick-reference.md) |
+| KEYS in production, DEL on big keys, missing maxmemory, hot keys, unbounded collections, severity guide, detection commands | [quick-reference](reference/anti-patterns-quick-reference.md) |
 
 
 ## Basics
@@ -107,4 +107,4 @@ argument-hint: "[feature, pattern, or scenario]"
 | Topic | Reference |
 |-------|-----------|
 | Strings, Hashes, Lists, Sets, Sorted Sets, Streams, Pub/Sub, HyperLogLog, Bitmaps, Geo | [data-types](reference/basics-data-types.md) |
-| Transactions (MULTI/EXEC), Lua scripting (EVAL/FCALL), Server commands (INFO/SCAN/CONFIG) | [server-and-scripting](reference/basics-server-and-scripting.md) |
+| Transactions (MULTI/EXEC), Lua scripting (EVAL/FCALL), Server commands (INFO/SCAN/CONFIG), client management, monitoring | [server-and-scripting](reference/basics-server-and-scripting.md) |

@@ -117,7 +117,7 @@ argument-hint: "[subsystem or source file]"
 | Topic | Reference |
 |-------|-----------|
 | Activation, data structures, monitoring, failure detection | [sentinel-monitoring](reference/sentinel-sentinel-monitoring.md) |
-| Leader election, failover state machine, commands, config | [sentinel-failover](reference/sentinel-sentinel-failover.md) |
+| Leader election, failover state machine, commands, config, Pub/Sub events, script hooks, timing | [sentinel-failover](reference/sentinel-sentinel-failover.md) |
 
 
 ## Memory Management
@@ -197,7 +197,7 @@ argument-hint: "[subsystem or source file]"
 | Topic | Reference |
 |-------|-----------|
 | Module load/unload lifecycle, command registration, context | [module-lifecycle](reference/modules-module-lifecycle.md) |
-| Error handling, memory management, versioning, example, replies | [module-patterns](reference/modules-module-patterns.md) |
+| Error handling, memory management, versioning, example, replies, Redis module backward compatibility | [module-patterns](reference/modules-module-patterns.md) |
 | Custom data types, RDB serialization, type methods | [custom-types](reference/modules-custom-types.md) |
 | Key access API, blocking commands, thread-safe contexts | [key-api-and-blocking](reference/modules-key-api-and-blocking.md) |
 | Rust module SDK, valkey-module crate, C-vs-Rust comparison | [rust-sdk](reference/modules-rust-sdk.md) |
