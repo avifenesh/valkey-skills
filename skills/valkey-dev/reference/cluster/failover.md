@@ -298,11 +298,3 @@ New Primary serving traffic
 | `resetManualFailover()` | Clear all manual failover state |
 
 ---
-
-## See Also
-
-- [Sentinel Mode](../sentinel/sentinel-mode.md) - Sentinel provides failover for standalone (non-cluster) deployments using a separate monitoring process with SDOWN/ODOWN detection and Raft-like leader election, compared to cluster's integrated gossip-based PFAIL/FAIL protocol
-- [Cluster Overview](overview.md) - Gossip protocol, PFAIL/FAIL propagation, and cluster state determination that feed into the failover process
-- [Replication Overview](../replication/overview.md) - Dual replication IDs (`replid`/`replid2`) and `shiftReplicationId()` enable partial resync after failover without a full RDB transfer
-- [RDB Snapshot Persistence](../persistence/rdb.md) - After failover promotion, replicas of the new primary perform full resync which triggers an RDB snapshot via BGSAVE
-- [Event Loop](../architecture/event-loop.md) - `clusterHandleReplicaFailover()` runs from both `clusterCron()` (time event) and `clusterBeforeSleep()` (before-sleep hook), driving the failover state machine within the event loop cycle

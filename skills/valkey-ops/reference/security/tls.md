@@ -1,6 +1,6 @@
-# TLS Configuration
-
 Use when setting up TLS encryption for Valkey - certificate generation,
+
+# TLS Configuration
 server configuration, mutual TLS, replication encryption, and cluster bus
 encryption.
 
@@ -284,15 +284,3 @@ openssl s_client -connect valkey-host:6379 -CAfile ca.crt
 ```
 
 ---
-
-## See Also
-
-- [ACL Configuration](acl.md) - authentication and authorization
-- [Security Hardening](hardening.md) - defense in depth
-- [Command Restriction](rename-commands.md) - command restriction strategies
-- [Prometheus Setup](../monitoring/prometheus.md) - TLS flags for exporter mTLS connections
-- [Monitoring Metrics](../monitoring/metrics.md) - connection tracking and rejected connection metrics
-- [Alerting Rules](../monitoring/alerting.md) - alerts for connection failures and TLS handshake errors
-- [Replication Tuning](../replication/tuning.md) - TLS for replication connections
-- [Cluster Setup](../cluster/setup.md) - TLS for cluster bus
-- [See valkey-dev: tls](../../../valkey-dev/reference/security/tls.md) - SSL context architecture, OpenSSL integration internals

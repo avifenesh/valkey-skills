@@ -1,6 +1,6 @@
-# Bare Metal Production Setup
-
 Use when deploying Valkey on physical servers or VMs without containers - systemd service, kernel tuning, directory structure, and permissions.
+
+# Bare Metal Production Setup
 
 ## Contents
 
@@ -303,16 +303,3 @@ valkey-cli INFO persistence | grep -E 'rdb_last_bgsave_status|aof_last_bgrewrite
 # Connected clients
 valkey-cli INFO clients | grep connected_clients
 ```
-
-## See Also
-
-- [Configuration Essentials](../configuration/essentials.md) - all config defaults
-- [Workload Presets](../configuration/workload-presets.md) - complete configs by use case
-- [Advanced Configuration](../configuration/advanced.md) - CPU pinning, OOM score, structured logging
-- [Lazy Free Configuration](../configuration/lazyfree.md) - async deletion for large keys
-- [Installing Valkey](install.md) - package manager and source builds
-- [Docker Deployment](docker.md) - container-based deployment
-- [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - adding HA with Sentinel to bare-metal nodes
-- [Cluster Setup](../cluster/setup.md) - distributed cluster deployment
-- [Security Hardening](../security/hardening.md) - defense in depth
-- [Production Checklist](../production-checklist.md) - full pre-launch verification

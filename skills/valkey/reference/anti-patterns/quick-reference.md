@@ -8,7 +8,6 @@ Use when reviewing application code for common Valkey mistakes, or as a checklis
 - Severity Guide (line 42)
 - Detection Commands (line 77)
 - Quick Decision Guide (line 106)
-- See Also (line 135)
 
 ---
 
@@ -132,13 +131,3 @@ Never use `KEYS` in production. Period. Use `SCAN` with a cursor. Accept that SC
 
 ---
 
-## See Also
-
-- [Performance Best Practices](../best-practices/performance.md) - SCAN vs KEYS, UNLINK vs DEL, pipelining
-- [Memory Best Practices](../best-practices/memory.md) - `maxmemory`, TTL strategies, encoding thresholds
-- [Key Best Practices](../best-practices/keys.md) - key naming, big key mitigation
-- [Caching Patterns](../patterns/caching.md) - TTL strategies and cache invalidation
-- [Counter Patterns](../patterns/counters.md) - sharded counters for hot key mitigation
-- [Lock Patterns](../patterns/locks.md) - lock without TTL and DEL without value check solutions
-- [Queue Patterns](../patterns/queues.md) - stream-based queues as alternative to pub/sub
-- [Conditional Operations](../valkey-features/conditional-ops.md) - SET IFEQ and DELIFEQ as alternatives to Lua

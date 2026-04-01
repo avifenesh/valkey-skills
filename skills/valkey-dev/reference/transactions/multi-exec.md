@@ -182,11 +182,3 @@ size_t multiStateMemOverhead(client *c);
 ```
 
 Returns the memory used by queued commands (argument data + robj pointers) plus watched key overhead plus reserved multiCmd array space. Used by CLIENT NO-EVICT and memory reporting.
-
-## See Also
-
-- [EVAL Subsystem](../scripting/eval.md) - Lua scripts execute atomically like transactions but support conditional logic and loops. EVAL is preferred when commands depend on intermediate results. MULTI/EXEC is simpler for unconditional command batching.
-- [Functions Subsystem](../scripting/functions.md) - Named, persistent scripts that also execute atomically. Functions are the modern replacement for EVAL when server-side logic is needed.
-- [Blocking Operations](../transactions/blocking.md) - Blocking commands (BLPOP, BRPOP, etc.) inside MULTI are rejected; the `deny_blocking` flag is set during EXEC.
-- [ACL Subsystem](../security/acl.md) - ACL permissions are re-checked at EXEC time for each queued command, so permission changes between MULTI and EXEC are enforced.
-- [Database Management](../config/db-management.md) - `signalModifiedKey()` calls `touchWatchedKey()` on every key mutation, which triggers the `dirty_cas` flag for WATCH-based optimistic locking.

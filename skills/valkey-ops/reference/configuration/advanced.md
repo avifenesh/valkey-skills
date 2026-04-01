@@ -1,6 +1,6 @@
-# Advanced Configuration
-
 Use when tuning structured logging, OOM behavior, graceful shutdown, active
+
+# Advanced Configuration
 expiration, CPU pinning, Unix sockets, or protocol limits. All defaults
 verified against `src/config.c` in valkey-io/valkey.
 
@@ -283,16 +283,3 @@ Settings that must be coordinated - changing one without the other causes proble
 | `active-defrag-cycle-us` | latency | Higher value = more defrag progress but longer per-cycle stalls |
 
 ---
-
-## See Also
-
-- [Configuration Essentials](essentials.md) - core config parameters
-- [Eviction Policies](eviction.md) - maxmemory-policy and eviction tuning
-- [Lazy Free Configuration](lazyfree.md) - async deletion behavior
-- [Encoding Thresholds](encoding.md) - compact encoding tuning referenced in anti-patterns
-- [Pub/Sub Configuration](pubsub.md) - subscriber buffer limits referenced in anti-patterns
-- [Workload Presets](workload-presets.md) - complete configs by use case
-- [Bare Metal Setup](../deployment/bare-metal.md) - systemd, kernel tuning, directory structure
-- [Docker Deployment](../deployment/docker.md) - container deployment and config injection
-- [Latency Diagnosis](../performance/latency.md) - diagnosing expiration and latency issues
-- [See valkey-dev: config system](../../../valkey-dev/reference/config/config-system.md) - config parsing internals

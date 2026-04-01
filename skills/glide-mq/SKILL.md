@@ -11,6 +11,20 @@ Provides guidance for greenfield glide-mq message queue development - queues, wo
 
 > This is a thin wrapper. For full API reference, advanced patterns, and deep documentation, see https://glidemq.dev/
 
+## Contents
+
+- [Install](#install)
+- [Connection](#connection)
+- [Quick Start](#quick-start)
+- [Core API](#core-api)
+- [Job Options](#job-options)
+- [AI/LLM Features (v0.13+)](#aillm-features-v013)
+- [Worker Options](#worker-options)
+- [Connection Options](#connection-options)
+- [Scheduling and Testing](#scheduling-and-testing)
+- [Critical Notes](#critical-notes)
+- [Deep Dive](#deep-dive)
+
 ## Install
 
 ```bash

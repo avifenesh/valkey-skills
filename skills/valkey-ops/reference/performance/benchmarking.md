@@ -1,6 +1,6 @@
-# Benchmarking
-
 Use when measuring Valkey throughput, comparing performance across versions or
+
+# Benchmarking
 configurations, validating tuning changes, or establishing performance baselines
 for capacity planning.
 
@@ -220,11 +220,3 @@ results/<commit-id>/
    you are measuring CPU limits not network or I/O capacity
 
 ---
-
-## See Also
-
-- [Latency diagnosis](latency.md) - when benchmarks reveal latency problems
-- [I/O threads](io-threads.md) - tuning thread count for throughput
-- [Durability vs performance](durability.md) - persistence impact on throughput
-- [Memory optimization](memory.md) - encoding and fragmentation affecting benchmarks
-- [Capacity planning](../operations/capacity-planning.md) - using benchmark results for sizing

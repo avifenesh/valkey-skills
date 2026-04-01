@@ -225,10 +225,3 @@ Sorted sets use the skiplist encoding when either threshold is exceeded:
 - `zset-max-listpack-value` (default 64) - element byte size
 
 Below these thresholds, sorted sets use listpack encoding.
-
-## See Also
-
-- [hashtable.md](hashtable.md) - The hashtable paired with the skiplist in `zset` for O(1) element-to-score lookups
-- [listpack.md](listpack.md) - The compact encoding used for small sorted sets before skiplist conversion
-- [encoding-transitions.md](encoding-transitions.md) - Threshold configs that trigger the listpack-to-skiplist conversion
-- [sds.md](sds.md) - The SDS strings embedded directly in skiplist nodes

@@ -8,7 +8,6 @@ Use when connecting your application to Valkey with authentication, configuring 
 - ACL Basics for Application Developers (line 82)
 - TLS Connection Setup (line 159)
 - Security Checklist for Application Developers (line 233)
-- See Also (line 248)
 
 ---
 
@@ -245,37 +244,3 @@ r = redis.Redis(
 
 ---
 
-## See Also
-
-**Best Practices**:
-- [Performance Best Practices](../best-practices/performance.md) - TLS I/O threading and connection handling
-- [High Availability Best Practices](../best-practices/high-availability.md) - separate Sentinel auth from Valkey auth
-- [Cluster Best Practices](../best-practices/cluster.md) - ACL consistency across cluster nodes
-- [Key Best Practices](../best-practices/keys.md) - ACL key patterns for namespace-based access control
-- [Persistence Best Practices](../best-practices/persistence.md) - authentication required after restart from persistence
-- [Memory Best Practices](../best-practices/memory.md) - ACL-restricted namespaces to limit memory blast radius
-
-**Patterns**:
-- [Session Patterns](../patterns/sessions.md) - session storage with per-user ACL isolation
-- [Lock Patterns](../patterns/locks.md) - ACL restrictions for lock key namespaces
-- [Queue Patterns](../patterns/queues.md) - ACL permissions for queue workers
-- [Caching Patterns](../patterns/caching.md) - ACL restrictions for cache key namespaces
-- [Pub/Sub Patterns](../patterns/pubsub-patterns.md) - channel-level ACL restrictions for pub/sub
-- [Rate Limiting Patterns](../patterns/rate-limiting.md) - ACL restrictions for rate limit key namespaces
-
-**Commands**:
-- [Server Commands](../basics/server-and-scripting.md) - ACL LIST, ACL CAT, and runtime introspection
-- [Pub/Sub Commands](../basics/data-types.md) - channel-level ACL restrictions and dedicated connections
-
-**Valkey Features**:
-- [Cluster Enhancements](../valkey-features/cluster-enhancements.md) - numbered databases and ACL database restrictions
-
-**Clients**:
-- Clients Overview (see valkey-glide skill) - TLS configuration per client library
-
-**Anti-Patterns**:
-- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - security anti-patterns (no auth, FLUSHALL accessible)
-
-**Ops**:
-- valkey-ops [security/acl](../../../valkey-ops/reference/security/acl.md) - ACL operational setup
-- valkey-ops [security/tls](../../../valkey-ops/reference/security/tls.md) - TLS operational setup

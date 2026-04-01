@@ -149,8 +149,3 @@ There is no special command for keyspace notifications - they are regular pub/su
 - When `notify-keyspace-events` is empty (default), the function returns after the module notification step. No string allocation or pub/sub work happens.
 - The `dbid` to string conversion (`ll2string`) result is cached between the keyspace and keyevent publish calls to avoid redundant conversion.
 - Channel name strings are constructed as sds and wrapped in temporary robj instances that are freed immediately after publishing.
-
-## See Also
-
-- [Pub/Sub Subsystem](../pubsub/pubsub.md) - The underlying message delivery system. Keyspace notifications use `pubsubPublishMessage()` with `sharded=0` (global pub/sub only) to deliver events to subscribed clients.
-- [Module API Overview](../modules/api-overview.md) - Modules can subscribe to keyspace events via `ValkeyModule_SubscribeToKeyspaceEvents`, which receives notifications regardless of the `notify-keyspace-events` config setting.

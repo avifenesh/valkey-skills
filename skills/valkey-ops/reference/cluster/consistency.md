@@ -1,6 +1,6 @@
-# Cluster Consistency Guarantees
-
 Use when evaluating Valkey Cluster's write safety for your use case, understanding what can go wrong during network partitions, or deciding between consistency and availability trade-offs.
+
+# Cluster Consistency Guarantees
 
 ## Contents
 
@@ -177,11 +177,3 @@ Summary: typical failover time is `NODE_TIMEOUT + 1-2 seconds` (~16-17s with def
 Lowering `cluster-node-timeout` reduces the failure detection window but increases the risk of false positives (transient network issues triggering unnecessary failovers).
 
 ---
-
-## See Also
-
-- [Cluster Setup](setup.md) - configuration parameters that affect consistency
-- [Cluster Operations](operations.md) - manual failover, automatic failover timing, PFAIL/FAIL state machine
-- [Cluster Resharding](resharding.md) - slot migration and write-loss windows
-- [Replication Safety](../replication/safety.md) - min-replicas reference, WAIT command details, safety checklist
-- [Split-Brain Prevention](../sentinel/split-brain.md) - write safety for non-clustered (Sentinel) deployments

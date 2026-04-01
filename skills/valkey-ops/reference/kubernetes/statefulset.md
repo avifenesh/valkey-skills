@@ -1,6 +1,6 @@
-# StatefulSet Patterns for Valkey
-
 Use when deploying Valkey on Kubernetes with raw StatefulSets, configuring PVCs, pod scheduling, health probes, resource sizing, or Pod Disruption Budgets.
+
+# StatefulSet Patterns for Valkey
 
 ## Contents
 
@@ -346,16 +346,3 @@ spec:
     update. Use retry parameters in startup scripts.
 
 ---
-
-## See Also
-
-- [Helm Charts](helm.md) - chart-based deployment
-- [Kubernetes Operators](operators.md) - CRD-based deployment
-- [Kubernetes Tuning](tuning-k8s.md) - kernel tuning in K8s
-- [Capacity Planning](../operations/capacity-planning.md) - memory and resource sizing
-- [RDB Persistence](../persistence/rdb.md) - snapshot configuration and fork overhead
-- [AOF Persistence](../persistence/aof.md) - write-ahead log configuration
-- [Performance I/O Threads](../performance/io-threads.md) - CPU sizing rules when using I/O threads
-- [Performance Memory](../performance/memory.md) - memory optimization and container sizing
-- [Troubleshooting OOM](../troubleshooting/oom.md) - OOM diagnosis when container limits are exceeded
-- [Production Checklist](../production-checklist.md) - full pre-launch verification

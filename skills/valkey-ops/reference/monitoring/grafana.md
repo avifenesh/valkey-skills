@@ -1,6 +1,6 @@
-# Grafana Dashboard Setup
-
 Use when configuring Grafana dashboards for Valkey monitoring - importing
+
+# Grafana Dashboard Setup
 community dashboards, configuring data sources, and building key panels.
 
 ## Contents
@@ -228,13 +228,3 @@ PMM's distinguishing feature is per-command latency histograms using
 commands contribute most to tail latency.
 
 ---
-
-## See Also
-
-- [Monitoring Metrics](metrics.md) - metric definitions and source verification
-- [Prometheus Setup](prometheus.md) - exporter and scrape configuration
-- [Alerting Rules](alerting.md) - alert thresholds aligned with dashboard panels
-- [Commandlog](commandlog.md) - slow command logging and Grafana panel examples
-- [Performance Latency](../performance/latency.md) - latency diagnosis workflow
-- [Troubleshooting Diagnostics](../troubleshooting/diagnostics.md) - 7-phase investigation when dashboards show anomalies
-- [Troubleshooting Slow Commands](../troubleshooting/slow-commands.md) - slow command investigation

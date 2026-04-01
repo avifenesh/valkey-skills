@@ -237,9 +237,3 @@ Push messages are deferred during command execution and flushed after the comman
 ### Broadcast Mode
 
 In broadcast mode (`CLIENT TRACKING ON BCAST PREFIX ...`), the server does not track per-client key reads. Instead, it broadcasts invalidation for any key matching registered prefixes. Broadcast invalidations are sent from `trackingBroadcastInvalidationMessages()` in `beforeSleep()`.
-
-## See Also
-
-- [networking.md](networking.md) - Read/write buffer management
-- [command-dispatch.md](command-dispatch.md) - What happens after parsing
-- [../valkey-specific/object-lifecycle.md](../valkey-specific/object-lifecycle.md) - Each parsed argument becomes an `robj` in `c->argv[]`

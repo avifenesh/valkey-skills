@@ -14,7 +14,6 @@ Use when you need per-field TTL on hash entries - expiring individual fields wit
 - Memory Overhead (line 155)
 - Interaction with Key-Level TTL (line 163)
 - Important Notes (line 172)
-- See Also (line 182)
 
 ---
 
@@ -179,17 +178,3 @@ Fields without TTL incur no additional overhead - the cost only applies to field
 
 ---
 
-## See Also
-
-- [What is Valkey](../overview/what-is-valkey.md) - overview and Valkey-only feature list
-- [Compatibility and Migration](../overview/compatibility.md) - migrating from Redis to Valkey
-- [Conditional Operations](conditional-ops.md) - SET IFEQ and DELIFEQ
-- [Cluster Enhancements](cluster-enhancements.md) - numbered databases in cluster mode
-- [Polygon Geospatial Queries](geospatial.md) - GEOSEARCH BYPOLYGON (also 9.0)
-- [Performance Summary](performance-summary.md) - version-by-version throughput and latency gains
-- [Hash Commands](../basics/data-types.md) - HEXPIRE, HSETEX, HGETEX, HGETDEL command details
-- [String Commands](../basics/data-types.md) - GETEX for key-level read-and-refresh TTL (analogous to HGETEX)
-- [Session Patterns](../patterns/sessions.md) - per-field TTL for session tokens
-- [Caching Patterns](../patterns/caching.md) - per-field freshness for cached API responses
-- [Memory Best Practices](../best-practices/memory.md) - hash field expiration memory overhead
-- For expiration internals: see valkey-dev `reference/config/expiry.md`

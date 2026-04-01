@@ -240,10 +240,3 @@ Called every event loop iteration from `beforeSleep()`. Orchestrates all blockin
 5. `processUnblockedClients()` - drain the unblocked queue
 
 This ordering matters - handling keys may produce new unblocked clients that `processUnblockedClients` then serves.
-
-## See Also
-
-- [MULTI/EXEC Transactions](../transactions/multi-exec.md) - Blocking commands cannot be used inside MULTI/EXEC transactions; the `deny_blocking` flag is set during EXEC.
-- [Custom Types and Advanced Commands](../modules/types-and-commands.md) - Modules implement blocking commands via `ValkeyModule_BlockClient` and `ValkeyModule_BlockClientOnKeys`. Module-blocked clients use the `BLOCKED_MODULE` type and follow the same key-readiness notification system.
-- [Pub/Sub Subsystem](../pubsub/pubsub.md) - Pub/Sub subscriptions put clients into a restricted state (not blocked in the `blockingState` sense) where only subscribe/unsubscribe commands are accepted.
-- [Latency Monitoring](../monitoring/latency.md) - the `command-unblocking` latency event measures the time to unblock clients; prolonged blocking can indicate performance issues tracked by the latency framework.

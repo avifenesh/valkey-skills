@@ -274,11 +274,3 @@ if (hasActiveChildProcess()) {
 ```
 
 ---
-
-## See Also
-
-- [zmalloc](../memory/zmalloc.md) - allocator wrapper layer; `zmalloc_get_allocator_info()` provides the jemalloc stats (allocated, active, resident) used to compute `mem_fragmentation_ratio`
-- [Lazy Freeing](../memory/lazy-free.md) - large object deletion that can contribute to fragmentation when the BIO thread frees many scattered allocations
-- [Hashtable](../data-structures/hashtable.md) - defrag scans use `hashtableScanDefrag()` to relocate entries within hashtable-backed data structures
-- [Latency Monitoring](../monitoring/latency.md) - the `active-defrag-cycle` latency event tracks defrag cycle duration
-- [Building Valkey](../build/building.md) - active defrag requires the vendored jemalloc from `deps/jemalloc/` with custom patches for `experimental.utilization` support. Sanitizer builds use `MALLOC=libc` which disables defrag (`HAVE_DEFRAG` is not defined).

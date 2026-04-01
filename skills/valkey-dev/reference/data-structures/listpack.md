@@ -189,11 +189,3 @@ For Hashes and Sorted Sets stored in listpack, key-value pairs are stored as con
 | lpFind | O(n) | Linear scan |
 | lpInsert / lpDelete | O(n) | Requires memmove of trailing data |
 | lpBytes | O(1) | Stored in header |
-
-## See Also
-
-- [encoding-transitions.md](encoding-transitions.md) - Thresholds that trigger conversion from listpack to full encodings
-- [quicklist.md](quicklist.md) - Uses listpacks as node payloads for the List data type
-- [hashtable.md](hashtable.md) - The full encoding that listpack-backed Hashes and Sets convert to
-- [skiplist.md](skiplist.md) - The full encoding that listpack-backed Sorted Sets convert to
-- [rax.md](rax.md) - Streams store listpacks as values in a radix tree

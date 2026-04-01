@@ -1,6 +1,6 @@
-# Configuration Presets by Workload
-
 Use when configuring Valkey for a specific use case. Each preset lists the parameters to set and why. Defaults verified against `src/config.c`.
+
+# Configuration Presets by Workload
 
 ## Contents
 
@@ -300,17 +300,3 @@ repl-backlog-size 256mb
 ```
 
 This ensures the primary rejects writes if no replicas are connected and acknowledging, preventing split-brain data divergence.
-
-
-## See Also
-
-- [Eviction Policies](eviction.md) - policy details and tuning
-- [Configuration Essentials](essentials.md) - all config defaults
-- [Lazy Free Configuration](lazyfree.md) - async deletion behavior (all defaults are yes)
-- [Encoding Thresholds](encoding.md) - memory tuning via compact encodings
-- [Pub/Sub Configuration](pubsub.md) - subscriber buffers and keyspace notifications
-- [Advanced Configuration](advanced.md) - structured logging, OOM score, CPU pinning
-- [Bare Metal Setup](../deployment/bare-metal.md) - systemd and kernel tuning for production
-- [Docker Deployment](../deployment/docker.md) - container resource limits and config injection
-- [I/O Threads](../performance/io-threads.md) - thread count guidelines
-- [Durability vs Performance](../performance/durability.md) - persistence trade-offs

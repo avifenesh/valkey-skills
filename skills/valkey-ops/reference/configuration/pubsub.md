@@ -1,6 +1,6 @@
-# Pub/Sub Operational Configuration
-
 Use when running Pub/Sub workloads, managing subscriber memory, configuring
+
+# Pub/Sub Operational Configuration
 keyspace notifications, or operating sharded Pub/Sub in cluster mode. All
 defaults verified against `src/config.c` and `src/server.h` in valkey-io/valkey.
 
@@ -289,15 +289,3 @@ Fields to watch: `omem` (output memory), `sub` (subscriptions), `psub`
 | `pubsub_patterns` | > 500 | > 5,000 |
 | Max `omem` across pubsub clients | > 50% of hard limit | > 75% of hard limit |
 | Subscriber disconnects/min | > 1 | > 10 |
-
-## See Also
-
-- [Configuration Essentials](essentials.md) - core config parameters including client limits
-- [Eviction Policies](eviction.md) - maxmemory-policy interaction with subscriber memory
-- [Advanced Configuration](advanced.md) - protocol limits and anti-patterns for Pub/Sub buffers
-- [Workload Presets](workload-presets.md) - complete configs by use case
-- [Monitoring Alerting](../monitoring/alerting.md) - alert rules for subscriber memory
-- [Monitoring Metrics](../monitoring/metrics.md) - `pubsub_channels`, `pubsub_patterns` metrics
-- [Security ACL](../security/acl.md) - `acl-pubsub-default` and channel permissions
-- [See valkey-dev: pubsub](../../../valkey-dev/reference/pubsub/pubsub.md) - Pub/Sub internals
-- [See valkey-dev: notifications](../../../valkey-dev/reference/pubsub/notifications.md) - keyspace notification implementation

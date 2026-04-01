@@ -195,12 +195,3 @@ main()
 **Timer registration**: Two time events are registered:
 - `serverCron` - fires at `server.hz` frequency (default 10 Hz = every 100ms). Handles expiry, stats, replication heartbeats, rehashing, defragmentation, background task management.
 - `clientsTimeProc` - variable frequency based on client count. Handles client timeouts, buffer resizing, memory accounting.
-
-## See Also
-
-- [event-loop.md](event-loop.md) - Reactor pattern and event processing
-- [command-dispatch.md](command-dispatch.md) - How commands execute
-- [networking.md](networking.md) - Client connection lifecycle
-- [resp-protocol.md](resp-protocol.md) - Wire protocol details
-- [../valkey-specific/kvstore.md](../valkey-specific/kvstore.md) - The kvstore abstraction wrapping the keyspace
-- [../valkey-specific/transport-layer.md](../valkey-specific/transport-layer.md) - Pluggable connection types initialized at boot

@@ -1,6 +1,6 @@
 ---
 name: valkey-glide-nodejs
-description: "Use when building Node.js/TypeScript applications with Valkey GLIDE. Covers Promise API, GlideClient, TypeScript types, ESM/CJS, TLS, OpenTelemetry, batching, PubSub, streams, Lua scripting. Not for ioredis migration - use migrate-ioredis instead."
+description: "Node.js/TypeScript Valkey GLIDE client - Promise API, GlideClient, TypeScript types, ESM/CJS, TLS, OpenTelemetry, Batch/ClusterBatch, PubSub, streams, Lua scripting. Not for ioredis migration - use migrate-ioredis skill."
 version: 2.0.0
 argument-hint: "[API or config question]"
 ---

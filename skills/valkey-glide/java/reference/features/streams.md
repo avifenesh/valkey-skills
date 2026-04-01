@@ -1,22 +1,24 @@
+# Valkey Streams (Java)
+
 Use when working with Valkey Streams in GLIDE Java - adding entries, reading, consumer groups, acknowledging messages, or trimming.
 
 ## Contents
 
-- Adding Entries (XADD) (line 21)
-- Reading Entries (XREAD) (line 39)
-- Consumer Groups (line 70)
-- Acknowledging Messages (XACK) (line 138)
-- Pending Messages (XPENDING) (line 149)
-- Stream Length (XLEN) (line 157)
-- Range Queries (XRANGE / XREVRANGE) (line 163)
-- Delete Entries (XDEL) (line 185)
-- Claiming Messages (XCLAIM / XAUTOCLAIM) (line 191)
-- Stream Info (XINFO) (line 217)
-- Trimming Streams (XTRIM) (line 236)
-- Delete Consumer / Destroy Group (line 249)
-- Set Group Last-Delivered ID (line 260)
-- Cluster Mode (line 266)
-- Full Consumer Group Pattern (line 274)
+- Adding Entries (XADD) (line 23)
+- Reading Entries (XREAD) (line 41)
+- Consumer Groups (line 72)
+- Acknowledging Messages (XACK) (line 140)
+- Pending Messages (XPENDING) (line 151)
+- Stream Length (XLEN) (line 159)
+- Range Queries (XRANGE / XREVRANGE) (line 165)
+- Delete Entries (XDEL) (line 187)
+- Claiming Messages (XCLAIM / XAUTOCLAIM) (line 193)
+- Stream Info (XINFO) (line 219)
+- Trimming Streams (XTRIM) (line 238)
+- Delete Consumer / Destroy Group (line 251)
+- Set Group Last-Delivered ID (line 262)
+- Cluster Mode (line 268)
+- Full Consumer Group Pattern (line 276)
 
 ## Adding Entries (XADD)
 

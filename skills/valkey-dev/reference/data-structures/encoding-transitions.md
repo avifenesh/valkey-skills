@@ -220,12 +220,3 @@ Use `OBJECT ENCODING <key>` to see the current encoding:
 > OBJECT ENCODING myzset
 "listpack"
 ```
-
-## See Also
-
-- [../valkey-specific/object-lifecycle.md](../valkey-specific/object-lifecycle.md) - The `robj` struct whose `type` and `encoding` fields drive these transitions
-- [listpack.md](listpack.md) - Compact encoding used by Lists, Hashes, Sets, and Sorted Sets
-- [hashtable.md](hashtable.md) - Full encoding for Hashes, Sets, and the element-to-score map in Sorted Sets
-- [quicklist.md](quicklist.md) - Full encoding for Lists
-- [skiplist.md](skiplist.md) - Full encoding (score-ordered) for Sorted Sets
-- [sds.md](sds.md) - The SDS string type underlying RAW and EMBSTR encodings

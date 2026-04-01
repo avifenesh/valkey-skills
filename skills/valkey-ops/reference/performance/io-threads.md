@@ -1,6 +1,6 @@
-# I/O Threads Configuration
-
 Use when tuning Valkey throughput on multi-core systems, deciding whether to
+
+# I/O Threads Configuration
 enable I/O threads, or choosing the right thread count for your workload.
 
 ## Contents
@@ -189,15 +189,3 @@ Monitor I/O thread utilization with `INFO server` - check
 - Set `events-per-io-thread 0` temporarily to force all threads active for testing
 
 ---
-
-## See Also
-
-- [Durability vs Performance](durability.md) - persistence trade-offs with I/O threads
-- [Latency Diagnosis](latency.md) - troubleshooting latency with I/O threads
-- [Slow Command Investigation](../troubleshooting/slow-commands.md) - when slow commands, not I/O, are the bottleneck
-- [Configuration Essentials](../configuration/essentials.md) - `io-threads` config reference
-- [Monitoring Metrics](../monitoring/metrics.md) - `io_threads_active` and throughput metrics
-- [Kubernetes StatefulSets](../kubernetes/statefulset.md) - CPU resource sizing for I/O threads in containers
-- [Kubernetes Tuning](../kubernetes/tuning-k8s.md) - kernel and CPU tuning for I/O threads in K8s
-- [See valkey-dev: io-threads](../../../valkey-dev/reference/threading/io-threads.md) - internal architecture, job queue design
-- [See valkey-dev: prefetch](../../../valkey-dev/reference/threading/prefetch.md) - batch key prefetching

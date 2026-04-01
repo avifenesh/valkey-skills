@@ -17,7 +17,6 @@ Use when implementing vector similarity search, full-text search, hybrid queries
 - Feature Comparison: valkey-search vs RediSearch (line 266)
 - Commands (line 285)
 - Use Cases (line 296)
-- Cross-References (line 307)
 
 ---
 
@@ -304,10 +303,3 @@ The remaining gaps are narrowing. Roadmap signals show FT.CURSOR, FT.EXPLAINCLI,
 | Analytics | FT.AGGREGATE with GROUPBY and REDUCE for real-time aggregations |
 | Hybrid search | Combine any of text, tag, numeric, and vector in a single query |
 
-## Cross-References
-
-- [overview.md](overview.md) - Module system overview and loading
-- [json.md](json.md) - valkey-json documents can be indexed by valkey-search
-- [gaps.md](gaps.md) - Remaining feature gaps vs Redis Stack
-- **valkey-ecosystem** skill - client library decision framework
-- **valkey-glide** skill - GlideFt / FT API for Python, Java, Node.js

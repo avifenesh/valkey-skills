@@ -186,11 +186,3 @@ unsigned long evalScriptsMemory(void);  /* Cache overhead: dict + evalScript str
 ## Replication
 
 Scripts are replicated by their body, not by SHA. The `es->body` field in `evalScript` stores the original source so that EVALSHA commands can be replicated as EVAL. The `repl_flags` field in `scriptRunCtx` defaults to `PROPAGATE_AOF | PROPAGATE_REPL`.
-
-## See Also
-
-- [Functions Subsystem](../scripting/functions.md) - Named, persistent, library-based alternative to EVAL. Functions replace the SHA-based identity model with explicit names, RDB persistence, and multi-function libraries.
-- [Scripting Engine Architecture](../scripting/scripting-engine.md) - The pluggable engine layer that EVAL delegates to for compilation and execution.
-- [MULTI/EXEC Transactions](../transactions/multi-exec.md) - An alternative atomicity mechanism. MULTI/EXEC queues commands for atomic execution but does not support conditional logic; EVAL scripts run as a single atomic unit with full Lua control flow.
-- [Commandlog](../monitoring/commandlog.md) - Long-running scripts appear as slow commands in the commandlog. The `c->duration` wall-clock timing captures total script execution time, including all commands executed within the script.
-- [ACL Subsystem](../security/acl.md) - Script execution is subject to ACL permission checks. The `scripting` command category controls whether a user can run EVAL/EVALSHA.

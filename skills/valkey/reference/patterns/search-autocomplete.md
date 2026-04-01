@@ -8,7 +8,6 @@ Use when building prefix autocomplete, tag-based filtering, search result rankin
 - Scored Search Results (line 83)
 - Tag-Based Search with Sets (line 126)
 - Hash-Based Inverted Indexes (line 208)
-- See Also (line 275)
 
 ---
 
@@ -272,19 +271,3 @@ async function searchDocuments(redis, terms) {
 
 ---
 
-## See Also
-
-- [Sorted Set Commands](../basics/data-types.md) - ZRANGEBYLEX, ZRANGE BYLEX, ZINCRBY for autocomplete
-- [Set Commands](../basics/data-types.md) - SINTER, SUNION, SINTERCARD for tag-based search
-- [Hash Commands](../basics/data-types.md) - HSET, HGETALL for document storage in inverted indexes
-- [Leaderboard Patterns](leaderboards.md) - scored ranking patterns with sorted sets
-- [Counter Patterns](counters.md) - HyperLogLog for approximate unique query counting
-- [Caching Patterns](caching.md) - cache-aside for search result caching
-- [Performance Best Practices](../best-practices/performance.md) - pipelining for batch lookups
-- [Memory Best Practices](../best-practices/memory.md) - sorted set encoding thresholds for large indexes
-- [Key Best Practices](../best-practices/keys.md) - hash tags for cluster co-location of index keys
-- [Cluster Best Practices](../best-practices/cluster.md) - multi-key operations require same hash slot
-- [High Availability Best Practices](../best-practices/high-availability.md) - replica reads for search queries
-- [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions for index key namespaces
-- Clients Overview (see valkey-glide skill) - auto-pipelining for batch index lookups
-- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - SMEMBERS on huge sets, big key issues with large indexes

@@ -1,6 +1,6 @@
-# Production Deployment Checklist
-
 Use when preparing a Valkey deployment for production, auditing an existing setup, or verifying readiness before go-live.
+
+# Production Deployment Checklist
 
 ## Contents
 
@@ -138,27 +138,3 @@ echo "=== Done ==="
 - [ ] **Rollback plan documented** - know how to revert if the upgrade fails
 - [ ] **Replica versions compatible** - see [upgrades/compatibility.md](upgrades/compatibility.md)
 - [ ] **Valkey 9.0: use 9.0.3+** - 9.0.0-9.0.1 had critical hash field expiration bugs (memory leaks, crashes, data corruption). Sentinel 9.0+ requires `+failover` ACL permission (permanent requirement, not a regression).
-
-## See Also
-
-- [Configuration Essentials](configuration/essentials.md) - all config defaults
-- [Security Hardening](security/hardening.md) - defense in depth
-- [Security ACL](security/acl.md) - per-user access control
-- [Security TLS](security/tls.md) - encryption in transit
-- [Monitoring Metrics](monitoring/metrics.md) - key metrics and thresholds
-- [Monitoring Alerting](monitoring/alerting.md) - Prometheus alert rules
-- [Monitoring Commandlog](monitoring/commandlog.md) - commandlog configuration and audit
-- [Troubleshooting Diagnostics](troubleshooting/diagnostics.md) - 7-phase investigation runbook
-- [Persistence AOF](persistence/aof.md) - AOF configuration
-- [Persistence RDB](persistence/rdb.md) - RDB configuration
-- [Persistence Backup](persistence/backup-recovery.md) - backup procedures
-- [Durability vs Performance](performance/durability.md) - persistence trade-off spectrum
-- [Replication Safety](replication/safety.md) - write safety, split-brain prevention
-- [Capacity Planning](operations/capacity-planning.md) - memory and connection sizing
-- [Upgrades Rolling](upgrades/rolling-upgrade.md) - zero-downtime upgrade procedures
-- [Upgrades Migration](upgrades/migration.md) - Redis to Valkey migration
-- [Upgrades Compatibility](upgrades/compatibility.md) - version compatibility
-- [Kubernetes Helm](kubernetes/helm.md) - Helm chart deployment
-- [Kubernetes Operators](kubernetes/operators.md) - CRD-based deployment
-- [Kubernetes StatefulSets](kubernetes/statefulset.md) - StatefulSet patterns
-- [Kubernetes Tuning](kubernetes/tuning-k8s.md) - kernel tuning in K8s

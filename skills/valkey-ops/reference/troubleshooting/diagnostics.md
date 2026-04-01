@@ -1,6 +1,6 @@
-# Diagnostics Reference
-
 Use when investigating fork latency, running memory tests, or as a quick
+
+# Diagnostics Reference
 reference for Valkey diagnostic commands. Covers the general investigation
 workflow for any production issue.
 
@@ -331,20 +331,3 @@ echo "=== Slow Cmds ===";   $CLI SLOWLOG GET 5
 ```
 
 ---
-
-## See Also
-
-- [Latency Diagnosis](../performance/latency.md) - full latency diagnosis workflow
-- [Memory Optimization](../performance/memory.md) - encoding thresholds, memory-efficient modeling
-- [Defragmentation](../performance/defragmentation.md) - active defrag for fragmentation issues
-- [Troubleshooting OOM](oom.md) - out of memory diagnosis and resolution
-- [Slow Command Investigation](slow-commands.md) - slow command patterns and fixes
-- [Replication Lag](replication-lag.md) - replication lag diagnosis and resolution
-- [Cluster Partition Issues](cluster-partitions.md) - cluster state and failover diagnosis
-- [Monitoring Metrics](../monitoring/metrics.md) - INFO metric reference
-- [Monitoring Alerting](../monitoring/alerting.md) - alert rules for all diagnostic categories
-- [Security ACL](../security/acl.md) - ACL LOG for unauthorized access diagnosis
-- [Security Hardening](../security/hardening.md) - security checklist and defense-in-depth layers
-- [See valkey-dev: debug](../../../valkey-dev/reference/monitoring/debug.md) - DEBUG command internals, software watchdog
-- [See valkey-dev: latency](../../../valkey-dev/reference/monitoring/latency.md) - latency monitor internals
-- [See valkey-dev: commandlog](../../../valkey-dev/reference/monitoring/commandlog.md) - commandlog architecture

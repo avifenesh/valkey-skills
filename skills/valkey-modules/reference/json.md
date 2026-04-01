@@ -13,7 +13,6 @@ Use when storing, querying, or manipulating JSON documents in Valkey, migrating 
 - RDB Compatibility (line 165)
 - Version History (line 174)
 - When to Use (line 186)
-- Cross-References (line 196)
 
 ---
 
@@ -193,10 +192,3 @@ This means you can migrate from a Redis instance with RedisJSON to Valkey with v
 | High-throughput atomic counter | Core Valkey INCR (faster than JSON.NUMINCRBY) |
 | Documents with array manipulation | valkey-json (native array operations) |
 
-## Cross-References
-
-- [overview.md](overview.md) - Module system overview and loading
-- [search.md](search.md) - valkey-search can index JSON document fields
-- [gaps.md](gaps.md) - Feature comparison with Redis Stack
-- **valkey-ecosystem** skill - client library decision framework
-- **valkey-glide** skill - GlideJson / Json API for Python, Java, Node.js

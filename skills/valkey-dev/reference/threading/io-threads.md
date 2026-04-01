@@ -274,10 +274,3 @@ I/O threads parallelize the memory-intensive read/write/parse work, and the
 prefetch optimization amortizes cache misses across batched commands.
 
 ---
-
-## See Also
-
-- [Batch Key Prefetching](../threading/prefetch.md) - interleaved prefetch across I/O thread command batches, the primary source of the throughput gain
-- [Networking](../architecture/networking.md) - event loop integration, client connection handling, and read/write event dispatch that feeds I/O threads
-- [BIO Threads](../threading/bio.md) - separate background thread pool for blocking OS operations (fsync, close, lazy free); compare the lock-free ring buffer here with BIO's mutex-based queue
-- [zmalloc](../memory/zmalloc.md) - per-thread memory counters designed around I/O thread concurrency

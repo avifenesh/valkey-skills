@@ -1,17 +1,19 @@
+# Batching - Pipelines and Transactions (Java)
+
 Use when executing multiple Valkey commands together using Batch (pipeline or transaction), ClusterBatch, or the deprecated Transaction class.
 
 ## Contents
 
-- Batch vs Transaction (line 16)
-- Atomic Batch (Transaction) (line 25)
-- Non-Atomic Batch (Pipeline) (line 40)
-- raiseOnError Parameter (line 55)
-- ClusterBatch (line 67)
-- Batch with Options (line 79)
-- Standalone-Only: SELECT in Batch (line 128)
-- Chaining (line 142)
-- Deprecated Transaction Class (line 158)
-- Error Handling (line 174)
+- Batch vs Transaction (line 18)
+- Atomic Batch (Transaction) (line 27)
+- Non-Atomic Batch (Pipeline) (line 42)
+- raiseOnError Parameter (line 57)
+- ClusterBatch (line 69)
+- Batch with Options (line 81)
+- Standalone-Only: SELECT in Batch (line 130)
+- Chaining (line 144)
+- Deprecated Transaction Class (line 160)
+- Error Handling (line 176)
 
 ## Batch vs Transaction
 

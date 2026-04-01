@@ -214,8 +214,3 @@ Same as the new hashtable - SipHash with a 16-byte seed:
 uint64_t dictGenHashFunction(const void *key, size_t len);
 uint64_t dictGenCaseHashFunction(const unsigned char *buf, size_t len);
 ```
-
-## See Also
-
-- [hashtable.md](hashtable.md) - The open-addressing replacement that superseded dict in Valkey 8.1
-- [../valkey-specific/kvstore.md](../valkey-specific/kvstore.md) - Multi-index wrapper that uses the new hashtable for the keyspace

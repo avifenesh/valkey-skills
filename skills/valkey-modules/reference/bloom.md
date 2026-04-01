@@ -13,7 +13,6 @@ Use when implementing probabilistic membership testing, deduplication, cache war
 - Error Rate and Memory (line 181)
 - Version History (line 193)
 - Client Library Compatibility (line 201)
-- Cross-References (line 205)
 
 ---
 
@@ -202,9 +201,3 @@ Compare with a Valkey Set storing 1 million 20-byte strings: approximately 50-60
 
 valkey-bloom is API compatible with existing Redis bloom filter client libraries. Works with valkey-py, valkey-java, valkey-go, and their Redis equivalents (redis-py, Jedis, go-redis) without code changes.
 
-## Cross-References
-
-- [overview.md](overview.md) - Module system overview and loading
-- [gaps.md](gaps.md) - Feature comparison with Redis Stack
-- **valkey-ecosystem** skill - client library decision framework
-- **valkey-ecosystem** skill (Java clients) - Redisson provides `RBloomFilter` as an alternative (client-side Bloom filter)

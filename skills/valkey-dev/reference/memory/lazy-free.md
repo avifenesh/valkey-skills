@@ -213,10 +213,3 @@ Lazy-free jobs are submitted via `bioCreateLazyFreeJob()`, which allocates a
 jobs sequentially, calling `job->free_args.free_fn(job->free_args.free_args)`.
 
 ---
-
-## See Also
-
-- [BIO Threads](../threading/bio.md) - the background thread architecture that processes lazy-free jobs on the `BIO_LAZY_FREE` worker (worker index 2)
-- [zmalloc](../memory/zmalloc.md) - memory accounting updated by `decrRefCount()` and `kvstoreRelease()` during background frees
-- [Key Expiration](../config/expiry.md) - the `lazyfree-lazy-expire` config controls whether expiration uses lazy freeing
-- [Database Management](../config/db-management.md) - `dbAsyncDelete()` and `emptyDbAsync()` submit lazy-free jobs

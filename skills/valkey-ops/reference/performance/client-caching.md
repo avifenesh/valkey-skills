@@ -1,6 +1,6 @@
-# Client-Side Caching
-
 Use when reducing read latency, offloading read traffic from the server, or
+
+# Client-Side Caching
 implementing a local cache in application code with server-assisted invalidation.
 
 ## Contents
@@ -201,12 +201,3 @@ either:
 - In cluster mode, tracking works per-node - each node tracks its own keys
 - Broadcasting mode with empty prefix (`BCAST` with no `PREFIX`) will send
   invalidation for every write, which can generate significant traffic
-
-## See Also
-
-- [Latency Diagnosis](latency.md) - latency optimization strategies
-- [Memory Optimization](memory.md) - memory impact of tracking table overhead
-- [Slow Command Investigation](../troubleshooting/slow-commands.md) - hot key detection and mitigation
-- [Configuration Essentials](../configuration/essentials.md) - client connection tuning
-- [Monitoring Metrics](../monitoring/metrics.md) - `tracking_clients`, `tracking_total_keys` metrics
-- [See valkey-dev: tracking](../../../valkey-dev/reference/monitoring/tracking.md) - radix tree structure, invalidation dispatch internals

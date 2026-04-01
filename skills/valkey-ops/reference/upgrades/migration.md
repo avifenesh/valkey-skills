@@ -1,6 +1,6 @@
-# Redis to Valkey Migration
-
 Use when migrating from Redis OSS to Valkey, planning a migration strategy, or understanding what changes between the two systems.
+
+# Redis to Valkey Migration
 
 ## Contents
 
@@ -261,13 +261,3 @@ Run these checks after any migration to verify data integrity:
 9. [ ] Promote Valkey instances
 10. [ ] Disable `extended-redis-compatibility` once clients are updated
 11. [ ] Update backup scripts to reference new paths
-
-## See Also
-
-- [Version Compatibility](compatibility.md) - RDB versions and replication compatibility
-- [Rolling Upgrades](rolling-upgrade.md) - zero-downtime upgrade procedures
-- [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - Sentinel setup for migrated deployments
-- [Cluster Setup](../cluster/setup.md) - cluster creation for Redis Cluster migrations
-- [Production Checklist](../production-checklist.md) - post-migration verification
-- [See valkey-dev: cluster/overview](../../../valkey-dev/reference/cluster/overview.md) - cluster protocol internals
-- [See valkey-dev: replication overview](../../../valkey-dev/reference/replication/overview.md) - replication protocol internals

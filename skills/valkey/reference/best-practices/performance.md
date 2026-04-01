@@ -10,7 +10,6 @@ Use when optimizing Valkey throughput, reducing latency, or reviewing applicatio
 - Connection Pooling (line 221)
 - I/O Threading (User Perspective) (line 271)
 - Quick Reference: Performance Anti-Patterns (line 300)
-- See Also (line 315)
 
 ---
 
@@ -312,41 +311,3 @@ Valkey 8.0+ uses I/O multithreading to parallelize network read/write while keep
 
 ---
 
-## See Also
-
-**Best Practices**:
-- [Memory Best Practices](memory.md) - encoding thresholds and memory-efficient data modeling
-- [Key Best Practices](keys.md) - hot key mitigation and key design
-- [Cluster Best Practices](cluster.md) - pipelining in cluster mode, per-node batching
-- [Persistence Best Practices](persistence.md) - fork pauses, fsync latency impact on throughput
-- [High Availability Best Practices](high-availability.md) - retry strategies, connection drop handling
-
-**Commands**:
-- [Scripting and Functions](../basics/server-and-scripting.md) - Lua scripts for atomic read-compute-write (vs pipelining)
-- [Transaction Commands](../basics/server-and-scripting.md) - MULTI/EXEC atomicity (vs pipeline batching)
-- [Server Commands](../basics/server-and-scripting.md) - SLOWLOG, LATENCY, INFO stats for diagnosis
-
-**Patterns**:
-- [Caching Patterns](../patterns/caching.md) - client-side caching to eliminate server round-trips
-- [Counter Patterns](../patterns/counters.md) - pipelining counter-with-TTL operations
-- [Queue Patterns](../patterns/queues.md) - pipelining for batch queue operations
-- [Rate Limiting Patterns](../patterns/rate-limiting.md) - pipelining for rate limit checks
-- [Session Patterns](../patterns/sessions.md) - pipelining session read + TTL refresh
-- [Leaderboard Patterns](../patterns/leaderboards.md) - pipelining bulk score updates
-
-**Security**:
-- [Security: Auth and ACL](../security/auth-and-acl.md) - TLS I/O threading performance and connection setup
-
-**Clients**:
-- Clients Overview (see valkey-glide skill) - GLIDE auto-pipelining, connection pooling guidance
-
-**Valkey Features**:
-- [Performance Improvements Summary](../valkey-features/performance-summary.md) - I/O threading, dual-channel replication, per-version gains
-
-**Anti-Patterns**:
-- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - KEYS, DEL on big keys, missing pipelining, and more
-
-**Ops**:
-- valkey-ops [performance/io-threads](../../../valkey-ops/reference/performance/io-threads.md) - I/O thread configuration and benchmarks
-- valkey-ops [performance/latency](../../../valkey-ops/reference/performance/latency.md) - latency diagnosis workflow
-- valkey-ops [configuration/lazyfree](../../../valkey-ops/reference/configuration/lazyfree.md) - lazy free configuration details

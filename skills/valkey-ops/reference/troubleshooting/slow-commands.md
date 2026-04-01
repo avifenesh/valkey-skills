@@ -1,6 +1,6 @@
-# Slow Command Investigation
-
 Use when clients report high latency, timeouts, or when monitoring shows
+
+# Slow Command Investigation
 elevated command execution times.
 
 ## Contents
@@ -257,18 +257,3 @@ Mitigation: read replicas for hot reads, client-side caching with
 cluster rebalancing to move the hot slot to a less-loaded shard.
 
 ---
-
-## See Also
-
-- [Latency Diagnosis](../performance/latency.md) - full latency diagnosis workflow
-- [Memory Optimization](../performance/memory.md) - encoding thresholds, `KEYS` alternatives
-- [Defragmentation](../performance/defragmentation.md) - defrag-related latency during scans
-- [Client-Side Caching](../performance/client-caching.md) - reduce hot key load with tracking
-- [Diagnostics Reference](diagnostics.md) - 7-phase diagnostic runbook
-- [Commandlog](../monitoring/commandlog.md) - commandlog configuration and commands
-- [I/O Threads](../performance/io-threads.md) - throughput optimization (I/O-bound, not command-bound)
-- [Monitoring Metrics](../monitoring/metrics.md) - commandstats and performance metrics
-- [Security ACL](../security/acl.md) - restrict dangerous commands via ACL instead of rename
-- [Security Rename Commands](../security/rename-commands.md) - disable or rename dangerous commands
-- [See valkey-dev: commandlog](../../../valkey-dev/reference/monitoring/commandlog.md) - commandlog internals, entry format
-- [See valkey-dev: latency](../../../valkey-dev/reference/monitoring/latency.md) - latency event types, DOCTOR report generation

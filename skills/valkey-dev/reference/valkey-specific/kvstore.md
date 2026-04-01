@@ -184,11 +184,3 @@ Two iterator types exist:
 - `kvstoreHashtableIterator` - iterates within a single hashtable index
 
 Both support safe iteration (allowing deletions during traversal).
-
-## See Also
-
-- [../data-structures/hashtable.md](../data-structures/hashtable.md) - The open-addressing hash table wrapped by kvstore
-- [object-lifecycle.md](object-lifecycle.md) - The `robj` entries stored as values in the keyspace hashtables
-- [../architecture/overview.md](../architecture/overview.md) - The `serverDb` struct that uses kvstore for `keys`, `expires`, and `keys_with_volatile_items`
-- [../cluster/overview.md](../cluster/overview.md) - In cluster mode, kvstore is created with `num_hashtables_bits=14` (16,384 hash tables), one per cluster hash slot. The `KVSTORE_ALLOCATE_HASHTABLES_ON_DEMAND` and `FREE_EMPTY_HASHTABLES` flags keep memory usage proportional to the slots actually owned by this node.
-- [../cluster/slot-migration.md](../cluster/slot-migration.md) - The `importing` field and `kvstoreSetIsImporting()` support atomic slot migration by excluding importing slots from Fenwick tree counts and random selection

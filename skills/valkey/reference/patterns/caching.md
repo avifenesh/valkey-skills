@@ -10,7 +10,6 @@ Use when implementing a caching layer with Valkey, setting up cache invalidation
 - Client-Side Caching (CLIENT TRACKING) (line 146)
 - Cache Invalidation Strategies (line 272)
 - TTL Patterns (line 315)
-- See Also (line 348)
 
 ---
 
@@ -345,23 +344,3 @@ SET cache:stable:product_details "..." EX 86400   # 1 day
 
 ---
 
-## See Also
-
-- [String Commands](../basics/data-types.md) - SET with EX/PX, GET, GETEX for cache operations
-- [Hash Commands](../basics/data-types.md) - HSET, HGETALL for structured cached objects
-- [Pub/Sub Patterns](pubsub-patterns.md) - keyspace notifications for cache invalidation events
-- [Lock Patterns](locks.md) - lock-based cache stampede prevention
-- [Session Patterns](sessions.md) - session storage with hashes and TTL (cache-adjacent)
-- [Counter Patterns](counters.md) - cache hit/miss counters, HyperLogLog for unique key tracking
-- [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL for structured cache entries (Valkey 9.0+)
-- [Performance Best Practices](../best-practices/performance.md) - pipelining cached reads
-- [Memory Best Practices](../best-practices/memory.md) - eviction policies for cache workloads
-- [Key Best Practices](../best-practices/keys.md) - TTL strategies and key naming for cache keys
-- [Cluster Best Practices](../best-practices/cluster.md) - hash tags for co-locating cache keys in cluster mode
-- [High Availability Best Practices](../best-practices/high-availability.md) - retry strategies for cache reads during failover
-- [Persistence Best Practices](../best-practices/persistence.md) - durability trade-offs for cache-backed data
-- [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions for cache key namespaces
-- Clients Overview (see valkey-glide skill) - client-side caching support and connection patterns
-- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - missing TTL, no `maxmemory`, and cache-related mistakes
-- valkey-ops [performance/client-caching](../../../valkey-ops/reference/performance/client-caching.md) - CLIENT TRACKING server configuration
-- valkey-ops [configuration/eviction](../../../valkey-ops/reference/configuration/eviction.md) - eviction policy selection for caches

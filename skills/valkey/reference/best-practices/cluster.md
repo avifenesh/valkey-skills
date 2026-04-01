@@ -11,7 +11,6 @@ Use when building applications that run on Valkey Cluster - designing keys for m
 - Pipelining in Cluster Mode (line 230)
 - SCAN in Cluster Mode (line 262)
 - Quick Reference: Cluster Pitfalls (line 326)
-- See Also (line 339)
 
 ---
 
@@ -336,36 +335,3 @@ async def cluster_scan(client, pattern: str):
 
 ---
 
-## See Also
-
-**Best Practices**:
-- [Key Best Practices](keys.md) - key naming, hash tag design, namespace conventions
-- [Performance Best Practices](performance.md) - pipelining and connection pooling
-- [High Availability Best Practices](high-availability.md) - Sentinel vs Cluster decision, failover behavior
-- [Memory Best Practices](memory.md) - encoding thresholds apply per-key across all shards
-- [Persistence Best Practices](persistence.md) - RDB/AOF behavior across cluster nodes
-
-**Commands**:
-- [Scripting and Functions](../basics/server-and-scripting.md) - Lua scripts in cluster require all keys in one slot
-- [Server Commands](../basics/server-and-scripting.md) - CLUSTER INFO, CLUSTER KEYSLOT for debugging
-
-**Patterns**:
-- [Counter Patterns](../patterns/counters.md) - sharded counters to spread hot keys across nodes
-- [Lock Patterns](../patterns/locks.md) - Redlock for distributed locking across cluster nodes
-- [Pub/Sub Patterns](../patterns/pubsub-patterns.md) - sharded pub/sub (SSUBSCRIBE/SPUBLISH) for cluster mode
-- [Rate Limiting Patterns](../patterns/rate-limiting.md) - hash tag routing for rate limit keys
-- [Caching Patterns](../patterns/caching.md) - co-locating cache keys with hash tags
-- [Search and Autocomplete Patterns](../patterns/search-autocomplete.md) - co-locating index keys for multi-key operations
-- [Session Patterns](../patterns/sessions.md) - co-locating session data with hash tags
-
-**Security**:
-- [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions per cluster node
-
-**Clients**:
-- Clients Overview (see valkey-glide skill) - cluster-aware client behavior, redirect handling, and replica reads
-
-**Valkey Features**: [Cluster Enhancements](../valkey-features/cluster-enhancements.md) - Valkey 9.0 atomic slot migration and numbered databases
-
-**Anti-Patterns**: [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - CROSSSLOT errors, hot slots, Lua in cluster pitfalls
-
-**Ops**: valkey-ops [cluster/setup](../../../valkey-ops/reference/cluster/setup.md), [cluster/operations](../../../valkey-ops/reference/cluster/operations.md), [cluster/resharding](../../../valkey-ops/reference/cluster/resharding.md)

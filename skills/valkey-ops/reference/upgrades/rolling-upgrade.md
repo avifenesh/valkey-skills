@@ -1,6 +1,6 @@
-# Rolling Upgrades
-
 Use when upgrading Valkey with zero downtime in Sentinel or Cluster setups, performing planned primary swaps, or executing maintenance windows.
+
+# Rolling Upgrades
 
 ## Contents
 
@@ -264,13 +264,3 @@ systemctl start valkey
 ```
 
 Key constraint: downgrading across RDB major versions may fail if the new version wrote data in a newer RDB format. Always keep backups from before the upgrade.
-
-## See Also
-
-- [Version Compatibility](compatibility.md) - RDB versions and replication compatibility
-- [Redis Migration](migration.md) - migrating from Redis to Valkey
-- [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - Sentinel failover procedures
-- [Cluster Operations](../cluster/operations.md) - cluster failover procedures
-- [Production Checklist](../production-checklist.md) - pre-upgrade verification
-- [See valkey-dev: cluster/failover](../../../valkey-dev/reference/cluster/failover.md) - cluster failover internals
-- [See valkey-dev: cluster/slot-migration](../../../valkey-dev/reference/cluster/slot-migration.md) - slot migration details

@@ -1,6 +1,6 @@
-# Prometheus Exporter Setup
-
 Use when configuring Prometheus to scrape Valkey metrics - exporter deployment,
+
+# Prometheus Exporter Setup
 scrape configuration, metric naming, and multi-instance setups.
 
 ## Contents
@@ -307,14 +307,3 @@ curl http://exporter-host:9121/metrics
 ```
 
 ---
-
-## See Also
-
-- [Monitoring Metrics](metrics.md) - metric definitions and alert thresholds
-- [Grafana Dashboards](grafana.md) - dashboard setup
-- [Alerting Rules](alerting.md) - Prometheus alert rules for Valkey
-- [Commandlog](commandlog.md) - slow command logging and large request/reply tracking
-- [Troubleshooting Diagnostics](../troubleshooting/diagnostics.md) - 7-phase investigation runbook
-- [Kubernetes Tuning](../kubernetes/tuning-k8s.md) - sidecar exporter in K8s
-- [Security ACL](../security/acl.md) - minimal-privilege exporter user
-- [TLS Configuration](../security/tls.md) - TLS for exporter connections

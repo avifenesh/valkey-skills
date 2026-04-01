@@ -1,5 +1,7 @@
 # Server, Scripting, and Transactions Quick Reference
 
+Use when looking up server management, Lua scripting (EVAL/FCALL), transaction (MULTI/EXEC), monitoring (SLOWLOG, LATENCY), configuration, or client management commands.
+
 Standard Redis-compatible server management, Lua scripting, and transaction commands. For Valkey-specific monitoring, use COMMANDLOG (see valkey-features/commandlog.md).
 
 ## Server Information

@@ -255,15 +255,3 @@ The decision logic:
 | `keyHashSlot()` | cluster.c | CRC16 hash slot calculation |
 
 ---
-
-## See Also
-
-- [Cluster Failover](failover.md) - PFAIL/FAIL detection and replica election
-- [Slot Migration](slot-migration.md) - Resharding via MIGRATE and atomic migration (9.0+)
-- [Sentinel Mode](../sentinel/sentinel-mode.md) - Alternative HA for non-cluster deployments
-- [Replication Overview](../replication/overview.md) - PSYNC and replication backlog for intra-shard sync
-- [Event Loop](../architecture/event-loop.md) - Cluster bus uses ae file events; clusterCron runs in serverCron
-- [Networking Layer](../architecture/networking.md) - Cluster bus uses the same connection abstraction as clients
-- [Command Dispatch](../architecture/command-dispatch.md) - processCommand checks slot ownership before execution
-- [kvstore](../valkey-specific/kvstore.md) - Per-slot hashtable organization in cluster mode
-- [Hashtable](../data-structures/hashtable.md) - Backing structure for per-slot keyspaces

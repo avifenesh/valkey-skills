@@ -317,12 +317,3 @@ Test:
 For dynamic-length arrays, pass `VALKEYMODULE_POSTPONED_LEN` to `ReplyWithArray` and call `ReplySetArrayLength` when the count is known.
 
 ---
-
-## See Also
-
-- [Custom Types and Advanced Commands](../modules/types-and-commands.md) - RDB persistence for custom data types, the key access API, and blocking command patterns.
-- [Rust SDK for Valkey Modules](../modules/rust-sdk.md) - Safe Rust bindings over this C API via the `valkey-module` crate.
-- [Scripting Engine Architecture](../scripting/scripting-engine.md) - Modules can implement scripting engines by registering via `ValkeyModule_RegisterScriptingEngine`. The engine ABI and callback interface are documented there.
-- [ACL Subsystem](../security/acl.md) - Module-registered commands are subject to ACL checks. Use `ValkeyModule_SetCommandACLCategories` to assign ACL categories and the `A` flag in `ValkeyModule_Call` to enforce ACL on internal calls.
-- [Keyspace Notifications](../pubsub/notifications.md) - Modules can subscribe to keyspace events via `ValkeyModule_SubscribeToKeyspaceEvents`, bypassing the `notify-keyspace-events` config.
-- [Building Valkey](../build/building.md) - Build with `BUILD_TLS=module` for TLS module support. The `BUILD_LUA` flag controls the Lua scripting engine module. Module `.so` files are built with `-shared -fPIC` and loaded via `MODULE LOAD` or `loadmodule` in the config file.

@@ -12,7 +12,6 @@ Use when reducing Valkey memory footprint, choosing data structures for space ef
 - Eviction Policies (User Perspective) (line 191)
 - Avoiding Large Values (line 220)
 - Quick Reference: Memory Anti-Patterns (line 242)
-- See Also (line 255)
 
 ---
 
@@ -252,40 +251,3 @@ data = json.loads(zlib.decompress(raw))
 
 ---
 
-## See Also
-
-**Best Practices**:
-- [Performance Best Practices](performance.md) - UNLINK vs DEL, pipelining, connection pooling
-- [Key Best Practices](keys.md) - key naming for memory efficiency, big key avoidance
-- [Persistence Best Practices](persistence.md) - copy-on-write memory overhead during snapshots
-- [Cluster Best Practices](cluster.md) - memory distribution across shards
-- [High Availability Best Practices](high-availability.md) - eviction and memory pressure during failover
-
-**Commands**:
-- [Hash Commands](../basics/data-types.md) - HSET, HMGET, hash bucketing for compact encoding
-- [Specialized Data Types](../basics/data-types.md) - HyperLogLog (12 KB cardinality), bitmaps (compact boolean flags)
-- [Server Commands](../basics/server-and-scripting.md) - MEMORY USAGE, MEMORY DOCTOR, INFO memory
-
-**Valkey Features**:
-- [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL to avoid splitting hashes for expiration
-
-**Patterns**:
-- [Caching Patterns](../patterns/caching.md) - eviction policies for cache workloads, TTL patterns
-- [Counter Patterns](../patterns/counters.md) - HyperLogLog and bitmaps for compact counting
-- [Session Patterns](../patterns/sessions.md) - hash encoding thresholds for session data
-- [Leaderboard Patterns](../patterns/leaderboards.md) - sorted set memory for large leaderboards
-- [Search and Autocomplete Patterns](../patterns/search-autocomplete.md) - inverted index memory with sets and sorted sets
-
-**Security**:
-- [Security: Auth and ACL](../security/auth-and-acl.md) - ACL-restricted namespaces limit memory blast radius
-
-**Clients**:
-- Clients Overview (see valkey-glide skill) - client-side caching to reduce server memory pressure
-
-**Anti-Patterns**:
-- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - no `maxmemory`, missing TTL, values over 1 MB, and more
-
-**Ops**:
-- valkey-ops [configuration/encoding](../../../valkey-ops/reference/configuration/encoding.md) - encoding threshold configuration reference
-- valkey-ops [performance/memory](../../../valkey-ops/reference/performance/memory.md) - `maxmemory` config, fragmentation, hash bucketing details
-- valkey-ops [configuration/eviction](../../../valkey-ops/reference/configuration/eviction.md) - eviction policy selection and LFU tuning

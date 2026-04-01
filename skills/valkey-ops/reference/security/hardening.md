@@ -1,6 +1,6 @@
-# Security Hardening
-
 Use when hardening a Valkey deployment - defense in depth, protected mode,
+
+# Security Hardening
 restricting dangerous commands, network security, and pre-production security
 audits.
 
@@ -253,15 +253,3 @@ Run through this checklist before any production deployment:
 | Commandlog configured | `CONFIG GET commandlog-execution-slower-than` |
 
 ---
-
-## See Also
-
-- [ACL Configuration](acl.md) - per-user access control
-- [TLS Configuration](tls.md) - encryption in transit
-- [Command Restriction](rename-commands.md) - rename-command directive
-- [Monitoring Metrics](../monitoring/metrics.md) - ACL LOG and connection tracking
-- [Commandlog](../monitoring/commandlog.md) - slow command logging referenced in security checklist
-- [Alerting Rules](../monitoring/alerting.md) - alerts for rejected connections and anomalies
-- [Production Checklist](../production-checklist.md) - full security checklist
-- [See valkey-dev: acl](../../../valkey-dev/reference/security/acl.md) - ACL internals
-- [See valkey-dev: tls](../../../valkey-dev/reference/security/tls.md) - TLS internals

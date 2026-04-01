@@ -10,7 +10,6 @@ Use when implementing atomic counters, unique event counting, idempotency keys, 
 - HyperLogLog for Approximate Unique Counting (line 222)
 - BITFIELD-Based Packed Counters (line 283)
 - Deduplication (line 338)
-- See Also (line 395)
 
 ---
 
@@ -392,19 +391,3 @@ BF.EXISTS dedup:events "evt-never-seen"
 
 ---
 
-## See Also
-
-- [String Commands](../basics/data-types.md) - INCR, INCRBY, SET NX EX for atomic counters
-- [Specialized Types](../basics/data-types.md) - HyperLogLog, Bitmaps, BITFIELD
-- [Scripting and Functions](../basics/server-and-scripting.md) - Lua scripts for bounded counters
-- [Conditional Operations](../valkey-features/conditional-ops.md) - DELIFEQ for safe idempotency key cleanup (Valkey 9.0+)
-- [Rate Limiting Patterns](rate-limiting.md) - windowed counters for rate limiting
-- [Lock Patterns](locks.md) - SET NX for mutual exclusion (related to idempotency keys)
-- [Queue Patterns](queues.md) - idempotent queue processing with deduplication
-- [Leaderboard Patterns](leaderboards.md) - scored counting with sorted sets
-- [Key Best Practices](../best-practices/keys.md) - hot key mitigation strategies
-- [Memory Best Practices](../best-practices/memory.md) - encoding thresholds for compact storage
-- [Performance Best Practices](../best-practices/performance.md) - pipelining for counter-with-TTL patterns
-- [Cluster Best Practices](../best-practices/cluster.md) - hash tags for sharded counters in cluster mode
-- [High Availability Best Practices](../best-practices/high-availability.md) - idempotency considerations for counter retries during failover
-- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - single hot key for counters, missing pipelining

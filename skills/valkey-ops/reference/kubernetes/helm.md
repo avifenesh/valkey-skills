@@ -1,6 +1,6 @@
-# Helm Charts for Valkey on Kubernetes
-
 Use when deploying Valkey on Kubernetes via Helm, choosing between the official and Bitnami charts, or configuring chart values for production.
+
+# Helm Charts for Valkey on Kubernetes
 
 ## Contents
 
@@ -295,15 +295,3 @@ Plan for a brief maintenance window to ensure all writes are fully
 replicated before switching endpoints.
 
 ---
-
-## See Also
-
-- [StatefulSet Patterns](statefulset.md) - raw StatefulSet deployment
-- [Kubernetes Operators](operators.md) - CRD-based deployment
-- [Kubernetes Tuning](tuning-k8s.md) - kernel tuning in K8s
-- [Capacity Planning](../operations/capacity-planning.md) - memory and resource sizing
-- [Configuration Essentials](../configuration/essentials.md) - Valkey config defaults
-- [Performance I/O Threads](../performance/io-threads.md) - I/O thread count and CPU allocation
-- [Performance Memory](../performance/memory.md) - memory optimization for container sizing
-- [Rolling Upgrades](../upgrades/rolling-upgrade.md) - zero-downtime upgrade procedures
-- [Production Checklist](../production-checklist.md) - full pre-launch verification

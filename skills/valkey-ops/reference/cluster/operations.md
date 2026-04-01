@@ -1,6 +1,6 @@
-# Cluster Operations
-
 Use when performing manual failovers, checking cluster health, diagnosing node issues, or planning for cluster scalability.
+
+# Cluster Operations
 
 ## Contents
 
@@ -276,11 +276,3 @@ done
 ```
 
 ---
-
-## See Also
-
-- [Cluster Setup](setup.md) - creating a cluster, hash slots, configuration
-- [Cluster Resharding](resharding.md) - moving slots, adding/removing nodes
-- [Cluster Consistency](consistency.md) - write safety during partitions
-- [Sentinel Architecture](../sentinel/architecture.md) - Sentinel-based failover for comparison with cluster failover
-- [Replication Safety](../replication/safety.md) - min-replicas settings, cascading resync prevention

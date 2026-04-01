@@ -1,6 +1,6 @@
 ---
 name: migrate-ioredis
-description: "Use when migrating Node.js applications from ioredis to Valkey GLIDE. Covers API mapping, PubSub (creation-time only), reversed publish args, Batch API for pipelines/transactions. Not for greenfield Node.js apps - use valkey-glide-nodejs instead."
+description: "ioredis to Valkey GLIDE migration for Node.js. Covers API mapping, creation-time PubSub, reversed publish args, Batch API, TypeScript types. Not for greenfield Node.js apps - use valkey-glide-nodejs instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
@@ -8,6 +8,28 @@ argument-hint: "[API or pattern to migrate]"
 # Migrating from ioredis to Valkey GLIDE (Node.js)
 
 Use when migrating a Node.js application from ioredis to the GLIDE client library.
+
+---
+
+## Contents
+
+- [Key Differences](#key-differences)
+- [Connection Setup](#connection-setup)
+- [Configuration Mapping](#configuration-mapping)
+- [String Operations](#string-operations)
+- [Hash Operations](#hash-operations)
+- [List Operations](#list-operations)
+- [Set Operations](#set-operations)
+- [Sorted Set Operations](#sorted-set-operations)
+- [Delete and Exists](#delete-and-exists)
+- [Cluster Mode](#cluster-mode)
+- [Lua Scripting](#lua-scripting)
+- [Pipelines and Transactions](#pipelines-and-transactions)
+- [Pub/Sub](#pubsub)
+- [Event Handling](#event-handling)
+- [TypeScript Support](#typescript-support)
+- [Incremental Migration Strategy](#incremental-migration-strategy)
+- [Gotchas](#gotchas)
 
 ---
 

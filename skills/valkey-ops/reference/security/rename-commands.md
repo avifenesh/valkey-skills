@@ -1,6 +1,6 @@
-# Command Restriction with rename-command
-
 Use when you need to disable or rename dangerous commands in Valkey. Covers
+
+# Command Restriction with rename-command
 the legacy `rename-command` directive and the preferred ACL alternative.
 
 Source-verified against `src/config.c` in valkey-io/valkey.
@@ -248,12 +248,3 @@ Commands that should be restricted to admin users only via ACLs:
 | Monitoring tool errors | Tool uses disabled commands | Use ACL instead - grant monitoring user access |
 
 ---
-
-## See Also
-
-- [ACL Configuration](acl.md) - preferred alternative to rename-command
-- [Security Hardening](hardening.md) - defense in depth strategy
-- [TLS Configuration](tls.md) - encryption in transit
-- [Monitoring Metrics](../monitoring/metrics.md) - monitoring tools affected by renamed commands
-- [Alerting Rules](../monitoring/alerting.md) - alerts for connection rejections and operational anomalies
-- [Production Checklist](../production-checklist.md) - security and operations checklist

@@ -1,6 +1,6 @@
-# Sentinel Architecture and Failure Detection
-
 Use when you need to understand how Sentinel provides high availability for non-clustered Valkey - how it monitors instances, detects failures, elects leaders, and promotes replicas.
+
+# Sentinel Architecture and Failure Detection
 
 ## Contents
 
@@ -214,11 +214,3 @@ Clients subscribe to Sentinel's Pub/Sub channels for real-time notifications. Th
 Other key events: `+sdown`/`-sdown`, `+odown`/`-odown`, `+tilt`/`-tilt`, `+failover-end`, `-failover-abort-not-elected`, `-failover-abort-no-good-slave`.
 
 ---
-
-## See Also
-
-- [Sentinel Deployment Runbook](deployment-runbook.md) - step-by-step deployment and configuration
-- [Split-Brain Prevention](split-brain.md) - network partition strategies
-- [Replication Setup](../replication/setup.md) - primary-replica configuration and PSYNC
-- [Replication Safety](../replication/safety.md) - min-replicas write safety
-- [Cluster Operations](../cluster/operations.md) - cluster-mode failover for comparison

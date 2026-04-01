@@ -1,6 +1,6 @@
-# Replication Tuning
-
 Use when sizing the replication backlog, configuring diskless or dual-channel replication, tuning sync behavior, or handling Docker/NAT networking for replicas.
+
+# Replication Tuning
 
 Source: `src/config.c`, `src/replication.c` (Valkey source).
 
@@ -235,10 +235,3 @@ valkey-cli INFO stats | grep -E "sync_full|sync_partial"
 | Replica `lag` | > 30 seconds | Critical |
 | `master_repl_offset - slave_repl_offset` > `repl_backlog_size * 0.8` | Approaching limit | Critical - full resync imminent |
 | `sync_full` counter incrementing | Unexpected increase | Investigate - possible backlog undersize |
-
-## See Also
-
-- [Replication Setup](setup.md) - basic primary-replica configuration
-- [Replication Safety](safety.md) - min-replicas settings and data loss prevention
-- [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - deploying Sentinel over replicated setups
-- [Cluster Setup](../cluster/setup.md) - cluster mode (backlog sizing applies to cluster replicas too)

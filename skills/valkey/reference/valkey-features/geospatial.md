@@ -10,7 +10,6 @@ Use when working with location data and you need to search within arbitrary poly
 - Comparison with Existing Search Modes (line 119)
 - Storing Coordinates (line 131)
 - Performance Notes (line 146)
-- See Also (line 155)
 
 ---
 
@@ -152,13 +151,3 @@ GEOADD key longitude latitude member [longitude latitude member ...]
 
 ---
 
-## See Also
-
-- [What is Valkey](../overview/what-is-valkey.md) - overview and Valkey-only feature list
-- [Compatibility and Migration](../overview/compatibility.md) - migrating from Redis to Valkey
-- [Cluster Enhancements](cluster-enhancements.md) - numbered databases and atomic slot migration in 9.0
-- [Hash Field Expiration](hash-field-ttl.md) - per-field TTL on hash entries (also 9.0)
-- [Conditional Operations](conditional-ops.md) - SET IFEQ and DELIFEQ
-- [Performance Summary](performance-summary.md) - version-by-version throughput and latency gains
-- [Specialized Data Types](../basics/data-types.md) - GEOADD, GEOSEARCH, GEODIST, GEOSEARCHSTORE command reference
-- [Sorted Set Commands](../basics/data-types.md) - geospatial indexes are stored as sorted sets internally

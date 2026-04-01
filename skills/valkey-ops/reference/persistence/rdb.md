@@ -1,6 +1,6 @@
-# RDB Snapshot Persistence
-
 Use when configuring point-in-time snapshots, tuning BGSAVE behavior, or understanding RDB trade-offs for backup and recovery scenarios.
+
+# RDB Snapshot Persistence
 
 Source: `src/config.c`, `src/rdb.c` (Valkey source). Cross-ref: valkey-dev `reference/persistence/rdb.md` for binary format internals.
 
@@ -180,14 +180,3 @@ For operational purposes, the key facts about the binary format:
 - Fully portable across architectures
 
 For full binary format details, see valkey-dev `reference/persistence/rdb.md`.
-
-## See Also
-
-- [AOF Persistence](aof.md) - write-ahead log for higher durability
-- [Backup and Recovery](backup-recovery.md) - automated backup procedures
-- [Durability vs Performance](../performance/durability.md) - persistence trade-off spectrum
-- [Replication Safety](../replication/safety.md) - replica-based backup and write safety
-- [Configuration Essentials](../configuration/essentials.md) - RDB config defaults
-- [Capacity Planning](../operations/capacity-planning.md) - memory sizing for fork overhead
-- [Production Checklist](../production-checklist.md) - pre-launch persistence verification
-- [See valkey-dev: rdb](../../../valkey-dev/reference/persistence/rdb.md) - RDB binary format internals

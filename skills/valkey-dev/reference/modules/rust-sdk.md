@@ -281,8 +281,3 @@ Register module configs via `ctx.register_string_config`, `register_numeric_conf
 Test pure business logic with standard Rust unit tests. For integration tests, start a Valkey server with the module loaded and use the `redis-rs` crate (compatible with Valkey) to send commands and assert results. The Valkey source tree also includes a Tcl-based module test harness under `tests/unit/moduleapi/`.
 
 ---
-
-## See Also
-
-- [Module API Overview](../modules/api-overview.md) - The C API that this Rust SDK wraps. Command flag strings, context flags, and reply types are documented there.
-- [Custom Types and Advanced Commands](../modules/types-and-commands.md) - Full C callback signatures for custom data types, RDB serialization primitives, and blocking command patterns. The Rust wrappers mirror these via FFI.

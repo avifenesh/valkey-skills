@@ -256,10 +256,3 @@ int dualChannelReplMainConnRecvPsyncReply(connection *conn, sds *err) {
 `PSYNC_FULLRESYNC_DUAL_CHANNEL` (6) is the new result code that triggers dual-channel setup on the replica side.
 
 ---
-
-## See Also
-
-- [RDB Snapshot Persistence](../persistence/rdb.md) - The RDB format and `rdbSaveRio()` function used for the snapshot transferred over the RDB channel
-- [Replication Overview](overview.md) - PSYNC protocol, replication backlog, and the single-channel full resync that dual-channel replaces
-- [AOF Persistence](../persistence/aof.md) - After the RDB load completes, the replica may enter `AOF_WAIT_REWRITE` state to enable AOF persistence
-- [Networking Layer](../architecture/networking.md) - Both the main channel and RDB channel use the `connection *` abstraction; `processInputBuffer()` is called during `streamReplDataBufToDb()` to replay buffered commands

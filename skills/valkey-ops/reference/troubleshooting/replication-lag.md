@@ -1,6 +1,6 @@
-# Replication Lag Diagnosis
-
 Use when replicas fall behind the primary, replication breaks are frequent,
+
+# Replication Lag Diagnosis
 or replica data staleness is unacceptable.
 
 ## Contents
@@ -215,16 +215,3 @@ Alert rules:
 ```
 
 ---
-
-## See Also
-
-- [Replication Setup](../replication/setup.md) - primary-replica configuration
-- [Replication Tuning](../replication/tuning.md) - backlog sizing, diskless sync
-- [Replication Safety](../replication/safety.md) - min-replicas write safety
-- [Troubleshooting OOM](oom.md) - OOM on primary can cause replica disconnection
-- [Diagnostics Reference](diagnostics.md) - 7-phase diagnostic runbook, fork latency from full resync
-- [Latency Diagnosis](../performance/latency.md) - replication-related latency spikes
-- [Durability vs Performance](../performance/durability.md) - persistence settings affecting replication
-- [Monitoring Metrics](../monitoring/metrics.md) - `master_repl_offset`, `slave_repl_offset` metrics
-- [Monitoring Alerting](../monitoring/alerting.md) - replication lag alert rules
-- [See valkey-dev: replication overview](../../../valkey-dev/reference/replication/overview.md) - replication protocol internals

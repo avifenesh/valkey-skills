@@ -1,5 +1,7 @@
 # Data Types Quick Reference
 
+Use when looking up Valkey command syntax for strings, hashes, lists, sets, sorted sets, streams, pub/sub, HyperLogLog, bitmaps, geospatial, or key management operations.
+
 Valkey supports all Redis data types. This is a brief listing - for Valkey-specific extensions to these types (IFEQ on strings, HEXPIRE on hashes, GEOSEARCH BYPOLYGON), see the Valkey-Specific Features section.
 
 ## Strings

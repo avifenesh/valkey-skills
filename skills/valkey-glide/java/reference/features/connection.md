@@ -1,18 +1,20 @@
+# Connection and Configuration (Java)
+
 Use when creating a GLIDE Java client, choosing between standalone and cluster mode, or configuring connection options.
 
 ## Contents
 
-- Client Types (line 17)
-- Standalone Client (line 23)
-- Cluster Client (line 38)
-- NodeAddress (line 53)
-- Authentication (line 63)
-- ReadFrom Strategy (line 86)
-- Reconnection Strategy (line 106)
-- Common Configuration Options (line 123)
-- Lazy Connect (line 140)
-- Database Selection (Standalone Only) (line 144)
-- Resource Management (line 154)
+- Client Types (line 19)
+- Standalone Client (line 25)
+- Cluster Client (line 40)
+- NodeAddress (line 55)
+- Authentication (line 65)
+- ReadFrom Strategy (line 88)
+- Reconnection Strategy (line 108)
+- Common Configuration Options (line 125)
+- Lazy Connect (line 142)
+- Database Selection (Standalone Only) (line 146)
+- Resource Management (line 156)
 
 ## Client Types
 

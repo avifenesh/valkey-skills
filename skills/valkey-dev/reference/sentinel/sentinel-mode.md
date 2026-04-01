@@ -391,9 +391,3 @@ The failover cooldown is `2 * failover_timeout` - no new attempt for the same pr
 within this window.
 
 ---
-
-## See Also
-
-- [Cluster Failover](../cluster/failover.md) - Cluster uses an integrated failover mechanism where replicas within the cluster detect PFAIL/FAIL via gossip and run elections among voting primaries, without requiring separate monitoring processes
-- [Replication Overview](../replication/overview.md) - The PSYNC protocol, dual replication IDs, and backlog that Sentinel-managed replicas use for resynchronization after failover
-- [RDB Snapshot Persistence](../persistence/rdb.md) - After Sentinel promotes a replica, remaining replicas perform full resync which triggers an RDB snapshot transfer from the new primary

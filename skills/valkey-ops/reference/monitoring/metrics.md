@@ -1,6 +1,6 @@
-# Monitoring Metrics
-
 Use when setting up monitoring for Valkey - understanding INFO command output,
+
+# Monitoring Metrics
 identifying critical metrics, setting alert thresholds, and running diagnostic
 commands.
 
@@ -278,16 +278,3 @@ Key NR metrics: `net.connectedClients`, `system.usedMemoryBytes`,
 `net.commandsProcessedPerSecond`.
 
 ---
-
-## See Also
-
-- [Prometheus Setup](prometheus.md) - exporter and scrape configuration
-- [Grafana Dashboards](grafana.md) - dashboard panels and queries
-- [Alerting Rules](alerting.md) - alert thresholds for key metrics
-- [Commandlog](commandlog.md) - slow command, large-request, and large-reply logging
-- [Performance Latency](../performance/latency.md) - latency diagnosis workflow
-- [Troubleshooting Diagnostics](../troubleshooting/diagnostics.md) - 7-phase investigation runbook using INFO metrics
-- [Troubleshooting Slow Commands](../troubleshooting/slow-commands.md) - slow command investigation
-- [Troubleshooting OOM](../troubleshooting/oom.md) - memory alert response
-- [Security ACL](../security/acl.md) - ACL LOG for access denial auditing
-- [See valkey-dev: latency](../../../valkey-dev/reference/monitoring/latency.md) - latency monitor internals

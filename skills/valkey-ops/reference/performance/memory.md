@@ -1,6 +1,6 @@
-# Memory Optimization
-
 Use when reducing Valkey memory footprint, tuning encoding thresholds for
+
+# Memory Optimization
 space efficiency, managing memory fragmentation, or configuring eviction.
 
 ## Contents
@@ -268,20 +268,3 @@ valkey-cli INFO memory
 ```
 
 ---
-
-## See Also
-
-- [Defragmentation](defragmentation.md) - active defrag configuration and monitoring
-- [Latency Diagnosis](latency.md) - memory-related latency (fork, eviction, expiration)
-- [Troubleshooting OOM](../troubleshooting/oom.md) - OOM diagnosis and resolution
-- [Diagnostics Reference](../troubleshooting/diagnostics.md) - MEMORY DOCTOR, MEMORY STATS commands
-- [Encoding Thresholds](../configuration/encoding.md) - detailed encoding threshold reference
-- [Eviction Policies](../configuration/eviction.md) - policy selection and LFU tuning
-- [Lazy Free](../configuration/lazyfree.md) - async free configuration
-- [Capacity Planning](../operations/capacity-planning.md) - memory sizing guidelines
-- [Monitoring Metrics](../monitoring/metrics.md) - `used_memory`, `mem_fragmentation_ratio` metrics
-- [Kubernetes StatefulSets](../kubernetes/statefulset.md) - memory resource sizing and fork headroom in containers
-- [Kubernetes Tuning](../kubernetes/tuning-k8s.md) - THP and overcommit settings in K8s
-- [See valkey-dev: zmalloc](../../../valkey-dev/reference/memory/zmalloc.md) - per-thread memory counters, jemalloc integration
-- [See valkey-dev: defragmentation](../../../valkey-dev/reference/memory/defragmentation.md) - active defrag internals
-- [See valkey-dev: lazy-free](../../../valkey-dev/reference/memory/lazy-free.md) - asynchronous object freeing

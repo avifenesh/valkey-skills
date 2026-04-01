@@ -1,6 +1,6 @@
-# Eviction Policies
-
 Use when choosing or tuning the maxmemory eviction policy. All 8 policy names verified against `maxmemory_policy_enum` in `src/config.c`.
+
+# Eviction Policies
 
 ## Contents
 
@@ -165,14 +165,3 @@ If `evicted_keys` is rising rapidly, either increase `maxmemory` or accept highe
 3. **Setting maxmemory-samples too high**: Values above 10 waste CPU for negligible accuracy gains.
 
 4. **Not monitoring eviction rate**: Sudden spikes in `evicted_keys` mean your working set exceeds memory. This causes cache misses and application latency.
-
-## See Also
-
-- [Configuration Essentials](essentials.md) - `maxmemory` and `maxmemory-policy` defaults
-- [Workload Presets](workload-presets.md) - preset configs showing policy choices per use case
-- [Advanced Configuration](advanced.md) - active expiration effort, OOM score adjustment
-- [Memory Optimization](../performance/memory.md) - encoding thresholds, data modeling
-- [Lazy Free Configuration](lazyfree.md) - async free during eviction
-- [Encoding Thresholds](encoding.md) - compact encodings that reduce memory pressure
-- [Monitoring Metrics](../monitoring/metrics.md) - `evicted_keys` and memory metrics
-- [Troubleshooting OOM](../troubleshooting/oom.md) - when eviction is not enough

@@ -281,11 +281,3 @@ This ensures replicas can correctly handle failover during an in-progress migrat
 | `finishSlotMigrationJob()` | cluster_migrateslots.c | Transition job to terminal state |
 
 ---
-
-## See Also
-
-- [Replication Overview](../replication/overview.md) - Atomic slot migration uses a replication-like streaming phase after the initial snapshot, and replicas track in-progress imports to handle failover during migration
-- [RDB Snapshot Persistence](../persistence/rdb.md) - Both traditional MIGRATE (via `createDumpPayload`) and atomic migration (via fork-based snapshot) use RDB-format serialization to transfer key data between nodes
-- [Cluster Failover](failover.md) - Failover during an in-progress migration requires replica awareness of the migration state; the atomic migration pause/cutover protocol resembles the manual failover pause mechanism
-- [Cluster Overview](overview.md) - MOVED/ASK/TRYAGAIN redirect logic in `getNodeByQuery()` governs client behavior during migration
-- [kvstore](../valkey-specific/kvstore.md) - `kvstoreSetIsImporting()` marks slots being imported, excluding them from Fenwick tree counts. `CLUSTER GETKEYSINSLOT` uses `kvstoreScan` restricted to a single hashtable index to enumerate keys in a slot.

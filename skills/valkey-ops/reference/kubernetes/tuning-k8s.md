@@ -1,6 +1,6 @@
-# Kubernetes Tuning for Valkey
-
 Use when tuning kernel parameters for Valkey in Kubernetes, setting up init containers for sysctl, handling Docker/NAT limitations, or configuring monitoring in K8s.
+
+# Kubernetes Tuning for Valkey
 
 ## Contents
 
@@ -287,17 +287,3 @@ spec:
 ### Grafana Dashboard
 
 Import the community Redis/Valkey dashboard (Grafana dashboard ID 11835 or 763) and configure the Prometheus data source.
-
-## See Also
-
-- [StatefulSet Patterns](statefulset.md) - raw StatefulSet deployment
-- [Helm Charts](helm.md) - chart-based deployment
-- [Kubernetes Operators](operators.md) - CRD-based deployment
-- [Capacity Planning](../operations/capacity-planning.md) - memory and resource sizing
-- [RDB Persistence](../persistence/rdb.md) - fork overhead and memory impact
-- [Bare Metal Setup](../deployment/bare-metal.md) - kernel tuning reference for non-K8s
-- [Monitoring Prometheus](../monitoring/prometheus.md) - exporter setup
-- [Performance I/O Threads](../performance/io-threads.md) - I/O thread count and CPU core allocation
-- [Performance Memory](../performance/memory.md) - memory optimization and fork headroom
-- [Performance Latency](../performance/latency.md) - THP and kernel settings affecting latency
-- [Production Checklist](../production-checklist.md) - full pre-launch verification

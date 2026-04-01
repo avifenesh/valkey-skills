@@ -290,12 +290,3 @@ void signalFlushedDb(int dbid, int async);
 Called on FLUSHDB/FLUSHALL. Invalidates all watched keys and tracking for the flushed databases.
 
 ---
-
-## See Also
-
-- [kvstore](../valkey-specific/kvstore.md) - the slot-partitioned hash table structure underlying `db->keys`, `db->expires`, and `db->keys_with_volatile_items`
-- [Lazy Freeing](../memory/lazy-free.md) - `dbAsyncDelete()` and `emptyDbAsync()` submit background free jobs for large keys and full database flushes
-- [Key Expiration](../config/expiry.md) - lazy and active expiration strategies that call `deleteExpiredKeyAndPropagate()` through the database layer
-- [Client Tracking](../monitoring/tracking.md) - `signalModifiedKey()` triggers `trackingInvalidateKey()` for server-assisted client-side caching
-- [MULTI/EXEC Transactions](../transactions/multi-exec.md) - `touchWatchedKey()` called from `signalModifiedKey()` to invalidate optimistic locks
-- [Batch Key Prefetching](../threading/prefetch.md) - prefetches `lookupKey()` hashtable accesses to reduce cache miss stalls

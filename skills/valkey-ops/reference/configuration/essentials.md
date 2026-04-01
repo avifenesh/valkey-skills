@@ -1,6 +1,6 @@
-# Essential Configuration
-
 Use when setting up a new Valkey instance or auditing an existing config. All defaults verified against `src/config.c` in the Valkey source.
+
+# Essential Configuration
 
 ---
 
@@ -161,20 +161,3 @@ Similarly, `dynamic-hz` is deprecated - the behavior it controlled is now always
 | `hide-user-data-from-log` | `yes` | Redact user data (keys, values) from log messages. |
 | `busy-reply-threshold` | `5000` | Milliseconds before long-running script triggers BUSY error. Alias: `lua-time-limit`. |
 | `proto-max-bulk-len` | `512mb` | Maximum size of a single RESP bulk string. |
-
-
-## See Also
-
-- [Eviction Policies](eviction.md) - maxmemory-policy details
-- [Lazy Free Configuration](lazyfree.md) - async deletion tuning
-- [Encoding Thresholds](encoding.md) - compact encoding tuning
-- [Pub/Sub Configuration](pubsub.md) - subscriber buffers and keyspace notifications
-- [Workload Presets](workload-presets.md) - complete configs by use case
-- [Advanced Configuration](advanced.md) - logging, shutdown, OOM, CPU pinning
-- [Bare Metal Setup](../deployment/bare-metal.md) - systemd, kernel tuning, directory structure
-- [Docker Deployment](../deployment/docker.md) - container-based deployment
-- [Replication Setup](../replication/setup.md) - primary-replica configuration using the replication parameters above
-- [Sentinel Architecture](../sentinel/architecture.md) - HA via Sentinel, uses `replica-priority` and `down-after-milliseconds`
-- [Cluster Setup](../cluster/setup.md) - cluster mode, uses the cluster parameters above
-- [See valkey-dev: config system](../../../valkey-dev/reference/config/config-system.md) - config parsing, validation, and rewrite internals
-- [See valkey-dev: db management](../../../valkey-dev/reference/config/db-management.md) - database selection and key space internals

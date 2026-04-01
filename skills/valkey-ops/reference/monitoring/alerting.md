@@ -1,6 +1,6 @@
-# Prometheus Alerting Rules
-
 Use when configuring alerts for Valkey - alert thresholds for availability,
+
+# Prometheus Alerting Rules
 memory, connections, replication, persistence, and performance.
 
 ## Contents
@@ -329,18 +329,3 @@ receivers:
   Jsonnet-based alerts including cluster slot and state rules.
 
 ---
-
-## See Also
-
-- [Monitoring Metrics](metrics.md) - metric definitions and INFO field mapping
-- [Prometheus Setup](prometheus.md) - exporter and scrape configuration
-- [Grafana Dashboards](grafana.md) - dashboard thresholds aligned with alerts
-- [Commandlog](commandlog.md) - slow command logging behind ValkeySlowlogGrowing alert
-- [Pub/Sub Configuration](../configuration/pubsub.md) - subscriber buffer alerting
-- [Troubleshooting Diagnostics](../troubleshooting/diagnostics.md) - 7-phase investigation runbook when alerts fire
-- [Troubleshooting OOM](../troubleshooting/oom.md) - memory alert response
-- [Troubleshooting Slow Commands](../troubleshooting/slow-commands.md) - latency alert investigation
-- [Troubleshooting Replication Lag](../troubleshooting/replication-lag.md) - replication alert investigation
-- [Troubleshooting Cluster Partitions](../troubleshooting/cluster-partitions.md) - cluster alert investigation
-- [Performance Latency](../performance/latency.md) - latency diagnosis workflow
-- [Security ACL](../security/acl.md) - ACL LOG for access denial auditing alongside alerts

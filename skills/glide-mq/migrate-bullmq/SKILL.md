@@ -11,6 +11,16 @@ Provides guidance for migrating BullMQ applications to glide-mq - connection con
 
 > This is a thin wrapper. For the complete migration guide with advanced patterns, see https://avifenesh.github.io/glide-mq.dev/migration/from-bullmq
 
+## Contents
+
+- [Install](#install)
+- [Connection Conversion](#connection-conversion)
+- [Quick Comparison](#quick-comparison)
+- [Key Differences](#key-differences)
+- [Breaking Changes](#breaking-changes)
+- [Migration Checklist](#migration-checklist)
+- [Deep Dive](#deep-dive)
+
 ## Install
 
 ```bash

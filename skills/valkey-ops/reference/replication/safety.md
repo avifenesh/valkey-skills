@@ -1,6 +1,6 @@
-# Replication Safety
-
 Use when configuring write safety guarantees, preventing data loss during network partitions, understanding auto-restart risks, or hardening a replication deployment against failure modes.
+
+# Replication Safety
 
 Source: `src/config.c`, `src/replication.c` (Valkey source).
 
@@ -207,11 +207,3 @@ If lag exceeds `min-replicas-max-lag`, that replica no longer counts toward `min
 - [ ] Auto-restart behavior is reviewed (especially if persistence is off)
 - [ ] Backup procedures are tested and verified
 - [ ] Monitoring and alerting cover replication lag, link status, and BGSAVE status
-
-## See Also
-
-- [Replication Setup](setup.md) - basic primary-replica configuration
-- [Replication Tuning](tuning.md) - backlog sizing, diskless sync, Docker/NAT networking
-- [Split-Brain Prevention](../sentinel/split-brain.md) - Sentinel-based split-brain mitigation
-- [Sentinel Architecture](../sentinel/architecture.md) - automatic failover for replicated setups
-- [Cluster Consistency](../cluster/consistency.md) - write safety in cluster mode

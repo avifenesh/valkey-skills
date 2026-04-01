@@ -1,6 +1,6 @@
-# Primary-Replica Replication Setup
-
 Use when configuring Valkey replication, setting up read replicas, promoting replicas to primary, or understanding how initial synchronization works.
+
+# Primary-Replica Replication Setup
 
 Source: `src/config.c`, `src/replication.c` (Valkey source).
 
@@ -190,11 +190,3 @@ With `replica-read-only yes` (the default), replicas reject all write commands. 
 ### Stale Data Serving
 
 With `replica-serve-stale-data yes` (the default), replicas continue serving read requests during initial sync or when the primary link is down. Set to `no` if stale reads are unacceptable - clients will receive errors instead.
-
-## See Also
-
-- [Replication Tuning](tuning.md) - backlog sizing, diskless sync, Docker/NAT networking
-- [Replication Safety](safety.md) - min-replicas settings, data loss prevention
-- [Sentinel Architecture](../sentinel/architecture.md) - automatic failover for replicated setups
-- [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - step-by-step Sentinel deployment on top of replication
-- [Cluster Setup](../cluster/setup.md) - cluster mode (which uses replication internally per shard)

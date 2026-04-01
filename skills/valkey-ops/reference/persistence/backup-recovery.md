@@ -1,6 +1,6 @@
-# Backup and Disaster Recovery
-
 Use when implementing automated backup strategies, planning disaster recovery procedures, or performing point-in-time recovery from RDB or AOF files.
+
+# Backup and Disaster Recovery
 
 ## Contents
 
@@ -346,13 +346,3 @@ rm -rf /tmp/valkey-verify
 | Monthly | First of month | 1 year | Off-site cold storage |
 
 Adjust based on your data volume and compliance requirements.
-
-## See Also
-
-- [RDB Persistence](rdb.md) - snapshot configuration details
-- [AOF Persistence](aof.md) - write-ahead log configuration
-- [Durability vs Performance](../performance/durability.md) - persistence trade-off spectrum
-- [Replication Setup](../replication/setup.md) - primary-replica configuration for replica-based backups
-- [Replication Safety](../replication/safety.md) - replica-based backup strategy and write safety
-- [Capacity Planning](../operations/capacity-planning.md) - memory sizing for fork overhead
-- [Production Checklist](../production-checklist.md) - backup verification checklist

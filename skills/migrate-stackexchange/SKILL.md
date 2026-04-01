@@ -1,6 +1,6 @@
 ---
 name: migrate-stackexchange
-description: "Use when migrating C#/.NET applications from StackExchange.Redis to Valkey GLIDE (.NET 8.0+, preview). Covers API mapping, GlideClient types, no IDatabase, PubSub, Batch API. Not for greenfield C# apps - use valkey-glide-csharp instead."
+description: "StackExchange.Redis to Valkey GLIDE migration for C#/.NET. Covers API mapping, async/await Task<T>, no IDatabase layer, PubSub, Batch API (.NET 8.0+, preview). Not for greenfield C# apps - use valkey-glide-csharp instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
@@ -10,6 +10,28 @@ argument-hint: "[API or pattern to migrate]"
 Use when migrating a .NET application from StackExchange.Redis to the GLIDE client library.
 
 **Status**: The GLIDE C# client is in preview (requires .NET 8.0+). APIs may change before GA.
+
+---
+
+## Contents
+
+- [Key Differences](#key-differences)
+- [Connection Setup](#connection-setup)
+- [Configuration Mapping](#configuration-mapping)
+- [String Operations](#string-operations)
+- [Hash Operations](#hash-operations)
+- [List Operations](#list-operations)
+- [Set Operations](#set-operations)
+- [Sorted Set Operations](#sorted-set-operations)
+- [Delete and Exists](#delete-and-exists)
+- [Cluster Mode](#cluster-mode)
+- [Transactions](#transactions)
+- [Pub/Sub](#pubsub)
+- [Key Type Differences](#key-type-differences)
+- [Fire-and-Forget](#fire-and-forget)
+- [API Compatibility Approach](#api-compatibility-approach)
+- [Incremental Migration Strategy](#incremental-migration-strategy)
+- [Gotchas](#gotchas)
 
 ---
 

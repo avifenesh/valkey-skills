@@ -1,6 +1,6 @@
 ---
 name: valkey-glide-php
-description: "Use when building PHP applications with Valkey GLIDE. Covers synchronous C extension API, installation (PIE/Composer/PECL), configuration, batching, phpredis compatibility, PubSub, and TLS. Not for other languages - see valkey-glide router."
+description: "PHP Valkey GLIDE client - synchronous C extension API (PHP 8.1+), PIE/Composer/PECL install, GlideClient, batching, phpredis compatibility aliases, PubSub, TLS. Not for other languages - see valkey-glide router."
 version: 2.0.0
 argument-hint: "[API or config question]"
 ---

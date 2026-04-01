@@ -254,10 +254,3 @@ Subcommands: `REFCOUNT`, `ENCODING`, `IDLETIME`, `FREQ`, `HELP`.
 
 Uses `objectCommandLookup` which calls `lookupKeyReadWithFlags` with
 `LOOKUP_NOTOUCH | LOOKUP_NONOTIFY` to avoid side effects.
-
-## See Also
-
-- [../data-structures/encoding-transitions.md](../data-structures/encoding-transitions.md) - How robj encoding changes based on collection size
-- [../data-structures/sds.md](../data-structures/sds.md) - The SDS string type used for RAW and EMBSTR values and embedded keys
-- [kvstore.md](kvstore.md) - Where robj entries are stored in the keyspace
-- [../architecture/command-dispatch.md](../architecture/command-dispatch.md) - How commands receive `robj` in `c->argv[]`

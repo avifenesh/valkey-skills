@@ -1,6 +1,6 @@
-# Cluster Setup
-
 Use when deploying a new Valkey Cluster, configuring cluster parameters, or understanding hash slot mechanics.
+
+# Cluster Setup
 
 ## Contents
 
@@ -257,11 +257,3 @@ Use the `-c` flag with `valkey-cli` to enable automatic redirect following.
 Source: `cluster.c` - `getNodeByQuery()`, `clusterRedirectClient()`
 
 ---
-
-## See Also
-
-- [Cluster Resharding](resharding.md) - moving slots between nodes
-- [Cluster Operations](operations.md) - failover, health checks, scalability
-- [Cluster Consistency](consistency.md) - write safety and partition behavior
-- [Replication Setup](../replication/setup.md) - primary-replica replication fundamentals used by cluster replicas
-- [Replication Tuning](../replication/tuning.md) - backlog sizing, diskless sync (applies to cluster replicas)

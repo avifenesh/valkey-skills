@@ -227,8 +227,3 @@ Streams are the primary user. Each stream stores its entries in a rax where keys
 | Memory per node | Variable | 4-byte header + chars + pointers + padding |
 
 The tree is memory-sparse compared to a traditional trie because compressed nodes represent multiple levels in a single allocation.
-
-## See Also
-
-- [listpack.md](listpack.md) - Stored as values in the rax for Stream entries
-- [../valkey-specific/vset.md](../valkey-specific/vset.md) - The vset uses a rax for time-bucket organization at scale

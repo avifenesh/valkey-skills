@@ -217,11 +217,3 @@ Checked both against existing prefixes and within the new set being registered.
 - `tracking_total_prefixes` - raxSize(PrefixTable)
 
 ---
-
-## See Also
-
-- [Pub/Sub](../pubsub/pubsub.md) - RESP2 invalidation messages are delivered over the pub/sub channel `__redis__:invalidate`; RESP3 uses push messages instead
-- [Keyspace Notifications](../pubsub/notifications.md) - a separate notification system; tracking sends targeted invalidations to caching clients, while keyspace notifications broadcast all key events
-- [Database Management](../config/db-management.md) - `signalModifiedKey()` calls `trackingInvalidateKey()` on every key mutation
-- [Radix Tree (rax)](../data-structures/rax.md) - both TrackingTable and PrefixTable are rax structures; `freeTrackingRadixTreeAsync()` uses lazy freeing for large trees
-- [Lazy Freeing](../memory/lazy-free.md) - `freeTrackingRadixTreeAsync()` submits the TrackingTable to a BIO thread on FLUSHALL ASYNC

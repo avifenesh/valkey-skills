@@ -217,13 +217,3 @@ createBoolConfig("my-new-feature", NULL, MODIFIABLE_CONFIG,
 This single line provides: default initialization, file parsing, CONFIG SET validation, CONFIG GET retrieval, and CONFIG REWRITE persistence. The `apply` function (`applyMyNewFeature`) runs only on CONFIG SET, not on startup file parsing.
 
 ---
-
-## See Also
-
-- [Key Expiration](../config/expiry.md) - active-expire-effort, lazyfree-lazy-expire, and other expiry configs registered through this system
-- [Database Management](../config/db-management.md) - the `databases` config and lazy allocation controlled by the config system
-- [Commandlog](../monitoring/commandlog.md) - commandlog threshold and max-len configs with their slowlog aliases
-- [Latency Monitoring](../monitoring/latency.md) - `latency-monitor-threshold` config
-- [Modules API](../modules/api-overview.md) - modules register configs via `MODULE_CONFIG` flag, applied through `moduleConfigApplyConfig()`
-- [ACL Subsystem](../security/acl.md) - `PROTECTED_CONFIG` requires `enable-protected-configs` to change at runtime, adding a security layer. `SENSITIVE_CONFIG` redacts values from logs and command history. ACL users defined via `user` directives in the config file are parsed during `loadServerConfigFromString()`.
-- [TLS Subsystem](../security/tls.md) - TLS config parameters (`tls-port`, `tls-cert-file`, etc.) are registered through this system. Background certificate reloading is triggered by config changes detected in `serverCron`.

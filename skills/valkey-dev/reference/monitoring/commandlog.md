@@ -167,10 +167,3 @@ Initialization in `commandlogInit()` creates one linked list per type with a
 custom free method that calls `commandlogFreeEntry`.
 
 ---
-
-## See Also
-
-- [Latency Monitoring](../monitoring/latency.md) - complementary diagnostics; commandlog records individual slow/large commands, latency monitoring tracks subsystem-level latency spikes across time
-- [Configuration System](../config/config-system.md) - commandlog thresholds and max-len are registered as modifiable configs with slowlog aliases for backward compatibility
-- [Debug Facilities](../monitoring/debug.md) - `DEBUG SLEEP` and `DEBUG POPULATE` can trigger commandlog entries during testing
-- [EVAL Subsystem](../scripting/eval.md) - Script execution time is measured as a single command duration. Long-running Lua scripts or FCALL invocations appear as slow entries in the commandlog. During script execution, metrics come from the executing client but identity (peerid, cname) comes from the script caller.

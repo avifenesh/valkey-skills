@@ -176,9 +176,3 @@ These access the header by subtracting from the string pointer using the `SDS_HD
 - TYPE_5 is never used for appending; `sdsMakeRoomFor` promotes to TYPE_8 if TYPE_5 would be selected.
 - When `s_malloc_usable` returns more memory than requested, `adjustTypeIfNeeded` may promote the type to use the extra space, avoiding a future reallocation.
 - The `sdswrite()` function can write an SDS into a caller-provided buffer, used for embedding SDS into other structures (e.g., [skiplist nodes](skiplist.md), [robj](../valkey-specific/object-lifecycle.md)).
-
-## See Also
-
-- [../valkey-specific/object-lifecycle.md](../valkey-specific/object-lifecycle.md) - SDS strings are embedded in robj for EMBSTR encoding and as embedded keys
-- [skiplist.md](skiplist.md) - SDS element strings embedded directly in skiplist nodes
-- [encoding-transitions.md](encoding-transitions.md) - How string encoding (INT, EMBSTR, RAW) transitions relate to SDS

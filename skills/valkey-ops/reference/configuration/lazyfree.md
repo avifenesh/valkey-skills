@@ -1,6 +1,6 @@
-# Lazy Free Configuration
-
 Use when tuning background deletion behavior, reducing latency spikes from
+
+# Lazy Free Configuration
 large key eviction/expiry, or understanding the difference between DEL and
 UNLINK.
 
@@ -153,13 +153,3 @@ Only consider disabling lazyfree if:
 # Verify all lazyfree settings (should all be "yes")
 valkey-cli CONFIG GET lazyfree-*
 ```
-
-## See Also
-
-- [Configuration Essentials](essentials.md) - all config defaults including lazyfree summary
-- [Eviction Configuration](eviction.md) - maxmemory-policy, tenacity
-- [Encoding Thresholds](encoding.md) - compact encodings and memory impact
-- [Workload Presets](workload-presets.md) - lazyfree in context of complete configs
-- [Memory Optimization](../performance/memory.md) - encoding thresholds, fragmentation
-- [Latency Diagnosis](../performance/latency.md) - diagnosing large key operation latency
-- [See valkey-dev: lazy-free](../../../valkey-dev/reference/memory/lazy-free.md) - BIO thread implementation, atomic counters

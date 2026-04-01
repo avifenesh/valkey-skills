@@ -191,12 +191,3 @@ microseconds. Buckets use logarithmic scaling (base 2, starting at 1024ns).
 If no commands are specified, all commands with data are returned.
 
 ---
-
-## See Also
-
-- [Commandlog](../monitoring/commandlog.md) - records individual slow/large commands; LATENCY DOCTOR may suggest adjusting the commandlog threshold (`commandlog-execution-slower-than`)
-- [Active Defragmentation](../memory/defragmentation.md) - the `active-defrag-cycle` latency event tracks defrag overhead
-- [Key Expiration](../config/expiry.md) - the `expire-cycle` and `expire-del` events measure active expiration cost
-- [AOF Persistence](../persistence/aof.md) - multiple AOF-related latency events (aof-write, aof-fsync-always, aof-write-pending-fsync)
-- [Debug Facilities](../monitoring/debug.md) - the software watchdog detects event loop stalls that would also appear as latency spikes
-- [Building Valkey](../build/building.md) - the vendored `deps/hdr_histogram/` library provides per-command latency histograms accessed via `LATENCY HISTOGRAM`. Build with `make noopt` for debugging latency issues with a debugger attached.

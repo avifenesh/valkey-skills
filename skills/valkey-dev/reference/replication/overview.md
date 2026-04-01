@@ -264,13 +264,3 @@ This preserves the exact same replication stream, allowing sub-replicas to use t
 | `server.repl_state` | `int` | Replica-side replication state machine |
 
 ---
-
-## See Also
-
-- [RDB Snapshot Persistence](../persistence/rdb.md) - RDB format and `rdbSaveRio()` used during full resync to generate the dataset snapshot sent to replicas
-- [Dual-Channel Replication](dual-channel.md) - Valkey 8.0+ optimization that separates the RDB transfer from the replication stream during full resync, reducing primary memory overhead
-- [AOF Persistence](../persistence/aof.md) - AOF and replication share the same write propagation path via `propagateNow()`, receiving identical RESP command sequences
-- [Cluster Failover](../cluster/failover.md) - Dual replication IDs (`replid`/`replid2`) enable partial resync after cluster failover without requiring a full RDB transfer
-- [Sentinel Mode](../sentinel/sentinel-mode.md) - Sentinel monitors replication topology and triggers failover when a primary becomes unreachable
-- [Networking Layer](../architecture/networking.md) - Replicas connect as regular clients via the `connection *` abstraction. The replica handshake (PING, AUTH, REPLCONF, PSYNC) uses the same `readQueryFromClient`/`addReply` I/O path. Replica output is flushed via `handleClientsWithPendingWrites` in `beforeSleep`.
-- [Command Dispatch](../architecture/command-dispatch.md) - Write propagation originates from `call()` in the command dispatch path, which calls `propagateNow()` when `server.dirty` increases

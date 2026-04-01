@@ -13,7 +13,6 @@ Use when understanding the Valkey module system, loading modules, checking compa
 - When to Use Modules vs Core Features (line 113)
 - Building Custom Modules (line 129)
 - Additional Official Repositories (line 244)
-- Cross-References (line 254)
 
 ---
 
@@ -251,11 +250,3 @@ For new modules, the Rust SDK is recommended unless you need to minimize depende
 | **valkey-operator** | Kubernetes operator for Valkey. Active development. | Go |
 | **valkeymodule-rs** | Official Rust SDK for building Valkey modules. | Rust |
 
-## Cross-References
-
-- [json.md](json.md) - valkey-json module details
-- [bloom.md](bloom.md) - valkey-bloom module details
-- [search.md](search.md) - valkey-search full-text and vector search details
-- [gaps.md](gaps.md) - feature gaps vs Redis Stack/Redis 8
-- **valkey-ecosystem** skill - client library decision framework (GLIDE provides dedicated module APIs)
-- **valkey-glide** skill - GLIDE module integration patterns (GlideJson, GlideFt, custom_command)

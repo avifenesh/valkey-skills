@@ -1,6 +1,6 @@
 ---
 name: migrate-jedis
-description: "Use when migrating Java applications from Jedis to Valkey GLIDE. Covers Jedis compatibility layer (zero-code-change) and native migration paths, CompletableFuture async, PubSub. Not for greenfield Java apps - use valkey-glide-java instead."
+description: "Jedis to Valkey GLIDE migration for Java. Covers zero-code-change compatibility layer, native CompletableFuture rewrite, PubSub, Batch API, cluster mode. Not for greenfield Java apps - use valkey-glide-java instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
@@ -8,6 +8,28 @@ argument-hint: "[API or pattern to migrate]"
 # Migrating from Jedis to Valkey GLIDE (Java)
 
 Use when migrating a Java application from Jedis to the GLIDE client library.
+
+---
+
+## Contents
+
+- [Key Differences](#key-differences)
+- [Migration Paths](#migration-paths)
+- [Connection Setup](#connection-setup)
+- [Configuration Mapping](#configuration-mapping)
+- [String Operations](#string-operations)
+- [Hash Operations](#hash-operations)
+- [List Operations](#list-operations)
+- [Set Operations](#set-operations)
+- [Sorted Set Operations](#sorted-set-operations)
+- [Delete and Exists](#delete-and-exists)
+- [Cluster Mode](#cluster-mode)
+- [Transactions and Pipelines](#transactions-and-pipelines)
+- [Pub/Sub](#pubsub)
+- [Error Handling](#error-handling)
+- [Spring Data Valkey as an Alternative](#spring-data-valkey-as-an-alternative)
+- [Incremental Migration Strategy](#incremental-migration-strategy)
+- [Gotchas](#gotchas)
 
 ---
 

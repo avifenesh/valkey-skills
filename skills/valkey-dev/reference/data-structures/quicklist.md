@@ -247,8 +247,3 @@ Limited to `QL_MAX_BM` (15) bookmarks. Only useful for very large lists.
 | Insert at position | O(n) + possible split/merge |
 | Length | O(1) (cached in quicklist->count) |
 | Iteration (full) | O(N) total elements |
-
-## See Also
-
-- [listpack.md](listpack.md) - The compact encoding stored inside each quicklist node
-- [encoding-transitions.md](encoding-transitions.md) - When lists convert from listpack to quicklist and back

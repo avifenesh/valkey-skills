@@ -1,6 +1,6 @@
-# ACL Configuration
-
 Use when setting up access control for Valkey - creating users, assigning
+
+# ACL Configuration
 permissions, restricting commands and keys, managing ACL files, and auditing
 access denials.
 
@@ -290,15 +290,3 @@ ACLs are the preferred authentication mechanism over `requirepass`.
 
 Metadata operations (STRLEN, TYPE, SISMEMBER, EXISTS) do not require read
 permission - only that the user has some key access matching the pattern.
-
-## See Also
-
-- [Security Hardening](hardening.md) - defense in depth, network security
-- [TLS Configuration](tls.md) - certificate-based authentication
-- [Command Restriction](rename-commands.md) - rename-command vs ACL comparison
-- [Prometheus Setup](../monitoring/prometheus.md) - minimal-privilege ACL user for the exporter
-- [Monitoring Metrics](../monitoring/metrics.md) - ACL LOG for access denial auditing
-- [Alerting Rules](../monitoring/alerting.md) - alerts for rejected connections and anomalies
-- [Commandlog](../monitoring/commandlog.md) - audit command patterns alongside ACL LOG
-- [Troubleshooting Diagnostics](../troubleshooting/diagnostics.md) - 7-phase diagnostic runbook including ACL review
-- [See valkey-dev: acl](../../../valkey-dev/reference/security/acl.md) - user structs, selector evaluation, bitmap permission internals

@@ -9,7 +9,6 @@ Use when evaluating whether Valkey covers your module needs, understanding what 
 - Minor Gaps (line 103)
 - Where Valkey Has No Gap (or Leads) (line 118)
 - Decision Guide (line 134)
-- Cross-References (line 145)
 
 ---
 
@@ -142,10 +141,3 @@ These are niche data structures. Most applications do not need them, and reasona
 | Cuckoo/CMS/TopK/t-digest | Evaluate if you truly need these; workarounds exist |
 | Cost-sensitive, Redis-compatible | Valkey uses the BSD license. AWS ElastiCache pricing differs between Valkey and Redis engines - check current AWS pricing |
 
-## Cross-References
-
-- [overview.md](overview.md) - Module system overview
-- [json.md](json.md) - valkey-json details
-- [bloom.md](bloom.md) - valkey-bloom details
-- [search.md](search.md) - valkey-search full-text and vector search details
-- **valkey-ecosystem** skill - client library decision framework and RESP compatibility notes

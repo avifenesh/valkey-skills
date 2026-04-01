@@ -1,6 +1,6 @@
-# AOF (Append-Only File) Persistence
-
 Use when configuring write-ahead logging for durability, choosing fsync policies, setting up hybrid persistence, or troubleshooting AOF corruption.
+
+# AOF (Append-Only File) Persistence
 
 Source: `src/config.c`, `src/aof.c` (Valkey source). Cross-ref: valkey-dev `reference/persistence/aof.md` for multi-part architecture internals.
 
@@ -250,14 +250,3 @@ If the AOF is truncated:
 5. **Set `auto-aof-rewrite-percentage`** based on your tolerance for disk usage spikes during rewrite
 6. **Keep `aof-load-truncated yes`** (default) so the server can recover from power loss mid-write
 7. **Test AOF recovery procedures** before you need them
-
-## See Also
-
-- [RDB Persistence](rdb.md) - point-in-time snapshots
-- [Backup and Recovery](backup-recovery.md) - automated backup procedures
-- [Durability vs Performance](../performance/durability.md) - persistence trade-off spectrum
-- [Replication Safety](../replication/safety.md) - replica-based backup and write safety
-- [Configuration Essentials](../configuration/essentials.md) - AOF config defaults
-- [Capacity Planning](../operations/capacity-planning.md) - memory sizing for fork overhead
-- [Production Checklist](../production-checklist.md) - pre-launch persistence verification
-- [See valkey-dev: aof](../../../valkey-dev/reference/persistence/aof.md) - multi-part AOF architecture internals

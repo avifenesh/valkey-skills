@@ -226,13 +226,3 @@ typedef struct aeApiState {
 ## Thread Safety
 
 The event loop uses `AE_PROTECT_POLL` and a mutex (`poll_mutex`) to allow I/O threads to safely modify file events while the main thread might be in `aeApiPoll`. The `AE_LOCK`/`AE_UNLOCK` macros wrap `pthread_mutex_lock/unlock` and are used in `aeCreateFileEvent`, `aeDeleteFileEvent`, `aeResizeSetSize`, and `aePoll`.
-
-## See Also
-
-- [overview.md](overview.md) - Boot sequence that creates the event loop
-- [networking.md](networking.md) - How client connections register file events
-- [command-dispatch.md](command-dispatch.md) - What happens inside file event callbacks
-- [../valkey-specific/transport-layer.md](../valkey-specific/transport-layer.md) - Connection types that register file events with the ae loop
-- [../persistence/rdb.md](../persistence/rdb.md) - BGSAVE forks from the main process; the child inherits the dataset while the parent continues the event loop. The `AE_BARRIER` flag and `beforeSleep` AOF flush coordinate fsync with the event cycle.
-- [../persistence/aof.md](../persistence/aof.md) - `flushAppendOnlyFile()` runs in `beforeSleep` to write `server.aof_buf` to disk each event loop iteration
-- [../cluster/overview.md](../cluster/overview.md) - `clusterBeforeSleep()` is called from the `beforeSleep` hook to handle deferred cluster actions (failover, state updates, config saves)

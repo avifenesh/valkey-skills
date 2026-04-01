@@ -224,12 +224,3 @@ The unit test `Makefile` at `src/unit/Makefile`:
 | When to use | Changing data structures or internal functions | Adding commands, changing server behavior |
 
 From `DEVELOPMENT_GUIDE.md`: "Most changes to data structures should include corresponding unit tests. Adding new commands should come with corresponding integration tests."
-
-## See Also
-
-- [Building Valkey](../build/building.md) - build prerequisites, `make all-with-unit-tests`, and dependency setup
-- [Tcl Integration Tests](tcl-tests.md) - end-to-end integration tests for commands and server behavior
-- [Sanitizer Builds](../build/sanitizers.md) - running unit tests under ASan or Valgrind
-- [CI Pipeline](ci-pipeline.md) - how unit tests are executed in CI (`make test-unit`)
-- [Contribution Workflow](../contributing/workflow.md) - when to write unit tests vs integration tests
-- [Module API Overview](../modules/api-overview.md) - module API integration tests are run separately via `./runtest-moduleapi`, not through the unit test binary. Unit tests cover core data structures; module tests are Tcl-based integration tests.

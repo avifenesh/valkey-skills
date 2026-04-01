@@ -1,6 +1,6 @@
-# Cluster Partition Issues
-
 Use when cluster state is degraded, nodes are marked as failed, slots are
+
+# Cluster Partition Issues
 uncovered, or clients receive CLUSTERDOWN errors.
 
 ## Contents
@@ -256,17 +256,3 @@ For large clusters (hundreds to thousands of nodes):
   reducing overhead in large clusters.
 
 ---
-
-## See Also
-
-- [Cluster Setup](../cluster/setup.md) - cluster configuration reference
-- [Cluster Operations](../cluster/operations.md) - manual failover, health checks
-- [Cluster Consistency](../cluster/consistency.md) - write safety during partitions
-- [Troubleshooting Replication Lag](replication-lag.md) - replica-level lag that may precede cluster issues
-- [Diagnostics Reference](diagnostics.md) - 7-phase diagnostic runbook including cluster health
-- [Latency Diagnosis](../performance/latency.md) - latency spikes during failover events
-- [Monitoring Metrics](../monitoring/metrics.md) - cluster state and slot coverage metrics
-- [Monitoring Alerting](../monitoring/alerting.md) - cluster health alert rules
-- [Security Hardening](../security/hardening.md) - firewall rules for cluster client and bus ports
-- [Security TLS](../security/tls.md) - TLS for cluster bus encryption
-- [See valkey-dev: cluster/failover](../../../valkey-dev/reference/cluster/failover.md) - cluster protocol internals, gossip, failover election

@@ -250,11 +250,3 @@ dict *replicaKeysWithExpire;  /* key name -> bitmap of DB IDs where key exists *
 The `expireReplicaKeys()` function stops after accumulating more than 3 unexpired keys or after 1ms, whichever comes first. This is a best-effort mechanism for the use case of using writable replicas as temporary compute caches.
 
 ---
-
-## See Also
-
-- [Lazy Freeing](../memory/lazy-free.md) - when `lazyfree-lazy-expire` is enabled, expired keys are freed via background BIO threads instead of synchronously
-- [BIO Threads](../threading/bio.md) - the `BIO_LAZY_FREE` worker processes deferred frees from expiration
-- [Database Management](../config/db-management.md) - `lookupKey()` calls `expireIfNeeded()` on every access; `dbDelete()` performs the actual key removal
-- [Latency Monitoring](../monitoring/latency.md) - the `expire-cycle` and `expire-del` latency events track active expiration overhead
-- [Replication](../replication/overview.md) - replicas normally do not expire keys independently; DEL commands are propagated from the primary

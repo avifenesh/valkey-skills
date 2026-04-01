@@ -1,6 +1,6 @@
-# Out of Memory (OOM) Diagnosis and Resolution
-
 Use when Valkey returns OOM errors on writes, the Linux OOM killer terminates
+
+# Out of Memory (OOM) Diagnosis and Resolution
 Valkey, or memory usage is approaching limits.
 
 ## Contents
@@ -227,17 +227,3 @@ client-output-buffer-limit pubsub 32mb 8mb 60
 ```
 
 ---
-
-## See Also
-
-- [Memory Optimization](../performance/memory.md) - encoding thresholds, memory-efficient data modeling
-- [Defragmentation](../performance/defragmentation.md) - active defrag configuration
-- [Latency Diagnosis](../performance/latency.md) - memory pressure causes latency spikes
-- [Diagnostics Reference](diagnostics.md) - 7-phase diagnostic runbook, fork latency
-- [Replication Lag](replication-lag.md) - OOM on primary can cascade to replica disconnections
-- [Eviction Policies](../configuration/eviction.md) - maxmemory-policy selection
-- [Capacity Planning](../operations/capacity-planning.md) - memory sizing guidelines
-- [Monitoring Alerting](../monitoring/alerting.md) - memory alert rules
-- [Monitoring Metrics](../monitoring/metrics.md) - `used_memory`, `mem_fragmentation_ratio` thresholds
-- [See valkey-dev: zmalloc](../../../valkey-dev/reference/memory/zmalloc.md) - allocator internals, per-thread counters
-- [See valkey-dev: defragmentation](../../../valkey-dev/reference/memory/defragmentation.md) - active defragmentation implementation

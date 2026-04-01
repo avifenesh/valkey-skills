@@ -274,10 +274,3 @@ ConnectionType *connectionTypeUnix(void);  // Cached CONN_TYPE_UNIX
 ```
 
 These use static variables initialized on first call.
-
-## See Also
-
-- [rdma.md](rdma.md) - The RDMA connection type implementation that plugs into this framework
-- [../architecture/networking.md](../architecture/networking.md) - How the `connection *` abstraction is used in client I/O
-- [../architecture/overview.md](../architecture/overview.md) - The boot sequence that calls `connTypeInitialize()` and `initListeners()`
-- [../architecture/event-loop.md](../architecture/event-loop.md) - How connection event handlers register with the ae event loop

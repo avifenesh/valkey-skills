@@ -261,11 +261,3 @@ The `AOF_WAIT_REWRITE` state is entered when a replica transitions to having AOF
 | `aof-timestamp-enabled` | no | Include timestamp annotations in AOF |
 
 ---
-
-## See Also
-
-- [RDB Snapshot Persistence](rdb.md) - RDB format used for the AOF BASE file when `aof-use-rdb-preamble` is enabled; also covers the `rdbSaveRio()` function called during AOF rewrite
-- [Replication Overview](../replication/overview.md) - AOF and replication share the same write propagation path via `propagateNow()`, receiving identical command sequences in RESP format
-- [Dual-Channel Replication](../replication/dual-channel.md) - During full resync, the replica may enter `AOF_WAIT_REWRITE` state to enable AOF after the RDB load completes
-- [Event Loop](../architecture/event-loop.md) - `flushAppendOnlyFile()` is called from `beforeSleep` each event loop iteration to write `server.aof_buf` to disk. The `AE_BARRIER` flag coordinates `appendfsync always` - fsync before sending replies.
-- [Command Dispatch](../architecture/command-dispatch.md) - AOF receives commands from the same `propagateNow()` call in `call()` that also feeds replication

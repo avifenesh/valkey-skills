@@ -1,6 +1,6 @@
 ---
 name: spring-data-valkey
-description: "Use when integrating Valkey GLIDE with Spring Boot via Spring Data Valkey. Covers auto-configuration, ValkeyTemplate, ReactiveValkeyTemplate, Actuator health, IAM auth, and Redis migration. Not for raw GLIDE Java API - use valkey-glide-java instead."
+description: "Spring Data Valkey integration for Spring Boot - GLIDE as first-class driver. Covers auto-configuration, ValkeyTemplate, caching, Actuator health, IAM auth, Spring Data Redis migration. Not for raw GLIDE Java API - use valkey-glide-java."
 version: 1.1.0
 argument-hint: "[Spring config, template, or migration question]"
 ---
@@ -8,6 +8,21 @@ argument-hint: "[Spring config, template, or migration question]"
 # Spring Data Valkey Integration
 
 Use when integrating GLIDE with Spring Boot applications via Spring Data Valkey, configuring auto-wired connections, templates, caching, health indicators, and IAM authentication. For GLIDE production deployment, see `production.md`. For error handling patterns, see `error-handling.md`.
+
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Maven Dependency](#maven-dependency)
+- [Application Properties Configuration](#application-properties-configuration)
+- [Auto-Configuration](#auto-configuration)
+- [Spring Cache Abstraction](#spring-cache-abstraction)
+- [Spring Boot Actuator Health Indicators](#spring-boot-actuator-health-indicators)
+- [Spring Data Repositories](#spring-data-repositories)
+- [Migrating from Spring Data Redis](#migrating-from-spring-data-redis)
+- [When to Use Spring Data Valkey vs Direct GLIDE API](#when-to-use-spring-data-valkey-vs-direct-glide-api)
+- [Version Compatibility](#version-compatibility)
 
 ---
 

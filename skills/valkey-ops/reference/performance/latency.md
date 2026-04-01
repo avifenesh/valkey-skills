@@ -1,6 +1,6 @@
-# Latency Diagnosis
-
 Use when investigating latency spikes, establishing baseline latency, analyzing
+
+# Latency Diagnosis
 slow commands, or using LATENCY DOCTOR for automated diagnostics.
 
 ## Contents
@@ -263,18 +263,3 @@ echo never > /sys/kernel/mm/transparent_hugepage/enabled
 | Noisy neighbor (VM) | High intrinsic latency | Dedicated instance or bare metal |
 
 ---
-
-## See Also
-
-- [Commandlog](../monitoring/commandlog.md) - slow command, large request/reply logging
-- [Slow Command Investigation](../troubleshooting/slow-commands.md) - specific slow command patterns
-- [Diagnostics Reference](../troubleshooting/diagnostics.md) - 7-phase diagnostic runbook, fork latency
-- [Troubleshooting OOM](../troubleshooting/oom.md) - memory pressure as latency contributor
-- [Monitoring Metrics](../monitoring/metrics.md) - performance metrics and thresholds
-- [Monitoring Alerting](../monitoring/alerting.md) - latency alert rules
-- [Defragmentation](defragmentation.md) - defrag-related latency
-- [I/O Threads](io-threads.md) - throughput optimization to reduce I/O-bound latency
-- [Kubernetes Tuning](../kubernetes/tuning-k8s.md) - THP and kernel settings affecting latency in containers
-- [See valkey-dev: latency](../../../valkey-dev/reference/monitoring/latency.md) - latency monitor internals, event types, HdrHistogram integration
-- [See valkey-dev: commandlog](../../../valkey-dev/reference/monitoring/commandlog.md) - commandlog architecture, entry format
-- [See valkey-dev: debug](../../../valkey-dev/reference/monitoring/debug.md) - software watchdog, DEBUG commands

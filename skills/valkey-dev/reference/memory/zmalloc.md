@@ -262,10 +262,3 @@ same pages. Only effective on Linux with jemalloc, and only for allocations
 larger than one page.
 
 ---
-
-## See Also
-
-- [Active Defragmentation](../memory/defragmentation.md) - uses jemalloc slab stats queried through zmalloc's allocator interface
-- [Lazy Freeing](../memory/lazy-free.md) - deferred deallocation that updates zmalloc memory counters from BIO threads
-- [I/O Threads](../threading/io-threads.md) - per-thread memory counters aligned to avoid cache-line contention across I/O workers
-- [Building Valkey](../build/building.md) - the `MALLOC` build variable selects the allocator (jemalloc, tcmalloc, or libc). Sanitizer builds force `MALLOC=libc` since ASan is incompatible with jemalloc.

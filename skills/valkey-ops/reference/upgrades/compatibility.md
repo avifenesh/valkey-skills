@@ -1,6 +1,6 @@
-# Version Compatibility
-
 Use when planning upgrades between Valkey versions, checking replication compatibility, or evaluating whether a version jump is safe.
+
+# Version Compatibility
 
 ## Contents
 
@@ -158,14 +158,3 @@ These config directives are silently ignored (verified from `src/config.c`):
 | `lua-replicate-commands` | Always enabled now |
 | `io-threads-do-reads` | Always enabled when I/O threads are configured |
 | `dynamic-hz` | Always enabled |
-
-## See Also
-
-- [Rolling Upgrades](rolling-upgrade.md) - zero-downtime upgrade procedures
-- [Redis Migration](migration.md) - migrating from Redis to Valkey
-- [Sentinel Architecture](../sentinel/architecture.md) - Sentinel version considerations during upgrades
-- [Cluster Operations](../cluster/operations.md) - cluster failover procedures for version transitions
-- [Production Checklist](../production-checklist.md) - pre-upgrade verification
-- [See valkey-dev: replication overview](../../../valkey-dev/reference/replication/overview.md) - replication protocol internals
-- [See valkey-dev: rdb](../../../valkey-dev/reference/persistence/rdb.md) - RDB format details
-- [See valkey-dev: cluster/failover](../../../valkey-dev/reference/cluster/failover.md) - cluster failover mechanics

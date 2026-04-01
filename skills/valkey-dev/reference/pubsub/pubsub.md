@@ -182,9 +182,3 @@ RESP2 clients receive array replies (`shared.mbulkhdr[3]`). RESP3 clients receiv
 - `clientShardSubscriptionsCount(c)` - client's shard channels
 - `clientTotalPubSubSubscriptionCount(c)` - all of the above combined
 - `pubsubTotalSubscriptions()` - patterns + global channels + shard channels server-wide
-
-## See Also
-
-- [Keyspace Notifications](../pubsub/notifications.md) - Event-driven notifications that publish to specially-named pub/sub channels (`__keyspace@<db>__:` and `__keyevent@<db>__:`) when keys are modified. Uses `pubsubPublishMessage()` internally.
-- [ACL Subsystem](../security/acl.md) - Channel access can be restricted per user via `&pattern` rules and the `resetchannels`/`allchannels` directives in ACL selectors.
-- [Client Tracking](../monitoring/tracking.md) - RESP2 invalidation messages for client-side caching are delivered over the pub/sub channel `__redis__:invalidate`. RESP3 clients use push messages instead. The `ClientPubSubData` struct also holds tracking-related state (`client_tracking_redirection`, `client_tracking_prefixes`).

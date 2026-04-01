@@ -231,11 +231,3 @@ int functionsInit(void);
 ```
 
 Called at startup. Creates the initial `functionsLibCtx` and assigns it to `curr_functions_lib_ctx`. Engine stats entries are populated by iterating all registered engines via `scriptingEngineManagerForEachEngine()`.
-
-## See Also
-
-- [EVAL Subsystem](../scripting/eval.md) - The legacy ad-hoc scripting interface. Functions supersede EVAL by providing named identity, persistence, and library grouping.
-- [Scripting Engine Architecture](../scripting/scripting-engine.md) - The pluggable engine layer that compiles and executes function libraries.
-- [MULTI/EXEC Transactions](../transactions/multi-exec.md) - An alternative atomicity mechanism. Transactions queue commands for atomic execution; functions run as a single atomic unit with full scripting-language control flow.
-- [Commandlog](../monitoring/commandlog.md) - Long-running FCALL invocations appear as slow commands in the commandlog, measured by `c->duration` wall-clock time.
-- [ACL Subsystem](../security/acl.md) - FCALL execution is subject to ACL permission checks. The `scripting` command category controls access to FCALL/FCALL_RO.

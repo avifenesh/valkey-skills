@@ -11,6 +11,17 @@ Provides guidance for migrating Bee-Queue applications to glide-mq - chained bui
 
 > This is a thin wrapper. For the complete migration guide, see https://avifenesh.github.io/glide-mq.dev/migration/from-bee-queue
 
+## Contents
+
+- [Why Migrate](#why-migrate)
+- [Install](#install)
+- [Connection Conversion](#connection-conversion)
+- [Chained Builder to Options Object](#chained-builder-to-options-object)
+- [Worker Processing](#worker-processing)
+- [Key Differences](#key-differences)
+- [Migration Checklist](#migration-checklist)
+- [Deep Dive](#deep-dive)
+
 ## Why Migrate
 
 Bee-Queue (2.0.0, Dec 2025) uses Redis-based list polling. It does not include:

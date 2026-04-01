@@ -139,8 +139,3 @@ The TSC explicitly weighs community input ("the dominant view of the TSC and nat
 ## License
 
 The governance document itself is licensed under CC-BY-4.0.
-
-## See Also
-
-- [Contribution Workflow](workflow.md) - how to submit patches, coding style, and the PR process
-- [CI Pipeline](../testing/ci-pipeline.md) - required CI checks that must pass before merge

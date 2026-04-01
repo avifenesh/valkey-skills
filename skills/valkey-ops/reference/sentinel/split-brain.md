@@ -1,6 +1,6 @@
-# Split-Brain Prevention
-
 Use when planning for network partition scenarios, configuring write safety for Sentinel-managed deployments, or troubleshooting data loss after a failover.
+
+# Split-Brain Prevention
 
 ## Contents
 
@@ -136,10 +136,3 @@ These settings reduce the data loss window but do not eliminate it:
 For stronger guarantees, use `WAIT <numreplicas> <timeout>` on individual commands that require synchronous replication confirmation.
 
 ---
-
-## See Also
-
-- [Sentinel Architecture](architecture.md) - quorum, majority, failure detection mechanics
-- [Sentinel Deployment Runbook](deployment-runbook.md) - step-by-step deployment
-- [Replication Safety](../replication/safety.md) - full min-replicas reference and safety checklist
-- [Cluster Consistency](../cluster/consistency.md) - write safety in cluster mode

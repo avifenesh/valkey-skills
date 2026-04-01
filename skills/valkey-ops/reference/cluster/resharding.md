@@ -1,6 +1,6 @@
-# Cluster Resharding
-
 Use when moving hash slots between nodes, adding or removing cluster nodes, or migrating to Valkey 9.0's atomic slot migration.
+
+# Cluster Resharding
 
 ## Contents
 
@@ -242,10 +242,3 @@ valkey-cli --cluster del-node 192.168.1.10:7000 <node-to-remove-id> \
 ```
 
 ---
-
-## See Also
-
-- [Cluster Setup](setup.md) - initial cluster creation and hash slot basics
-- [Cluster Operations](operations.md) - manual failover, health checks
-- [Cluster Consistency](consistency.md) - write safety during migrations
-- [Replication Tuning](../replication/tuning.md) - backlog sizing (relevant for `client-output-buffer-limit replica` during migration)

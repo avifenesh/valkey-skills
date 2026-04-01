@@ -175,10 +175,3 @@ The expiry getter function is stored in a `_Thread_local` variable
 (`current_getter_func`) to work around the lack of `qsort_r` on all
 platforms. This means vset sort operations are safe across threads but the
 getter must be set/unset around each sort call.
-
-## See Also
-
-- [../data-structures/rax.md](../data-structures/rax.md) - The radix tree used for time-bucket organization at scale
-- [../data-structures/hashtable.md](../data-structures/hashtable.md) - Used as a bucket type for clustered expiry values
-- [object-lifecycle.md](object-lifecycle.md) - The `robj` that vset entries reference
-- [kvstore.md](kvstore.md) - The `serverDb.keys_with_volatile_items` kvstore that tracks keys containing vset data

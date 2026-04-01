@@ -198,15 +198,3 @@ Commands from the queue are consumed one at a time in `processInputBuffer()`. Ke
 When a client is in `MULTI` state (`c->flag.multi`), commands are not executed immediately. Instead, `processCommand()` calls `queueMultiCommand()` which stores the command in `c->mstate` (the multi-state queue) and replies with `+QUEUED`.
 
 When `EXEC` arrives, all queued commands are executed sequentially via `call()`, and their replies are sent as an array.
-
-## See Also
-
-- [networking.md](networking.md) - How bytes arrive at `readQueryFromClient`
-- [resp-protocol.md](resp-protocol.md) - RESP parsing details
-- [event-loop.md](event-loop.md) - How `beforeSleep` flushes replies
-- [../data-structures/hashtable.md](../data-structures/hashtable.md) - The `hashtable *` backing `server.commands`
-- [../data-structures/encoding-transitions.md](../data-structures/encoding-transitions.md) - How command execution triggers encoding conversions
-- [../valkey-specific/object-lifecycle.md](../valkey-specific/object-lifecycle.md) - The `robj` that commands receive in `c->argv[]`
-- [../replication/overview.md](../replication/overview.md) - After `call()` executes a write command, `propagateNow()` fans out the command to both AOF and replicas via `replicationFeedReplicas()`
-- [../persistence/aof.md](../persistence/aof.md) - Write commands are appended to `server.aof_buf` via `feedAppendOnlyFile()` in the same propagation path
-- [../cluster/overview.md](../cluster/overview.md) - Step 6 in `processCommand()` checks slot ownership and sends MOVED/ASK redirects for cluster-enabled nodes

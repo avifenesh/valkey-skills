@@ -239,13 +239,3 @@ When `io-threads > 1`, the main thread can offload read and write operations to 
 - **Poll offloading**: `trySendPollJobToIOThreads()` can offload the `epoll_wait` itself
 
 The main thread processes results via `processIOThreadsReadDone()` and `processIOThreadsWriteDone()` in `beforeSleep()`. Thread count is dynamically adjusted by `adjustIOThreadsByEventLoad()` in `afterSleep()`.
-
-## See Also
-
-- [resp-protocol.md](resp-protocol.md) - Wire format details
-- [command-dispatch.md](command-dispatch.md) - What happens after parsing
-- [event-loop.md](event-loop.md) - How file events drive the read/write cycle
-- [../valkey-specific/transport-layer.md](../valkey-specific/transport-layer.md) - Pluggable connection types (TCP, TLS, Unix, RDMA) behind the `connection *` abstraction
-- [../valkey-specific/object-lifecycle.md](../valkey-specific/object-lifecycle.md) - The `robj` stored in `client->name` and `client->argv`
-- [../replication/overview.md](../replication/overview.md) - Replicas connect as regular clients. The `client.flag.replica` and `client.flag.primary` flags distinguish replication connections from normal clients, and the shared replication buffer uses the same write path as `handleClientsWithPendingWrites`.
-- [../cluster/overview.md](../cluster/overview.md) - Cluster bus connections use a separate listener on `port + 10000` but share the same event-driven I/O model via the `connection *` abstraction

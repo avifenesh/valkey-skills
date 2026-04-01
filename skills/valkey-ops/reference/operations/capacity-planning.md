@@ -1,6 +1,6 @@
-# Capacity Planning
-
 Use when sizing Valkey instances, planning memory allocation, estimating
+
+# Capacity Planning
 connection requirements, or deciding when to scale a cluster. All config
 defaults verified against `src/config.c` in valkey-io/valkey.
 
@@ -305,19 +305,3 @@ Example: 6 primaries with 2 replicas each = 18 nodes.
 8. **Set eviction policy**: Choose `maxmemory-policy` based on workload (see eviction.md)
 9. **Monitor continuously**: Alert on `used_memory_rss` > 80% of system RAM
 10. **Test with realistic data**: Use `DEBUG POPULATE` or real datasets to validate estimates
-
-## See Also
-
-- [Configuration Essentials](../configuration/essentials.md) - `maxmemory`, `maxclients`, buffer defaults
-- [Memory Optimization](../performance/memory.md) - encoding thresholds, data modeling
-- [I/O Threads](../performance/io-threads.md) - CPU core allocation for throughput planning
-- [Eviction Policies](../configuration/eviction.md) - choosing `maxmemory-policy`
-- [RDB Persistence](../persistence/rdb.md) - snapshot fork overhead
-- [AOF Persistence](../persistence/aof.md) - rewrite fork overhead
-- [Cluster Setup](../cluster/setup.md) - hash slot distribution and cluster topology
-- [Monitoring Metrics](../monitoring/metrics.md) - memory and connection metrics
-- [Monitoring Alerting](../monitoring/alerting.md) - alert thresholds for capacity monitoring
-- [Troubleshooting OOM](../troubleshooting/oom.md) - when capacity estimates fall short
-- [StatefulSet Patterns](../kubernetes/statefulset.md) - PVC and resource sizing in Kubernetes
-- [Kubernetes Tuning](../kubernetes/tuning-k8s.md) - storage class and kernel tuning in K8s
-- [Production Checklist](../production-checklist.md) - pre-launch capacity verification

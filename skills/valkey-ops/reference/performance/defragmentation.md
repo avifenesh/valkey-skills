@@ -1,6 +1,6 @@
-# Active Defragmentation
-
 Use when memory fragmentation ratio is high, Valkey is consuming more RSS than
+
+# Active Defragmentation
 expected, or you want to reclaim memory without restarting.
 
 ## Contents
@@ -161,12 +161,3 @@ If fragmentation ratio exceeds 2.0 and active defrag is insufficient:
 - Defrag cycles are logged at `verbose` log level with duration and hit count.
 - After a cycle completes, defrag immediately checks if another cycle is
   needed (fragmentation may have changed during the scan).
-
-## See Also
-
-- [Memory Optimization](memory.md) - encoding thresholds, maxmemory tuning
-- [Latency Diagnosis](latency.md) - diagnosing defrag-related latency spikes
-- [Troubleshooting OOM](../troubleshooting/oom.md) - fragmentation as OOM contributor
-- [Monitoring Metrics](../monitoring/metrics.md) - `mem_fragmentation_ratio`, `active_defrag_running`
-- [Monitoring Alerting](../monitoring/alerting.md) - fragmentation alert rules
-- [See valkey-dev: defragmentation](../../../valkey-dev/reference/memory/defragmentation.md) - allocator interaction, jemalloc purging, scan stages

@@ -1,6 +1,6 @@
 ---
 name: valkey-glide-ruby
-description: "Use when building Ruby applications with Valkey GLIDE. Covers the valkey-rb gem (GA), redis-rb drop-in replacement, PubSub, pipelining, OpenTelemetry, TLS, and configuration. Not for other languages - see valkey-glide router."
+description: "Ruby Valkey GLIDE client - valkey-rb gem (GA), redis-rb drop-in replacement, FFI bridge, PubSub, pipelining, OpenTelemetry, TLS, sharded channels. Not for other languages - see valkey-glide router."
 version: 2.0.0
 argument-hint: "[API or config question]"
 ---

@@ -273,9 +273,3 @@ The optimization is most effective when:
 | `stat_total_prefetch_entries` | Number of keys prefetched |
 
 ---
-
-## See Also
-
-- [Hashtable](../data-structures/hashtable.md) - the `hashtableIncrementalFindStep()` function is designed for one memory access per call, enabling the interleaved prefetch pattern
-- [I/O Threads](../threading/io-threads.md) - prefetch batches are collected from clients whose commands were read by I/O threads; `prefetchCommandsBatchInit()` is called from `initIOThreads()`
-- [Database Management](../config/db-management.md) - `lookupKey()` is the hot path that prefetching optimizes by bringing hashtable buckets and value objects into cache before execution

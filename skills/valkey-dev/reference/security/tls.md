@@ -302,8 +302,3 @@ Exposed via INFO for monitoring. For CA certs loaded from a directory, the
 earliest expiry across all certificates is reported.
 
 ---
-
-## See Also
-
-- [ACL Subsystem](../security/acl.md) - Certificate-based user mapping (`tls-auth-clients-user`) resolves a username from the client certificate and authenticates via `ACLGetUserByName()`. The `ACL_INVALID_TLS_CERT_AUTH` denial code is specific to TLS certificate auth failures.
-- [Module API Overview](../modules/api-overview.md) - TLS can be compiled as a Valkey module (`USE_OPENSSL=2`). The module-mode TLS uses the standard module lifecycle (`ValkeyModule_OnLoad`) and must be loaded at boot time.

@@ -1,6 +1,6 @@
 ---
 name: migrate-redis-py
-description: "Use when migrating Python applications from redis-py to Valkey GLIDE. Covers async-first API, bytes returns (no decode_responses), list args, PubSub, ExpirySet/ConditionalChange. Not for greenfield Python apps - use valkey-glide-python instead."
+description: "redis-py to Valkey GLIDE migration for Python. Covers async-first API, bytes returns (no decode_responses), list args, PubSub, ExpirySet/ConditionalChange. Not for greenfield Python apps - use valkey-glide-python instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
@@ -8,6 +8,25 @@ argument-hint: "[API or pattern to migrate]"
 # Migrating from redis-py to Valkey GLIDE (Python)
 
 Use when migrating a Python application from redis-py to the GLIDE client library.
+
+---
+
+## Contents
+
+- [Key Differences](#key-differences)
+- [Connection Setup](#connection-setup)
+- [Configuration Mapping](#configuration-mapping)
+- [String Operations](#string-operations)
+- [Hash Operations](#hash-operations)
+- [List Operations](#list-operations)
+- [Set Operations](#set-operations)
+- [Sorted Set Operations](#sorted-set-operations)
+- [Delete and Exists](#delete-and-exists)
+- [Cluster Mode](#cluster-mode)
+- [Pub/Sub](#pubsub)
+- [Pipelines and Transactions](#pipelines-and-transactions)
+- [Incremental Migration Strategy](#incremental-migration-strategy)
+- [Gotchas](#gotchas)
 
 ---
 

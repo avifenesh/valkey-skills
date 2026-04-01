@@ -1,6 +1,6 @@
 ---
 name: migrate-go-redis
-description: "Use when migrating Go applications from go-redis to Valkey GLIDE. Covers Result[T] nil handling, CGO dependency, PubSub, SetWithOptions, Alpine/MUSL gotchas. Not for greenfield Go GLIDE apps - use valkey-glide-go instead."
+description: "go-redis to Valkey GLIDE migration for Go. Covers Result[T] nil handling, CGO dependency, PubSub, SetWithOptions, Alpine/MUSL gotchas. Not for greenfield Go apps - use valkey-glide-go instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
@@ -8,6 +8,27 @@ argument-hint: "[API or pattern to migrate]"
 # Migrating from go-redis to Valkey GLIDE (Go)
 
 Use when migrating a Go application from `go-redis/redis` to the GLIDE client library.
+
+---
+
+## Contents
+
+- [Key Differences](#key-differences)
+- [Connection Setup](#connection-setup)
+- [Configuration Mapping](#configuration-mapping)
+- [Error Handling - The Biggest Change](#error-handling---the-biggest-change)
+- [String Operations](#string-operations)
+- [Hash Operations](#hash-operations)
+- [List Operations](#list-operations)
+- [Set Operations](#set-operations)
+- [Sorted Set Operations](#sorted-set-operations)
+- [Delete and Exists](#delete-and-exists)
+- [Cluster Mode](#cluster-mode)
+- [Transactions and Pipelines](#transactions-and-pipelines)
+- [Pub/Sub](#pubsub)
+- [Incremental Migration Strategy](#incremental-migration-strategy)
+- [Gotchas](#gotchas)
+- [Go API Maturity Timeline](#go-api-maturity-timeline)
 
 ---
 

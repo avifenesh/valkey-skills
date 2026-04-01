@@ -1,6 +1,6 @@
 ---
 name: migrate-lettuce
-description: "Use when migrating Java applications from Lettuce to Valkey GLIDE. Covers Spring Data Valkey, compatibility layer, and native rewrite paths. No reactive API equivalent, PubSub, codec gaps. Not for Jedis migration - use migrate-jedis instead."
+description: "Lettuce to Valkey GLIDE migration for Java. Covers Spring Data Valkey path, native rewrite from RedisFuture to CompletableFuture, PubSub, no reactive API or codec equivalent. Not for Jedis migration - use migrate-jedis instead."
 version: 1.0.0
 argument-hint: "[API or pattern to migrate]"
 ---
@@ -8,6 +8,27 @@ argument-hint: "[API or pattern to migrate]"
 # Migrating from Lettuce to Valkey GLIDE (Java)
 
 Use when migrating a Java application from Lettuce to the GLIDE client library.
+
+---
+
+## Contents
+
+- [Key Differences](#key-differences)
+- [Connection Setup](#connection-setup)
+- [Configuration Mapping](#configuration-mapping)
+- [String Operations](#string-operations)
+- [Hash Operations](#hash-operations)
+- [List Operations](#list-operations)
+- [Set Operations](#set-operations)
+- [Sorted Set Operations](#sorted-set-operations)
+- [Delete and Exists](#delete-and-exists)
+- [Cluster Mode](#cluster-mode)
+- [Transactions and Pipelines](#transactions-and-pipelines)
+- [Pub/Sub](#pubsub)
+- [Spring Data Valkey as an Alternative](#spring-data-valkey-as-an-alternative)
+- [Lettuce Compatibility Layer Status](#lettuce-compatibility-layer-status)
+- [Incremental Migration Strategy](#incremental-migration-strategy)
+- [Gotchas](#gotchas)
 
 ---
 

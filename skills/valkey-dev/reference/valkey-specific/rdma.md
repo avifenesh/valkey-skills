@@ -217,9 +217,3 @@ static ConnectionType CT_RDMA = {
 Note that RDMA implements `postpone_update_state` / `update_state` to
 coordinate with IO threads - the IO threads must not modify event loop
 state directly.
-
-## See Also
-
-- [transport-layer.md](transport-layer.md) - The pluggable `ConnectionType` framework that RDMA registers into
-- [../architecture/networking.md](../architecture/networking.md) - How the server uses `connRead`/`connWrite` regardless of transport
-- [../architecture/event-loop.md](../architecture/event-loop.md) - The ae event loop that drives RDMA completion channel events

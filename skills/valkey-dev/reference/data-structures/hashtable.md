@@ -253,12 +253,3 @@ uint64_t hashtableGenCaseHashFunction(const char *buf, size_t len);
 | Secondary hash | None | 1-byte h2 per slot (99.6% mismatch filter) |
 | SIMD | None | Optional x86 SSE/AVX and ARM NEON |
 | Separate dictEntry | Yes (key + value + next) | No (user provides entry object) |
-
-## See Also
-
-- [../valkey-specific/kvstore.md](../valkey-specific/kvstore.md) - Multi-index wrapper managing arrays of hashtables
-- [dict.md](dict.md) - Legacy chained hash table replaced in Valkey 8.1
-- [encoding-transitions.md](encoding-transitions.md) - When listpack transitions to hashtable encoding
-- [../valkey-specific/object-lifecycle.md](../valkey-specific/object-lifecycle.md) - The robj entries stored in the hashtable
-- [../cluster/overview.md](../cluster/overview.md) - Cluster slots use CRC16; hashtable uses SipHash internally
-- [../persistence/rdb.md](../persistence/rdb.md) - RDB serializes hashtable-encoded types via the hashtable API

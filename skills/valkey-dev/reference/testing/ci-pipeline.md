@@ -186,12 +186,3 @@ Fix: Check that backward-compatible behavior is maintained when interacting with
 ## Required Checks
 
 All jobs in `ci.yml` must pass for a PR to be mergeable. The daily tests are informational for `unstable` PRs but required for release branch PRs.
-
-## See Also
-
-- [Building Valkey](../build/building.md) - build commands and flags used by CI jobs
-- [Sanitizer Builds](../build/sanitizers.md) - details on ASan, UBSan, TSan, and Valgrind CI configurations
-- [Tcl Integration Tests](tcl-tests.md) - test runner options and tags (CI uses `--tags -slow` on PRs)
-- [C++ Unit Tests](unit-tests.md) - unit test binary and `make test-unit`
-- [Contribution Workflow](../contributing/workflow.md) - full contributor guide including the PR process and CI expectations
-- [Module API Overview](../modules/api-overview.md) - the `test-sanitizer-address` CI job and `./runtest-moduleapi` validate module API tests. Module tests compile C test modules and exercise custom types, blocking commands, and scripting engines.

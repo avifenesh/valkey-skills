@@ -1,6 +1,6 @@
-# Docker Deployment
-
 Use when running Valkey in containers - Docker, Docker Compose, or container orchestration.
+
+# Docker Deployment
 
 ## Contents
 
@@ -336,15 +336,3 @@ Set `maxmemory` to roughly 75% of the container memory limit. The remaining 25% 
 - Client output buffers
 - Replication backlog
 - Internal data structure overhead
-
-## See Also
-
-- [Installing Valkey](install.md) - package manager and source builds
-- [Configuration Essentials](../configuration/essentials.md) - all config defaults
-- [Workload Presets](../configuration/workload-presets.md) - complete configs by use case
-- [Eviction Policies](../configuration/eviction.md) - maxmemory-policy for container memory limits
-- [Bare Metal Setup](bare-metal.md) - non-container deployment
-- [Kubernetes Helm](../kubernetes/helm.md) - Helm chart deployment
-- [Sentinel Deployment Runbook](../sentinel/deployment-runbook.md) - Docker Sentinel considerations
-- [Cluster Setup](../cluster/setup.md) - cluster mode with Docker (requires host networking or announce addresses)
-- [Production Checklist](../production-checklist.md) - full pre-launch verification

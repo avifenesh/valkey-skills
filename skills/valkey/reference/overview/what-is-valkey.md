@@ -12,7 +12,6 @@ Use when you need to understand what Valkey is, how it relates to Redis, its lic
 - Choosing Between Them (line 88)
 - Version History (line 102)
 - Community and Ecosystem (line 114)
-- See Also (line 124)
 
 ---
 
@@ -121,17 +120,3 @@ Valkey covers some of these through modules (valkey-search for full-text and vec
 
 ---
 
-## See Also
-
-- [Compatibility and Migration](compatibility.md) - detailed migration guide from Redis
-- [Performance Summary](../valkey-features/performance-summary.md) - version-by-version throughput and latency gains
-- [Conditional Operations](../valkey-features/conditional-ops.md) - SET IFEQ and DELIFEQ
-- [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL on hash entries
-- [Cluster Enhancements](../valkey-features/cluster-enhancements.md) - numbered databases and atomic slot migration
-- [Polygon Geospatial Queries](../valkey-features/geospatial.md) - GEOSEARCH BYPOLYGON
-- [String Commands](../basics/data-types.md) - SET IFEQ syntax and compare-and-swap patterns
-- [Hash Commands](../basics/data-types.md) - HEXPIRE, HSETEX, HGETEX, HGETDEL command details
-- [Specialized Data Types](../basics/data-types.md) - GEOSEARCH BYPOLYGON and SIMD-optimized HyperLogLog/bitmap commands
-- Module Commands (see valkey-modules skill) - Bloom, JSON, and Search modules via the Valkey module API
-- Clients Overview (see valkey-glide skill) - GLIDE and existing Redis client compatibility
-- For operational deployment: see valkey-ops skill (deployment, configuration, monitoring)

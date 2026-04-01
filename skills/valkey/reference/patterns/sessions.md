@@ -10,7 +10,6 @@ Use when storing user sessions in Valkey, implementing session expiration, or le
 - Session Rotation (line 230)
 - Session Counting and Management (line 257)
 - Production Tips (line 312)
-- See Also (line 322)
 
 ---
 
@@ -319,21 +318,3 @@ async def enforce_session_limit(user_id: int, max_sessions: int = 5):
 
 ---
 
-## See Also
-
-- [Hash Commands](../basics/data-types.md) - HSET, HMGET, HGETALL for session storage
-- [Set Commands](../basics/data-types.md) - SADD, SCARD, SMEMBERS for session tracking per user
-- [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL for session tokens (Valkey 9.0+)
-- [Pub/Sub Patterns](pubsub-patterns.md) - keyspace notifications for session expiration events
-- [Caching Patterns](caching.md) - cache-aside pattern for session-adjacent data
-- [Lock Patterns](locks.md) - distributed locks for session-critical operations
-- [Counter Patterns](counters.md) - tracking active session counts
-- [Performance Best Practices](../best-practices/performance.md) - pipelining session read + TTL refresh
-- [Memory Best Practices](../best-practices/memory.md) - hash encoding thresholds for session data
-- [Key Best Practices](../best-practices/keys.md) - key naming conventions
-- [Cluster Best Practices](../best-practices/cluster.md) - hash tags for co-locating session data in cluster mode
-- [High Availability Best Practices](../best-practices/high-availability.md) - session durability during failover
-- [Persistence Best Practices](../best-practices/persistence.md) - AOF durability for session data
-- [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions for session key access
-- Clients Overview (see valkey-glide skill) - connection patterns for session middleware
-- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - missing TTL, no authentication, HGETALL on large session hashes

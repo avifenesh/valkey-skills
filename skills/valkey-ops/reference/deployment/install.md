@@ -1,6 +1,6 @@
-# Installing Valkey
-
 Use when setting up Valkey on a new machine - package manager, source build, or PREFIX install.
+
+# Installing Valkey
 
 ## Contents
 
@@ -180,15 +180,3 @@ valkey-cli INFO server | grep -E 'valkey_version|os|gcc_version|mem_allocator'
 ```
 
 This shows the exact version, OS, compiler, and allocator in use.
-
-
-## See Also
-
-- [Bare Metal Setup](bare-metal.md) - systemd, kernel tuning, permissions
-- [Docker Deployment](docker.md) - container-based deployment
-- [Configuration Essentials](../configuration/essentials.md) - initial config after install
-- [Workload Presets](../configuration/workload-presets.md) - complete configs by use case
-- [Sentinel Architecture](../sentinel/architecture.md) - HA with Sentinel for non-clustered deployments
-- [Cluster Setup](../cluster/setup.md) - distributed deployment with automatic sharding
-- [See valkey-dev: building](../../../valkey-dev/reference/build/building.md) - contributor-level build details
-- [See valkey-dev: testing](../../../valkey-dev/reference/testing/tcl-tests.md) - test suite internals

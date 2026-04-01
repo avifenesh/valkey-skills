@@ -11,7 +11,6 @@ Use when migrating from Redis to Valkey, evaluating compatibility of existing ap
 - Incompatible Versions (line 173)
 - Client Library Compatibility (line 185)
 - Application Code Changes (line 206)
-- See Also (line 217)
 
 ---
 
@@ -214,18 +213,3 @@ All data structures, commands, scripting, and patterns work identically.
 
 ---
 
-## See Also
-
-- [What is Valkey](what-is-valkey.md) - overview, version history, and feature comparison
-- Clients Overview (see valkey-glide skill) - GLIDE and existing Redis client compatibility
-- [Conditional Operations](../valkey-features/conditional-ops.md) - Valkey-only SET IFEQ and DELIFEQ commands
-- [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - Valkey-only per-field TTL on hash entries
-- [Cluster Enhancements](../valkey-features/cluster-enhancements.md) - Valkey-only numbered databases and atomic slot migration
-- [Polygon Geospatial Queries](../valkey-features/geospatial.md) - Valkey-only GEOSEARCH BYPOLYGON
-- [Performance Summary](../valkey-features/performance-summary.md) - version-by-version throughput and latency gains
-- [String Commands](../basics/data-types.md) - all Redis OSS string commands work unchanged; SET IFEQ is Valkey-only
-- [Hash Commands](../basics/data-types.md) - all Redis OSS hash commands work unchanged; field TTL commands are Valkey-only
-- [Scripting and Functions](../basics/server-and-scripting.md) - Lua scripts and Functions work unchanged after migration
-- [Server Commands](../basics/server-and-scripting.md) - INFO, CONFIG GET, and extended-redis-compatibility mode
-- Module Commands (see valkey-modules skill) - Redis modules load in Valkey via the compatible module API
-- For operational migration procedures: see valkey-ops `reference/upgrades/migration.md`

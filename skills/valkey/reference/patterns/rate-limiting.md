@@ -11,7 +11,6 @@ Use when implementing API rate limiting, throttling user actions, or protecting 
 - Per-Field Rate Limiting (Valkey 9.0+) (line 264)
 - Comparison Table (line 306)
 - Production Tips (line 324)
-- See Also (line 334)
 
 ---
 
@@ -331,21 +330,3 @@ HGETEX rate:user:42 EX 60 FIELDS 1 /api/orders
 
 ---
 
-## See Also
-
-- [String Commands](../basics/data-types.md) - INCR, EXPIRE for fixed window counters
-- [Hash Commands](../basics/data-types.md) - HSETEX, HINCRBY for per-field rate limiting
-- [Sorted Set Commands](../basics/data-types.md) - ZADD, ZREMRANGEBYSCORE for sliding window log
-- [Scripting and Functions](../basics/server-and-scripting.md) - Lua scripts for token bucket
-- [Hash Field Expiration](../valkey-features/hash-field-ttl.md) - per-field TTL for hash-based rate limiting (Valkey 9.0+)
-- [Counter Patterns](counters.md) - sharded counters for high-throughput rate limit keys
-- [Lock Patterns](locks.md) - distributed locks for related concurrency control
-- [Queue Patterns](queues.md) - rate-limited message processing
-- [Performance Best Practices](../best-practices/performance.md) - pipelining for rate limit checks
-- [Key Best Practices](../best-practices/keys.md) - key naming, TTL strategies, and hash tags for cluster
-- [Cluster Best Practices](../best-practices/cluster.md) - hash tag routing for rate limit keys
-- [Memory Best Practices](../best-practices/memory.md) - encoding thresholds for sorted set and hash-based rate limits
-- [High Availability Best Practices](../best-practices/high-availability.md) - rate limit behavior during failover
-- [Security: Auth and ACL](../security/auth-and-acl.md) - ACL restrictions for rate limit key namespaces
-- Clients Overview (see valkey-glide skill) - connection patterns for rate limit middleware
-- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - missing TTL on rate limit keys, hot key bottlenecks

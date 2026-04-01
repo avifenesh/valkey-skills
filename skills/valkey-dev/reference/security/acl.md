@@ -296,12 +296,3 @@ bitmap is compared to the original. A mismatch triggers `serverPanic()` - ACL
 serialization errors are treated as security risks.
 
 ---
-
-## See Also
-
-- [TLS Subsystem](../security/tls.md) - Certificate-based ACL user mapping. When `tls-auth-clients-user` is set to `cn` or `uri`, the TLS subsystem extracts a username from the client certificate and calls `ACLGetUserByName()` to authenticate the client without AUTH.
-- [Pub/Sub Subsystem](../pubsub/pubsub.md) - Channel access is controlled by ACL channel patterns (`&pattern` rules). The `resetchannels` and `allchannels` directives manage channel permissions.
-- [Module API Overview](../modules/api-overview.md) - Module-registered commands are subject to ACL checks. Modules can register custom ACL categories via `ACLAddCommandCategory()` and assign them with `ValkeyModule_SetCommandACLCategories`.
-- [Scripting Engine Architecture](../scripting/scripting-engine.md) - Scripting engines are modules; their registered commands follow standard ACL enforcement.
-- [MULTI/EXEC Transactions](../transactions/multi-exec.md) - ACL permissions are re-checked at EXEC time for each queued command.
-- [Configuration System](../config/config-system.md) - ACL users can be defined in `valkey.conf` via `user` directives (parsed during config loading). The `PROTECTED_CONFIG` and `SENSITIVE_CONFIG` flags restrict which config parameters can be changed at runtime, complementing ACL-level access control.

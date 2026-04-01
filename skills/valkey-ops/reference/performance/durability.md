@@ -1,6 +1,6 @@
-# Durability vs Performance
-
 Use when choosing persistence settings, tuning TCP/client connections, or
+
+# Durability vs Performance
 evaluating Valkey 9.0 performance features. Covers the full spectrum from
 maximum safety to maximum speed.
 
@@ -228,16 +228,3 @@ ulimit -n 65535
 | High-throughput analytics | RDB only | - | 8+ |
 
 ---
-
-## See Also
-
-- [AOF Persistence](../persistence/aof.md) - AOF configuration details
-- [RDB Persistence](../persistence/rdb.md) - snapshot configuration details
-- [I/O Threads](io-threads.md) - multi-threaded I/O configuration
-- [Latency Diagnosis](latency.md) - diagnosing persistence-related latency spikes
-- [Diagnostics Reference](../troubleshooting/diagnostics.md) - fork latency investigation
-- [Troubleshooting OOM](../troubleshooting/oom.md) - memory pressure from fork COW overhead
-- [Monitoring Metrics](../monitoring/metrics.md) - persistence and performance metrics
-- [Workload Presets](../configuration/workload-presets.md) - complete configs by use case
-- [See valkey-dev: io-threads](../../../valkey-dev/reference/threading/io-threads.md) - I/O thread internals
-- [See valkey-dev: prefetch](../../../valkey-dev/reference/threading/prefetch.md) - batch key prefetching

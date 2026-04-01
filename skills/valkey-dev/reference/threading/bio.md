@@ -301,11 +301,3 @@ variable set during worker initialization.
 | When idle | Block on condvar | Spin then park on mutex |
 
 ---
-
-## See Also
-
-- [Lazy Freeing](../memory/lazy-free.md) - the primary consumer of the `BIO_LAZY_FREE` worker; submits jobs via `bioCreateLazyFreeJob()`
-- [AOF Persistence](../persistence/aof.md) - uses `BIO_AOF_FSYNC` and `BIO_CLOSE_AOF` workers for deferred fsync and close
-- [RDB Persistence](../persistence/rdb.md) - the `BIO_RDB_SAVE` worker handles disk I/O during dual-channel replication
-- [I/O Threads](../threading/io-threads.md) - network I/O thread pool; contrast with BIO's blocking-operation design
-- [TLS](../security/tls.md) - the `BIO_TLS_RELOAD` worker performs async TLS configuration reload

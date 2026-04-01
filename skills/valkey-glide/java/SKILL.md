@@ -1,6 +1,6 @@
 ---
 name: valkey-glide-java
-description: "Use when building Java applications with Valkey GLIDE. Covers CompletableFuture API, GlideClient, TLS, OpenTelemetry, batching, streams, Lua scripting, Valkey functions. Not for Jedis/Lettuce migration - use migrate-jedis or migrate-lettuce instead."
+description: "Java Valkey GLIDE client - CompletableFuture API, GlideClient, GlideClusterClient, Batch/ClusterBatch, TLS, OpenTelemetry, streams, Lua scripting, Valkey functions. Not for Jedis/Lettuce migration - use migrate-jedis or migrate-lettuce skill."
 version: 2.0.0
 argument-hint: "[API or config question]"
 ---

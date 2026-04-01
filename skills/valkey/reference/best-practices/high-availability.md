@@ -9,7 +9,6 @@ Use when connecting to Valkey through Sentinel, handling failovers in applicatio
 - Retry Strategies for Connection Drops (line 110)
 - Read-After-Write Consistency (line 195)
 - Architecture Decision: Sentinel vs Cluster (line 263)
-- See Also (line 278)
 
 ---
 
@@ -275,39 +274,3 @@ Arguments: `WAITAOF <local_fsyncs> <replica_fsyncs> <timeout_ms>`
 
 ---
 
-## See Also
-
-**Best Practices**:
-- [Cluster Best Practices](cluster.md) - hash tags, redirects, replica reads in cluster mode
-- [Persistence Best Practices](persistence.md) - RDB/AOF configuration for durability
-- [Performance Best Practices](performance.md) - connection pooling and pipelining
-- [Memory Best Practices](memory.md) - eviction behavior under memory pressure during failover
-- [Key Best Practices](keys.md) - TTL-at-write-time to avoid orphaned keys after failover
-
-**Commands**:
-- [Server Commands](../basics/server-and-scripting.md) - INFO replication, CLIENT LIST, WAIT, WAITAOF
-
-**Patterns**:
-- [Lock Patterns](../patterns/locks.md) - Redlock for distributed locking across failures
-- [Session Patterns](../patterns/sessions.md) - session durability during failover
-- [Queue Patterns](../patterns/queues.md) - queue message safety with AOF and replication
-- [Caching Patterns](../patterns/caching.md) - cache stampede prevention after failover
-- [Counter Patterns](../patterns/counters.md) - idempotency keys for safe counter retries
-- [Rate Limiting Patterns](../patterns/rate-limiting.md) - rate limit behavior during failover windows
-
-**Security**:
-- [Security: Auth and ACL](../security/auth-and-acl.md) - separate Sentinel auth from Valkey auth
-
-**Clients**:
-- Clients Overview (see valkey-glide skill) - Sentinel-aware client configuration and reconnection
-
-**Valkey Features**:
-- [Cluster Enhancements](../valkey-features/cluster-enhancements.md) - Valkey 9.0 atomic slot migration (eliminates ASK redirects)
-
-**Anti-Patterns**:
-- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - pub/sub for durable messaging, no authentication
-
-**Ops**:
-- valkey-ops [sentinel/architecture](../../../valkey-ops/reference/sentinel/architecture.md) - Sentinel architecture and failover mechanics
-- valkey-ops [sentinel/deployment-runbook](../../../valkey-ops/reference/sentinel/deployment-runbook.md) - Sentinel deployment and configuration
-- valkey-ops [replication/](../../../valkey-ops/reference/replication/) - replication internals and troubleshooting

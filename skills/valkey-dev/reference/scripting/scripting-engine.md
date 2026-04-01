@@ -321,10 +321,3 @@ size_t scriptingEngineManagerGetMemoryUsage(void);
 ```
 
 `GetTotalMemoryOverhead` tracks the sum of all engines' `engine_memory_overhead` plus the engine struct and name allocations. `GetMemoryUsage` returns the dictionary overhead plus the manager struct size.
-
-## See Also
-
-- [EVAL Subsystem](../scripting/eval.md) - Ad-hoc script execution that delegates to the engine layer via `VMSE_EVAL`.
-- [Functions Subsystem](../scripting/functions.md) - Library-based scripting that delegates to the engine layer via `VMSE_FUNCTION`.
-- [Module API Overview](../modules/api-overview.md) - Scripting engines are implemented as Valkey modules. A module registers an engine during `OnLoad` via `ValkeyModule_RegisterScriptingEngine` and unregisters during `OnUnload`.
-- [ACL Subsystem](../security/acl.md) - Module-registered commands (including those from scripting engine modules) are subject to ACL permission checks and can be assigned to ACL categories.

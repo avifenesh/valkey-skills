@@ -1,6 +1,6 @@
-# Kubernetes Operators for Valkey
-
 Use when deploying Valkey via a Kubernetes operator, comparing operator options, writing CRD manifests, or deciding between operators and Helm charts.
+
+# Kubernetes Operators for Valkey
 
 ## Contents
 
@@ -404,14 +404,3 @@ kubectl describe valkey my-cluster
 | GitOps with ArgoCD/Flux | Any (all CRD-based) |
 | Need Bitnami image hardening | SAP (uses Bitnami) |
 | Full cluster lifecycle automation | Hyperspike |
-
-## See Also
-
-- [Helm Charts](helm.md) - chart-based deployment
-- [StatefulSet Patterns](statefulset.md) - raw StatefulSet deployment
-- [Kubernetes Tuning](tuning-k8s.md) - kernel tuning in K8s
-- [Capacity Planning](../operations/capacity-planning.md) - memory and resource sizing
-- [Performance I/O Threads](../performance/io-threads.md) - I/O thread CPU allocation for operator manifests
-- [Performance Memory](../performance/memory.md) - memory optimization for resource spec sizing
-- [Rolling Upgrades](../upgrades/rolling-upgrade.md) - zero-downtime upgrade procedures
-- [Production Checklist](../production-checklist.md) - full pre-launch verification

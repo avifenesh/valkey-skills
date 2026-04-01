@@ -1,6 +1,6 @@
-# Memory Encoding Thresholds
-
 Use when tuning memory usage for small collections or diagnosing unexpected memory consumption. All thresholds verified against `src/config.c`.
+
+# Memory Encoding Thresholds
 
 ## Contents
 
@@ -166,14 +166,3 @@ A hash with 100 small fields:
 Multiply by millions of keys and the difference is significant. With 10 million hashes at 100 fields each:
 - Listpack: ~25 GB
 - Hashtable: ~120 GB
-
-
-## See Also
-
-- [Configuration Essentials](essentials.md) - all config defaults
-- [Workload Presets](workload-presets.md) - encoding thresholds in context of complete configs
-- [Eviction Policies](eviction.md) - memory pressure that triggers eviction
-- [Lazy Free Configuration](lazyfree.md) - async deletion for large keys after encoding conversion
-- [Memory Optimization](../performance/memory.md) - maxmemory, eviction, data modeling
-- [See valkey-dev: encoding transitions](../../../valkey-dev/reference/data-structures/encoding-transitions.md) - C implementation of encoding checks and conversion logic
-- [See valkey-dev: listpack](../../../valkey-dev/reference/data-structures/listpack.md) - listpack internal structure

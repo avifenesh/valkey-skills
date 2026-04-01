@@ -1,6 +1,6 @@
-# Sentinel Deployment Runbook
-
 Use when deploying Sentinel for the first time, configuring Sentinel directives, or planning deployments in Docker/NAT environments.
+
+# Sentinel Deployment Runbook
 
 ## Contents
 
@@ -342,10 +342,3 @@ sudo systemctl enable --now valkey-sentinel
 ```
 
 ---
-
-## See Also
-
-- [Sentinel Architecture](architecture.md) - failure detection, quorum, election protocol
-- [Split-Brain Prevention](split-brain.md) - network partition strategies
-- [Replication Setup](../replication/setup.md) - primary-replica configuration
-- [Replication Tuning](../replication/tuning.md) - backlog sizing and Docker/NAT networking for replicas

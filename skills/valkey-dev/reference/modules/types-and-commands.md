@@ -322,11 +322,3 @@ MyType = ValkeyModule_CreateDataType(ctx, "mydata--x", 0, &tm);
 ```
 
 ---
-
-## See Also
-
-- [Module API Overview](../modules/api-overview.md) - Core module lifecycle, command registration, context object, memory management, and reply helpers.
-- [Rust SDK for Valkey Modules](../modules/rust-sdk.md) - Rust bindings for custom types and blocking commands. The Rust `ValkeyType::new()` wraps `ValkeyModule_CreateDataType`; blocking uses `Context::block_client()`.
-- [Blocking Operations](../transactions/blocking.md) - Server-side blocking infrastructure. Module-blocked clients use the `BLOCKED_MODULE` type and integrate with the same key-readiness notification system (`signalKeyAsReady`).
-- [ACL Subsystem](../security/acl.md) - Module commands are subject to ACL enforcement. Key access permissions (read/write) are checked against ACL key patterns.
-- [Tcl Integration Tests](../testing/tcl-tests.md) - Module API tests live in `tests/unit/moduleapi/` and are run via `./runtest-moduleapi`. Test modules (C source in `tests/modules/`) are compiled automatically by the test runner.

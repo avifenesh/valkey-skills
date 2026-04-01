@@ -265,12 +265,3 @@ average).
 targets via dladdr. Used to understand what functions surround a crash site.
 
 ---
-
-## See Also
-
-- [Latency Monitoring](../monitoring/latency.md) - the software watchdog here detects event loop stalls; latency monitoring records their duration as latency events
-- [Commandlog](../monitoring/commandlog.md) - `DEBUG SLEEP` triggers commandlog slow entries; `DEBUG POPULATE` can generate large-request entries
-- [zmalloc](../memory/zmalloc.md) - `DEBUG STRUCTSIZE` reports core struct sizes relevant to memory overhead; `DEBUG MALLCTL` directly queries jemalloc internals
-- [Active Defragmentation](../memory/defragmentation.md) - `DEBUG DICT-RESIZING` can disable hashtable resizing to isolate defrag behavior during testing
-- [Configuration System](../config/config-system.md) - `DEBUG CONFIG-REWRITE-FORCE-ALL` exercises the config rewrite path with all defaults included
-- [Sanitizer Builds](../build/sanitizers.md) - Debug builds with `make noopt` or `make valgrind` are essential for effective use of debug facilities. ASan and UBSan catch memory errors that crash reports help diagnose. The software watchdog and stack trace collection work best with `-fno-omit-frame-pointer` (included in sanitizer builds).

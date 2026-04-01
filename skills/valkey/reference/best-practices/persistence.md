@@ -12,7 +12,6 @@ Use when choosing a persistence strategy for your application, understanding dur
 - How Persistence Affects Your Application Latency (line 113)
 - Application-Level Durability Decisions (line 144)
 - What to Ask Your Ops Team (line 174)
-- See Also (line 187)
 
 ---
 
@@ -184,35 +183,3 @@ If you are an application developer and someone else manages Valkey:
 
 ---
 
-## See Also
-
-**Best Practices**:
-- [Performance Best Practices](performance.md) - how persistence interacts with throughput
-- [Memory Best Practices](memory.md) - eviction policies, `maxmemory`, COW memory overhead
-- [High Availability Best Practices](high-availability.md) - WAIT/WAITAOF for replication durability
-- [Key Best Practices](keys.md) - TTL-at-write-time pattern, key expiration strategies
-- [Cluster Best Practices](cluster.md) - persistence behavior in cluster mode
-
-**Commands**:
-- [Server Commands](../basics/server-and-scripting.md) - INFO persistence, DBSIZE, LASTSAVE
-
-**Patterns**:
-- [Caching Patterns](../patterns/caching.md) - write-through and read-through with database backing
-- [Session Patterns](../patterns/sessions.md) - session durability requirements
-- [Queue Patterns](../patterns/queues.md) - queue durability with AOF
-- [Lock Patterns](../patterns/locks.md) - lock safety during crash recovery
-
-**Security**:
-- [Security: Auth and ACL](../security/auth-and-acl.md) - authentication required after restart from persistence
-
-**Clients**:
-- Clients Overview (see valkey-glide skill) - reconnection behavior after server restart
-
-**Anti-Patterns**:
-- [Anti-Patterns Quick Reference](../anti-patterns/quick-reference.md) - missing TTL, no `maxmemory`, and related pitfalls
-
-**Ops**:
-- valkey-ops [persistence/rdb](../../../valkey-ops/reference/persistence/rdb.md) - RDB configuration, fork overhead, backup procedures
-- valkey-ops [persistence/aof](../../../valkey-ops/reference/persistence/aof.md) - AOF configuration, fsync policies, hybrid persistence
-- valkey-ops [performance/durability](../../../valkey-ops/reference/performance/durability.md) - full durability vs performance spectrum
-- valkey-ops [persistence/backup-recovery](../../../valkey-ops/reference/persistence/backup-recovery.md) - backup scripts and disaster recovery

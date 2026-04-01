@@ -1,6 +1,6 @@
-# Commandlog
-
 Use when investigating slow commands, large requests, or large replies.
+
+# Commandlog
 The commandlog is Valkey's evolution of Redis SLOWLOG, expanded to cover
 network bandwidth in addition to execution time.
 
@@ -231,13 +231,3 @@ delta(redis_slowlog_length[10m])
 ```
 
 ---
-
-## See Also
-
-- [Latency Diagnosis](../performance/latency.md) - latency diagnosis workflow using commandlog data
-- [Slow Command Investigation](../troubleshooting/slow-commands.md) - slow command troubleshooting
-- [Monitoring Metrics](metrics.md) - INFO metrics including commandlog stats
-- [Prometheus Setup](prometheus.md) - exporter exposes slowlog metrics from the commandlog
-- [Alerting Rules](alerting.md) - ValkeySlowlogGrowing alert for commandlog entries
-- [Grafana Dashboards](grafana.md) - dashboard panels for commandlog visualization
-- [See valkey-dev: commandlog](../../../valkey-dev/reference/monitoring/commandlog.md) - entry lifecycle, memory management internals
