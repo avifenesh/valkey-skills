@@ -17,23 +17,43 @@ Gives AI coding assistants (Claude Code, Cursor, Codex, Copilot, Gemini CLI, Ope
 
 ## Install
 
-### Agent Skills standard (any tool)
+### Agent Skills CLI (cross-tool)
 
 ```bash
 npx skills add avifenesh/valkey-skills
 ```
 
-### Claude Code
+Installs into `.agents/skills/` in your project. Works with Claude Code, Cursor, Codex, Copilot, Gemini CLI, OpenCode, Kiro, and any tool supporting the [Agent Skills standard](https://agentskills.io).
 
-```
-/install avifenesh/valkey-skills
-```
-
-### Manual (Cursor, Codex, OpenCode, Kiro, Copilot)
+### Claude Code (plugin, session-scoped)
 
 ```bash
-git clone https://github.com/avifenesh/valkey-skills.git .agents/skills/valkey-skills
+claude --plugin-dir /path/to/valkey-skills
 ```
+
+Or clone and point to it:
+
+```bash
+git clone https://github.com/avifenesh/valkey-skills.git ~/valkey-skills
+claude --plugin-dir ~/valkey-skills
+```
+
+### Manual (any tool)
+
+```bash
+git clone https://github.com/avifenesh/valkey-skills.git
+```
+
+Copy or symlink into your tool's skills directory:
+
+| Tool | Copy to |
+|------|---------|
+| Claude Code | `~/.claude/skills/` or project `.claude/skills/` |
+| Cursor | `.cursor/skills/` |
+| Codex CLI | `~/.codex/skills/` |
+| OpenCode | `~/.config/opencode/skills/` |
+| Kiro | `.kiro/skills/` |
+| Any Agent Skills tool | `.agents/skills/` |
 
 ## Skills
 
