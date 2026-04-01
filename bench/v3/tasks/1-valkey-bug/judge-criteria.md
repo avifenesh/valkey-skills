@@ -1,34 +1,25 @@
-# Judge Criteria: Task 1 - Valkey Bug Investigation
+# Judge Criteria: Task 1 - Valkey Bug Investigation and Fix
 
-Evaluate the agent's ANALYSIS.md against these criteria:
+Evaluate the agent's three deliverables: ANALYSIS.md, fix.patch, verify.sh.
 
-## Root Cause Identification (30%)
+## Root Cause Analysis (25%)
+- Correctly identifies t_hash.c and the missing field existence check
+- Explains the sequence: HDEL removes field, HEXPIRE creates orphaned TTL metadata
+- Shows understanding of Valkey hash field TTL internals
 
-- Does the analysis correctly identify t_hash.c as the file containing the bug?
-- Does it pinpoint the missing field existence check in the HEXPIRE command handler?
-- Does it demonstrate understanding that the hash field TTL code path skips validation of whether the target field actually exists in the hash before creating expiration metadata?
+## Patch Quality (30%)
+- Valid unified diff targeting t_hash.c
+- Adds minimal field existence check before TTL set
+- Would compile and work if applied
+- Doesn't break existing HEXPIRE on valid fields
 
-## Mechanism Explanation (25%)
+## Verification Script (25%)
+- Tests HEXPIRE on deleted field (expects 0)
+- Tests HEXPIRETIME on deleted field (expects -2)
+- Tests normal HEXPIRE on existing fields still works
+- Runnable and well-structured
 
-- Is the explanation of how the bug manifests detailed and technically accurate?
-- Does it describe the sequence: field deleted via HDEL, HEXPIRE called on that field, server creates expiration metadata without checking field existence, metadata persists as an orphan?
-- Does it explain why HEXPIRETIME returns a value (the orphaned metadata is queryable) while HGETALL does not show the field (the field data was properly deleted)?
-
-## Fix Proposal (20%)
-
-- Is the proposed fix correct - adding a field existence check before setting TTL?
-- Is the fix minimal and targeted (not an overhaul of the entire expiration system)?
-- Does it specify the right location in the code path (before the expiration metadata is written)?
-- Does it correctly describe the expected return value (0) when the field does not exist?
-
-## Impact Analysis (15%)
-
-- Does the analysis cover all three impact dimensions: incorrect return values, ghost TTLs, and memory leak?
-- Is the memory leak mechanism explained (orphaned metadata entries accumulate with no cleanup path)?
-- Are related commands identified (HTTL, HPTTL, HPERSIST, HEXPIREAT, HPEXPIRE, HPEXPIREAT)?
-
-## Understanding of Valkey Internals (10%)
-
-- Does the analysis show genuine understanding of Valkey's hash implementation?
-- Does it reference relevant internal structures (hash field expiration metadata, per-field TTL tracking)?
-- Is the reasoning logical and derived from architectural knowledge rather than guesswork?
+## Impact Analysis (20%)
+- Identifies affected commands (HTTL, HPTTL, HPERSIST, HEXPIREAT)
+- Explains memory leak mechanism
+- Describes incorrect return values

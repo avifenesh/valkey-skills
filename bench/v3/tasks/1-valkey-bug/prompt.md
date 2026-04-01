@@ -1,4 +1,4 @@
-# Task: Investigate Valkey Hash Field TTL Bug
+# Task: Investigate and Fix Valkey Hash Field TTL Bug
 
 You are a Valkey server developer investigating a bug in a custom Valkey 9.0.3 build.
 
@@ -17,18 +17,39 @@ An operator has reported anomalous behavior with hash field expiration. A Docker
 
 ## What You Do NOT Have
 
-- No Valkey source code is provided
+- No Valkey source code is provided in the workspace
 - No hints about which specific file or function contains the bug
 - You must reason from Valkey's architecture and the observed symptoms to identify the root cause
 
-## Deliverable
+## Deliverables
 
-Write your analysis to `ANALYSIS.md` in the workspace directory. Your analysis must cover:
+### 1. ANALYSIS.md
+
+Write your analysis to `ANALYSIS.md` covering:
 
 1. **Root cause** - identify the specific source file and the missing check
 2. **Mechanism** - explain exactly how the bug manifests at the code level
-3. **Impact** - describe all observable consequences (incorrect return values, ghost TTLs, memory leak)
-4. **Fix** - propose a minimal, correct fix with enough detail to implement it
-5. **Related commands** - identify other commands that may be affected by or expose this bug
+3. **Impact** - describe all observable consequences
+4. **Related commands** - identify other commands affected
 
-Use the reproduce script and symptoms document to guide your investigation. Reason from your knowledge of Valkey server internals.
+### 2. fix.patch
+
+Write a patch file to `fix.patch` that fixes the bug. The patch should:
+
+- Be a valid unified diff format (applicable with `git apply` or `patch -p1`)
+- Target the correct source file in the Valkey codebase
+- Add the minimal check needed to prevent HEXPIRE on non-existent fields
+- Not break any existing functionality
+
+### 3. verify.sh
+
+Write a verification script `verify.sh` that:
+
+- Connects to the Valkey instance at localhost:6379
+- Demonstrates the bug is present (before fix)
+- Applies the fix (you may describe the expected post-fix behavior)
+- Tests that HEXPIRE on a deleted field returns 0 (not 1)
+- Tests that HEXPIRETIME on a deleted field returns -2 (field not found)
+- Tests that normal HEXPIRE on existing fields still works correctly
+
+Use the reproduce script and symptoms document to guide your investigation.

@@ -5,6 +5,10 @@ set -uo pipefail
 # Usage: test.sh <work_dir>
 
 WORK_DIR="${1:-.}"
+
+cleanup() { cd "$WORK_DIR"; docker compose down -v --remove-orphans 2>/dev/null || true; }
+trap cleanup EXIT
+
 PASS=0
 FAIL=0
 

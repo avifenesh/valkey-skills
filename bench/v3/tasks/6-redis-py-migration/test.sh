@@ -19,6 +19,22 @@ check() {
   fi
 }
 
+# Start Valkey via docker compose
+cleanup() {
+  cd "$WORK" && docker compose down -v --remove-orphans 2>/dev/null || true
+}
+trap cleanup EXIT
+
+cd "$WORK" && docker compose up -d --wait 2>&1
+
+# Wait for Valkey to be ready
+for i in $(seq 1 30); do
+  if valkey-cli -p 6379 PING 2>/dev/null | grep -q PONG; then
+    break
+  fi
+  sleep 1
+done
+
 # 1. No redis-py imports remain in app.py
 if grep -qE '^\s*(import redis|from redis)' "$WORK/app.py" 2>/dev/null; then
   check "No redis-py imports" 1
