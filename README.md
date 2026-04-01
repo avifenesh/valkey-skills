@@ -26,8 +26,16 @@ Gives AI coding assistants (Claude Code, Cursor, Codex, Copilot, Gemini CLI, Ope
 
 ### Codex CLI
 
+Codex discovers `.codex-plugin/plugin.json` automatically when the repo is cloned:
+
 ```bash
 git clone https://github.com/avifenesh/valkey-skills.git
+codex --plugin-dir ./valkey-skills
+```
+
+Or copy skills directly:
+
+```bash
 cp -r valkey-skills/skills/* ~/.codex/skills/
 ```
 
