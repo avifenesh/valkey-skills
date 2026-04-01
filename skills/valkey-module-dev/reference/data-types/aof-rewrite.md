@@ -90,7 +90,7 @@ void MyType_AofRewrite(ValkeyModuleIO *aof, ValkeyModuleString *key, void *value
 }
 ```
 
-This is the pattern used by `hellotype` in the Valkey source:
+The `hellotype` module in the Valkey source uses this pattern:
 
 ```c
 void HelloTypeAofRewrite(ValkeyModuleIO *aof, ValkeyModuleString *key, void *value) {

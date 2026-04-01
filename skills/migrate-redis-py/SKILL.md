@@ -69,7 +69,7 @@ client.ping()
 
 ## Incremental Migration Strategy
 
-No drop-in replacement or compatibility layer exists for Python. The recommended approach:
+No drop-in replacement or compatibility layer exists for Python. Migration approach:
 
 1. Install `valkey-glide` alongside `redis-py`
 2. Create a wrapper/adapter that abstracts the client interface
@@ -93,8 +93,8 @@ No drop-in replacement or compatibility layer exists for Python. The recommended
 
 ## Gotchas
 
-1. **Bytes everywhere.** GLIDE has no decode_responses option. Every string value comes back as bytes. Call .decode() yourself.
-2. **List arguments.** Commands like delete, exists, lpush, sadd take a list, not varargs. Forgetting brackets is a common first-day mistake.
+1. **Bytes everywhere.** GLIDE has no decode_responses option. All string values return as bytes. Call .decode() at each read site.
+2. **List arguments.** Commands like delete, exists, lpush, sadd take a list, not varargs.
 3. **No connection pool tuning.** GLIDE uses a single multiplexed connection per node.
 4. **Async by default.** The primary API is async. The sync wrapper (glide_sync) is available from GLIDE 2.1.
 5. **Timeout units.** redis-py uses seconds (float). GLIDE uses milliseconds (int). Default is 250ms.

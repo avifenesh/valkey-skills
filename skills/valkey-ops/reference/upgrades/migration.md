@@ -31,7 +31,7 @@ Source: `src/rdb.h` reserves versions 12-79 as `RDB_FOREIGN_VERSION_MIN` to `RDB
 |------|--------|
 | Binary names | `redis-server` -> `valkey-server`, `redis-cli` -> `valkey-cli` |
 | Config file | `redis.conf` -> `valkey.conf` (format identical) |
-| Data directory | Typically `/var/lib/redis` -> `/var/lib/valkey` |
+| Data directory | `/var/lib/redis` -> `/var/lib/valkey` |
 | Service name | `redis.service` -> `valkey.service` |
 | Default user | `redis` -> `valkey` |
 | Server identity | Reports as "valkey" in `INFO`, `HELLO`, `LOLWUT` |
@@ -60,7 +60,7 @@ When enabled, Valkey reports as "redis" and shows `REDIS_VERSION` (7.2.4) in `HE
 
 Source: verified across `src/networking.c`, `src/lolwut.c`, `src/debug.c`, `src/server.c`. The `REDIS_VERSION` is "7.2.4" (`src/version.h`).
 
-This is a runtime-modifiable config - no restart needed.
+Runtime-modifiable - no restart needed.
 
 ## Method 1: Binary Replacement (Downtime Required)
 
@@ -193,7 +193,7 @@ These cannot be changed at runtime (verified from `src/config.c` IMMUTABLE_CONFI
 | `pidfile` | PID file path |
 | `disable-thp` | THP disabling |
 
-Note: `bind` and `port` ARE modifiable at runtime despite some documentation stating otherwise. Verified from source: both use MODIFIABLE_CONFIG flag.
+`bind` and `port` ARE modifiable at runtime despite some documentation stating otherwise. Verified from source: both use MODIFIABLE_CONFIG flag.
 
 ### Runtime-Modifiable Configs (Common Tuning)
 

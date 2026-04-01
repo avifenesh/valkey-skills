@@ -13,7 +13,7 @@ Use when implementing compare-and-swap patterns, safe distributed lock release, 
 
 ## SET IFEQ - Conditional Update (Valkey 8.1+)
 
-Atomically update a key's value only if the current value matches an expected value. This eliminates the GET-compare-SET round-trip pattern that was previously only achievable with Lua scripts.
+Atomically update a key's value only if the current value matches an expected value. Eliminates the GET-compare-SET round-trip previously requiring Lua scripts.
 
 ### Syntax
 
@@ -77,7 +77,7 @@ SET mykey new_value IFEQ old_value
 
 ## DELIFEQ - Conditional Delete (Valkey 9.0+)
 
-Atomically delete a key only if its current value matches the expected value. This replaces the Lua script pattern that was required for safe distributed lock release.
+Atomically delete a key only if its current value matches. Replaces the Lua script required for safe distributed lock release.
 
 ### Syntax
 
@@ -102,7 +102,7 @@ DELIFEQ mylock "wrong_owner"     # Returns 0 (not deleted - key already gone)
 
 ### Primary Use Case: Safe Lock Release
 
-The most important use of DELIFEQ is releasing distributed locks safely. You must only release a lock you own - otherwise you could release another process's lock.
+The primary use of DELIFEQ is safe lock release. Only release a lock you own - otherwise you release another process's lock.
 
 ```
 # Acquire lock (SET NX with TTL)
@@ -126,7 +126,7 @@ else return 0 end" 1 lock:resource my_random_token
 DELIFEQ lock:resource my_random_token
 ```
 
-The native command is simpler, faster (no Lua overhead), and easier to audit.
+Simpler, faster (no Lua overhead), and easier to audit.
 
 ---
 
@@ -139,7 +139,7 @@ The native command is simpler, faster (no Lua overhead), and easier to audit.
 
 ### DELIFEQ as the Canonical Redlock Unlock
 
-DELIFEQ is the native replacement for the canonical Redlock unlock pattern. In Redlock, each instance must be unlocked by checking that the random value matches. Before 9.0, this required sending a Lua script to each of the N Redlock instances. With DELIFEQ, a single atomic command replaces the script on each instance:
+DELIFEQ is the native replacement for the canonical Redlock unlock pattern. Before 9.0, unlocking required a Lua script on each of N instances. DELIFEQ replaces the script with a single atomic command:
 
 ```
 # Release Redlock on all 5 instances
@@ -154,7 +154,7 @@ DELIFEQ lock:resource <random_value>    # Instance 5
 
 ## Migration from Lua Scripts
 
-If you have existing Lua scripts implementing these patterns, you can replace them with native commands:
+Replace existing Lua scripts with native commands:
 
 | Pattern | Pre-8.1 (Lua) | Valkey 8.1+/9.0+ |
 |---------|---------------|-------------------|

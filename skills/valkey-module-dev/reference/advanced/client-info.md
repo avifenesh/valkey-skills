@@ -109,7 +109,7 @@ Flags returned in `ValkeyModuleClientInfo.flags`:
 | `VALKEYMODULE_CLIENTINFO_FLAG_EVER_AUTHENTICATED` | 1<<12 | Client was authenticated at some point |
 | `VALKEYMODULE_CLIENTINFO_FLAG_FAKE` | 1<<13 | Fake client internal to Valkey |
 
-Note: Flags from `VALKEYMODULE_CLIENTINFO_FLAG_PRIMARY` onward were added in Valkey 9.1.
+Flags from `VALKEYMODULE_CLIENTINFO_FLAG_PRIMARY` onward were added in Valkey 9.1.
 
 ```c
 ValkeyModuleClientInfo ci = VALKEYMODULE_CLIENTINFO_INITIALIZER_V1;

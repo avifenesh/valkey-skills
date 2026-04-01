@@ -16,7 +16,7 @@ Use when migrating from Redis to Valkey, evaluating compatibility of existing ap
 
 ## Compatibility Baseline
 
-Valkey is compatible with Redis OSS versions 2.x through 7.2.x. This means:
+Valkey is compatible with Redis OSS versions 2.x through 7.2.x:
 
 - **Protocol**: RESP2 and RESP3 wire formats are identical
 - **Commands**: All Redis OSS commands through 7.2 work unchanged
@@ -43,7 +43,7 @@ Valkey is compatible with Redis OSS versions 2.x through 7.2.x. This means:
 
 ### Extended Redis Compatibility Mode
 
-For clients that check the server identity string, Valkey provides a compatibility mode:
+For clients that check the server identity string:
 
 ```
 CONFIG SET extended-redis-compatibility yes
@@ -204,7 +204,7 @@ For new projects or when upgrading, consider Valkey GLIDE - see clients overview
 
 ## Application Code Changes
 
-In most cases, no application code changes are needed. The two exceptions:
+No application code changes needed in most cases. Two exceptions:
 
 1. **Connection strings** - update hostname/port if Valkey runs on different infrastructure
 2. **Server identity checks** - if your code inspects `INFO` output for "redis", either update the check or enable `extended-redis-compatibility`

@@ -93,7 +93,7 @@ typedef struct aeTimeEvent {
 } aeTimeEvent;
 ```
 
-Time events are stored in an unsorted doubly-linked list. Finding the earliest timer is O(N), but Valkey typically has only 2-3 time events (serverCron, clientsTimeProc), so this is not a bottleneck.
+Time events are stored in an unsorted doubly-linked list. Finding the earliest timer is O(N), but Valkey has only 2-3 time events (serverCron, clientsTimeProc), so this is not a bottleneck.
 
 ## Key Functions
 

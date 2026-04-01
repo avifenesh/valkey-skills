@@ -17,12 +17,12 @@ Use when choosing a persistence strategy for your application, understanding dur
 
 ## What Application Developers Need to Know
 
-Persistence is primarily an operational concern, but it affects your application in two ways:
+Persistence is an operational concern, but affects applications in two ways:
 
 1. **Durability guarantees** - how much data you can lose on a crash
 2. **Latency impact** - how persistence operations affect request latency
 
-You do not need to configure persistence yourself (that is your ops team's job), but you need to understand the trade-offs to set correct expectations in your application.
+Configuration is the ops team's job, but developers need to understand the trade-offs.
 
 ---
 
@@ -44,7 +44,7 @@ RDB creates a compact binary snapshot of the entire dataset at intervals (e.g., 
 
 ### What Developers Should Know
 
-**Durability**: Data written between snapshots is lost on crash. If RDB saves every 5 minutes, you can lose up to 5 minutes of writes.
+**Durability**: Data written between snapshots is lost on crash. RDB saving every 5 minutes means up to 5 minutes of writes can be lost.
 
 **Latency**: RDB uses `fork()` to create a child process for the snapshot. The fork itself is fast (1-2 ms per GB of dataset), but:
 
@@ -76,9 +76,9 @@ The fsync policy controls how often data is flushed from OS buffers to disk:
 | `always` | Fsync after every write command | Near zero | Every write waits for disk |
 | `no` | OS decides when to flush | Up to 30 seconds | No impact |
 
-**The `everysec` fine print**: If a background fsync takes longer than 1 second (e.g., disk contention during AOF rewrite), the main thread delays writes for up to 1 additional second. Worst case is 2 seconds of data loss, not 1 second as commonly assumed.
+**`everysec` fine print**: If a background fsync takes longer than 1 second (e.g., disk contention during AOF rewrite), the main thread delays writes for up to 1 additional second. Worst case is 2 seconds of data loss, not 1 second.
 
-**`always` mode**: Provides near-zero data loss but significantly reduces write throughput. On rotational disk, expect ~1000 writes/second. SSDs improve this substantially. Only use when your application truly cannot tolerate any data loss.
+**`always` mode**: Near-zero data loss but significantly reduces write throughput. On rotational disk, expect ~1000 writes/second. SSDs improve this substantially. Only use when the application cannot tolerate any data loss.
 
 ### When to Use AOF
 
@@ -132,7 +132,7 @@ After fork, the child shares memory pages with the parent using copy-on-write (C
 - **Moderate writes**: 10-30% additional memory
 - **Heavy writes**: Up to 2x memory usage
 
-**Your application should know**: If your workload is write-heavy, ensure your deployment has memory headroom for COW. Otherwise, the OS may kill the Valkey process or the server may reject writes.
+For write-heavy workloads, ensure the deployment has memory headroom for COW. Otherwise, the OS may kill the Valkey process or the server may reject writes.
 
 ### Fsync Latency
 
@@ -152,7 +152,7 @@ WAIT 1 5000    # Wait for 1 replica to acknowledge, timeout 5 seconds
 # Returns: number of replicas that acknowledged
 ```
 
-`WAIT` does not guarantee persistence to disk on replicas - it guarantees the write reached the replica's memory. Combine with AOF on replicas for full durability.
+`WAIT` guarantees the write reached replica memory, not disk. Combine with AOF on replicas for full durability.
 
 ### Pattern: Two-Tier Durability
 
@@ -164,15 +164,15 @@ Use different TTLs and persistence strategies for different data types in the sa
 
 ### Pattern: Valkey as Cache with Database Backing
 
-The safest approach for non-ephemeral data: treat Valkey as a read-through/write-through cache backed by a durable database. On cache miss, read from the database. On write, write to both the database and Valkey.
+Treat Valkey as a read-through/write-through cache backed by a durable database. On cache miss, read from the database. On write, write to both.
 
-This way, persistence configuration only affects restart time - not data safety.
+Persistence configuration then only affects restart time - not data safety.
 
 ---
 
 ## What to Ask Your Ops Team
 
-If you are an application developer and someone else manages Valkey:
+If someone else manages Valkey, ask:
 
 1. **What persistence is configured?** (RDB, AOF, hybrid, none)
 2. **What is the fsync policy?** (`everysec` vs `always`)

@@ -109,7 +109,7 @@ results = await client.exec(tx, raise_on_error=True)
 
 ### Protobuf Dependency Conflict
 
-The async package requires `protobuf>=3.20`, which can conflict with other packages (gRPC stubs, etc.). The sync package (`valkey-glide-sync`) also requires `>=3.20` but has fewer transitive conflicts. Pin protobuf versions carefully in your requirements.
+The async package requires `protobuf>=3.20`, which can conflict with other packages (gRPC stubs, etc.). The sync package (`valkey-glide-sync`) also requires `>=3.20` but has fewer transitive conflicts. Pin protobuf versions carefully.
 
 ### Alpine Linux Not Supported
 
@@ -121,4 +121,4 @@ GLIDE runs `INFO REPLICATION`, `CLIENT SETINFO`, and `CLIENT SETNAME` during con
 
 ### Trio and anyio Support
 
-GLIDE transparently supports asyncio, anyio, and trio as of GLIDE 2.0.1. No special configuration needed if your application uses trio.
+GLIDE transparently supports asyncio, anyio, and trio as of GLIDE 2.0.1. No special configuration needed.

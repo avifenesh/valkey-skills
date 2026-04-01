@@ -27,7 +27,7 @@ Two approaches exist: the traditional key-by-key method (all versions) and atomi
 
 ## Traditional Resharding (Key-by-Key)
 
-An external tool (typically `valkey-cli --cluster reshard`) orchestrates key migration one slot at a time:
+An external tool (`valkey-cli --cluster reshard`) orchestrates key migration one slot at a time:
 
 ```
 1. Target:  CLUSTER SETSLOT <slot> IMPORTING <source-id>

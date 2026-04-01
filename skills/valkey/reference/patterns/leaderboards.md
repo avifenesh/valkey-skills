@@ -16,7 +16,7 @@ Use when building real-time ranking systems, game leaderboards, top-N lists, or 
 
 ## Why Sorted Sets
 
-Sorted sets are purpose-built for leaderboards. Every member has a numeric score, and the set is always maintained in sorted order. All ranking operations are O(log N) - no scanning, no sorting at query time.
+Sorted sets are purpose-built for leaderboards. Every member has a numeric score, the set stays sorted, and all ranking operations are O(log N) - no scanning or sorting at query time.
 
 | Operation | Command | Complexity |
 |-----------|---------|------------|
@@ -127,7 +127,7 @@ class Leaderboard:
 
 ## Paginated Results
 
-For leaderboards with thousands of players, use `ZREVRANGE` with offset and count:
+Use `ZREVRANGE` with offset and count for pagination:
 
 ```
 # Page 1 (ranks 1-20)
@@ -163,7 +163,7 @@ ZREVRANGE leaderboard 45 55 WITHSCORES
 
 ## Composite Scoring
 
-When multiple factors determine ranking (e.g., score + time), encode them into a single score value.
+When multiple factors determine ranking (score + time), encode them into a single score value.
 
 ### Score + Tiebreaker by Time
 
@@ -232,7 +232,7 @@ ZADD leaderboard:rolling <score> "player:alice:<timestamp>"
 ZREMRANGEBYSCORE leaderboard:rolling -inf <24h_ago_timestamp>
 ```
 
-**Warning**: This approach requires unique members per scoring event. Deduplication is the caller's responsibility.
+This approach requires unique members per scoring event. Deduplication is the caller's responsibility.
 
 ---
 
@@ -263,13 +263,13 @@ ZUNIONSTORE leaderboard:weekly:combined 7 \
 
 ## Scaling Considerations
 
-**Memory**: Each sorted set member uses ~70 bytes of overhead plus the member string and score. A leaderboard with 1 million players uses ~100 MB.
+**Memory**: Each sorted set member uses ~70 bytes overhead plus the member string and score. 1 million players = ~100 MB.
 
-**Operations**: All rank operations are O(log N). Even with 10 million players, `ZREVRANK` takes microseconds.
+**Operations**: All rank operations are O(log N). With 10 million players, `ZREVRANK` takes microseconds.
 
-**Big leaderboards (10M+ members)**: `ZREVRANGE` with large ranges can be slow. Use pagination with small page sizes (20-50 entries).
+**Big leaderboards (10M+ members)**: `ZREVRANGE` with large ranges can be slow. Paginate with small page sizes (20-50 entries).
 
-**Cluster mode**: A single sorted set lives on one shard. For very large leaderboards (100M+ members), consider sharding by score range or using multiple sorted sets with `ZUNIONSTORE` for aggregation.
+**Cluster mode**: A single sorted set lives on one shard. For 100M+ members, shard by score range or use multiple sorted sets with `ZUNIONSTORE` for aggregation.
 
 ---
 

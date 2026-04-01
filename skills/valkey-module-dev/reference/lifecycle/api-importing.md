@@ -152,7 +152,7 @@ When a module is unloaded, two cleanup functions run:
 
 `moduleUnregisterUsedAPI(module)` - removes the module from the `usedby` list of every provider module whose APIs it was consuming. Returns the count of provider modules. Source: `src/module.c` (lines 11160-11175).
 
-Important: the server does not notify consumer modules when a provider is unloaded. If a consumer cached a function pointer from `GetSharedAPI`, that pointer becomes dangling after the provider unloads. The dependency tracking prevents this scenario by blocking the provider's unload, but if dependencies are forcibly broken, the consumer should handle NULL checks.
+The server does not notify consumer modules when a provider is unloaded. If a consumer cached a function pointer from `GetSharedAPI`, that pointer becomes dangling after the provider unloads. The dependency tracking prevents this scenario by blocking the provider's unload, but if dependencies are forcibly broken, the consumer should handle NULL checks.
 
 ## Complete Example
 

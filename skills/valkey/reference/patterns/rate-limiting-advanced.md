@@ -17,7 +17,7 @@ Allows bursts up to a maximum while enforcing a sustained rate. Uses a Lua scrip
 
 ### How It Works
 
-A bucket holds tokens (up to a max capacity). Each request consumes one token. Tokens are added at a fixed refill rate. If the bucket is empty, the request is rejected.
+A bucket holds tokens up to a max capacity. Each request consumes one token. Tokens refill at a fixed rate. Empty bucket = rejected request.
 
 ### Implementation
 
@@ -85,7 +85,7 @@ Use hash field expiration to track rate limits per endpoint (or per action) with
 
 ### How It Works
 
-Store one hash per user. Each field represents an endpoint or action, and its value is the request count. Set a per-field TTL using HSETEX so the counter auto-expires at the end of the window.
+One hash per user. Each field represents an endpoint/action with a request count value. Per-field TTL via HSETEX auto-expires counters at window end.
 
 ### Implementation
 

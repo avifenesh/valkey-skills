@@ -29,7 +29,7 @@ bool committed = await tran.ExecuteAsync();
 // Atomic batch = transaction, non-atomic batch = pipeline
 ```
 
-Note: The C# Batch API is being developed. Check the latest GLIDE C# release notes for current transaction support.
+The C# Batch API is in development. Check the latest GLIDE C# release notes for current transaction support.
 
 ---
 
@@ -87,7 +87,7 @@ Use a dedicated client for subscriptions - a subscribing client enters a special
 
 **GLIDE** uses plain strings for keys and values. Binary data is handled through `GlideString` where needed.
 
-This means migration typically simplifies code - fewer explicit conversions and wrapper types.
+Migration simplifies code - fewer explicit conversions and wrapper types.
 
 ---
 
@@ -98,7 +98,7 @@ This means migration typically simplifies code - fewer explicit conversions and 
 db.StringSet("key", "value", flags: CommandFlags.FireAndForget);
 ```
 
-**GLIDE** does not support fire-and-forget. Every command returns a result that should be awaited. If you used fire-and-forget for performance, consider batching commands instead - non-atomic batches provide similar throughput benefits.
+**GLIDE** does not support fire-and-forget. Every command returns a result that must be awaited. For equivalent throughput, use non-atomic batches.
 
 ---
 
@@ -106,10 +106,10 @@ db.StringSet("key", "value", flags: CommandFlags.FireAndForget);
 
 The C# GLIDE client intentionally mirrors StackExchange.Redis naming conventions (`ConnectionMultiplexer`, `StringSetAsync`, `StringGetAsync`) to ease migration. The README states: "API Compatibility: Compatible with StackExchange.Redis APIs to ease migration."
 
-A significant community discussion debated how closely GLIDE should match existing client APIs. Key positions from that debate:
+Key positions from the community discussion on API compatibility:
 
 - **Pro-compatibility** (from AWS/GCP stakeholders): Reducing migration effort drives adoption.
-- **Anti-compatibility** (from core architect): GLIDE's thin-binding architecture means foreign interfaces would break the design. Recommended dedicated **Adapters** that translate foreign interfaces rather than modifying GLIDE core.
+- **Anti-compatibility** (from core architect): GLIDE's thin-binding architecture means foreign interfaces would break the design. Dedicated **Adapters** that translate foreign interfaces are preferred over modifying GLIDE core.
 - **Tooling approach**: A .NET Roslyn-based migration tool could automate code transformation.
 
 The client has been moved to a separate repository: https://github.com/valkey-io/valkey-glide-csharp

@@ -114,7 +114,7 @@ func (client *ClusterClient) ExecWithOptions(
 ) ([]any, error)
 ```
 
-Note: pass the batch by value (`*tx` not `tx`) to `Exec`.
+Pass the batch by value (`*tx` not `tx`) to `Exec`.
 
 ## Error Handling
 

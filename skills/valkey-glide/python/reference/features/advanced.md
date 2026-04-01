@@ -89,7 +89,7 @@ cursor = ClusterScanCursor()
 cursor, keys = await client.scan(cursor, allow_non_covered_slots=True)
 ```
 
-Important: use the returned cursor for the next iteration - reusing a cursor produces duplicate or unexpected results.
+Always use the returned cursor for the next iteration - reusing a cursor produces duplicate or unexpected results.
 
 ### Standalone SCAN
 

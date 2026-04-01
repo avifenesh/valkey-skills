@@ -7,8 +7,6 @@ argument-hint: "[API or config question]"
 
 # Valkey GLIDE Java Client
 
-Self-contained guide for building Java/JVM applications with Valkey GLIDE.
-
 ## Routing
 
 | Question | Reference |

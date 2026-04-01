@@ -162,4 +162,4 @@ const client = await GlideClusterClient.createClient({
 });
 ```
 
-GLIDE auto-discovers the full topology from seed nodes. No natMap or manual slot configuration needed.
+GLIDE auto-discovers the full topology from seed nodes. No natMap or manual slot configuration.

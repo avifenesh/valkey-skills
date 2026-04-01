@@ -134,7 +134,7 @@ typedef void (*ValkeyModulePostNotificationJobFunc)(ValkeyModuleCtx *ctx,
 | `VALKEYMODULE_OK` | Job scheduled successfully |
 | `VALKEYMODULE_ERR` | Called during AOF/RDB loading, or on a read-only replica |
 
-**Important notes:**
+**Constraints:**
 
 - Jobs may trigger further keyspace notifications, which may register more jobs. The server makes no attempt to detect infinite loops - this is a logical bug the module must prevent.
 - The `free_privdata` callback can be NULL if no cleanup is needed.
@@ -149,7 +149,7 @@ ValkeyModule_SetModuleOptions(ctx,
     VALKEYMODULE_OPTIONS_ALLOW_NESTED_KEYSPACE_NOTIFICATIONS);
 ```
 
-This enables the same subscriber to be notified about events triggered by its own actions. Use with care to avoid infinite recursion.
+The same subscriber can then be notified about events triggered by its own actions. The module must prevent infinite recursion.
 
 ## Usage Example
 

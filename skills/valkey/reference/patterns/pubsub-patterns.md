@@ -15,7 +15,7 @@ Use when implementing real-time messaging, event broadcasting, or notification s
 
 ## Fan-Out Messaging
 
-The classic pub/sub pattern: one publisher sends a message, and all subscribers on that channel receive it immediately.
+One publisher sends a message, all subscribers on that channel receive it immediately.
 
 ### Basic Pattern
 
@@ -30,7 +30,7 @@ PUBLISH notifications:user:1000 '{"type":"message","from":"user:2000","text":"He
 PSUBSCRIBE notifications:user:*
 ```
 
-**Critical**: Pub/sub is fire-and-forget (at-most-once delivery). Messages are lost if no subscriber is listening when the message is published. For durable messaging, use Streams instead.
+Pub/sub is fire-and-forget (at-most-once delivery). Messages are lost if no subscriber is listening. For durable messaging, use Streams.
 
 ### Code Examples
 
@@ -72,17 +72,17 @@ await redis.publish(
 
 ### Important Rules
 
-- **Subscriber connections are monopolized** - they can only receive messages, not run regular commands. Use a separate connection for subscribing.
-- **No message buffering** - if a subscriber disconnects and reconnects, it misses all messages published during the gap.
-- **Pattern subscriptions are expensive** - each published message is matched against all patterns (O(N) where N = total pattern subscriptions across all clients). Prefer exact `SUBSCRIBE` when possible.
+- **Subscriber connections are monopolized** - cannot run regular commands. Use a separate connection.
+- **No message buffering** - disconnected subscribers miss all messages published during the gap.
+- **Pattern subscriptions are expensive** - each published message is matched against all patterns (O(N) across all clients). Prefer exact `SUBSCRIBE` when possible.
 
 ---
 
 ## Sharded Pub/Sub (Cluster Mode)
 
-Standard `PUBLISH` broadcasts messages to ALL cluster nodes, regardless of which node owns the channel. This wastes network bandwidth in large clusters.
+Standard `PUBLISH` broadcasts to ALL cluster nodes regardless of which node owns the channel, wasting bandwidth in large clusters.
 
-Sharded pub/sub (`SPUBLISH`/`SSUBSCRIBE`) routes messages through hash slots, so they only reach the node that owns the channel's slot.
+Sharded pub/sub (`SPUBLISH`/`SSUBSCRIBE`) routes messages through hash slots - only the node owning the channel's slot is involved.
 
 ```
 # Sharded subscriber
@@ -121,7 +121,7 @@ cluster-allow-pubsubshard-when-down yes    # Default
 
 ## Keyspace Notifications
 
-Valkey can publish events when keys are created, modified, deleted, expired, or evicted. This enables event-driven architectures without explicit publishing.
+Valkey publishes events when keys are created, modified, deleted, expired, or evicted - enabling event-driven architectures without explicit publishing.
 
 ### Enable Notifications
 

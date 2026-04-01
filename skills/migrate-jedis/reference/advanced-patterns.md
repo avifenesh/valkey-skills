@@ -120,4 +120,4 @@ Use a dedicated client for subscriptions - a subscribing client enters a special
 
 ## Spring Data Valkey as an Alternative
 
-If your application uses Spring Data Redis with Jedis, consider Spring Data Valkey instead of a direct migration. Set `spring.data.valkey.client-type=valkeyglide` in your properties. The migration involves a package rename (`redis` to `valkey`) and class rename (`RedisTemplate` to `ValkeyTemplate`). An automated `sed` script is provided in the Spring Data Valkey MIGRATION.md.
+For Spring Data Redis with Jedis, Spring Data Valkey is an alternative to direct migration. Set `spring.data.valkey.client-type=valkeyglide` in properties. The migration involves a package rename (`redis` to `valkey`) and class rename (`RedisTemplate` to `ValkeyTemplate`). An automated `sed` script is provided in the Spring Data Valkey MIGRATION.md.

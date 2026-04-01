@@ -30,7 +30,7 @@ Never use `KEYS pattern` in production - use SCAN instead.
 `EVALSHA sha1 numkeys key [key ...] arg [arg ...]`
 `SCRIPT LOAD script`, `SCRIPT EXISTS sha1`, `SCRIPT FLUSH`
 
-Note: Many patterns that previously required Lua (compare-and-swap, safe lock release) now have native commands in Valkey - SET IFEQ and DELIFEQ.
+Many patterns that previously required Lua (compare-and-swap, safe lock release) now have native commands in Valkey - SET IFEQ and DELIFEQ.
 
 ## Functions (Valkey 7.0+)
 `FUNCTION LOAD [REPLACE] function-code`
@@ -41,7 +41,7 @@ Note: Many patterns that previously required Lua (compare-and-swap, safe lock re
 ## Transactions
 `MULTI`, `EXEC`, `DISCARD`, `WATCH key [key ...]`, `UNWATCH`
 
-Note: For simple compare-and-swap, prefer SET IFEQ over WATCH/MULTI/EXEC.
+For simple compare-and-swap, prefer SET IFEQ over WATCH/MULTI/EXEC.
 
 ## Replication and Durability
 `WAIT numreplicas timeout`, `WAITAOF numlocal numreplicas timeout`

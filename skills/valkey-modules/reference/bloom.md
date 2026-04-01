@@ -62,7 +62,7 @@ valkey-bloom adds Bloom filters as a native data type to Valkey. A Bloom filter 
 
 ### Scalable (Default)
 
-When a scalable Bloom filter reaches its initial capacity, it creates additional sub-filters to accommodate more items. Each new sub-filter has a tighter error rate to maintain the overall false positive probability.
+When a scalable Bloom filter reaches its initial capacity, it creates additional sub-filters. Each new sub-filter has a tighter error rate to maintain the overall false positive probability.
 
 ```
 BF.RESERVE myfilter 0.01 1000
@@ -79,7 +79,7 @@ BF.RESERVE myfilter 0.01 1000 EXPANSION 4
 
 ### Non-Scalable
 
-A non-scalable filter has a fixed capacity. Attempts to add items beyond the capacity will fail. Non-scalable filters use less memory and have more predictable performance since there is only one sub-filter to check.
+A non-scalable filter has a fixed capacity. Adds beyond capacity fail. Non-scalable filters use less memory and have more predictable performance - only one sub-filter to check.
 
 ```
 BF.RESERVE myfilter 0.01 1000 NONSCALING
@@ -149,7 +149,7 @@ See the **valkey-glide** skill for more on `custom_command` usage patterns.
 
 ### Deduplication
 
-Prevent processing the same item twice in a pipeline. Before processing, check `BF.EXISTS` - if the item is absent, it is guaranteed to be new.
+Prevent processing the same item twice. Check `BF.EXISTS` before processing - if absent, the item is guaranteed new.
 
 ```
 # Web crawler deduplication
@@ -160,7 +160,7 @@ BF.ADD crawled_urls "https://example.com/new-page"
 
 ### Membership Testing at Scale
 
-Check if a username, email, or ID exists in a large dataset without querying a database. The Bloom filter uses a fraction of the memory that a Set would require.
+Check if a username, email, or ID exists in a large dataset without querying a database. Bloom filters use a fraction of the memory a Set would require.
 
 ```
 # Username availability pre-check
@@ -171,11 +171,11 @@ BF.EXISTS taken_usernames "alice_new"
 
 ### Cache Warming Prevention
 
-Track which keys have been requested. On a cache miss, check the Bloom filter before hitting the origin database - if the key was never seen before, it likely does not exist in the database either.
+Track requested keys. On a cache miss, check the Bloom filter before hitting the origin database - if the key was never seen, it likely does not exist in the database either.
 
 ### Rate Limiting Approximation
 
-Track unique visitors or events within a time window using a Bloom filter per window. More memory-efficient than HyperLogLog when you also need individual membership checks.
+Track unique visitors or events within a time window using a Bloom filter per window. More memory-efficient than HyperLogLog when individual membership checks are also needed.
 
 ## Error Rate and Memory
 
@@ -199,5 +199,5 @@ Compare with a Valkey Set storing 1 million 20-byte strings: approximately 50-60
 
 ## Client Library Compatibility
 
-valkey-bloom is API compatible with existing Redis bloom filter client libraries. Works with valkey-py, valkey-java, valkey-go, and their Redis equivalents (redis-py, Jedis, go-redis) without code changes.
+API compatible with existing Redis bloom filter client libraries. Works with valkey-py, valkey-java, valkey-go, and their Redis equivalents (redis-py, Jedis, go-redis) without code changes.
 

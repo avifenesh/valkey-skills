@@ -12,11 +12,11 @@ Use when implementing API rate limiting with fixed windows, sliding window count
 
 ## Fixed Window Counter
 
-The simplest rate limiting approach. Count requests in a fixed time window using `INCR` and `EXPIRE`.
+Count requests in a fixed time window using `INCR` and `EXPIRE`.
 
 ### How It Works
 
-Each time window (e.g., each minute) gets a counter key. Increment on each request. Reject when the counter exceeds the limit.
+Each time window gets a counter key. Increment on each request. Reject when the counter exceeds the limit.
 
 ### Implementation
 
@@ -70,7 +70,7 @@ async def check_rate_limit(user_id: str, limit: int, window_secs: int) -> bool:
 
 ## Sliding Window Counter
 
-Smooths the boundary problem by weighting the previous window's count.
+Weights the previous window's count to smooth the boundary problem.
 
 ### How It Works
 
@@ -132,7 +132,7 @@ Exact sliding window using a sorted set to track individual request timestamps.
 
 ### How It Works
 
-Store each request timestamp as a sorted set member. Remove entries older than the window. Count remaining entries.
+Store each request timestamp as a sorted set member, remove entries outside the window, count remaining.
 
 ### Implementation
 

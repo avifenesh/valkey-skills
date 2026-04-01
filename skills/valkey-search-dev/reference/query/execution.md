@@ -22,7 +22,7 @@ Source: `src/query/search.h`, `src/query/search.cc`, `src/query/planner.h`, `src
 
 ## Execution Overview
 
-Search execution starts on the main thread (command handler), dispatches to a reader thread pool for the actual search, and may return to the main thread for content resolution. The key tension is between background parallelism and main-thread safety - index data can be read on background threads, but fetching document content from Valkey's keyspace requires the main thread.
+Search execution starts on the main thread (command handler), dispatches to a reader thread pool for the actual search, and may return to the main thread for content resolution. Index data can be read on background threads, but fetching document content from Valkey's keyspace requires the main thread.
 
 The `SearchParameters` struct (in `search.h`) carries all state through the pipeline: parsed filter, index schema reference, limit/offset, timeout, cancellation token, and the eventual `SearchResult`.
 
@@ -194,7 +194,7 @@ Between the background search and main-thread content fetch, mutations may have 
 3. If contention is detected, the content fetch may need to re-validate results
 4. `content_resolution_blocked_` tracks how many times a query was blocked during this process
 
-This ensures that the final response reflects a consistent snapshot - if a document was modified after the search but before content fetch, the system detects and handles it.
+The final response reflects a consistent snapshot - if a document was modified after the search but before content fetch, the system detects and handles it.
 
 ## Result Trimming and Serialization
 

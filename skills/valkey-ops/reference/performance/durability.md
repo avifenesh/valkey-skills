@@ -66,7 +66,7 @@ appendonly yes
 appendfsync no
 ```
 
-OS decides when to flush to disk (typically every 30 seconds on Linux).
+OS decides when to flush to disk (every ~30 seconds on Linux).
 Low latency but potential for significant data loss on crash.
 
 ### 5. RDB only

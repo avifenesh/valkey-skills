@@ -49,7 +49,7 @@ Two-character tokens (DOTDOT, EQ, NE, GE, LE, AND, OR) are recognized by `peekTo
 
 ## Selector Class
 
-`Selector` (selector.h:145-368) is the JSONPath parser and evaluator. It combines parsing and evaluation in a single pass - there is no intermediate AST. The class name reflects that for READ mode it selects matching values, and for WRITE mode it selects values to update plus locations to insert.
+`Selector` (selector.h:145-368) is the JSONPath parser and evaluator. It combines parsing and evaluation in a single pass - there is no intermediate AST. In READ mode, it selects matching values. In WRITE mode, it selects values to update plus locations to insert.
 
 Constructor takes an optional `force_v2_path_behavior` flag. Key members:
 

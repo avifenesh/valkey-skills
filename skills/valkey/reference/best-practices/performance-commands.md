@@ -11,7 +11,7 @@ Use when choosing between UNLINK and DEL, replacing KEYS with SCAN, or selecting
 
 ## UNLINK vs DEL
 
-`DEL` is synchronous by default - it frees memory on the main thread. For large keys (hashes with millions of fields, sorted sets with millions of members), this blocks all other clients for hundreds of milliseconds.
+`DEL` is synchronous by default - frees memory on the main thread. For large keys (hashes or sorted sets with millions of members), this blocks all clients for hundreds of milliseconds.
 
 `UNLINK` removes the key reference in O(1) on the main thread and queues memory reclamation to a background thread.
 
@@ -28,7 +28,7 @@ DEL small_counter
 1. It communicates intent clearly in your code
 2. It protects against config changes - if someone sets `lazyfree-lazy-user-del no`, `UNLINK` calls remain non-blocking while `DEL` calls become blocking
 
-**When DEL is acceptable**: Small keys (strings, hashes with a few fields). The overhead difference is negligible for keys under a few hundred elements.
+DEL is acceptable for small keys (strings, hashes with a few fields). Overhead difference is negligible under a few hundred elements.
 
 ### Code Examples
 
@@ -56,9 +56,9 @@ await client.unlink('key1', 'key2', 'key3')
 
 ## SCAN vs KEYS
 
-`KEYS pattern` blocks the server while scanning the entire keyspace. With millions of keys, this freezes all clients for seconds. Never use `KEYS` in production.
+`KEYS pattern` blocks the server scanning the entire keyspace. Millions of keys = multi-second freeze. Never use in production.
 
-`SCAN cursor [MATCH pattern] [COUNT hint]` iterates incrementally in small batches, allowing the server to process other commands between iterations.
+`SCAN cursor [MATCH pattern] [COUNT hint]` iterates in small batches, allowing the server to process other commands between iterations.
 
 ```
 # NEVER in production:

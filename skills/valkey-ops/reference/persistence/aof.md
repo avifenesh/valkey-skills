@@ -83,7 +83,7 @@ All defaults verified against `src/config.c` in the Valkey source tree.
 | `aof-rewrite-incremental-fsync` | `yes` | Yes | Fsync every 32MB during rewrite |
 | `aof-timestamp-enabled` | `no` | Yes | Add timestamps to AOF entries |
 
-Important: `appendfilename` and `appenddirname` are IMMUTABLE - they cannot be changed at runtime. Plan these at deployment time.
+`appendfilename` and `appenddirname` are IMMUTABLE - they cannot be changed at runtime. Plan these at deployment time.
 
 ### Fsync Policies
 
@@ -108,7 +108,7 @@ Recommendation: `everysec` balances durability and performance for most workload
 ### no-appendfsync-on-rewrite
 
 When set to `yes`, Valkey skips fsync during AOF rewrite or RDB save to
-reduce disk contention. This means durability drops to `appendfsync no`
+reduce disk contention. Durability drops to `appendfsync no`
 during rewrites - up to 30 seconds of data loss in the worst scenario
 (with default Linux settings). The default `no` is safer.
 
@@ -148,7 +148,7 @@ Benefits:
 - High durability (AOF incremental captures recent writes)
 - On startup, Valkey loads AOF when both AOF and RDB exist (AOF is more complete)
 
-This is the recommended production configuration.
+Recommended production configuration.
 
 ## AOF Rewrite
 

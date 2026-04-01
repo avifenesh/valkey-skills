@@ -176,7 +176,7 @@ case <-ctx.Done():
 }
 ```
 
-Drain the queue promptly - the internal buffer is unbounded and grows indefinitely if not consumed.
+Drain the queue regularly - the internal buffer is unbounded and grows if not consumed.
 
 ## PubSubMessage Type
 

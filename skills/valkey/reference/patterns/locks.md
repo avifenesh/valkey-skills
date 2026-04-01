@@ -34,7 +34,7 @@ SET lock:resource <random_value> NX PX 30000
 
 ### Release
 
-Only release if you still hold the lock. Without this check, a slow client could release a lock that another client has since acquired.
+Only release if you still hold the lock. Without this check, a slow client could release another client's lock.
 
 **Valkey 9.0+ (DELIFEQ)**:
 ```
@@ -105,7 +105,7 @@ async def release_lock(redis, resource: str, value: str) -> bool:
 
 ## Lock Extension (Renewal)
 
-Long-running tasks may need to extend the lock before it expires. Only the lock owner should be able to extend.
+Long-running tasks may need to extend the lock before it expires. Only the lock owner can extend.
 
 **Valkey 8.1+ (SET IFEQ)**:
 ```
@@ -125,7 +125,7 @@ end
 
 ### Auto-Renewal Pattern
 
-For long-running tasks, use a background timer to renew the lock at intervals shorter than the TTL:
+Renew the lock at intervals shorter than the TTL:
 
 ```javascript
 function withLock(redis, resource, fn, ttlMs = 30000) {
@@ -156,7 +156,7 @@ function withLock(redis, resource, fn, ttlMs = 30000) {
 
 ## Redlock (Distributed Multi-Instance)
 
-For scenarios where a single Valkey instance failure could violate mutual exclusion, Redlock acquires locks on multiple independent instances.
+When a single Valkey instance failure could violate mutual exclusion, Redlock acquires locks on multiple independent instances.
 
 ### Why Replication Alone Is Unsafe
 
@@ -228,9 +228,9 @@ For long-running operations, extend the lock by sending a Lua script to all inst
 
 ## Fencing Tokens
 
-Locks can fail silently: a client holds a lock, pauses (GC, network delay), the lock expires, another client acquires it, and the original client resumes thinking it still has the lock. The lock alone does not guarantee a process still holds it when performing work.
+Locks can fail silently: a client holds a lock, pauses (GC, network delay), the lock expires, another client acquires it, and the original client resumes thinking it still holds the lock.
 
-A fencing token prevents this. Each lock acquisition increments a monotonic counter. The protected resource rejects operations with a token older than the last seen.
+A fencing token prevents this: each lock acquisition increments a monotonic counter, and the protected resource rejects operations with a token older than the last seen.
 
 ```
 # Acquire lock and get fencing token
@@ -241,9 +241,9 @@ token = INCR lock:resource:fencing_token
 # The resource server verifies: token >= last_seen_token
 ```
 
-**Note**: Fencing requires the downstream resource (database, API) to support token validation. Not all systems can do this.
+Fencing requires the downstream resource (database, API) to support token validation. Not all systems can do this.
 
-**Essential reading**: Martin Kleppmann's analysis ("How to do distributed locking") argues that fencing tokens are the only way to achieve strong safety guarantees with distributed locks. The antirez counterpoint defends Redlock's design assumptions. Both are required reading for production distributed lock implementations.
+Martin Kleppmann's analysis ("How to do distributed locking") argues fencing tokens are the only way to achieve strong safety with distributed locks. The antirez counterpoint defends Redlock's design assumptions. Both are required reading for production implementations.
 
 ---
 

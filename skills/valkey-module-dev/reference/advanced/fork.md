@@ -91,7 +91,7 @@ for (int i = 0; i < total_items; i++) {
 ValkeyModule_SendChildHeartbeat(1.0);
 ```
 
-Call this at reasonable intervals - every few thousand iterations or every few seconds. Calling too frequently adds overhead; calling too rarely means stale progress in `INFO`.
+Call every few thousand iterations or every few seconds. Too frequent adds overhead; too rare means stale progress in `INFO`.
 
 ## ValkeyModule_ExitFromChild
 
@@ -201,7 +201,7 @@ If `hasActiveChildProcess()` returns true when a module calls `ValkeyModule_Fork
 - A running `BGSAVE` or `BGREWRITEAOF` blocks module forks
 - Two modules cannot fork concurrently
 
-Design long-running module forks carefully. If the module fork runs for minutes, RDB and AOF persistence are delayed for that entire period. For very long operations, consider breaking the work into shorter fork sessions or using threads instead.
+Long-running module forks delay RDB and AOF persistence for their entire duration. For operations that take minutes, break the work into shorter fork sessions or use threads instead.
 
 ## Feature Detection
 

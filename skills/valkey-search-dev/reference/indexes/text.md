@@ -143,7 +143,7 @@ if (!stem_iter.Done() && stem_iter.GetWord() == stemmed) {
 }
 ```
 
-This enables queries for "happy" to also match documents containing "happiness" or "happily", since they all share the stem "happi". Stem expansion uses `stem_text_field_mask_` to only expand stems for fields that have stemming enabled.
+Queries for "happy" also match documents containing "happiness" or "happily", since they all share the stem "happi". Stem expansion uses `stem_text_field_mask_` to only expand stems for fields that have stemming enabled.
 
 ## Postings Lists with Position Maps
 

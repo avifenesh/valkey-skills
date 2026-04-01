@@ -95,7 +95,7 @@ valkey_module! {
 }
 ```
 
-This ensures all Rust heap allocations route through Valkey's `zmalloc`/`zfree`, which enables accurate memory tracking in `INFO MEMORY` and correct behavior with `maxmemory` eviction policies. See `reference/architecture/bloom-object.md` for how memory limits interact with ValkeyAlloc.
+All Rust heap allocations route through Valkey's `zmalloc`/`zfree`, enabling accurate memory tracking in `INFO MEMORY` and correct behavior with `maxmemory` eviction policies. See `reference/architecture/bloom-object.md` for how memory limits interact with ValkeyAlloc.
 
 Because ValkeyAlloc requires a running Valkey server, unit tests must use `--features enable-system-alloc` to substitute the system allocator. Integration tests load the module into a real server and use ValkeyAlloc normally.
 

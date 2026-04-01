@@ -94,7 +94,7 @@ def bloom_config_parameterization(request):
     return request.param
 ```
 
-This means every integration test automatically runs twice - once with `bf.bloom-use-random-seed yes` and once with `no`.
+Every integration test automatically runs twice - once with `bf.bloom-use-random-seed yes` and once with `no`.
 
 ## Test Base Class Helpers
 
@@ -116,7 +116,7 @@ This means every integration test automatically runs twice - once with `bf.bloom
 - `add_items_till_nonscaling_failure(client, filter, start_idx, prefix)` - adds items until "non scaling filter is full" error. Returns the failing index
 - `check_items_exist(client, filter, start, end, expected, prefix, batch_size=1000)` - checks items via BF.MEXISTS in batches. Returns `(error_count, num_operations)`
 - `fp_assert(error_count, num_ops, expected_fp_rate, margin)` - asserts actual FP rate stays within bounds
-- `validate_nonscaling_failure(client, filter, prefix, idx)` - validates BF.ADD, BF.MADD, and BF.INSERT all return the expected error. Note: multi-item commands stop at the first error and return 2 elements
+- `validate_nonscaling_failure(client, filter, prefix, idx)` - validates BF.ADD, BF.MADD, and BF.INSERT all return the expected error. Multi-item commands stop at the first error and return 2 elements
 - `validate_copied_bloom_correctness(client, filter, prefix, idx, fp_rate, margin, info_dict)` - validates COPY produces identical bloom objects using DEBUG DIGEST-VALUE comparison
 - `calculate_expected_capacity(initial, expansion, num_filters)` - computes total capacity across scaled filters
 - `generate_random_string(length=7)` - creates a random alphanumeric string

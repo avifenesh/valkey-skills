@@ -181,7 +181,7 @@ During replica RDB loads, metadata is staged rather than applied immediately:
 - `OnLoadingEnded` clears the local metadata and reconciles from the staged copy with `prefer_incoming = true` and `trigger_callbacks = false`
 - After applying, the staged metadata is cleared
 
-This prevents partial metadata from being visible during the load and ensures the replica's metadata is a consistent snapshot from the primary.
+Prevents partial metadata from being visible during the load and ensures the replica's metadata is a consistent snapshot from the primary.
 
 For non-replication loads (e.g., restart from RDB), `LoadMetadata` merges directly into `metadata_` via `ReconcileMetadata`.
 

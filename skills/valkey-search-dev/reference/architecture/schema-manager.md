@@ -259,4 +259,4 @@ static absl::StatusOr<uint64_t> ComputeFingerprint(
     const google::protobuf::Any &metadata);
 ```
 
-The fingerprint is seeded by a fixed 256-bit key (`kHashKey` - four randomly generated 64-bit values). It is used by the coordinator to detect metadata divergence across cluster nodes. Note that protobuf serialization is non-deterministic across versions, so this assumes fleet-wide module version consistency.
+The fingerprint is seeded by a fixed 256-bit key (`kHashKey` - four randomly generated 64-bit values). It is used by the coordinator to detect metadata divergence across cluster nodes. Protobuf serialization is non-deterministic across versions, so this assumes fleet-wide module version consistency.

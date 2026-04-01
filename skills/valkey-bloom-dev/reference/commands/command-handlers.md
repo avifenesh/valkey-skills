@@ -59,7 +59,7 @@ This private function handles item insertion for BF.ADD, BF.MADD, and BF.INSERT.
 
 **Multi mode** (`multi: true`): Iterates from `item_idx` to `argc`, collecting results into a `Vec`. Each item gets `ValkeyValue::Integer(0|1)`. On error (e.g., non-scaling filter full, memory limit exceeded, max filters reached), the error is pushed as `ValkeyValue::StaticError` and iteration stops with `break` - remaining items are not processed.
 
-The `add_succeeded` flag is set to true if any item returned 1. This flag controls whether a `bloom.add` keyspace notification fires and whether verbatim replication occurs.
+The `add_succeeded` flag is set to true if any item returned 1. It controls whether a `bloom.add` keyspace notification fires and whether verbatim replication occurs.
 
 ## BF.EXISTS and BF.MEXISTS
 
@@ -73,7 +73,7 @@ let filter_key = ctx.open_key(filter_name);  // read-only open
 
 **Multi mode**: Collects results into a `Vec<ValkeyValue>`. Each item independently returns 0 or 1.
 
-The standalone `handle_item_exists` function calls `val.item_exists(item)`, which runs `self.filters.iter().any(|filter| filter.check(item))` - scanning all sub-filters in the bloom object. This means existence checks search every filter in a scaled bloom, not just the last one.
+The standalone `handle_item_exists` function calls `val.item_exists(item)`, which runs `self.filters.iter().any(|filter| filter.check(item))` - scanning all sub-filters in the bloom object. Existence checks search every filter in a scaled bloom, not just the last one.
 
 **Key behavior**: When the key does not exist at all, the function returns `ValkeyValue::Integer(0)` for each item rather than an error. This matches Valkey convention where checking membership on a non-existent set returns 0.
 
@@ -97,7 +97,7 @@ match value {
 - `BF.INFO key` (argc == 2) - returns all fields
 - `BF.INFO key <field>` (argc == 3) - returns a single field
 
-Unlike BF.CARD and BF.EXISTS, a non-existent key returns `ERR not found` (`utils::NOT_FOUND`). This is the only read command that errors on missing keys.
+Unlike BF.CARD and BF.EXISTS, a non-existent key returns `ERR not found` (`utils::NOT_FOUND`). The only read command that errors on missing keys.
 
 Arity: exactly 2 or 3 args via `!(2..=3).contains(&argc)`. Opens key read-only.
 

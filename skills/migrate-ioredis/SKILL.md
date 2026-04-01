@@ -63,7 +63,7 @@ const client = await GlideClient.createClient({
 
 ## Incremental Migration Strategy
 
-No drop-in compatibility layer exists for Node.js. The recommended approach:
+No drop-in compatibility layer exists for Node.js. Migration approach:
 
 1. Install `@valkey/valkey-glide` alongside `ioredis`
 2. Create a wrapper module that abstracts the client interface
@@ -97,4 +97,4 @@ No drop-in compatibility layer exists for Node.js. The recommended approach:
 7. **Node.js PubSub is creation-time only.** Unlike Java/Python/Go, the Node.js client requires all subscriptions at connection time.
 8. **Publish arg order reversed.** ioredis: publish(channel, message). GLIDE: publish(message, channel).
 9. **protobufjs bundle size.** Adds ~19KB gzipped - relevant for serverless cold starts.
-10. **npm version on Linux.** npm 11+ recommended for proper optional dependency handling.
+10. **npm version on Linux.** Requires npm 11+ for proper optional dependency handling.

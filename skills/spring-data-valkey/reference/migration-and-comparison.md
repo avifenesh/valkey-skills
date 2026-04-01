@@ -22,20 +22,20 @@ Key migration steps:
 4. Update property prefixes from `spring.data.redis` to `spring.data.valkey`
 5. Optionally add GLIDE driver (or continue with Lettuce/Jedis via `client-type`)
 
-You can continue using Lettuce or Jedis as the driver - set `spring.data.valkey.client-type=lettuce` or `spring.data.valkey.client-type=jedis`.
+Lettuce and Jedis remain available as drivers via `spring.data.valkey.client-type=lettuce` or `spring.data.valkey.client-type=jedis`.
 
 ---
 
 ## Driver Comparison Test Suite
 
-When evaluating GLIDE against Lettuce and Jedis for Spring integration, build a comparison test suite that exercises all three Java drivers against the same workload:
+Build a comparison test suite that exercises all three Java drivers against the same workload:
 - Connection lifecycle (create, reconnect, close)
 - Template operations (opsForValue, opsForHash, opsForZSet)
 - Cache abstraction (@Cacheable, @CacheEvict, @CachePut)
 - Cluster failover behavior
 - Latency percentiles (p50, p95, p99) under load
 
-This validates that the Spring abstraction layer does not mask driver-specific behaviors or performance characteristics.
+Validates that the Spring abstraction layer does not mask driver-specific behaviors or performance characteristics.
 
 ---
 
@@ -61,7 +61,7 @@ This validates that the Spring abstraction layer does not mask driver-specific b
 
 ## Hybrid Approach
 
-You can use both. Configure Spring Data Valkey for auto-wired templates and caching, then inject the underlying GLIDE client for advanced operations:
+Both can coexist. Configure Spring Data Valkey for auto-wired templates and caching, then inject the underlying GLIDE client for advanced operations:
 
 ```java
 @Service

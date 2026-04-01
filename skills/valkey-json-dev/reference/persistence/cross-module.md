@@ -67,7 +67,7 @@ int SharedJSON_Get(ValkeyModuleKey *key, const char *path, ValkeyModuleString **
 }
 ```
 
-The caller is responsible for freeing the returned `ValkeyModuleString`. The function verifies the key holds a JSON document type before accessing it.
+The caller must free the returned `ValkeyModuleString`. The function verifies the key holds a JSON document type before accessing it.
 
 ## C API Functions
 
@@ -132,7 +132,7 @@ CONFIG SET json.max-document-size <bytes>
 | Flag | VALKEYMODULE_CONFIG_MEMORY |
 | Runtime | Yes |
 
-Controls the maximum allowed size for a JSON document. When set to 0 (default), there is no limit. When non-zero, any mutation (JSON.SET, JSON.ARRAPPEND, etc.) that would cause the document to exceed this size is rejected with `JSONUTIL_DOCUMENT_SIZE_LIMIT_EXCEEDED`. The check is applied only on non-replicated commands - replicas accept any size to avoid replication divergence (json.cc line 110).
+Controls the maximum allowed size for a JSON document. When set to 0 (default), there is no limit. When non-zero, any mutation (JSON.SET, JSON.ARRAPPEND, etc.) that would cause the document to exceed this size is rejected with `JSONUTIL_DOCUMENT_SIZE_LIMIT_EXCEEDED`. Applied only on non-replicated commands - replicas accept any size to avoid replication divergence (json.cc line 110).
 
 ### json.max-path-limit
 

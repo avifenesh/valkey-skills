@@ -24,8 +24,7 @@ large key is deleted, expired, or evicted, the main thread unlinks the object
 from the keyspace and queues the actual memory deallocation to a background
 thread.
 
-This prevents latency spikes that occur when freeing a hash with millions of
-fields or a sorted set with millions of members.
+Without it, freeing a hash with millions of fields or a sorted set with millions of members causes latency spikes.
 
 Implementation is in `src/lazyfree.c` and `src/bio.c`.
 
@@ -62,7 +61,7 @@ replaces the old value. These internal deletions happen in the background.
 
 **lazyfree-lazy-user-del**: When set to `yes`, the `DEL` command behaves
 identically to `UNLINK` - it unlinks the key and queues background freeing.
-This is a transparent behavioral change with no API difference from the
+Transparent behavioral change with no API difference from the
 client's perspective.
 
 **lazyfree-lazy-user-flush**: When set to `yes`, `FLUSHDB` and `FLUSHALL`
@@ -145,7 +144,7 @@ There is no downside to background freeing in normal operation.
 
 Only consider disabling lazyfree if:
 
-- You need deterministic memory accounting (rare - typically for embedded/IoT)
+- You need deterministic memory accounting (rare - embedded/IoT use cases)
 - You are debugging memory issues and need synchronous deallocation
 - You are running benchmarks where background thread CPU interference matters
 

@@ -117,7 +117,7 @@ Messages arrive via a callback registered at the C extension level. Each message
 
 ## Multi-Process Pattern
 
-PHP's synchronous nature means PubSub subscribers typically run in a dedicated process:
+PubSub subscribers run in a dedicated process due to PHP's synchronous execution model:
 
 ```php
 <?php

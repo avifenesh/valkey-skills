@@ -14,7 +14,7 @@ Use when connecting to Valkey through Sentinel, handling failovers in applicatio
 
 ## Connecting via Sentinel
 
-Sentinel provides automatic failover, monitoring, and service discovery. Your application never connects to a fixed Valkey address - instead it asks Sentinel for the current primary.
+Sentinel provides automatic failover, monitoring, and service discovery. The application asks Sentinel for the current primary instead of connecting to a fixed address.
 
 ### Client Configuration
 
@@ -74,7 +74,7 @@ const config = {
 
 ## What Happens During Failover
 
-Understanding the failover timeline helps you design appropriate retry logic.
+The failover timeline informs retry logic design.
 
 ### Timeline
 
@@ -97,12 +97,12 @@ Total outage window: typically 5-30 seconds depending on Sentinel configuration.
 
 ### Data Loss Window
 
-Valkey replication is asynchronous by default. Writes acknowledged by the old primary but not yet replicated to any replica are lost during failover. This window depends on:
+Valkey replication is asynchronous by default. Writes acknowledged by the old primary but not yet replicated are lost during failover. This window depends on:
 
-- Replication lag (typically sub-millisecond, but variable)
+- Replication lag (sub-millisecond typical, but variable)
 - Time between primary failure and last replicated write
 
-For most applications, this is acceptable. For scenarios where write loss is critical, see the WAIT/WAITAOF section below.
+For scenarios where write loss is critical, see the WAIT/WAITAOF section below.
 
 ---
 
@@ -110,7 +110,7 @@ For most applications, this is acceptable. For scenarios where write loss is cri
 
 ### ioredis Built-in Retry
 
-ioredis retries automatically with configurable behavior:
+ioredis retries automatically:
 
 ```javascript
 const redis = new Redis({
@@ -148,7 +148,7 @@ client = valkey.Valkey(
 
 ### Application-Level Retry Pattern
 
-For critical operations, wrap Valkey calls with application-level retry:
+For critical operations, wrap Valkey calls with retry logic:
 
 ```javascript
 async function withRetry(fn, maxRetries = 3) {
@@ -187,7 +187,7 @@ const result = await withRetry(() => redis.get('user:1000'));
 
 ### Idempotency Warning
 
-Only retry commands that are idempotent. `SET`, `GET`, `HSET`, `ZADD` are safe to retry. `INCR`, `LPUSH`, `RPUSH` are NOT idempotent - retrying them can cause double-counting or duplicate entries. For non-idempotent operations, use the idempotency key pattern (see [Counter Patterns](../patterns/counters.md)).
+Only retry idempotent commands. `SET`, `GET`, `HSET`, `ZADD` are safe. `INCR`, `LPUSH`, `RPUSH` are NOT idempotent - retrying causes double-counting or duplicate entries. For non-idempotent operations, use the idempotency key pattern (see [Counter Patterns](../patterns/counters.md)).
 
 ---
 
@@ -195,7 +195,7 @@ Only retry commands that are idempotent. `SET`, `GET`, `HSET`, `ZADD` are safe t
 
 ### WAIT
 
-`WAIT` blocks the current client until previous write commands have been replicated to a specified number of replicas, or until the timeout expires.
+`WAIT` blocks the current client until previous writes replicate to a specified number of replicas, or until the timeout expires.
 
 ```
 SET user:1000:email "alice@example.com"
@@ -226,7 +226,7 @@ async def write_with_consistency(redis, key: str, value: str):
 
 ### WAITAOF (since 7.2)
 
-`WAITAOF` blocks until previous writes have been fsynced to disk on the primary and/or replicas. Stronger guarantee than `WAIT`, which only confirms in-memory replication.
+`WAITAOF` blocks until previous writes are fsynced to disk on the primary and/or replicas. Stronger than `WAIT`, which only confirms in-memory replication.
 
 ```
 SET critical:transaction:9876 "committed"
@@ -252,10 +252,10 @@ Arguments: `WAITAOF <local_fsyncs> <replica_fsyncs> <timeout_ms>`
 
 ### Gotchas
 
-- **WAIT does not make replication synchronous** - it only blocks the calling client. Other clients can still read stale data from replicas during the wait.
+- **WAIT does not make replication synchronous** - it only blocks the calling client. Other clients can still read stale data from replicas.
 - **Timeout of 0 blocks forever** - always set a reasonable timeout.
-- **WAIT in a pipeline**: WAIT applies to all preceding writes in the connection. Place it after the last write you care about.
-- **Performance impact**: Do not use WAIT on every write. Reserve it for critical paths where data loss is unacceptable.
+- **WAIT in a pipeline**: Applies to all preceding writes in the connection. Place it after the last write you care about.
+- **Performance impact**: Do not use WAIT on every write. Reserve for critical paths where data loss is unacceptable.
 
 ---
 
@@ -270,7 +270,7 @@ Arguments: `WAITAOF <local_fsyncs> <replica_fsyncs> <timeout_ms>`
 | Client complexity | Sentinel-aware client needed | Cluster-aware client needed |
 | Operational complexity | Moderate (3+ Sentinels) | Higher (6+ nodes minimum) |
 
-**Start with Sentinel** unless you need sharding for capacity. Migrate to Cluster when a single primary cannot handle your data size or write throughput.
+Start with Sentinel unless you need sharding for capacity. Migrate to Cluster when a single primary cannot handle your data size or write throughput.
 
 ---
 

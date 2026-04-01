@@ -13,7 +13,7 @@ Use when optimizing Valkey throughput with pipelining, connection pooling, I/O t
 
 ## Pipeline Batching
 
-Each command without pipelining incurs a full network round-trip. Pipelining sends multiple commands in one batch and reads all responses together.
+Without pipelining, each command incurs a full network round-trip. Pipelining sends multiple commands in one batch and reads all responses together.
 
 ```
 # Without pipelining: 3 round-trips
@@ -75,7 +75,7 @@ try (Pipeline pipeline = jedis.pipelined()) {
 
 ### Auto-Pipelining
 
-Some clients automatically batch commands issued in the same event loop tick, eliminating the need for explicit pipeline management.
+Some clients batch commands issued in the same event loop tick automatically.
 
 **ioredis**:
 ```javascript
@@ -86,11 +86,11 @@ const redis = new Redis({ enableAutoPipelining: true });
 
 **Valkey GLIDE**: Uses auto-pipelining by default through its multiplexed connection design. No configuration needed.
 
-Auto-pipelining is especially effective in HTTP servers where many concurrent requests each issue 1-3 commands - they are naturally batched without developer effort.
+Especially effective in HTTP servers where concurrent requests each issue 1-3 commands - naturally batched without developer effort.
 
 ### Pipeline vs MULTI/EXEC
 
-Pipelines are a client-side optimization that batches network I/O. `MULTI/EXEC` is a server-side transaction that executes commands atomically. You can combine them - send a `MULTI`, queued commands, and `EXEC` inside a single pipeline for both atomicity and network efficiency.
+Pipelines are a client-side optimization batching network I/O. `MULTI/EXEC` is a server-side atomic transaction. Combine them: send `MULTI`, queued commands, and `EXEC` inside a single pipeline for both atomicity and network efficiency.
 
 ### Pipelining vs Lua Scripting
 
@@ -107,7 +107,7 @@ Use pipelining when commands are independent. Use Lua scripts when command B dep
 
 ## Connection Pooling
 
-Creating a new TCP connection per request is expensive: TCP handshake, optional TLS negotiation, AUTH, SELECT. Use connection pools.
+Creating a TCP connection per request is expensive: TCP handshake, TLS negotiation, AUTH, SELECT. Use connection pools.
 
 ### Valkey GLIDE (Official Client)
 
@@ -157,7 +157,7 @@ client = valkey.Valkey(connection_pool=pool)
 
 ## I/O Threading (User Perspective)
 
-Valkey 8.0+ uses I/O multithreading to parallelize network read/write while keeping command execution single-threaded. This tripled throughput from ~360K to 1.2M requests per second on benchmark hardware.
+Valkey 8.0+ parallelizes network read/write via I/O multithreading while keeping command execution single-threaded. This tripled throughput from ~360K to 1.2M RPS on benchmark hardware.
 
 **What this means for application developers**:
 
@@ -178,7 +178,7 @@ Valkey 8.0+ uses I/O multithreading to parallelize network read/write while keep
 - Workloads bottlenecked by slow commands (the main thread is the limit)
 - Memory-bound workloads (I/O threads do not help with eviction or persistence)
 
-**Talk to your ops team** about enabling I/O threads if you observe high throughput needs. Typical production configs use 4-9 total threads depending on available CPU cores.
+Coordinate with ops to enable I/O threads for high throughput needs. Typical production configs use 4-9 total threads depending on available CPU cores.
 
 > Cross-reference: See valkey-ops [performance/io-threads](../../../valkey-ops/reference/performance/io-threads.md) for thread count guidelines, benchmarks, and CPU affinity tuning.
 

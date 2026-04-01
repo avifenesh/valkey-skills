@@ -13,7 +13,7 @@ Use when building prefix autocomplete, tag-based filtering, search result rankin
 
 ## Prefix Autocomplete with Sorted Sets
 
-Sorted sets with lexicographic range queries provide O(log N) prefix matching. Add all searchable terms with score 0, then query by prefix using `ZRANGEBYLEX`.
+Sorted sets with lexicographic range queries provide O(log N) prefix matching. Add terms with score 0, query by prefix with `ZRANGEBYLEX`.
 
 ### Setup
 
@@ -81,7 +81,7 @@ suggestions = await autocomplete(redis, 'app')
 
 ## Scored Search Results
 
-When results need ranking (not just prefix matching), use non-zero scores to represent relevance. Higher scores appear first with `ZREVRANGE`.
+For ranked results (not just prefix matching), use non-zero scores for relevance. Higher scores appear first with `ZREVRANGE`.
 
 ```
 # Index products with popularity scores
@@ -95,7 +95,7 @@ ZREVRANGE search:laptop 0 4 WITHSCORES
 
 ### Combining Prefix Match with Score Ranking
 
-Store terms in one sorted set for prefix lookup, and maintain a separate scored set for ranking:
+One sorted set for prefix lookup, a separate scored set for ranking:
 
 ```javascript
 async function searchWithRanking(redis, prefix, limit = 10) {
@@ -124,7 +124,7 @@ async function searchWithRanking(redis, prefix, limit = 10) {
 
 ## Tag-Based Search with Sets
 
-Sets provide O(1) membership testing and O(N*M) intersection for multi-tag queries. Use when items have discrete tags and users filter by combinations.
+Sets provide O(1) membership testing and O(N*M) intersection for multi-tag queries. Use for items with discrete tags filtered by combinations.
 
 ### Indexing
 
@@ -206,7 +206,7 @@ async def count_by_tags(redis, tags: list[str], limit: int = 0):
 
 ## Hash-Based Inverted Indexes
 
-For more complex search scenarios where each document has multiple searchable fields, use hashes for document storage and sets for inverted indexes.
+For documents with multiple searchable fields, use hashes for storage and sets for inverted indexes.
 
 ### Indexing
 

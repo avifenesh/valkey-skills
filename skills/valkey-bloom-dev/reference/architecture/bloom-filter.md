@@ -88,7 +88,7 @@ pub fn from_existing(bitmap: &[u8], num_items: i64, capacity: i64) -> BloomFilte
 }
 ```
 
-The `from_slice` method reconstructs the entire `Bloom` struct from the raw bytes, including the SipHash keys embedded in the bitmap header. This is how RDB restore recovers the hasher state without explicitly saving seed data per filter.
+The `from_slice` method reconstructs the entire `Bloom` struct from the raw bytes, including the SipHash keys embedded in the bitmap header. RDB restore recovers the hasher state without explicitly saving seed data per filter.
 
 All three constructors call `bloom_filter_incr_metrics_on_new_create` to update global counters.
 
@@ -138,9 +138,9 @@ pub fn set(&mut self, item: &[u8]) {
 }
 ```
 
-Delegates to the crate. Hashes the item and sets the corresponding bits. Note that `set` does not check for existence - the caller (`BloomObject::add_item`) handles dedup by scanning all filters first.
+Delegates to the crate. Hashes the item and sets the corresponding bits. `set` does not check for existence - the caller (`BloomObject::add_item`) handles dedup by scanning all filters first.
 
-The `BloomFilter` does not track whether individual items were already present. The `num_items` counter is incremented by the parent `BloomObject::add_item` only when a genuinely new item is added.
+`BloomFilter` does not track whether individual items were already present. The `num_items` counter is incremented by the parent `BloomObject::add_item` only when a genuinely new item is added.
 
 ## Memory Sizing
 
@@ -178,7 +178,7 @@ pub fn create_copy_from(bf: &BloomFilter) -> BloomFilter {
 }
 ```
 
-Serializes the bloom to bytes via `to_bytes()`, then reconstructs via `from_existing`. This produces a fully independent copy with its own heap allocation.
+Serializes the bloom to bytes via `to_bytes()`, then reconstructs via `from_existing`. Produces a fully independent copy with its own heap allocation.
 
 **Serde integration**: The `#[serde]` attributes on the `bloom` field use the crate's `serialize` and a custom `deserialize_boxed_bloom` wrapper (line 576) that deserializes into a `Box<Bloom<[u8]>>`. This is used by bincode for the AOF rewrite path (BF.LOAD encoding).
 
@@ -203,4 +203,4 @@ impl Drop for BloomFilter {
 }
 ```
 
-This decrements four counters: filter count, memory bytes, item count, and capacity. Combined with BloomObject's Drop (which handles object count and object-level overhead), all metrics stay accurate through the full lifecycle.
+Decrements four counters: filter count, memory bytes, item count, and capacity. Combined with BloomObject's Drop (which handles object count and object-level overhead), all metrics stay accurate through the full lifecycle.

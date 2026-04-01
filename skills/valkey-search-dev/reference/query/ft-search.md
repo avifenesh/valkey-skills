@@ -212,4 +212,4 @@ When `WITHSORTKEYS` is set, each result gets an extra element - the sort key val
 
 The sort respects ASC/DESC order from the SORTBY clause. Documents missing the sort field are pushed to the end. The `expr::Compare` function returns `Ordering::kLESS`, `kGREATER`, `kEQUAL`, or `kUNORDERED`.
 
-Note: SORTBY requires `RequiresCompleteResults() = true`, which disables background trimming - the full result set must be available for sorting.
+SORTBY requires `RequiresCompleteResults() = true`, which disables background trimming - the full result set must be available for sorting.

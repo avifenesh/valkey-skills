@@ -262,7 +262,7 @@ commandlog-execution-slower-than 5000
 | `volatile-ttl` | Rate limit windows have TTLs. Evict expired windows first. |
 | No persistence | Counter state is transient. Restart resets all limits - acceptable for most rate limiters. |
 | `maxmemory` 50% of RAM | Conservative - rate limiter keys are small but can spike with attack traffic. |
-| `timeout 60` | Short timeout - rate limiter clients are typically short-lived. |
+| `timeout 60` | Short timeout - rate limiter clients are short-lived. |
 | `commandlog-execution-slower-than 5000` | 5ms threshold - rate limiters need consistent low latency. |
 
 

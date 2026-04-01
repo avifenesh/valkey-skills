@@ -7,10 +7,6 @@ argument-hint: "[subsystem or source file]"
 
 # Valkey Search Module - Contributor Reference
 
-20 source-verified reference docs covering the valkey-search C++ module - vector similarity, full-text search, hybrid queries, cluster coordination, and build infrastructure.
-
-Browse by subsystem below or ask about a specific topic. Each link leads to a focused reference doc with class hierarchies, function signatures, and implementation details verified against the actual C++ source.
-
 ## Routing
 
 - HNSW graph, ef_construction, ef_runtime, M parameter, ANN search -> Indexes (hnsw)

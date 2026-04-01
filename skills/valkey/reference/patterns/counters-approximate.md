@@ -12,7 +12,7 @@ Use when counting unique elements with HyperLogLog, packing compact counters wit
 
 ## HyperLogLog for Approximate Unique Counting
 
-HyperLogLog counts unique elements with 0.81% standard error using only 12 KB of memory - regardless of whether you count 100 or 100 million unique elements.
+HyperLogLog counts unique elements with 0.81% standard error using 12 KB of memory - whether counting 100 or 100 million unique elements.
 
 ### When to Use
 
@@ -170,7 +170,7 @@ BF.EXISTS dedup:events "evt-never-seen"
 # (integer) 0 -> definitely does not exist
 ```
 
-**Key property**: Bloom filters never have false negatives. If `BF.EXISTS` returns 0, the element was definitely never added. If it returns 1, the element was probably added (with a configurable false positive rate).
+Bloom filters never have false negatives. `BF.EXISTS` returning 0 means the element was definitely never added. Returning 1 means it was probably added (configurable false positive rate).
 
 ### Choosing a Deduplication Strategy
 

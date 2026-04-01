@@ -117,7 +117,7 @@ make USE_TCMALLOC=yes    # Google tcmalloc
 
 Jemalloc is strongly recommended for production on Linux - it enables `activedefrag` and provides better memory fragmentation behavior.
 
-Note: Official Docker images are built with `BUILD_TLS=yes` and `USE_FAST_FLOAT=yes` (>= 8.1), so TLS is available out of the box in containers without a custom build.
+Official Docker images are built with `BUILD_TLS=yes` and `USE_FAST_FLOAT=yes` (>= 8.1), so TLS is available out of the box in containers without a custom build.
 
 ### TLS Build
 

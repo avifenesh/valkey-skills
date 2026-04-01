@@ -120,7 +120,7 @@ Saves the entire current dataset to the stream as an RDB file.
 |---|---|
 | `EINVAL` | `stream` is NULL or `flags` is non-zero |
 
-The save is synchronous and blocks the server while writing. For large datasets, consider triggering this from an appropriate context (e.g., a timer event or admin command) rather than during high-traffic periods.
+The save is synchronous and blocks the server while writing. For large datasets, trigger this from a low-traffic context (e.g., a timer event or admin command) rather than during high-traffic periods.
 
 **Example:**
 

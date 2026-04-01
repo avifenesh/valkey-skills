@@ -7,8 +7,6 @@ argument-hint: "[API or config question]"
 
 # Valkey GLIDE Python Client
 
-Self-contained guide for building Python applications with Valkey GLIDE.
-
 ## Routing
 
 | Question | Reference |

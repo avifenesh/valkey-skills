@@ -31,7 +31,7 @@ RapidJsonAllocator::Malloc/Free    <-- RapidJSON library calls this
     ValkeyModule_Alloc / Free       <-- Valkey engine allocator (jemalloc)
 ```
 
-Every byte allocated for JSON data passes through all three layers. This ensures:
+Every byte allocated for JSON data passes through all three layers. Guarantees:
 1. Valkey engine sees accurate memory usage (`MEMORY STATS`).
 2. The module tracks its own total (`json_total_memory_bytes`).
 3. Per-document sizes can be computed for histograms.

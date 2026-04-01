@@ -38,7 +38,7 @@ All configs use `ConfigurationFlags::DEFAULT` and have no custom validation call
 
 **bloom-expansion** - Default expansion factor for scaling. When a sub-filter fills, the next one gets `capacity * expansion` items. Set to 0 for non-scaling behavior. Registration range is 0 to `BLOOM_EXPANSION_MAX as i64` (u32::MAX cast to i64 in the macro). Stored in `BLOOM_EXPANSION: AtomicI64`. Defined as `BLOOM_EXPANSION_DEFAULT = 2`.
 
-Note: The config registration uses `0` as the min (allowing non-scaling), while the command-level `EXPANSION` argument enforces `BLOOM_EXPANSION_MIN` (1) as the floor. The value 0 is only reachable via the config or the `NONSCALING` keyword.
+The config registration uses `0` as the min (allowing non-scaling), while the command-level `EXPANSION` argument enforces `BLOOM_EXPANSION_MIN` (1) as the floor. The value 0 is only reachable via the config or the `NONSCALING` keyword.
 
 **bloom-memory-usage-limit** - Per-object memory cap in bytes. Default is `128 * 1024 * 1024` (128MB). The `validate_size` function rejects objects whose `memory_usage()` exceeds this value. Write operations that would exceed the limit return `ERR operation exceeds bloom object memory limit`. Stored in `BLOOM_MEMORY_LIMIT_PER_OBJECT: AtomicI64`. Range: 0 to i64::MAX. Setting to 0 effectively blocks all bloom object creation since any object will have size > 0.
 
@@ -52,7 +52,7 @@ Both string configs exist because the Valkey module configuration system does no
 
 ## Boolean Configs
 
-**bloom-use-random-seed** - When true (default), each new bloom object gets a unique random 32-byte seed. When false, all objects use `FIXED_SEED`. Stored in `BLOOM_USE_RANDOM_SEED: AtomicBool`. Note: `AtomicBool::default()` initializes to false, but the config system applies the default value `true` on module load.
+**bloom-use-random-seed** - When true (default), each new bloom object gets a unique random 32-byte seed. When false, all objects use `FIXED_SEED`. Stored in `BLOOM_USE_RANDOM_SEED: AtomicBool`. `AtomicBool::default()` initializes to false, but the config system applies the default value `true` on module load.
 
 **bloom-defrag-enabled** - Enables cursor-based incremental defragmentation. Default true. Stored in `BLOOM_DEFRAG: AtomicBool` initialized to `AtomicBool::new(BLOOM_DEFRAG_DEFAULT)` (true).
 
@@ -122,7 +122,7 @@ configurations: [
 ]
 ```
 
-This tells the valkey-module SDK to interpret module load arguments as configuration parameters. For example:
+Tells the valkey-module SDK to interpret module load arguments as configuration parameters. For example:
 
 ```
 valkey-server --loadmodule ./libvalkey_bloom.so bloom-capacity 1000 bloom-fp-rate 0.001

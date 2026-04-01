@@ -52,7 +52,7 @@ volumeClaimTemplates:
 
 - PVCs created by StatefulSets are NOT deleted when the StatefulSet or Helm release is deleted
 - Manual cleanup required: `kubectl delete pvc -l app=valkey`
-- This is a safety feature - prevents accidental data loss
+- Safety feature - prevents accidental data loss
 - When scaling down, PVCs for removed pods persist and reattach if scaled back up
 
 ## Pod Anti-Affinity

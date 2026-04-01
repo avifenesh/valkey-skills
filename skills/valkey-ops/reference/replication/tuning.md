@@ -109,7 +109,7 @@ Keep disk-based sync when:
 
 ### Diskless Sync Delay
 
-The `repl-diskless-sync-delay` setting (default: 5 seconds) controls how long the primary waits before starting a diskless transfer. This allows multiple replicas to arrive and receive the same stream, avoiding repeated full syncs.
+`repl-diskless-sync-delay` (default: 5 seconds) controls how long the primary waits before starting a diskless transfer. Multiple replicas arriving during this window receive the same stream, avoiding repeated full syncs.
 
 Set to `0` for single-replica setups. Increase for environments where multiple replicas may reconnect simultaneously.
 

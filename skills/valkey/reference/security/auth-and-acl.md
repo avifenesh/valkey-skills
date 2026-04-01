@@ -15,7 +15,7 @@ Use when connecting your application to Valkey with authentication, configuring 
 
 ### Basic Password Authentication
 
-The simplest authentication uses the default user with a password:
+Default user with a password:
 
 ```
 # In valkey.conf (operator sets this)
@@ -49,7 +49,7 @@ r = redis.Redis(
 
 ### Username + Password Authentication (ACL)
 
-For fine-grained access control, Valkey supports named users with the ACL system:
+Named users with ACL for fine-grained access control:
 
 ```
 # Authenticate with username and password
@@ -80,7 +80,7 @@ r = redis.Redis(
 
 ## ACL Basics for Application Developers
 
-ACLs are typically configured by your ops team, but as an application developer you should understand what permissions your app user needs and how to request them.
+ACLs are configured by the ops team. Application developers need to understand what permissions to request.
 
 ### What ACL Controls
 
@@ -99,7 +99,7 @@ ACLs are typically configured by your ops team, but as an application developer 
 ACL SETUSER appuser on >password ~app:* +@read +@write +@connection -@admin
 ```
 
-This user can read and write keys matching `app:*`, manage its own connection, but cannot run admin commands.
+Read/write keys matching `app:*`, manage own connection, no admin commands.
 
 **Read-only replica reader**:
 
@@ -107,7 +107,7 @@ This user can read and write keys matching `app:*`, manage its own connection, b
 ACL SETUSER reader on >password ~* +@read +@connection
 ```
 
-Can read any key but cannot write.
+Read any key, no write access.
 
 **Cache-only user** (limited to cache namespace):
 
@@ -115,7 +115,7 @@ Can read any key but cannot write.
 ACL SETUSER cacheuser on >password ~cache:* +GET +SET +DEL +UNLINK +EXPIRE +TTL +@connection
 ```
 
-Can only access cache keys with a specific set of commands.
+Cache keys only, specific command set.
 
 **Queue worker** (streams and lists):
 
@@ -125,7 +125,7 @@ ACL SETUSER worker on >password ~queue:* +XREADGROUP +XACK +XADD +BLPOP +RPUSH +
 
 ### What Permissions to Request from Your Ops Team
 
-When requesting an ACL user, specify:
+Specify:
 
 1. **Key patterns** your application accesses (e.g., `app:*`, `cache:*`, `session:*`)
 2. **Command categories** needed (e.g., `@read`, `@write`, `@string`, `@hash`)
@@ -157,7 +157,7 @@ View all categories at runtime: `ACL CAT` (see [Server Commands](../basics/serve
 
 ## TLS Connection Setup
 
-TLS encrypts data in transit between your application and Valkey. Your ops team configures TLS on the server; you configure it in your client.
+TLS encrypts data in transit. The ops team configures TLS on the server; configure it in the client.
 
 ### Basic TLS (Encryption Only)
 
@@ -194,7 +194,7 @@ JedisPool pool = new JedisPool(
 
 ### Mutual TLS (mTLS)
 
-When the server requires client certificates for authentication:
+When the server requires client certificates:
 
 ```javascript
 // ioredis with mTLS

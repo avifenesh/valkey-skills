@@ -7,8 +7,6 @@ argument-hint: "[API or config question]"
 
 # Valkey GLIDE Node.js Client
 
-Self-contained guide for building Node.js and TypeScript applications with Valkey GLIDE.
-
 ## Routing
 
 | Question | Reference |

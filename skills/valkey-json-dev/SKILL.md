@@ -7,10 +7,6 @@ argument-hint: "[subsystem or source file]"
 
 # Valkey JSON Module - Contributor Reference
 
-14 source-verified reference docs covering the valkey-json C++ module - document DOM, JSONPath engine, persistence, cross-module integration, build, and test infrastructure.
-
-Browse by subsystem below or ask about a specific topic. Each link leads to a focused reference doc with struct definitions, function signatures, and implementation details verified against the actual C++ source.
-
 ## Routing
 
 - JDocument, JValue, RJValue, JParser, RapidJsonAllocator, GenericValue, type system -> Document Model (jdocument)

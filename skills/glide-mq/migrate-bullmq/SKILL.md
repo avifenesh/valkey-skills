@@ -62,7 +62,7 @@ import { Queue, Worker } from 'bullmq';      import { Queue, Worker } from 'glid
 // connection: { host, port }                // connection: { addresses: [{ host, port }] }
 ```
 
-The processor function signature is similar, but glide-mq has several breaking differences in connection format, scheduling API, backoff strategy, and default options. Review the Key Differences table below and the full migration guide before migrating.
+The processor function signature is similar, but glide-mq has breaking differences in connection format, scheduling API, backoff strategy, and default options. Review the Key Differences table and the full migration guide before migrating.
 
 ## Key Differences
 

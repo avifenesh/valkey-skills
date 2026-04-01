@@ -12,7 +12,7 @@ Use when leveraging Valkey 9.0+ per-field TTL for session data with mixed volati
 
 ## Hash Field Expiration (Valkey 9.0+)
 
-Valkey 9.0 introduced per-field TTL on hashes. This eliminates the need to split session data across multiple keys when different fields have different expiration needs.
+Valkey 9.0 per-field TTL eliminates splitting session data across multiple keys for different expiration needs.
 
 ### Use Cases
 
@@ -77,7 +77,7 @@ class SessionStoreV9 {
 
 ### Sliding Window with HGETEX
 
-Use HGETEX to read session fields and atomically refresh their TTL in one command. This implements a true per-field sliding window - each field's TTL resets on access.
+HGETEX reads session fields and atomically refreshes their TTL in one command - a true per-field sliding window where each field's TTL resets on access.
 
 ```
 # Read core session data and refresh TTL to 1 hour in one atomic call
@@ -87,7 +87,7 @@ HGETEX session:abc123 EX 3600 FIELDS 2 user_id email
 -- Both fields now have a fresh 1-hour TTL
 ```
 
-This eliminates the two-command pipeline (HMGET + HEXPIRE) for session access. Each field's TTL is managed independently - accessing `user_id` does not refresh `csrf_token`.
+Eliminates the two-command pipeline (HMGET + HEXPIRE). Each field's TTL is independent - accessing `user_id` does not refresh `csrf_token`.
 
 ### Session Data with Mixed Volatility
 
@@ -107,7 +107,7 @@ This eliminates the two-command pipeline (HMGET + HEXPIRE) for session access. E
 
 ### Memory Overhead
 
-Per-field expiration adds 16-29 bytes per expiring field. No measurable performance regression on standard hash operations. The overhead is negligible compared to splitting data across multiple keys (each key has ~70-80 bytes of metadata).
+16-29 bytes per expiring field. No measurable performance regression. Negligible compared to splitting across multiple keys (~70-80 bytes metadata per key).
 
 ---
 

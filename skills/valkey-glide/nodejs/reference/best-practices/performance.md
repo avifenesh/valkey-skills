@@ -86,7 +86,7 @@ GLIDE uses a single multiplexed connection per node. No connection pools to size
 
 ## TCP Tuning
 
-GLIDE enables TCP_NODELAY by default, disabling Nagle's algorithm. Commands are sent immediately rather than buffered. Do not disable this unless you have measured and confirmed that TCP-level batching helps your workload.
+GLIDE enables TCP_NODELAY by default (Nagle's algorithm disabled). Commands are sent immediately rather than buffered. Only disable after benchmarking confirms TCP-level batching improves throughput for your workload.
 
 ```typescript
 const client = await GlideClient.createClient({

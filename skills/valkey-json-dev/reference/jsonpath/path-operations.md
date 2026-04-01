@@ -198,6 +198,6 @@ The Selector produces results that DOM functions consume. The flow:
 
 **Read-then-modify pattern** - most commands besides JSON.SET and JSON.DEL use `getValues()` to select targets, then mutate the returned JValue pointers directly. Since resultSet contains pointers into the live document, in-place mutations take effect immediately. `getUniqueResultSet()` ensures each value is modified only once even if matched by multiple path branches.
 
-**Delete ordering** - `deleteValues()` sorts paths deepest-first using `pathCompare` (selector.cc:611-645). This comparator orders by path depth descending, then by element index descending within the same parent. This ensures children are removed before parents, preventing dangling references.
+**Delete ordering** - `deleteValues()` sorts paths deepest-first using `pathCompare` (selector.cc:611-645). This comparator orders by path depth descending, then by element index descending within the same parent. Children are removed before parents, preventing dangling references.
 
 **Document size tracking** - DOM mutation functions use `CHECK_DOCUMENT_SIZE_LIMIT` and `CHECK_DOCUMENT_PATH_LIMIT` macros before committing changes. The two-stage write pattern in `dom_set_value()` is specifically designed to allow these checks between path evaluation and actual mutation.

@@ -117,7 +117,7 @@ Avoids fork for sending RDB to replicas by streaming directly over the socket.
 3. **Offload BGSAVE to replicas**
 
 Configure replicas to do the RDB saves instead of the primary. This moves
-the fork latency to the replica, which typically has a smaller impact.
+the fork latency to the replica, which has a smaller impact on client-facing traffic.
 
 4. **Use bare metal for large datasets**
 

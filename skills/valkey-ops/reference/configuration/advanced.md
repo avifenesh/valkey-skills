@@ -194,7 +194,7 @@ unixsocketperm 770
 unixsocketgroup valkey
 ```
 
-Note: `unixsocketperm 0` (the default) means the socket inherits the process
+`unixsocketperm 0` (the default) means the socket inherits the process
 umask. Set explicitly for production use.
 
 Source references:
@@ -218,7 +218,7 @@ Control maximum sizes for client queries and bulk strings.
   sending unexpectedly large commands (e.g., very large MSET batches). The
   default 1GB is generous.
 - Increase `proto-max-bulk-len` only if you store individual values larger than
-  512MB (rare and generally discouraged).
+  512MB (rare and discouraged).
 - Reduce both on memory-constrained instances to limit worst-case per-client
   memory usage.
 

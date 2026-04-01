@@ -222,7 +222,7 @@ If the bottleneck is I/O (many clients, moderate command complexity):
 CONFIG SET io-threads 4
 ```
 
-Note: I/O threads do not help with slow individual commands - they parallelize
+I/O threads do not help with slow individual commands - they parallelize
 the I/O path, not command execution.
 
 ## Hot Key Detection

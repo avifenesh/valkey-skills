@@ -61,7 +61,7 @@ ValkeyModuleString *ValkeyModule_HoldString(ValkeyModuleCtx *ctx,
 
 Both `RetainString` and `HoldString` are not thread safe for strings originating from client arguments.
 
-**When to use which**:
+**Selection guide**:
 
 | Scenario | Function |
 |----------|----------|

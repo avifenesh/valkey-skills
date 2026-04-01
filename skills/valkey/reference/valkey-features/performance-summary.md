@@ -49,7 +49,7 @@ Performance figures below are from Valkey project benchmarks and release notes. 
 
 ## What Application Developers Get for Free
 
-These improvements require no application code changes. They take effect when you upgrade Valkey:
+No application code changes needed. These take effect on upgrade:
 
 ### Transparent throughput gains
 
@@ -80,7 +80,7 @@ Applications using these operations see immediate speedups:
 
 ## What Requires Configuration
 
-Some improvements need operator-side configuration to take full effect. Coordinate with your ops team or see the valkey-ops skill for details.
+Some improvements need operator-side configuration. Coordinate with ops or see the valkey-ops skill.
 
 ### I/O threading
 
@@ -91,7 +91,7 @@ io-threads 4        # Main + 3 I/O threads (good starting point)
 io-threads 9        # Main + 8 I/O threads (dedicated high-throughput hardware)
 ```
 
-Requires available CPU cores. The main thread still handles command execution (single-threaded), so this scales I/O, not computation.
+Requires available CPU cores. The main thread still handles command execution (single-threaded) - this scales I/O, not computation.
 
 ### TLS offload (8.1+)
 
@@ -103,13 +103,13 @@ Requires kernel support and network configuration. When available, Valkey uses M
 
 ### Pipeline prefetch (9.0+)
 
-Enabled automatically for pipelined commands. Applications that already use pipelining get the benefit with no changes. Applications that do NOT pipeline should consider adding it - the gains are significant.
+Enabled automatically for pipelined commands. Applications already pipelining benefit with no changes. Applications not pipelining should add it - the gains are significant.
 
 ---
 
 ## Application-Side Optimizations
 
-These are not Valkey version-specific but work well with all versions and compound with server-side improvements:
+Not version-specific, but compound with server-side improvements:
 
 ### Pipelining
 
@@ -128,11 +128,11 @@ Recommended batch size: ~10,000 commands per batch.
 
 ### Connection pooling
 
-Reuse connections instead of creating per-request. Or use Valkey GLIDE, which uses a single multiplexed connection per node with auto-pipelining - no pool management needed.
+Reuse connections instead of creating per-request. Valkey GLIDE uses a single multiplexed connection per node with auto-pipelining - no pool management needed.
 
 ### Client-side caching
 
-Use `CLIENT TRACKING` to cache frequently-read keys locally. The server sends invalidation messages when tracked keys change, eliminating network round-trips entirely.
+Use `CLIENT TRACKING` to cache frequently-read keys locally. The server sends invalidation messages when tracked keys change, eliminating round-trips.
 
 ---
 

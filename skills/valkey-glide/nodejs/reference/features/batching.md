@@ -196,7 +196,7 @@ await batchWriteProducts(client, products);
 // [OK] Wrote 50 products (100 commands)
 ```
 
-Note: The `{catalog}` hash tag ensures HSET and SADD for each product route to the same slot, which matters if you later wrap them in an atomic batch. For non-atomic batches, hash tags are optional - GLIDE auto-splits commands across nodes.
+The `{catalog}` hash tag ensures HSET and SADD for each product route to the same slot, which matters if you later wrap them in an atomic batch. For non-atomic batches, hash tags are optional - GLIDE auto-splits commands across nodes.
 
 ## Cluster Routing Behavior
 

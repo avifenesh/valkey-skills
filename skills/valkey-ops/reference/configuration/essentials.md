@@ -33,7 +33,7 @@ Valkey reads configuration from `valkey.conf`. Most parameters can be changed at
 | `maxclients` | `10000` | Maximum simultaneous client connections. |
 | `mptcp` | `no` | Multipath TCP support. |
 
-Note: `bind` defaults to `* -::*` in the source (`CONFIG_DEFAULT_BINDADDR`), which listens on all interfaces. The research guide shows `127.0.0.1 -::1` as the recommended production setting. When `protected-mode` is `yes` and no password is set, external connections are rejected regardless of bind address.
+`bind` defaults to `* -::*` in the source (`CONFIG_DEFAULT_BINDADDR`), which listens on all interfaces. The research guide shows `127.0.0.1 -::1` as the recommended production setting. When `protected-mode` is `yes` and no password is set, external connections are rejected regardless of bind address.
 
 ## Memory
 

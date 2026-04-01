@@ -162,7 +162,7 @@ for (long i = 0; i < n; i++) {
 ValkeyModule_CloseKey(key);
 ```
 
-Important caveats:
+Caveats:
 - After `ListPop`, `ListSet`, or `ListInsert`, the internal iterator is invalidated. The next index-based access requires a linear seek.
 - `ListDelete` advances the iterator to the next element rather than invalidating it, so sequential deletion by index is efficient.
 - Do not use `ValkeyModule_Call()` to modify the list while the key is open - it confuses the internal iterator. Reopen the key after such modifications.

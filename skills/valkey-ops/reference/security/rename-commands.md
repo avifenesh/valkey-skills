@@ -72,7 +72,7 @@ rename-command CONFIG "CONFIG_a8f3b2c1d4e5"
 rename-command FLUSHALL "FLUSH_secret_7x9k2m"
 ```
 
-This allows emergency use while preventing accidental invocation.
+Allows emergency use while preventing accidental invocation.
 
 ### Minimal Production Lockdown
 
@@ -154,7 +154,7 @@ or resource-intensive:
 ACL CAT dangerous
 ```
 
-This typically includes: FLUSHALL, FLUSHDB, DEBUG, KEYS, SORT, MIGRATE,
+Includes: FLUSHALL, FLUSHDB, DEBUG, KEYS, SORT, MIGRATE,
 RESTORE, CLUSTER, REPLICAOF, CONFIG, SHUTDOWN, SAVE, BGSAVE, BGREWRITEAOF,
 SLOWLOG, ACL, MODULE, and others.
 

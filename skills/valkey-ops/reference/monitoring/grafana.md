@@ -48,7 +48,7 @@ Import pre-built dashboards from Grafana.com by Dashboard ID:
 
 Dashboard 763 is the canonical choice - it ships with the exporter source
 (`contrib/grafana_prometheus_redis_dashboard.json`). It supports multi-value
-instance dropdowns for Sentinel environments. Note that single-stat panels
+instance dropdowns for Sentinel environments. Single-stat panels
 (uptime, total memory, clients) do not aggregate across multiple instances.
 
 ### Import steps
@@ -169,7 +169,7 @@ After customizing, export the dashboard JSON for version control:
 2. Copy the JSON
 3. Store in your infrastructure repository
 
-This allows reproducible dashboard deployments via Grafana provisioning or
+Enables reproducible dashboard deployments via Grafana provisioning or
 the Grafana API.
 
 ---

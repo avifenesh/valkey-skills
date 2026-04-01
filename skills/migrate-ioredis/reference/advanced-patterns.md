@@ -37,7 +37,7 @@ const script = new Script("return redis.call('GET', KEYS[1])");
 const result = await client.invokeScript(script, { keys: ["key1"] });
 ```
 
-No manual SHA management. GLIDE caches the script automatically and uses EVALSHA on repeat calls.
+GLIDE caches the script automatically and uses EVALSHA on repeat calls. No manual SHA management.
 
 ---
 
@@ -75,7 +75,7 @@ pipe.get("k1");
 const results2 = await client.exec(pipe, false);  // ["OK", "v1"]
 ```
 
-Note: GLIDE returns flat result arrays, not the [error, result] tuple format that ioredis uses.
+GLIDE returns flat result arrays, not the [error, result] tuple format ioredis uses.
 
 ---
 
@@ -137,9 +137,9 @@ await cluster.publish("events:order", JSON.stringify({ id: 1, status: "created" 
 await publisher.publish(JSON.stringify({ id: 1, status: "created" }), "events:order");
 ```
 
-The publisher must be a separate client from the subscriber. Any standard `GlideClusterClient` (without `pubsubSubscriptions`) can publish.
+The publisher must be a separate client from the subscriber. Any `GlideClusterClient` without `pubsubSubscriptions` can publish.
 
-Node.js GLIDE has NO runtime `subscribe()` / `psubscribe()` methods. All subscriptions must be declared at client creation time. To change subscriptions, close and recreate the client. Callback and polling are mutually exclusive. RESP3 required for PubSub.
+Node.js GLIDE has no runtime `subscribe()` / `psubscribe()` methods. All subscriptions are declared at client creation time. To change subscriptions, close and recreate the client. Callback and polling are mutually exclusive. RESP3 required for PubSub.
 
 ---
 
@@ -154,10 +154,10 @@ redis.on("reconnecting", () => console.log("Reconnecting"));
 ```
 
 **GLIDE:**
-GLIDE does not expose an EventEmitter interface. Connection management and reconnection are handled internally by the Rust core. Errors surface per-command as rejected promises. Configure reconnection behavior via connectionBackoff in the client configuration.
+GLIDE does not expose an EventEmitter interface. The Rust core handles connection management and reconnection internally. Errors surface per-command as rejected promises. Configure reconnection behavior via connectionBackoff in the client configuration.
 
 ---
 
 ## TypeScript Support
 
-GLIDE provides full TypeScript types out of the box via `@valkey/valkey-glide`. The package supports TypeScript, CommonJS, and ESM module formats. Return types are fully typed as `Promise<string | null>` etc. - no `@types/` packages needed.
+GLIDE ships full TypeScript types via `@valkey/valkey-glide`. Supports TypeScript, CommonJS, and ESM module formats. Return types are fully typed (`Promise<string | null>` etc.) - no `@types/` packages needed.

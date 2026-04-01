@@ -159,4 +159,4 @@ config = GlideClusterClientConfiguration(
 client = await GlideClusterClient.create(config)
 ```
 
-GLIDE discovers the full cluster topology from seed nodes automatically. No need to enumerate all nodes.
+GLIDE discovers the full cluster topology from seed nodes automatically.

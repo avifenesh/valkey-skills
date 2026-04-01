@@ -202,8 +202,8 @@ Use `delta(redis_slowlog_length[10m]) > 10` as an alert for growing slow
 command counts. The exporter reads via `SLOWLOG GET` which maps to the `slow`
 commandlog type.
 
-Note: The exporter does not yet expose `large-request` or `large-reply`
-commandlog types. To monitor those, poll via `COMMANDLOG LEN large-request`
+The exporter does not yet expose `large-request` or `large-reply`
+commandlog types. Poll via `COMMANDLOG LEN large-request`
 and `COMMANDLOG LEN large-reply` from your monitoring agent directly.
 
 ### Commands Excluded from Logging

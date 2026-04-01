@@ -27,7 +27,7 @@ Two slot states are tracked in `clusterState`:
 
 ### Resharding Workflow
 
-A resharding tool (typically `valkey-cli --cluster reshard`) orchestrates these steps:
+A resharding tool (`valkey-cli --cluster reshard`) orchestrates these steps:
 
 ```
 1. Target:  CLUSTER SETSLOT <slot> IMPORTING <source-id>

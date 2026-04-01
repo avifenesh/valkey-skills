@@ -24,7 +24,7 @@ SET cache:user:1000 "{...}" EX 3600    # Stale for up to 1 hour
 
 ### Event-Driven Invalidation
 
-Invalidate the cache key when the underlying data changes. Requires your write path to know about the cache.
+Invalidate the cache key when underlying data changes. The write path must know about the cache.
 
 ```python
 async def update_user(user_id, data):
@@ -39,7 +39,7 @@ async def update_user(user_id, data):
 
 ### Keyspace Notifications
 
-React to key changes using Valkey's built-in notification system. Requires enabling `notify-keyspace-events`:
+React to key changes via built-in notifications. Requires enabling `notify-keyspace-events`:
 
 ```
 # Enable notifications for expired and generic events
@@ -49,13 +49,13 @@ CONFIG SET notify-keyspace-events Exg
 SUBSCRIBE __keyevent@0__:expired
 ```
 
-**Caution**: Keyspace notifications are fire-and-forget (pub/sub). If no subscriber is listening, the message is lost. Not suitable as a reliable invalidation mechanism on its own.
+Keyspace notifications are fire-and-forget (pub/sub). If no subscriber is listening, the message is lost. Not reliable as a sole invalidation mechanism.
 
 ---
 
 ## Eviction Policy Guidance
 
-When using Valkey as a cache with `maxmemory` configured, the eviction policy determines what happens when memory is full.
+With `maxmemory` configured, the eviction policy determines what happens when memory is full.
 
 | Policy | Best For |
 |--------|----------|
@@ -65,7 +65,7 @@ When using Valkey as a cache with `maxmemory` configured, the eviction policy de
 | `volatile-ttl` | Hint-based priority - evicts shortest remaining TTL first |
 | `noeviction` | When data loss is unacceptable (rejects writes on memory limit) |
 
-**Key insight**: `allkeys-lru` is more memory-efficient than `volatile-lru` because keys do not need TTLs to be eviction candidates. Setting TTLs consumes extra memory for the expiry metadata.
+`allkeys-lru` is more memory-efficient than `volatile-lru` because keys do not need TTLs to be eviction candidates. TTLs consume extra memory for expiry metadata.
 
 **LFU tuning**: `lfu-log-factor` (default 10) controls how many hits saturate the frequency counter. `maxmemory-samples` (default 5, increase for accuracy) controls LRU precision.
 

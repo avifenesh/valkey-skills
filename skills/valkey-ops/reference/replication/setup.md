@@ -77,7 +77,7 @@ All defaults verified against `src/config.c` in the Valkey source tree.
 | `repl-disable-tcp-nodelay` | `no` | Yes | Disable TCP_NODELAY on replication socket |
 | `repl-mptcp` | `no` | No (immutable) | Enable Multipath TCP for replication |
 
-Note: `replicaof` is IMMUTABLE in config files but can be changed at runtime via the `REPLICAOF` command. `repl-mptcp` is immutable and requires restart.
+`replicaof` is IMMUTABLE in config files but can be changed at runtime via the `REPLICAOF` command. `repl-mptcp` is immutable and requires restart.
 
 ## Setup Procedures
 

@@ -48,7 +48,7 @@ valkey-cli CONFIG GET io-threads
 
 Valkey keeps command execution single-threaded on the main thread. I/O threads
 handle only network read/write, parsing, response serialization, and polling.
-This means no locking around data structures - the parallelism is strictly in
+No locking around data structures - the parallelism is strictly in
 the I/O path.
 
 Each I/O thread has its own lock-free ring buffer job queue (2048 entries).
@@ -177,7 +177,7 @@ Monitor I/O thread utilization with `INFO server` - check
 
 **No throughput improvement after enabling**:
 - Check if workload is actually I/O-bound (not CPU or memory-bound)
-- Verify `events-per-io-thread` is not too high (default 2 is usually fine)
+- Verify `events-per-io-thread` is not too high (default 2 is fine for most workloads)
 - Ensure sufficient CPU cores are available
 
 **Higher latency after enabling**:

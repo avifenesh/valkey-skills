@@ -210,7 +210,7 @@ Memory allocation: hnswlib code is compiled with `vmsdk/src/memory_allocation_ov
 
 `SaveIndexImpl()` delegates to `algo_->SaveIndex()` which writes the full hnswlib binary format via `RDBChunkOutputStream`. `LoadFromRDB()` constructs a new `HierarchicalNSW` and calls `LoadIndex()` from `RDBChunkInputStream`.
 
-Note that `ef_runtime` is not persisted in the hnswlib binary - it is restored from the protobuf `VectorIndex.hnsw_algorithm.ef_runtime` field after loading. `allow_replace_deleted_` is also re-applied from options after loading.
+`ef_runtime` is not persisted in the hnswlib binary - it is restored from the protobuf `VectorIndex.hnsw_algorithm.ef_runtime` field after loading. `allow_replace_deleted_` is also re-applied from options after loading.
 
 Tracked keys are saved/loaded separately via `VectorBase::SaveTrackedKeys()` / `LoadTrackedKeys()` using protobuf `TrackedKeyMetadata` messages containing key, internal_id, and magnitude. After loading, `inc_id_` is resumed from `GetMaxInternalLabel() + 1`.
 

@@ -21,7 +21,7 @@ Source: `src/bloom/utils.rs`
 
 ## BloomObject Struct
 
-Defined at line 92 of `src/bloom/utils.rs`. This is the top-level container stored as a Valkey data type (`bloomfltr`). It holds one or more sub-filters in a chain.
+Defined at line 92 of `src/bloom/utils.rs`. The top-level container stored as a Valkey data type (`bloomfltr`), holding one or more sub-filters in a chain.
 
 ```rust
 #[derive(Serialize, Deserialize)]
@@ -34,7 +34,7 @@ pub struct BloomObject {
 }
 ```
 
-The `expansion` field doubles as a non-scaling indicator: when set to 0, scaling is disabled and only one filter is allowed.
+`expansion` doubles as a non-scaling indicator: when set to 0, scaling is disabled and only one filter is allowed.
 
 ## Constructor Methods
 
@@ -103,7 +103,7 @@ With default tightening ratio 0.5 and FP rate 0.01:
 - Filter 1: `0.01 * 0.5^1 = 0.005`
 - Filter 2: `0.01 * 0.5^2 = 0.0025`
 
-Each successive filter uses a stricter FP rate. This ensures the overall object maintains the configured FP rate as it scales, because the union of independent bloom filters with geometrically decreasing FP rates converges to the original target.
+Each successive filter uses a stricter FP rate. The union of independent bloom filters with geometrically decreasing FP rates converges to the original target, maintaining the configured FP rate as the object scales.
 
 ## Non-Scaling Behavior
 
@@ -210,4 +210,4 @@ impl Drop for BloomObject {
 }
 ```
 
-This decrements the object-level overhead only. Each `BloomFilter` in the vec has its own `Drop` that decrements filter-level metrics separately.
+Decrements the object-level overhead only. Each `BloomFilter` in the vec has its own `Drop` that decrements filter-level metrics separately.

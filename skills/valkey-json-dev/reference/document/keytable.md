@@ -184,7 +184,7 @@ The refcount is 29 bits, max value 536,870,911. Arithmetic is saturating:
 - `incrRefCount()`: If at max, returns true (saturated) and does not increment. The `KeyTable::stuckKeys` atomic counter is incremented.
 - `decrRefCount()`: If stuck (at max), does not decrement. The string will never be freed.
 
-This is a deliberate design choice - a string used more than 2^29 times is considered permanent. The `stuckKeys` counter in `KeyTable::Stats` reports how many strings are in this state.
+A deliberate design choice - a string used more than 2^29 times is considered permanent. The `stuckKeys` counter in `KeyTable::Stats` reports how many strings are in this state.
 
 Poison value `0xdeadbeeffeedfead` is written to `original_hash` when a layout is freed, enabling detection of use-after-free in `destroyHandle`.
 

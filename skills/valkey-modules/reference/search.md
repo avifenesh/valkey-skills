@@ -22,7 +22,7 @@ Use when implementing vector similarity search, full-text search, hybrid queries
 
 ## Overview
 
-valkey-search is a comprehensive search module for Valkey. Originally contributed by Google Cloud as a vector-only engine, it has evolved rapidly into a full-featured search solution. Version 1.2.0 added full-text search, tag search, numeric range queries, and server-side aggregations - transforming it from a vector-only tool into a combined search engine comparable to RediSearch.
+valkey-search is a search module for Valkey. Originally contributed by Google Cloud as a vector-only engine, it has evolved into a full-featured search solution. Version 1.2.0 added full-text search, tag search, numeric range queries, and server-side aggregations - making it a combined search engine comparable to RediSearch.
 
 | Property | Value |
 |----------|-------|
@@ -46,7 +46,7 @@ valkey-search is a comprehensive search module for Valkey. Originally contribute
 
 ## Full-Text Search (1.2.0+)
 
-Added in version 1.2.0, valkey-search now supports keyword-based full-text search with the following query types:
+valkey-search 1.2.0 supports keyword-based full-text search with these query types:
 
 | Query Type | Description | Example |
 |------------|-------------|---------|
@@ -85,7 +85,7 @@ Server-side aggregation pipeline for analytics queries:
 
 ### KNN (Flat / Brute Force)
 
-Exact nearest-neighbor search using linear scan. Guarantees finding the true nearest neighbors but scales linearly with dataset size.
+Exact nearest-neighbor search using linear scan. Guarantees true nearest neighbors but scales linearly with dataset size.
 
 | Property | Value |
 |----------|-------|
@@ -95,7 +95,7 @@ Exact nearest-neighbor search using linear scan. Guarantees finding the true nea
 
 ### HNSW (Hierarchical Navigable Small World)
 
-Approximate nearest-neighbor search using a graph-based index. Trades a small amount of recall for dramatically faster queries on large datasets.
+Approximate nearest-neighbor search using a graph-based index. Trades a small amount of recall for significantly faster queries on large datasets.
 
 | Property | Value |
 |----------|-------|
@@ -279,7 +279,7 @@ See the **valkey-glide** skill for complete GlideFt API reference and code examp
 | FT.CURSOR | **Not yet** | Yes |
 | INFIELDS / INKEYS parameters | **Not yet** | Yes |
 
-The remaining gaps are narrowing. Roadmap signals show FT.CURSOR, FT.EXPLAINCLI, and INFIELDS/INKEYS as open feature requests for future releases.
+FT.CURSOR, FT.EXPLAINCLI, and INFIELDS/INKEYS are open feature requests for future releases.
 
 ## Commands
 

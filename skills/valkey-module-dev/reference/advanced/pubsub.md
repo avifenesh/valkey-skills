@@ -96,10 +96,8 @@ The two publish functions differ in three ways:
 | Pattern matching | Yes - PSUBSCRIBE patterns checked | No - patterns ignored |
 | Cluster propagation | All nodes in the cluster | Only nodes in the same shard |
 
-**When to use each:**
-
-- Use `PublishMessage` for notifications that any client in the cluster should be able to receive, regardless of which node they are connected to. This matches the classic PUBLISH/SUBSCRIBE model.
-- Use `PublishMessageShard` when the notification is relevant only to a specific hash slot's data. Shard channels are cheaper in cluster mode because the message only travels within the shard. Clients must connect to the node that owns the slot and use SSUBSCRIBE.
+- `PublishMessage` - for notifications that any client in the cluster should receive, regardless of which node they are connected to. Matches the classic PUBLISH/SUBSCRIBE model.
+- `PublishMessageShard` - for notifications relevant only to a specific hash slot's data. Shard channels are cheaper in cluster mode because the message only travels within the shard. Clients must connect to the node that owns the slot and use SSUBSCRIBE.
 
 Shard channels are a cluster-mode concept. In standalone mode, both functions behave similarly - they deliver to locally subscribed clients. The distinction in pattern matching still applies: `PublishMessageShard` never checks pattern subscriptions even in standalone mode.
 
@@ -124,7 +122,7 @@ ValkeyModuleCallReply *reply = ValkeyModule_Call(ctx, "PUBLISH", "ss",
 ValkeyModule_FreeCallReply(reply);
 ```
 
-The dedicated API functions are preferred over ValkeyModule_Call for several reasons:
+Advantages over ValkeyModule_Call:
 
 - **No command overhead.** The API calls the internal publish function directly, bypassing command parsing, ACL checks, and call reply allocation.
 - **Direct return value.** The receiver count is returned as an int rather than wrapped in a CallReply that must be parsed and freed.

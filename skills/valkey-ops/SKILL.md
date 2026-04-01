@@ -7,8 +7,6 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 
 # Valkey Operations Reference
 
-60 source-verified reference docs for deploying and operating self-hosted Valkey. All config defaults verified against actual Valkey source code.
-
 ## Routing
 
 - Install, build from source, package manager, Docker, Compose, systemd, bare metal, multi-instance -> Deployment

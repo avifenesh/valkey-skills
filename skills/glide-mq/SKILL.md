@@ -110,7 +110,7 @@ worker.on('failed', (job, err) => console.error(`Job ${job.id} failed:`, err.mes
 - `queue.rateLimitGroup(key, duration, opts?)` - pause group from outside (webhook, health check)
 - Options: `currentJob` ('requeue'|'fail'), `requeuePosition` ('front'|'back'), `extend` ('max'|'replace')
 
-**Note:** Compression (`compression: 'gzip'`) is a Queue-level option passed to the Queue constructor, not a per-job option.
+Compression (`compression: 'gzip'`) is a Queue-level option on the Queue constructor, not a per-job option.
 
 ## AI/LLM Features (v0.13+)
 

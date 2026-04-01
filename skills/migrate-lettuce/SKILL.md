@@ -30,7 +30,7 @@ Use when migrating a Java application from Lettuce to the GLIDE client library.
 | Transactions | MULTI/EXEC API | Batch(true) |
 | Pipelines | Auto-flush or manual setAutoFlushCommands | Batch(false) |
 
-Both Lettuce and GLIDE use async, multiplexed connections - so the migration is structurally smoother than from Jedis or redis-py.
+Both Lettuce and GLIDE use async, multiplexed connections - structurally smoother migration than from Jedis or redis-py.
 
 ## Quick Start - Connection Setup
 
@@ -50,7 +50,7 @@ GlideClientConfiguration config = GlideClientConfiguration.builder()
 GlideClient client = GlideClient.createClient(config).get();
 ```
 
-GLIDE has fewer layers - no separate connection and commands objects. The client exposes commands directly.
+No separate connection and commands objects - the client exposes commands directly.
 
 ## Configuration Mapping
 

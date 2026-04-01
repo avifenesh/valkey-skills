@@ -7,8 +7,6 @@ argument-hint: "[area or task]"
 
 # Valkey Bloom Module - Contributor Reference
 
-12 source-verified reference docs covering the valkey-bloom Rust module - scalable bloom filter architecture, command handlers, replication strategy, persistence, configuration, build system, testing, and CI pipeline. All docs verified against the actual Rust source in valkey-io/valkey-bloom.
-
 ## Not This Skill
 
 - Using BF.ADD/BF.EXISTS/BF.RESERVE in applications -> use valkey-modules

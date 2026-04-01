@@ -19,9 +19,9 @@ Use when you need per-field TTL on hash entries - expiring individual fields wit
 
 ## Overview
 
-Before hash field expiration, the only option for TTL was at the key level. If you had a user hash with `auth_token`, `csrf_token`, and `profile_data`, all fields shared the same lifetime. To expire fields independently, you had to split them into separate keys - losing the organizational benefit of hashes.
+Before 9.0, TTL was key-level only. A user hash with `auth_token`, `csrf_token`, and `profile_data` shared the same lifetime. Expiring fields independently required separate keys, losing hash organization benefits.
 
-Valkey 9.0 adds per-field TTL. Each hash field can have its own expiration time, independent of the key-level TTL.
+Valkey 9.0 adds per-field TTL. Each hash field has its own expiration, independent of key-level TTL.
 
 ---
 
@@ -91,7 +91,7 @@ HPERSIST user:1000 FIELDS 1 profile_data
 
 ## Return Values for TTL Commands
 
-When querying multiple fields, the commands return an array with one value per field:
+Commands return an array with one value per field:
 
 | Value | Meaning |
 |-------|---------|
@@ -103,7 +103,7 @@ When querying multiple fields, the commands return an array with one value per f
 
 ## Use Case: Session Storage with Granular Expiration
 
-Store a user session as a single hash, with different lifetimes for different data:
+Single hash per session, different lifetimes per field:
 
 ```
 # Create session with base data (30-minute session TTL)
@@ -153,9 +153,9 @@ HSETEX cache:user:1000 EX 300 FIELDS 1 recommendations '[...]'
 
 ## Memory Overhead
 
-Per-field expiration adds 16-29 bytes of overhead per expiring field. Standard hash operations (HGET, HSET, HGETALL, etc.) show no measurable performance regression.
+16-29 bytes overhead per expiring field. No measurable performance regression on standard hash operations.
 
-Fields without TTL incur no additional overhead - the cost only applies to fields that have an expiration set.
+Fields without TTL incur no additional overhead.
 
 ---
 

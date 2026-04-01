@@ -114,7 +114,7 @@ async def stream_consumer(redis, stream: str, group: str, consumer: str):
 
 ### Reclaiming Stuck Messages
 
-Messages that were delivered but not acknowledged (consumer crashed) can be reclaimed:
+Reclaim unacknowledged messages from crashed consumers:
 
 ```
 # Find messages pending for more than 5 minutes
@@ -161,7 +161,7 @@ When the cursor returns `0-0`, all pending entries have been scanned. The JUSTID
 
 ### Stream Trimming
 
-Streams grow indefinitely. Trim old messages to bound memory:
+Streams grow indefinitely. Trim to bound memory:
 
 ```
 # Keep at most 10,000 entries

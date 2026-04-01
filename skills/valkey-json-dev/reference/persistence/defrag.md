@@ -63,11 +63,11 @@ The threshold controls the maximum document size (in bytes) that defrag will pro
 #define DEFAULT_DEFRAG_THRESHOLD (64 * 1024 * 1024)  // 64MB
 ```
 
-Documents larger than the threshold are skipped entirely. The rationale stated in the source comment (json.cc line 2367):
+Documents larger than the threshold are skipped entirely. From the source comment (json.cc line 2367):
 
 > We do not want to defrag a key larger than the default max document size. If there is a need to do that, increase the defrag-threshold config value.
 
-The threshold exists because defrag requires copying the entire document. For a 64MB document, that means temporarily holding two copies in memory. Setting the threshold too high risks doubling the memory footprint during defrag passes on large documents.
+Defrag requires copying the entire document. For a 64MB document, two copies exist simultaneously in memory. A threshold set too high risks doubling the memory footprint during defrag passes on large documents.
 
 The threshold is stored in `config_defrag_threshold` and accessed via `json_get_defrag_threshold()`. It is not currently exposed as a runtime-configurable module config through the `registerModuleConfigs` function - it uses the default value unless modified by a future config registration.
 
@@ -75,7 +75,7 @@ The threshold is stored in `config_defrag_threshold` and accessed via `json_get_
 
 The source comment (json.cc lines 2354-2360) explains the design choice:
 
-> Note that the current implementation does not support defrag stop and resume, which is needed for very large JSON objects.
+> The current implementation does not support defrag stop and resume, which is needed for very large JSON objects.
 
 Valkey's defrag API supports a stop/resume pattern where the module can pause partway through defragging a large value and resume on the next defrag cycle. The JSON module does not implement this because:
 

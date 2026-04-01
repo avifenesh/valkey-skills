@@ -18,7 +18,7 @@ Use when storing, querying, or manipulating JSON documents in Valkey, migrating 
 
 ## Overview
 
-valkey-json adds a native JSON data type to Valkey with full JSONPath query support. It is a drop-in replacement for RedisJSON - API and RDB compatible with RedisJSON v1 and v2.
+valkey-json adds a native JSON data type to Valkey with full JSONPath query support. Drop-in replacement for RedisJSON - API and RDB compatible with RedisJSON v1 and v2.
 
 | Property | Value |
 |----------|-------|
@@ -88,13 +88,13 @@ valkey-json adds a native JSON data type to Valkey with full JSONPath query supp
 
 ## Performance
 
-valkey-json uses the RapidJSON library - a header-only C++ JSON parser with no external dependencies. Memory overhead is 16 bytes per JSON value on most 32/64-bit architectures.
+Uses the RapidJSON library - a header-only C++ JSON parser with no external dependencies. Memory overhead is 16 bytes per JSON value on most 32/64-bit architectures.
 
 ## JSONPath Syntax
 
-valkey-json supports full JSONPath query language - wildcard selections, filter expressions, array slices, union operations, and recursive searches. Complies with RFC 7159 and ECMA-404.
+Full JSONPath query language - wildcard selections, filter expressions, array slices, union operations, and recursive searches. Complies with RFC 7159 and ECMA-404.
 
-Two path syntaxes are available:
+Two path syntaxes:
 
 ### Restricted Syntax (RedisJSON v1 compatible)
 
@@ -151,7 +151,7 @@ JSON.MGET user:1 user:2 user:3 $.name
 
 ## Client Integration via GLIDE
 
-GLIDE provides dedicated JSON APIs as static utility classes. These use `customCommand` internally and work with both standalone and cluster clients.
+GLIDE provides dedicated JSON APIs as static utility classes. These use `customCommand` internally and work with standalone and cluster clients.
 
 | Language | Class | Import |
 |----------|-------|--------|
@@ -168,7 +168,7 @@ valkey-json RDB format is compatible with:
 - RedisJSON v1.0.8 and later v1 releases
 - RedisJSON v2 (all versions)
 
-This means you can migrate from a Redis instance with RedisJSON to Valkey with valkey-json by importing RDB snapshots directly. The reverse is also true - RDB files from valkey-json can be loaded by RedisJSON.
+Migrate from a Redis instance with RedisJSON to Valkey with valkey-json by importing RDB snapshots directly. The reverse also works - RDB files from valkey-json can be loaded by RedisJSON.
 
 ## Version History
 

@@ -45,7 +45,7 @@ client.set("key", "value",
     SetOptions.builder().conditionalSetOnlyIfNotExist().build()).get();
 ```
 
-Both return futures - the .get() pattern is the same. The main difference is CompletableFuture (GLIDE) vs RedisFuture (Lettuce).
+Both return futures with the same .get() pattern. The type changes from RedisFuture (Lettuce) to CompletableFuture (GLIDE).
 
 ---
 
@@ -67,7 +67,7 @@ String val = client.hget("hash", "field1").get();
 Map<String, String> all = client.hgetall("hash").get();
 ```
 
-Nearly identical. The only difference is that Lettuce hset accepts a single field-value pair as separate args, while GLIDE always takes a Map.
+Lettuce hset accepts a single field-value pair as separate args; GLIDE always takes a Map.
 
 ---
 

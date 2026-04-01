@@ -7,10 +7,6 @@ argument-hint: "[API area or task]"
 
 # Valkey Module Development Reference
 
-45 source-verified reference docs covering the complete ValkeyModule_* C API for building custom Valkey modules. Organized by lifecycle, commands, data types, events, and advanced APIs. All function signatures and behaviors verified against the Valkey 9.0.3 source (`src/module.c`, `src/valkeymodule.h`).
-
-Browse by category below or ask about a specific API. Each link leads to a focused reference doc with function signatures, parameters, return values, and usage patterns.
-
 ## Routing
 
 - Module skeleton / OnLoad / Init / startup -> Lifecycle (module-loading)

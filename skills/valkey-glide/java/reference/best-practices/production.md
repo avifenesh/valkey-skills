@@ -30,7 +30,7 @@ GlideClient client = GlideClient.createClient(config).get();
 
 ### Lazy Connect
 
-Defer connection until the first command. Useful when the server may not be ready at startup.
+Defers connection until the first command. Allows startup when the server is not yet available.
 
 ```java
 GlideClientConfiguration config = GlideClientConfiguration.builder()

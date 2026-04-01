@@ -73,7 +73,7 @@ Unblocks a client previously blocked with `ValkeyModule_BlockClient`. The `privd
 | `VALKEYMODULE_ERR` (`EINVAL`) | `bc` is NULL |
 | `VALKEYMODULE_ERR` (`ENOTSUP`) | Blocked on keys but no timeout callback registered |
 
-**Important:** You must call `ValkeyModule_UnblockClient` for every blocked client, even if the client was killed, timed out, or disconnected. Failing to do so causes memory leaks.
+`ValkeyModule_UnblockClient` must be called for every blocked client, even if the client was killed, timed out, or disconnected. Failing to do so causes memory leaks.
 
 ## AbortBlock
 
@@ -92,7 +92,7 @@ void ValkeyModule_SetDisconnectCallback(ValkeyModuleBlockedClient *bc,
 
 Registers a callback that fires when a blocked client disconnects before the module calls `UnblockClient`. Use this to clean up module state so that `UnblockClient` can be called safely.
 
-**Important constraints:**
+**Constraints:**
 
 - Do not call Reply functions in the disconnect callback - the client is gone.
 - The disconnect callback is NOT called for timeout disconnections. The timeout callback handles that case instead.

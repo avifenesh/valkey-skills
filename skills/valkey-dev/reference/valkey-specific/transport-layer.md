@@ -189,8 +189,8 @@ static inline int connConnect(connection *conn, const char *addr, int port,
 }
 ```
 
-This means all server code uses `connRead`/`connWrite` regardless of whether
-the underlying transport is TCP, TLS, or RDMA.
+All server code uses `connRead`/`connWrite` regardless of whether the
+underlying transport is TCP, TLS, or RDMA.
 
 ## Socket Implementation (Reference)
 

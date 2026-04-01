@@ -67,7 +67,7 @@ Tests use `testing/common.h` and `testing/common.cc` which provide:
 ./build.sh --tsan --run-tests
 ```
 
-Test binaries are placed in `.build-release/tests/` (or the corresponding build directory). You can also run them directly:
+Test binaries are placed in `.build-release/tests/` (or the corresponding build directory). They can also be run directly:
 
 ```bash
 .build-release/tests/indexes_test --gtest_brief=1

@@ -113,7 +113,7 @@ Channel permission flags:
 | `VALKEYMODULE_CMD_CHANNEL_UNSUBSCRIBE` | Unsubscribe (always allowed) |
 | `VALKEYMODULE_CMD_CHANNEL_PATTERN` | Pattern-based channel |
 
-Note: Since Valkey 9.1, `ACLCheckCommandPermissions` passes -1 for the database ID, which means it does not validate database permissions at all. For users without the `alldbs` flag, this causes READ or WRITE commands to be denied even if the user has permission for the current database. Use `ACLCheckPermissions` for comprehensive validation including database access.
+Since Valkey 9.1, `ACLCheckCommandPermissions` passes -1 for the database ID, which means it does not validate database permissions at all. For users without the `alldbs` flag, this causes READ or WRITE commands to be denied even if the user has permission for the current database. Use `ACLCheckPermissions` for comprehensive validation including database access.
 
 ## ACL Logging
 

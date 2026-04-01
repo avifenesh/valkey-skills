@@ -57,7 +57,7 @@ if val.IsNil() {
 }
 ```
 
-The critical difference: go-redis uses `redis.Nil` as an error sentinel for missing keys. GLIDE separates the nil check from error handling - `err` is only for actual errors, and `val.IsNil()` checks for key absence.
+go-redis uses `redis.Nil` as an error sentinel for missing keys. GLIDE separates nil from errors - `err` is only for actual errors, `val.IsNil()` checks for key absence.
 
 ## Quick Start - Connection Setup
 
@@ -88,7 +88,7 @@ defer client.Close()
 
 ## Incremental Migration Strategy
 
-No drop-in compatibility layer exists for Go. The recommended approach:
+No drop-in compatibility layer exists for Go. Migration approach:
 
 1. Add `github.com/valkey-io/valkey-glide/go/v2` to your `go.mod` alongside `go-redis`
 2. Define a repository or store interface that abstracts the Redis client
@@ -112,7 +112,7 @@ No drop-in compatibility layer exists for Go. The recommended approach:
 
 ## Gotchas
 
-1. **`Result[T]` instead of `redis.Nil`.** The biggest behavioral change. Always check `IsNil()` before calling `Value()`.
+1. **`Result[T]` instead of `redis.Nil`.** Check `IsNil()` before calling `Value()`.
 2. **Slice args, not varargs.** Multi-key commands take `[]string` slices.
 3. **Separate `Set` and `SetWithOptions`.** go-redis combines expiry into `Set()`. GLIDE has separate methods.
 4. **CGO dependency.** GLIDE for Go uses CGO to call the Rust core. Cross-compilation requires Docker-based builds or platform-native compilation.

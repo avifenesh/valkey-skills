@@ -67,7 +67,7 @@ ValkeyModuleCtx *ValkeyModule_GetDetachedThreadSafeContext(ValkeyModuleCtx *ctx)
 
 Creates a thread-safe context that is not associated with any blocked client but retains the calling module's identity. The `ctx` argument is the module context from which the module pointer is copied - typically the context received in `OnLoad`.
 
-This is the preferred way to create long-lived global contexts for logging or periodic background operations. The retained module ID means `ValkeyModule_Log` calls through this context correctly identify the module in log output.
+Preferred for long-lived global contexts used for logging or periodic background operations. The retained module ID means `ValkeyModule_Log` calls through this context correctly identify the module in log output.
 
 Internally, this always creates a new client object (flags include both `VALKEYMODULE_CTX_THREAD_SAFE` and `VALKEYMODULE_CTX_NEW_CLIENT`).
 
@@ -128,7 +128,7 @@ Returns:
 - `VALKEYMODULE_OK` - lock acquired successfully, proceed with API calls
 - `VALKEYMODULE_ERR` - lock not acquired, `errno` is set (typically `EBUSY`)
 
-This is useful for background threads that have other work to do and should not stall waiting for the main thread. The thread can retry later or skip the Valkey operation for this iteration.
+Useful for background threads that have other work to do and should not stall waiting for the main thread. The thread can retry later or skip the Valkey operation for this iteration.
 
 ```c
 if (ValkeyModule_ThreadSafeContextTryLock(ctx) == VALKEYMODULE_OK) {
@@ -176,7 +176,7 @@ The Global Interpreter Lock (`moduleGIL`) is a single `pthread_mutex_t` that ser
 
 ## Pattern: Background Thread with Locked API Calls
 
-The most common pattern: a command blocks the client, spawns a thread for heavy work, and the thread writes results back to Valkey before unblocking.
+A command blocks the client, spawns a thread for heavy work, and the thread writes results back to Valkey before unblocking.
 
 ```c
 typedef struct {

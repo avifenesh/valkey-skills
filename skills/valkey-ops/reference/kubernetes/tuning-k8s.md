@@ -35,7 +35,7 @@ spec:
         value: "65535"
 ```
 
-Note: only "safe" sysctls are allowed by default. The Kubernetes cluster must have `net.core.somaxconn` in the allowed unsafe sysctls list, or it must be configured as a safe sysctl via the kubelet `--allowed-unsafe-sysctls` flag.
+Only "safe" sysctls are allowed by default. The Kubernetes cluster must have `net.core.somaxconn` in the allowed unsafe sysctls list, or it must be configured as a safe sysctl via the kubelet `--allowed-unsafe-sysctls` flag.
 
 ### Init Container for Transparent Huge Pages
 

@@ -148,9 +148,9 @@ config = GlideClientConfiguration(
 
 ## Failover and Timeout
 
-During cluster failover, expect `GlideConnectionError` bursts for 1-5 seconds. GLIDE refreshes the slot map and re-routes automatically. Application code should retry failed operations.
+During cluster failover, expect `GlideConnectionError` bursts for 1-5 seconds. GLIDE refreshes the slot map and re-routes automatically. Retry failed operations.
 
-If you see frequent `GlideTimeoutError`, check server load before increasing:
+Frequent `GlideTimeoutError` indicates server load - verify before increasing timeout:
 
 ```python
 config = GlideClientConfiguration(

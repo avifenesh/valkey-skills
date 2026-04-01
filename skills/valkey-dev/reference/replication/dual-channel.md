@@ -201,7 +201,7 @@ When the primary decides to use dual-channel sync, it attaches the replica's mai
 // Then attaches the replica to start receiving backlog from that point
 ```
 
-This means the replica starts receiving incremental updates immediately, even before the RDB is fully generated. The end-offset tells the replica where the RDB snapshot ends so it knows which PSYNC offset to request after loading.
+The replica starts receiving incremental updates immediately, even before the RDB is fully generated. The end-offset tells the replica where the RDB snapshot ends so it knows which PSYNC offset to request after loading.
 
 ### PSYNC After RDB Load
 

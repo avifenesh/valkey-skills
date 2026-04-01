@@ -30,7 +30,7 @@ const client = await GlideClient.createClient({
 
 ### Lazy Connect
 
-Defer connection until the first command. Useful when the server may not be ready at startup.
+Defers connection until the first command. Allows startup when the server is not yet available.
 
 ```typescript
 const client = await GlideClient.createClient({

@@ -20,7 +20,7 @@ Use when understanding the Valkey module system, loading modules, checking compa
 
 Valkey supports a module system compatible with Redis modules built for Redis 7.2. Modules are shared libraries (`.so` files) loaded at startup or runtime that extend Valkey with new data types and commands. The Valkey project maintains official BSD-licensed modules that provide equivalent functionality to Redis Stack modules.
 
-Modules use the same API as Redis 7.2 modules. Both the `ValkeyModule_OnLoad` and legacy `RedisModule_OnLoad` entry points are supported. Existing Redis modules compiled against Redis 7.2 can run on Valkey without recompilation in most cases.
+Modules use the same API as Redis 7.2 modules. Both the `ValkeyModule_OnLoad` and legacy `RedisModule_OnLoad` entry points are supported. Existing Redis modules compiled against Redis 7.2 run on Valkey without recompilation in most cases.
 
 ## Valkey Bundle
 
@@ -39,7 +39,7 @@ The bundle includes all official modules. New releases of any module automatical
 | valkey-search | GA |
 | valkey-ldap | GA |
 
-The bundle is the simplest way to get all official modules running. For production deployments where you need only specific modules, load them individually.
+The bundle is the simplest path to all official modules. For production deployments requiring only specific modules, load them individually.
 
 ## Official Modules
 
@@ -127,7 +127,7 @@ See [json.md](json.md) and [search.md](search.md) for per-module GLIDE examples,
 
 ## Building Custom Modules
 
-Valkey modules are shared libraries that implement the Valkey Modules API. You can build custom modules in C (using the API directly) or in Rust (using the valkeymodule-rs SDK).
+Valkey modules are shared libraries implementing the Valkey Modules API, built in C (using the API directly) or Rust (using the valkeymodule-rs SDK).
 
 ### C Module API
 
@@ -175,7 +175,7 @@ Full API reference: [valkey.io/topics/modules-api-ref](https://valkey.io/topics/
 
 ### Rust SDK (valkeymodule-rs)
 
-[valkeymodule-rs](https://github.com/valkey-io/valkeymodule-rs) provides an idiomatic Rust API for the Valkey Modules API, eliminating the need for raw pointers or unsafe code.
+[valkeymodule-rs](https://github.com/valkey-io/valkeymodule-rs) provides an idiomatic Rust API for the Valkey Modules API - no raw pointers or unsafe code required.
 
 | | |
 |---|---|
@@ -238,7 +238,7 @@ cargo test --features enable-system-alloc
 | Redis compatibility | Both entry points supported natively | `use-redismodule-api` feature flag |
 | Examples | Valkey source tree `src/modules/` | `examples/` directory in valkeymodule-rs |
 
-For new modules, the Rust SDK is recommended unless you need to minimize dependencies or integrate with existing C codebases.
+The Rust SDK is recommended for new modules unless minimizing dependencies or integrating with existing C codebases.
 
 ## Additional Official Repositories
 

@@ -101,7 +101,7 @@ Command flags used in this module:
 | `fast` | O(1) or O(log N) complexity |
 | `deny-oom` | Reject when server is over maxmemory |
 
-Note: BF.LOAD uses `"write deny-oom"` without `fast` - it is the only command without the fast flag since it deserializes an entire bloom object.
+BF.LOAD uses `"write deny-oom"` without `fast` - the only command without the fast flag since it deserializes an entire bloom object.
 
 Each wrapper function in `lib.rs` is a thin dispatcher to `command_handler.rs`:
 
@@ -224,7 +224,7 @@ Err(ValkeyError::WrongArity)
 Err(ValkeyError::WrongType)
 ```
 
-The pattern is: parse arguments with early returns on validation failure, then open the key writable, check for type errors via `get_value::<BloomObject>(&BLOOM_TYPE)`, and proceed with the operation.
+The pattern: parse arguments with early returns on validation failure, open the key writable, check for type errors via `get_value::<BloomObject>(&BLOOM_TYPE)`, and proceed with the operation.
 
 ## Replication Pattern
 

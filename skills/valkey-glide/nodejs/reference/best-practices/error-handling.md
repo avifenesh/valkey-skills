@@ -128,9 +128,9 @@ const client = await GlideClient.createClient({
 
 ## Failover and Timeout
 
-During cluster failover, expect `ConnectionError` bursts for 1-5 seconds. GLIDE refreshes the slot map and re-routes automatically. Application code should retry failed operations.
+During cluster failover, expect `ConnectionError` bursts for 1-5 seconds. GLIDE refreshes the slot map and re-routes automatically. Retry failed operations.
 
-If you see frequent `TimeoutError`, check server load before increasing the timeout:
+Frequent `TimeoutError` indicates server load - verify before increasing timeout:
 
 ```typescript
 const client = await GlideClient.createClient({

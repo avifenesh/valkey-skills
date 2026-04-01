@@ -29,7 +29,7 @@ Valkey uses compact internal encodings (listpack, intset) for small collections.
 | Set (integers) | intset | <= 512 entries | hashtable |
 | List | quicklist (linked listpacks) | Always quicklist | quicklist |
 
-**Key insight**: The conversion is one-way. Once a collection exceeds a threshold and converts to the full encoding, it stays there even if you remove elements. The only way to get compact encoding back is to delete and recreate the key.
+The conversion is one-way. Once a collection exceeds a threshold and converts to the full encoding, it stays even if you remove elements. Delete and recreate the key to restore compact encoding.
 
 ### Check a Key's Encoding
 
@@ -67,7 +67,7 @@ HSET user:1000 name "Alice" email "alice@example.com" age "30"
 
 ### Hash-Based Key-Value Optimization
 
-For applications with millions of simple key-value pairs, use hashes to model a memory-efficient key-value store. Instead of individual string keys, split the key into a hash key and a field:
+For millions of simple key-value pairs, split the key into a hash key and a field:
 
 ```
 # Instead of: SET object:1234 somevalue
@@ -75,14 +75,14 @@ For applications with millions of simple key-value pairs, use hashes to model a 
 HSET object:12 34 somevalue
 ```
 
-Each hash ends up with ~100 fields, which stays within listpack encoding. This approach uses **5-10x less memory** than individual string keys because:
+Each hash has ~100 fields, staying within listpack encoding. **5-10x less memory** than individual string keys because:
 1. Each top-level key has ~70-80 bytes of metadata overhead
 2. Listpack-encoded hashes store field-value pairs as a compact byte array
-3. Fewer keys means less overhead in the main dictionary
+3. Fewer keys = less main dictionary overhead
 
 ### Hash Bucketing for Extreme Density
 
-For millions of simple key-value pairs, group them into hash buckets to stay under the compact encoding threshold:
+Group millions of key-value pairs into hash buckets to stay under the compact encoding threshold:
 
 ```
 # Instead of millions of top-level keys:
@@ -96,7 +96,7 @@ This keeps each hash under ~100 fields, well within the listpack threshold (512)
 
 ### Encoding Threshold Guidance
 
-Stay under the compact encoding thresholds to avoid memory bloat:
+Compact encoding thresholds:
 
 | Configuration | Default | Effect |
 |---------------|---------|--------|
@@ -108,7 +108,7 @@ Stay under the compact encoding thresholds to avoid memory bloat:
 | `set-max-listpack-value` | 64 | Max member size (bytes) before set converts |
 | `set-max-intset-entries` | 512 | Max integer members before intset converts |
 
-**Gotcha**: Conversion is one-way and permanent for that key. Once a collection exceeds a threshold and converts to the full encoding, it stays there even if you remove elements to go back under the threshold. The only way to get compact encoding back is to delete and recreate the key.
+Conversion is one-way and permanent for that key. Removing elements below the threshold does not restore compact encoding. Delete and recreate the key to restore it.
 
 ---
 
@@ -122,7 +122,7 @@ Strings have implicit encoding rules (not configurable):
 | String <= 52 bytes | `embstr` | Single allocation (object + data together) |
 | String > 52 bytes | `raw` | Two allocations (pointer + data separately) |
 
-**Practical tip**: Keep string values under 52 bytes when possible to use the `embstr` encoding, which avoids an extra allocation and pointer dereference.
+Keep string values under 52 bytes when possible to use `embstr` encoding, which avoids an extra allocation and pointer dereference.
 
 ---
 
@@ -146,7 +146,7 @@ BITOP AND active:both active:2026-03-28 active:2026-03-29
 
 ### Always Set TTLs on Cache Entries
 
-Keys without TTLs live forever. This is the most common cause of memory growth.
+Keys without TTLs live forever - the most common cause of memory growth.
 
 ```
 # Set TTL at write time (preferred - atomic)
@@ -170,7 +170,7 @@ SET cache:realtime:data "{...}" PX 500
 
 ### Hash Field Expiration (Valkey 9.0+)
 
-Set TTLs on individual hash fields instead of the entire key. This avoids splitting data across multiple keys for different expiration needs.
+Set TTLs on individual hash fields instead of the entire key, avoiding data splits across multiple keys for different expiration needs.
 
 ```
 # Set fields with per-field TTL
@@ -201,18 +201,18 @@ Eviction happens when `used_memory` exceeds `maxmemory`. The policy determines w
 
 ### Choosing a Policy
 
-**If your workload is pure cache** (all data can be regenerated): Use `allkeys-lfu`. It adapts to access frequency and handles power-law distributions well.
+**Pure cache** (all data can be regenerated): Use `allkeys-lfu`. Adapts to access frequency and handles power-law distributions well.
 
-**If you mix cache and persistent data**: Use `volatile-lru`. Set TTLs on cache keys, leave persistent keys without TTL. Only keys with TTLs are eviction candidates.
+**Mixed cache and persistent data**: Use `volatile-lru`. Set TTLs on cache keys, leave persistent keys without TTL. Only keys with TTLs are eviction candidates.
 
-**If data loss is unacceptable**: Use `noeviction`. Your application must handle OOM errors on writes. Monitor memory closely.
+**Data loss unacceptable**: Use `noeviction`. The application must handle OOM errors on writes. Monitor memory closely.
 
 ### What Developers Need to Know
 
-- `maxmemory` must be set in production. Without it, Valkey grows until the OS kills it. Typical recommendation: ~75% of available RAM.
-- When eviction kicks in, your cache miss rate increases. This is normal and expected.
-- `volatile-*` policies with no TTL-bearing keys behave like `noeviction` - they cannot find candidates and reject writes.
-- Sudden spikes in `evicted_keys` (visible in `INFO stats`) mean your working set exceeds memory.
+- `maxmemory` must be set in production. Without it, Valkey grows until the OS kills it. Set to ~75% of available RAM.
+- When eviction kicks in, cache miss rate increases. This is expected.
+- `volatile-*` policies with no TTL-bearing keys behave like `noeviction` - no candidates found, writes rejected.
+- Sudden spikes in `evicted_keys` (visible in `INFO stats`) mean the working set exceeds memory.
 
 ---
 
@@ -224,7 +224,7 @@ Eviction happens when `used_memory` exceeds `maxmemory`. The policy determines w
 | 100 KB - 1 MB | Noticeable latency on reads | Consider compression |
 | > 1 MB | Significant latency, network pressure | Store in object storage, keep reference in Valkey |
 
-**Compression**: If you must store large values, compress them client-side before writing. Most Valkey clients do not compress automatically.
+Compress large values client-side before writing. Most Valkey clients do not compress automatically.
 
 ```python
 import zlib

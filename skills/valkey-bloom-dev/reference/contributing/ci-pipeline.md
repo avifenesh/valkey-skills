@@ -109,7 +109,7 @@ The `-m "not skip_for_asan"` filter excludes tests marked with `@pytest.mark.ski
 
 After tests complete, the output is scanned for LeakSanitizer reports (see next section).
 
-Note: The bloom module itself is built as a standard release binary without ASAN instrumentation. ASAN coverage applies to the Valkey server process. Memory leaks in the module are detected because the module's allocations (via ValkeyAlloc) flow through the server's instrumented allocator.
+The bloom module itself is built as a standard release binary without ASAN instrumentation. ASAN coverage applies to the Valkey server process. Memory leaks in the module are detected because the module's allocations (via ValkeyAlloc) flow through the server's instrumented allocator.
 
 ## LeakSanitizer Detection
 

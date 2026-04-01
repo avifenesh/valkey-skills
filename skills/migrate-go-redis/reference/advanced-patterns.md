@@ -105,7 +105,7 @@ err = client.UnsubscribeAll(ctx)      // all exact channels
 err = client.PUnsubscribeAll(ctx)     // all patterns
 ```
 
-go-redis uses a Go channel-based approach (`pubsub.Channel()`). GLIDE uses either callbacks (set at creation time) or queue-based polling (`GetQueue` + `Pop` / `WaitForMessage`). Use a dedicated client for subscriptions. GLIDE automatically resubscribes on reconnection.
+go-redis uses a Go channel-based approach (`pubsub.Channel()`). GLIDE uses callbacks (set at creation time) or queue-based polling (`GetQueue` + `Pop` / `WaitForMessage`). Use a dedicated client for subscriptions. GLIDE automatically resubscribes on reconnection.
 
 ---
 
@@ -117,4 +117,4 @@ go-redis uses a Go channel-based approach (`pubsub.Channel()`). GLIDE uses eithe
 | 2.2 | `go mod vendor` support |
 | 2.3 | Dynamic PubSub, ACL commands, cluster management commands |
 
-Community feedback shaped the API design - the team minimized interface usage in favor of concrete types after developers noted that returning interfaces was non-idiomatic Go.
+The team minimized interface usage in favor of concrete types after community feedback that returning interfaces was non-idiomatic Go.

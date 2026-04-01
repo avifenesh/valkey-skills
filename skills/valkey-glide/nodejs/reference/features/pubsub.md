@@ -156,7 +156,7 @@ if (next) {
 }
 ```
 
-Drain messages promptly - the internal buffer is unbounded and grows indefinitely if not consumed.
+Drain the queue regularly - the internal buffer is unbounded and grows if not consumed.
 
 ## Complete Example: Publisher + Subscriber
 
@@ -202,7 +202,7 @@ subscriber.close();
 
 2. **Separate clients for pub and sub.** A subscribing client is in a special mode. Use one client for publishing and a different client for subscribing.
 
-3. **No runtime subscribe/unsubscribe yet in Node.js.** Java/Python/Go have dynamic `subscribe()`/`psubscribe()` methods (GLIDE 2.3+). Node.js support is in progress. For now, declare all subscriptions at creation time. To change subscriptions, close and recreate the client.
+3. **No runtime subscribe/unsubscribe in Node.js.** Java/Python/Go have dynamic `subscribe()`/`psubscribe()` methods (GLIDE 2.3+). Node.js support is in progress. Declare all subscriptions at creation time. To change subscriptions, close and recreate the client.
 
 4. **Callback vs polling - pick one.** If a callback is configured, `getPubSubMessage()` and `tryGetPubSubMessage()` throw `ConfigurationError`. If no callback is configured, messages must be polled.
 

@@ -14,7 +14,7 @@ Use when handling MOVED/ASK redirects, reading from replicas, pipelining in clus
 
 ## MOVED and ASK Redirects
 
-In cluster mode, a client may connect to any node and be told to try a different one. Your client library handles this automatically - understanding it helps with debugging.
+A client may connect to any node and be told to try a different one. Client libraries handle this automatically - understanding it helps with debugging.
 
 ### MOVED Redirect
 
@@ -48,7 +48,7 @@ All production clients (ioredis, Valkey GLIDE, valkey-py, Jedis, go-redis) handl
 - Follow ASK with the ASKING prefix
 - Retry transparently
 
-**When you see redirect errors in logs**: Usually means the slot mapping cache is stale. This is normal during cluster topology changes. If redirects are excessive, check for ongoing resharding or frequent failovers.
+Redirect errors in logs mean the slot mapping cache is stale - normal during topology changes. Excessive redirects indicate ongoing resharding or frequent failovers.
 
 ---
 
@@ -102,7 +102,7 @@ client = ValkeyCluster(
 | Prefer replica | Lower | Eventual (replication lag) | Dashboards, analytics, cache reads |
 | AZ-affinity | Lowest | Eventual | Multi-AZ deployments, minimize cross-AZ traffic |
 
-**Replication lag**: Typically sub-millisecond under normal load. Can spike to seconds under heavy write load or during full resync. Never assume zero lag.
+**Replication lag**: Sub-millisecond under normal load. Can spike to seconds under heavy writes or during full resync. Never assume zero lag.
 
 ### When to Read from Replicas
 
@@ -128,7 +128,7 @@ WAIT 1 100
 
 ## Pipelining in Cluster Mode
 
-Pipelining works in cluster mode, but with a constraint: each node receives only the commands for keys it owns. Cluster-aware clients handle this by grouping commands by slot/node.
+Pipelining works in cluster mode. Each node receives only commands for keys it owns. Cluster-aware clients group commands by slot/node automatically.
 
 ### How Clients Handle It
 
@@ -138,7 +138,7 @@ Pipelining works in cluster mode, but with a constraint: each node receives only
 4. Client sends one pipeline per node in parallel
 5. Client reassembles results in original order
 
-This is transparent to your code. Pipeline normally:
+Transparent to application code:
 
 ```javascript
 // ioredis in cluster mode - works identically to standalone
@@ -162,7 +162,7 @@ Pipeline depth per-node is what matters. A 100-command pipeline across 3 nodes s
 
 ### The Problem
 
-`SCAN` iterates keys on a single node. In a cluster, each node holds a subset of keys. To scan the entire keyspace, you must scan each primary node individually.
+`SCAN` iterates keys on a single node. In a cluster, scan each primary node individually to cover the full keyspace.
 
 ### CLUSTERSCAN (Valkey 9.1+)
 
@@ -174,7 +174,7 @@ CLUSTERSCAN 0 MATCH user:* COUNT 100
 # Cursor encodes both node and position - just keep calling until cursor is 0
 ```
 
-`CLUSTERSCAN` abstracts away the per-node iteration. Use it when your client supports it.
+`CLUSTERSCAN` abstracts per-node iteration. Use when your client supports it.
 
 ### Per-Node SCAN (Fallback)
 

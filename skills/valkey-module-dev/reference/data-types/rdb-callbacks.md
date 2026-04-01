@@ -66,7 +66,7 @@ All load functions operate within the `rdb_load` callback context. Each validate
 | `LoadFloat` | `float ValkeyModule_LoadFloat(ValkeyModuleIO *io)` | 0 |
 | `LoadLongDouble` | `long double ValkeyModule_LoadLongDouble(ValkeyModuleIO *io)` | 0 |
 
-**Important differences between LoadString and LoadStringBuffer:**
+**LoadString vs LoadStringBuffer:**
 
 - `LoadString` returns a `ValkeyModuleString*` - free with `ValkeyModule_FreeString()`
 - `LoadStringBuffer` returns a heap-allocated `char*` - free with `ValkeyModule_Free()`. The buffer is NOT null-terminated. Length is stored in `*lenptr`.

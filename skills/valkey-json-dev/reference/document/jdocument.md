@@ -134,7 +134,7 @@ public:
 };
 ```
 
-This eliminates per-member string storage for object keys. Keys are interned in the global KeyTable, and member names are 8-byte handles. The destructor releases the KeyTable reference.
+Eliminates per-member string storage for object keys. Keys are interned in the global KeyTable, and member names are 8-byte handles. The destructor releases the KeyTable reference.
 
 For hash table mode, `GenericMemberHT` extends `GenericMember` with linked-list pointers:
 
@@ -149,7 +149,7 @@ public:
 
 ## Double Storage as Strings
 
-Doubles are stored as their string representation rather than IEEE 754 binary. This preserves exact decimal representation across serialize/deserialize cycles (e.g., `0.1` stays `"0.1"`, not `0.1000000000000000055511151231257827`).
+Doubles are stored as their string representation rather than IEEE 754 binary. Preserves exact decimal representation across serialize/deserialize cycles (e.g., `0.1` stays `"0.1"`, not `0.1000000000000000055511151231257827`).
 
 Two storage modes for doubles:
 

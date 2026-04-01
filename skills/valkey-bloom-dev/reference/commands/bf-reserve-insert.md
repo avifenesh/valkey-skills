@@ -100,7 +100,7 @@ After all arguments are parsed, if `validate_scale_to` is set:
    - FP rate degrades to zero before reaching target: `ERR provided VALIDATESCALETO causes false positive to degrade to 0`
    - Memory limit exceeded before reaching target: `ERR provided VALIDATESCALETO causes bloom object to exceed memory limit`
 
-This argument is not replicated - it is validated on the primary before object creation only.
+Not replicated - validated on the primary before object creation only.
 
 ## NOCREATE Behavior
 

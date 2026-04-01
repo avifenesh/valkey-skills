@@ -16,7 +16,7 @@ Use when configuring ValkeyTemplate, StringValkeyTemplate, Spring Cache abstract
 
 ## Connection Factory
 
-Spring Data Valkey auto-configures a `ValkeyConnectionFactory` based on the driver detected on the classpath. For GLIDE, this wraps `GlideClient` or `GlideClusterClient` depending on whether cluster nodes are configured.
+Spring Data Valkey auto-configures a `ValkeyConnectionFactory` based on the classpath driver. For GLIDE, this wraps `GlideClient` or `GlideClusterClient` depending on whether cluster nodes are configured.
 
 ---
 
@@ -119,7 +119,7 @@ spring.cache.valkey.use-key-prefix=true
 
 ## Spring Boot Actuator Health Indicators
 
-Spring Data Valkey registers a health indicator automatically when Actuator is on the classpath:
+A health indicator is registered automatically when Actuator is on the classpath:
 
 ```properties
 management.health.valkey.enabled=true
@@ -170,4 +170,4 @@ public interface PersonRepository extends CrudRepository<Person, String> {
 
 Import: `io.valkey.springframework.data.valkey.core.ValkeyHash`
 
-Repository support uses secondary indexes via Valkey SETs. This works well for small to medium datasets but is not designed for high-cardinality queries.
+Repository support uses secondary indexes via Valkey SETs. Suitable for small to medium datasets; not designed for high-cardinality queries.

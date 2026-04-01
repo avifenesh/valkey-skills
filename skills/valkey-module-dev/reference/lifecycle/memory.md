@@ -160,7 +160,7 @@ Must be called as the first function in a command implementation that wants auto
 | ValkeyModuleCallReply | `ValkeyModule_FreeCallReply()` |
 | ValkeyModuleString | `ValkeyModule_FreeString()` |
 
-Even with AutoMemory enabled, you can still call the manual free functions. This is useful in loops to avoid accumulating objects:
+Manual free functions still work with AutoMemory enabled, which avoids accumulating objects in loops:
 
 ```c
 int MyCommand(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int argc) {

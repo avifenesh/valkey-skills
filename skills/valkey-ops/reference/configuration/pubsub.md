@@ -61,7 +61,7 @@ For comparison, the other client classes:
 CONFIG SET client-output-buffer-limit "pubsub 64mb 16mb 60"
 ```
 
-Note: this sets all three values for the pubsub class in a single command.
+This sets all three values for the pubsub class in a single command.
 
 ---
 
@@ -94,7 +94,7 @@ CLIENT LIST TYPE pubsub
 
 ### Interaction with maxmemory-clients
 
-When `maxmemory-clients` is set (e.g., `5%` of maxmemory), client eviction kicks in before output buffer limits. Client eviction disconnects the client using the most memory first, regardless of class. This means a slow Pub/Sub subscriber may be disconnected by client eviction before hitting the pubsub buffer hard limit. Use `CLIENT NO-EVICT on` for critical monitoring or control-plane subscribers.
+When `maxmemory-clients` is set (e.g., `5%` of maxmemory), client eviction kicks in before output buffer limits. Client eviction disconnects the client using the most memory first, regardless of class. A slow Pub/Sub subscriber may be disconnected by client eviction before hitting the pubsub buffer hard limit. Use `CLIENT NO-EVICT on` for critical monitoring or control-plane subscribers.
 
 ### Anti-Pattern: Unlimited Pub/Sub Buffers
 
@@ -212,9 +212,8 @@ Source references:
 - `cluster-allow-pubsubshard-when-down`: verified in essentials.md
 - `acl-pubsub-default`: line 3342, default `0` which maps to `resetchannels`
 
-Note: `acl-pubsub-default resetchannels` means new users have NO Pub/Sub
-channel access by default. They must be explicitly granted with `&pattern` or
-`allchannels`.
+`acl-pubsub-default resetchannels` means new users have NO Pub/Sub
+channel access by default. Grant explicitly with `&pattern` or `allchannels`.
 
 ---
 

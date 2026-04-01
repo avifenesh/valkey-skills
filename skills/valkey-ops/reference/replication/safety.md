@@ -41,7 +41,7 @@ min-replicas-to-write 1
 min-replicas-max-lag 10
 ```
 
-This means:
+Effect:
 - If the sole replica disconnects or falls more than 10 seconds behind, the primary stops accepting writes
 - Clients receive `NOREPLICAS` error on write attempts
 - Reads continue to work normally
@@ -73,7 +73,7 @@ WAIT 1 5000
 
 `WAIT` returns the number of replicas that acknowledged the write. If it returns 0, the write may not have been replicated.
 
-Important limitations:
+Limitations:
 - WAIT only confirms the write reached the replica's memory, not that it was persisted to disk
 - WAIT does not make Valkey into a strongly consistent system
 - Use for critical writes only - it adds latency equal to replication lag

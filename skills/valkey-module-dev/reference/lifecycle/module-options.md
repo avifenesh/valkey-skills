@@ -154,7 +154,7 @@ int MyNotificationHandler(ValkeyModuleCtx *ctx, int type,
 
 When set, the module can skip command validation checks for `ValkeyModule_Replicate()` and `ValkeyModule_EmitAOF()`. This reduces overhead in high-throughput scenarios where the commands being replicated are already pre-validated or are trusted custom command logic.
 
-Use with caution - bypassing validation means the module is responsible for ensuring replicated commands are well-formed.
+Bypassing validation means the module is responsible for ensuring replicated commands are well-formed.
 
 ## HANDLE_ATOMIC_SLOT_MIGRATION
 

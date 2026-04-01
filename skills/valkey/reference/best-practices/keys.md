@@ -31,7 +31,7 @@ o5678i
 rl42
 ```
 
-**Short keys save negligible memory** compared to the value they hold. A 20-byte key name vs a 5-byte key name saves 15 bytes - irrelevant when the value is hundreds of bytes or more. Readability and operational tooling (SCAN patterns, monitoring) matter far more.
+Short keys save negligible memory. A 20-byte vs 5-byte key name saves 15 bytes - irrelevant when values are hundreds of bytes or more. Readability and operational tooling (SCAN patterns, monitoring) matter far more.
 
 ### Naming Guidelines
 
@@ -63,7 +63,7 @@ MGET {user:1000}:profile {user:1000}:sessions
 
 ## Avoiding Hot Keys
 
-A hot key is a single key receiving extreme read/write traffic. In cluster mode, all operations on a key route to one shard, making that shard a bottleneck.
+A hot key receives extreme read/write traffic. In cluster mode, all operations on a key route to one shard, creating a bottleneck.
 
 ### Detection
 
@@ -97,21 +97,21 @@ HINCRBY counters:{1} page_views 1
 
 **2. Read replicas for read-heavy hot keys**:
 
-Route read traffic to replicas. This works in Sentinel and cluster setups where replicas can serve reads.
+Route read traffic to replicas in Sentinel and cluster setups.
 
 **3. Client-side caching**:
 
-Use `CLIENT TRACKING` to cache hot read-only keys locally. Eliminates server round-trips entirely for frequently accessed data. See [patterns/caching](../patterns/caching.md) for details.
+Use `CLIENT TRACKING` to cache hot read-only keys locally, eliminating server round-trips. See [patterns/caching](../patterns/caching.md).
 
 **4. Local application cache with short TTL**:
 
-For data that tolerates slight staleness, cache in application memory for 1-5 seconds.
+For data tolerating slight staleness, cache in application memory for 1-5 seconds.
 
 ---
 
 ## Avoiding Big Keys
 
-Big keys - those with millions of elements or multi-MB values - cause latency spikes on operations like `HGETALL`, `SMEMBERS`, or `DEL`.
+Big keys (millions of elements or multi-MB values) cause latency spikes on `HGETALL`, `SMEMBERS`, or `DEL`.
 
 ### Detection
 
@@ -170,10 +170,10 @@ UNLINK bigkey
 
 Valkey uses two expiration mechanisms:
 
-- **Passive**: When a client accesses an expired key, it is deleted on the spot
+- **Passive**: Expired keys are deleted when a client accesses them
 - **Active**: A periodic background task samples random keys with TTLs and deletes expired ones
 
-This means expired keys may linger in memory until accessed or sampled. With many short-lived keys, active expiration keeps memory in check.
+Expired keys may linger in memory until accessed or sampled. With many short-lived keys, active expiration keeps memory in check.
 
 ### Expiration Commands
 
@@ -188,7 +188,7 @@ This means expired keys may linger in memory until accessed or sampled. With man
 
 ### Set TTL at Write Time
 
-Always prefer setting TTL at write time to avoid the race between write and expire:
+Set TTL at write time to avoid the race between write and expire:
 
 ```
 # Atomic: write + TTL in one command

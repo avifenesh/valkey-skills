@@ -75,7 +75,7 @@ Use when reviewing application code for common Valkey mistakes, or as a checklis
 
 ## Detection Commands
 
-Use these to find problems in a running Valkey instance:
+Find problems in a running Valkey instance:
 
 ```bash
 # Find big keys (keys with many elements or large memory)
@@ -106,11 +106,11 @@ valkey-cli SLOWLOG GET 10
 
 ### "Should I use DEL or UNLINK?"
 
-Always use `UNLINK` unless you specifically need synchronous deletion semantics. In Valkey 8.0+, `DEL` defaults to async behavior (`lazyfree-lazy-user-del yes`), but `UNLINK` is explicit and clear.
+Always use `UNLINK` unless you need synchronous deletion. In Valkey 8.0+, `DEL` defaults to async behavior (`lazyfree-lazy-user-del yes`), but `UNLINK` is explicit and clear.
 
 ### "Should I use KEYS or SCAN?"
 
-Never use `KEYS` in production. Period. Use `SCAN` with a cursor. Accept that SCAN may return duplicates (deduplicate client-side) and empty pages (keep iterating until cursor returns 0).
+Never use `KEYS` in production. Use `SCAN` with a cursor. SCAN may return duplicates (deduplicate client-side) and empty pages (keep iterating until cursor returns 0).
 
 ### "Should I use Pub/Sub or Streams?"
 

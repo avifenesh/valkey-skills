@@ -7,8 +7,6 @@ argument-hint: "[language binding or core component]"
 
 # Valkey GLIDE Contributor Reference
 
-For using GLIDE in applications, see the `valkey-glide` skill (per-language user skills).
-
 ## Routing
 
 - Rust core, connection management, protocol -> Core Architecture

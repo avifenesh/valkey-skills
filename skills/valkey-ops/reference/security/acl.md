@@ -231,7 +231,7 @@ user monitor on >monitorpass +get +info +ping ~*
 
 When using inline config, `CONFIG REWRITE` persists ACL changes.
 
-Important: Do not mix both methods. If `aclfile` is set, inline `user`
+Do not mix both methods. If `aclfile` is set, inline `user`
 directives in `valkey.conf` are ignored.
 
 ---

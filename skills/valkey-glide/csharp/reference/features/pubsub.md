@@ -144,4 +144,4 @@ Cluster clients also have `PubSubShardChannelsAsync()` and `PubSubShardNumSubAsy
 2. **RESP3 required.** PubSub push notifications need RESP3 (the default protocol).
 3. **Automatic reconnection.** On disconnect, GLIDE resubscribes to all desired channels automatically.
 4. **Message loss during reconnect.** PubSub is at-most-once delivery. Use Streams for durability.
-5. **Drain messages promptly.** The internal buffer is unbounded when using polling/callback modes.
+5. **Drain the queue regularly.** The internal buffer is unbounded when using polling/callback modes.

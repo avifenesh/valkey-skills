@@ -157,7 +157,7 @@ Pub/sub buffers: 100 * 32MB  = 3200MB (worst case)
 Normal clients: monitor individually
 ```
 
-Note: `client-query-buffer-limit` defaults to 1GB per client. A misbehaving
+`client-query-buffer-limit` defaults to 1GB per client. A misbehaving
 client can consume significant memory with a single large pipeline. Use
 `maxmemory-clients 5%` to cap aggregate client buffer memory.
 
@@ -265,7 +265,7 @@ Valkey Cluster has 16,384 hash slots distributed across primary nodes.
 | 32 GB | ~20 GB | Larger fork times, plan maintenance windows |
 | 64 GB+ | ~40 GB | Long fork times - consider RDB-less replication |
 
-Smaller nodes are generally preferred because:
+Smaller nodes are preferred because:
 - Faster BGSAVE and AOF rewrite (less data to fork)
 - Faster failover (less data to replicate)
 - Faster slot migration when rebalancing

@@ -260,7 +260,7 @@ int ValkeyModule_OnLoad(ValkeyModuleCtx *ctx, ValkeyModuleString **argv, int arg
 
 ### Testing defrag
 
-From `tests/unit/moduleapi/defrag.tcl`. Note: `activedefrag` requires a build with jemalloc, so the test guards with `catch`:
+From `tests/unit/moduleapi/defrag.tcl`. `activedefrag` requires a build with jemalloc, so the test guards with `catch`:
 
 ```tcl
 start_server {tags {"modules"} overrides {{save ""}}} {

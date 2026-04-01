@@ -102,7 +102,7 @@ struct ReplicateArgs<'a> {
 }
 ```
 
-This is populated from the **bloom object's actual properties**, not the command arguments. This distinction matters because BF.ADD and BF.MADD do not accept these parameters as arguments - they read them from the created bloom object. For BF.INSERT on an existing object, the object's original properties are used, not the command's override arguments.
+Populated from the **bloom object's actual properties**, not the command arguments. The distinction matters because BF.ADD and BF.MADD do not accept these parameters as arguments - they read them from the created bloom object. For BF.INSERT on an existing object, the object's original properties are used, not the command's override arguments.
 
 The `items` field is a slice of the original input arguments starting at the item index position, so the exact user-supplied items are forwarded to replicas.
 
@@ -125,7 +125,7 @@ Uses the `ValkeyModule_MustObeyClient` API from the `valkey_module::raw` binding
 ctx.get_flags().contains(valkey_module::ContextFlags::REPLICATED)
 ```
 
-Falls back to checking `ContextFlags::REPLICATED` via the `GetContextFlags` API. This is a best-effort approximation since the flag-based approach is less precise than the dedicated API.
+Falls back to checking `ContextFlags::REPLICATED` via the `GetContextFlags` API. A best-effort approximation since the flag-based approach is less precise than the dedicated API.
 
 The feature flag is compile-time: `cargo build --features valkey_8_0`. Without the flag, the 8.1+ path is used.
 
@@ -143,7 +143,7 @@ When `must_obey_client` returns true (replica receiving from primary, or AOF rep
 - `BloomObject::add_item` skips `validate_size_before_scaling`
 - `BloomObject::decode_object` (BF.LOAD path) skips memory size validation
 
-This ensures replicas never reject operations that the primary accepted. If the primary's `bloom-memory-usage-limit` allowed a bloom object, the replica must accept it even if the replica has a different (lower) memory limit configured.
+Replicas never reject operations that the primary accepted. If the primary's `bloom-memory-usage-limit` allowed a bloom object, the replica must accept it even if the replica has a different (lower) memory limit configured.
 
 The size limit is enforced only on user-initiated commands on the primary node.
 
@@ -167,7 +167,7 @@ if reserve_operation {
 }
 ```
 
-Both events can fire in the same call - when BF.ADD or BF.INSERT creates a new object and adds items, both `bloom.reserve` and `bloom.add` are emitted. The events use `NotifyEvent::GENERIC` category. Note that keyspace notifications fire independently of the replication path - both checks run regardless of which replication branch was taken.
+Both events can fire in the same call - when BF.ADD or BF.INSERT creates a new object and adds items, both `bloom.reserve` and `bloom.add` are emitted. The events use `NotifyEvent::GENERIC` category. Keyspace notifications fire independently of the replication path - both checks run regardless of which replication branch was taken.
 
 ## Replication in Each Command
 

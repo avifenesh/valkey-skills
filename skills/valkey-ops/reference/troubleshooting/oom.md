@@ -91,7 +91,7 @@ journalctl -u valkey --since "1 hour ago" | grep -i "oom\|memory"
 ### 1. Set Explicit maxmemory
 
 Source-verified: `maxmemory` defaults to 0 (unlimited) in `src/config.c`
-line 3442. This is the most common cause of OOM - Valkey grows until the OS
+line 3442. The most common cause of OOM - Valkey grows until the OS
 kills it.
 
 ```bash

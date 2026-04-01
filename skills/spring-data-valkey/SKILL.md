@@ -62,7 +62,7 @@ GLIDE requires platform-specific native libraries. Add the os-maven-plugin to re
 | Lettuce | Supported | Reactive/async workloads, existing Lettuce users |
 | Jedis | Supported | Legacy compatibility, synchronous-only workloads |
 
-Spring Data Valkey auto-detects the driver on the classpath. Configure explicitly via:
+Spring Data Valkey auto-detects the driver on the classpath. Explicit configuration:
 
 ```properties
 spring.data.valkey.client-type=valkeyglide
@@ -106,7 +106,7 @@ spring.data.valkey.valkey-glide.iam-authentication.service=ELASTICACHE
 spring.data.valkey.valkey-glide.iam-authentication.region=us-east-1
 ```
 
-IAM auth requires TLS and the GLIDE driver. AWS credentials must be available in the environment. The driver handles token refresh automatically.
+IAM auth requires TLS and the GLIDE driver. AWS credentials must be available in the environment. Token refresh is automatic.
 
 ### OpenTelemetry via Spring Properties
 

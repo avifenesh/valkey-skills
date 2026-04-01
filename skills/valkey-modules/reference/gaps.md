@@ -37,11 +37,11 @@ Use when evaluating whether Valkey covers your module needs, understanding what 
 
 valkey-search 1.2.0 added full-text search with keyword, phrase, prefix, suffix, wildcard, and fuzzy (typo-tolerant) queries. It also supports tag search for categorical filtering, numeric range queries, and hybrid queries combining text, tag, numeric, and vector dimensions in a single request. FT.AGGREGATE (added in 1.1.0) provides server-side GROUPBY, REDUCE, APPLY, FILTER, and SORTBY.
 
-This was previously the single largest functional gap between Valkey and Redis 8. It is now closed for most use cases.
+Previously the single largest functional gap between Valkey and Redis 8, now closed for most use cases.
 
 **Remaining search gaps vs RediSearch**: Phonetic matching, auto-complete/suggestions, and FT.CURSOR are not yet available. Stemming is now supported (use NOSTEM on fields where stemming should be disabled).
 
-**When you still need an external search service**: If your workload requires phonetic matching or auto-complete suggestions, pair Valkey with a dedicated search engine until these features land in valkey-search.
+**When an external search service is needed**: Workloads requiring phonetic matching or auto-complete suggestions should pair Valkey with a dedicated search engine until these features land in valkey-search.
 
 | Alternative | Type | Notes |
 |-------------|------|-------|
@@ -53,7 +53,7 @@ This was previously the single largest functional gap between Valkey and Redis 8
 
 **Status**: No official Valkey module.
 
-There is no valkey-timeseries module. The community-maintained `redistimeseries.so` (built for Redis 7.2) works on Valkey 7.2, but it is not officially supported by the Valkey project and may break with future Valkey versions.
+No valkey-timeseries module exists. The community-maintained `redistimeseries.so` (built for Redis 7.2) works on Valkey 7.2 but is not officially supported and may break with future Valkey versions.
 
 **Alternatives**:
 
@@ -82,13 +82,13 @@ ZCOUNT sensor:temp:room1 1711756800 1711843200
 ZREMRANGEBYSCORE sensor:temp:room1 -inf 1711670400
 ```
 
-This approach works for simple use cases but lacks automatic downsampling, aggregation functions (avg, min, max over windows), and compaction rules that a dedicated time series module provides.
+This works for simple use cases but lacks automatic downsampling, aggregation functions (avg, min, max over windows), and compaction rules that a dedicated time series module provides.
 
 ### Graph
 
 **Status**: Not available on either platform.
 
-RedisGraph was end-of-lifed by Redis Inc. in 2023. There is no Valkey equivalent and no plans for one. Graph workloads have moved to dedicated graph databases.
+RedisGraph was end-of-lifed by Redis Inc. in 2023. No Valkey equivalent exists and none is planned. Graph workloads have moved to dedicated graph databases.
 
 **Alternatives**:
 
@@ -112,7 +112,7 @@ Redis 8 bundles several probabilistic data structures that Valkey does not have:
 | Top-K | `TOPK.*` commands | Not available | Use Sorted Sets with periodic pruning |
 | t-digest | `TDIGEST.*` commands | Not available | Compute percentiles in application code |
 
-These are niche data structures. Most applications do not need them, and reasonable workarounds exist using core Valkey features.
+These are niche data structures. Most applications do not need them, and workarounds exist using core Valkey features.
 
 ## Where Valkey Has No Gap (or Leads)
 

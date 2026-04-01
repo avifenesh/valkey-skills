@@ -12,7 +12,7 @@ Use when storing user sessions in Valkey with hashes, implementing sliding sessi
 
 ## Basic Session Storage with Hashes
 
-Hashes are the natural fit for sessions: each session is a hash key with fields for user data, metadata, and tokens.
+Each session is a hash key with fields for user data, metadata, and tokens.
 
 ### Create and Read Sessions
 
@@ -92,7 +92,7 @@ class SessionStore:
 
 ## Sliding Session Timeout
 
-Reset the TTL every time the user makes a request. This keeps active sessions alive while expiring idle ones.
+Reset the TTL on every request. Active sessions stay alive, idle ones expire.
 
 ```
 # On every authenticated request:
@@ -106,7 +106,7 @@ EXPIRE session:abc123 1800
 
 ### Absolute Expiration with Sliding Idle
 
-Sometimes you want both: an absolute maximum session lifetime AND a sliding idle timeout. Store the absolute deadline as a field:
+For both an absolute maximum lifetime and a sliding idle timeout, store the absolute deadline as a field:
 
 ```
 HSET session:abc123 user_id 1000 max_expires_at 1711756800

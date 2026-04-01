@@ -117,7 +117,7 @@ valkey-sentinel /etc/valkey/sentinel.conf
 valkey-server /etc/valkey/sentinel.conf --sentinel
 ```
 
-Important: the config file must be writable. Sentinel persists runtime state (discovered replicas, other Sentinels, current epoch, voted leaders) by rewriting its config file.
+The config file must be writable. Sentinel persists runtime state (discovered replicas, other Sentinels, current epoch, voted leaders) by rewriting its config file.
 
 ### Step 4: Verify the Deployment
 

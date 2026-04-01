@@ -31,7 +31,7 @@ client = await GlideClient.create(config)
 
 ### Lazy Connect
 
-Defer connection until the first command. Useful when the server may not be ready at startup.
+Defers connection until the first command. Allows startup when the server is not yet available.
 
 ```python
 config = GlideClientConfiguration(

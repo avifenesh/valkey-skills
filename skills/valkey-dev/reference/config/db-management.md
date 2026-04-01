@@ -59,7 +59,7 @@ int getKVStoreIndexForKey(sds key) {
 }
 ```
 
-Every key operation first computes a `dict_index` - the kvstore hashtable index. In standalone mode this is always 0. In cluster mode it is the CRC16 hash slot, often cached on the client to avoid recomputation.
+Every key operation first computes a `dict_index` - the kvstore hashtable index. In standalone mode this is always 0. In cluster mode it is the CRC16 hash slot, cached on the client to avoid recomputation.
 
 ## Key Lookup
 

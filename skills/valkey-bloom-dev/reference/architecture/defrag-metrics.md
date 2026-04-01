@@ -54,7 +54,7 @@ Each BloomObject has five levels of heap allocation, defragmented in this order:
 
 Each `defrag.alloc()` call either returns a new pointer (the allocation was moved to reduce fragmentation) or null (the allocation was already in a good location). Both outcomes are tracked in metrics.
 
-Note: the Vec defrag in step 4 (line 308 of `bloom_callback.rs`) increments `BLOOM_DEFRAG_HITS` in both the hit and miss branches - the else branch should increment `BLOOM_DEFRAG_MISSES`. This is a known source bug that slightly inflates the hit counter.
+The Vec defrag in step 4 (line 308 of `bloom_callback.rs`) increments `BLOOM_DEFRAG_HITS` in both the hit and miss branches - the else branch should increment `BLOOM_DEFRAG_MISSES`. Known source bug that slightly inflates the hit counter.
 
 ## Cursor-Based Incremental Defrag
 
@@ -105,7 +105,7 @@ The swap sequence for each filter:
 5. Swap the defragmented Bloom back into the BloomFilter
 6. Put the placeholder back into the static: `*temporary_bloom = Some(placeholder_bloom)`
 
-This avoids leaving a null or invalid pointer in the BloomFilter during defrag. The placeholder is a minimal `Bloom::new(1, 1)` - capacity 1, 1 item - using negligible memory.
+Avoids leaving a null or invalid pointer in the BloomFilter during defrag. The placeholder is a minimal `Bloom::new(1, 1)` - capacity 1, 1 item - using negligible memory.
 
 ## Bit Vector Defrag Callback
 
@@ -140,9 +140,9 @@ if !configs::BLOOM_DEFRAG.load(Ordering::Relaxed) {
 }
 ```
 
-This check is the first line in `bloom_defrag`. When disabled, the callback returns 0 immediately (indicating complete - no work needed). The config is an `AtomicBool` that can be changed at runtime via `CONFIG SET bloom-defrag-enabled yes|no`.
+First check in `bloom_defrag`. When disabled, the callback returns 0 immediately (indicating complete - no work needed). The config is an `AtomicBool` changeable at runtime via `CONFIG SET bloom-defrag-enabled yes|no`.
 
-Note: Valkey's `activedefrag` must also be enabled for the callback to be invoked at all. `bloom-defrag-enabled` is an additional module-level toggle.
+Valkey's `activedefrag` must also be enabled for the callback to be invoked at all. `bloom-defrag-enabled` is an additional module-level toggle.
 
 ## INFO bf Sections
 

@@ -15,9 +15,9 @@ Use when working with location data and you need to search within arbitrary poly
 
 ## Background
 
-Valkey (and Redis) have supported geospatial operations since version 3.2. The `GEOADD` command stores longitude/latitude coordinates, and `GEOSEARCH` retrieves members within a radius (`BYRADIUS`) or bounding box (`BYBOX`).
+Geospatial operations have been available since version 3.2. `GEOADD` stores coordinates, `GEOSEARCH` retrieves members within a radius (`BYRADIUS`) or bounding box (`BYBOX`).
 
-Valkey 9.0 adds `BYPOLYGON` support to `GEOSEARCH`, allowing queries against arbitrary polygon shapes.
+Valkey 9.0 adds `BYPOLYGON` support to `GEOSEARCH` for arbitrary polygon queries.
 
 ---
 
@@ -73,7 +73,7 @@ GEOSEARCH locations BYPOLYGON 5 \
 
 ### Delivery zone checking
 
-Determine whether a customer's location falls within a delivery service area defined as a polygon:
+Check if addresses fall within a delivery polygon:
 
 ```
 # Define delivery zone as a geo set
@@ -93,7 +93,7 @@ GEOSEARCH delivery:addresses BYPOLYGON 5 \
 
 ### Geofencing
 
-Monitor whether tracked assets (vehicles, devices) are within authorized zones:
+Check if tracked assets are within authorized zones:
 
 ```
 # Store current positions

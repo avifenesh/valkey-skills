@@ -15,7 +15,7 @@ Use when you need to check, manage, or audit key expiration. EXPIRETIME returns 
 
 ## Why EXPIRETIME Matters
 
-TTL/PTTL returns relative time - if you read TTL=300 and pass it to another service, by the time that service uses it, the actual remaining time is less. EXPIRETIME returns the absolute timestamp, which is unambiguous across services.
+TTL/PTTL returns relative time - reading TTL=300 and passing it to another service is inaccurate because the remaining time decreases before the service uses it. EXPIRETIME returns the absolute timestamp, unambiguous across services.
 
 ```
 SET session:abc "data" EX 1800
@@ -31,9 +31,8 @@ EXPIRETIME session:abc
 
 ## Use Cases
 
-**Session management - check if session is still valid without GET:**
+**Session management - check validity without GET:**
 ```
-# Check expiration without touching the key
 EXPIRETIME session:user:1000
 # Compare against current time to decide if refresh needed
 ```
@@ -50,11 +49,10 @@ PEXPIRETIME cache:product:123
 
 **Audit keys for missing TTL:**
 ```
-# Scan keys and check which ones have no expiration
 SCAN 0 MATCH user:* COUNT 100
 # For each key:
 TTL user:1000
-# -1 means no TTL set - potential memory leak
+# -1 = no TTL set, potential memory leak
 ```
 
 ## PERSIST - Remove TTL
@@ -71,7 +69,7 @@ PERSIST temp:data          # Returns 1, key no longer expires
 TTL temp:data              # Returns -1 (no TTL)
 ```
 
-**Use when**: a temporary key needs to become permanent (e.g., trial user becomes paying user, temp data becomes permanent record).
+**Use when**: a temporary key becomes permanent (trial user converts, temp data becomes a permanent record).
 
 ## Related: Hash Field TTL Inspection
 

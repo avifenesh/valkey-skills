@@ -13,7 +13,7 @@ Use when implementing a caching layer with Valkey - choosing between cache-aside
 
 ## Cache-Aside (Lazy Loading)
 
-The most common caching pattern. The application checks cache first, falls back to the database on miss, and populates the cache on read.
+The most common pattern. Check cache first, fall back to database on miss, populate cache on read.
 
 ### Flow
 
@@ -66,7 +66,7 @@ async def get_user(user_id: int) -> dict:
 
 ### Cache Stampede Prevention
 
-When a popular key expires, many concurrent requests hit the database simultaneously. Mitigation strategies:
+When a popular key expires, many concurrent requests hit the database simultaneously. Mitigations:
 
 **1. Lock-based refresh** (recommended for expensive queries):
 ```javascript
@@ -100,7 +100,7 @@ TTL cache:user:1000
 
 ## Write-Through
 
-Every write goes to both the cache and the database. The cache is always up to date.
+Every write goes to both cache and database. Cache is always current.
 
 ```
 1. Application writes to database
@@ -126,7 +126,7 @@ async def update_user(user_id: int, data: dict):
 
 ## Write-Behind (Write-Back)
 
-Writes go to the cache first, then asynchronously propagate to the database. Reduces write latency but increases complexity.
+Writes go to cache first, then asynchronously propagate to the database. Lower write latency, higher complexity.
 
 ```
 1. Application writes to cache
@@ -142,11 +142,11 @@ Writes go to the cache first, then asynchronously propagate to the database. Red
 
 ## Client-Side Caching (CLIENT TRACKING)
 
-Valkey supports server-assisted client-side caching. The server tracks which keys each client has read and sends invalidation messages when those keys change. This eliminates network round-trips for frequently accessed data entirely.
+Server-assisted client-side caching. The server tracks which keys each client reads and sends invalidation messages when those keys change, eliminating network round-trips for frequently accessed data.
 
 ### Default Mode (Key-Based)
 
-The server remembers every key served to a client and sends precise invalidation when those specific keys are modified.
+The server remembers every key served to a client and sends invalidation when those keys are modified.
 
 ```
 # Enable tracking on the client connection
@@ -165,7 +165,7 @@ GET user:1000:profile
 
 ### Broadcasting Mode (Prefix-Based)
 
-Clients subscribe to key prefixes. The server sends invalidation for any key matching the prefix when modified, regardless of whether the client read it.
+Clients subscribe to key prefixes. The server sends invalidation for any matching key when modified, regardless of whether the client read it.
 
 ```
 # Subscribe to all keys starting with "user:"
@@ -192,7 +192,7 @@ GET user:1000:profile
 
 ### Protocol Setup
 
-**RESP3 (single connection)**: Push invalidation messages arrive on the same connection. Simpler setup - recommended when your client supports RESP3.
+**RESP3 (single connection)**: Push invalidation on the same connection. Simpler setup, recommended when the client supports RESP3.
 
 ```
 Client -> Server: HELLO 3
@@ -223,7 +223,7 @@ GET foo
 
 The `__redis__:invalidate` channel is the standard channel name for invalidation messages. The REDIRECT option sends invalidation to connection 1 (client ID 4) instead of the data connection.
 
-**NOLOOP option**: Prevents invalidation messages for keys modified by the same connection. Useful when a client both reads and writes to avoid self-invalidation noise.
+**NOLOOP option**: Prevents self-invalidation when a client both reads and writes.
 
 ```
 CLIENT TRACKING ON NOLOOP

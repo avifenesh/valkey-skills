@@ -126,7 +126,7 @@ int ValkeyModule_CommandFilterArgDelete(ValkeyModuleCommandFilterCtx *fctx,
 
 Delete the argument at position `pos`, shifting remaining arguments. The deleted argument is freed. Returns `VALKEYMODULE_OK` or `VALKEYMODULE_ERR` if pos is out of range.
 
-Important: strings passed to `ArgInsert` and `ArgReplace` may be retained by the server after the filter returns. They must not be auto-memory managed, must not be freed by the module, and must not be used elsewhere after the call.
+Strings passed to `ArgInsert` and `ArgReplace` may be retained by the server after the filter returns. They must not be auto-memory managed, must not be freed by the module, and must not be used elsewhere after the call.
 
 ## Filter Flags
 

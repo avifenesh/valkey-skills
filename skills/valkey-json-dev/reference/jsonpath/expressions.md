@@ -78,7 +78,7 @@ Six comparison operators are supported (selector.cc:1982-2019):
 - GT swaps to LT, LT to GT
 - GE swaps to LE, LE to GE
 
-This allows `10 > @.price` to be internally treated the same as `@.price < 10`.
+`10 > @.price` is internally treated the same as `@.price < 10`.
 
 ## Boolean Operators
 
@@ -143,7 +143,7 @@ Implementation:
 4. The result must be exactly one scalar value (not an object or array)
 5. The value is copied into a JValue for use in the comparison
 
-This enables dynamic comparisons where the threshold comes from another part of the document.
+Enables dynamic comparisons where the threshold comes from another part of the document.
 
 ## Type Coercion Rules
 
@@ -151,7 +151,7 @@ This enables dynamic comparisons where the threshold comes from another part of 
 
 **Type mismatch returns false** - if the left-hand value's RapidJSON type differs from the comparison value's type, the comparison evaluates to false. No implicit coercion between strings and numbers, or between null and other types.
 
-**Exception: booleans** - `kTrueType` and `kFalseType` are treated as the same type for comparison purposes (selector.cc:2114-2116). This allows `true == true` and `true != false` to work correctly despite RapidJSON using separate type tags.
+**Exception: booleans** - `kTrueType` and `kFalseType` are treated as the same type for comparison purposes (selector.cc:2114-2116). Allows `true == true` and `true != false` to work correctly despite RapidJSON using separate type tags.
 
 Per-type comparison rules:
 
@@ -177,7 +177,7 @@ Per-type comparison rules:
 $[?(@.tags[?(@=="active")])]
 ```
 
-This checks whether each element's `.tags` sub-array contains a value matching the condition. The implementation:
+Checks whether each element's `.tags` sub-array contains a value matching the condition. The implementation:
 
 1. Iterates the current array's elements
 2. For each element that is an object, finds the named member
@@ -196,7 +196,7 @@ Only looks one level deep - further nesting is not recursed. The syntax requires
 $[?(@.scores[0] > 90)]
 ```
 
-This checks the element at a specific index within each element's sub-array. The implementation:
+Checks the element at a specific index within each element's sub-array. The implementation:
 
 1. Iterates the current array's elements
 2. For each element that is an object, finds the named member
@@ -204,4 +204,4 @@ This checks the element at a specific index within each element's sub-array. The
 4. Applies `evalOp()` to the element at that index
 5. Pushes the outer index if the comparison succeeds
 
-This allows filtering based on a specific position within nested arrays.
+Allows filtering based on a specific position within nested arrays.

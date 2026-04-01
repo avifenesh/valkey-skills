@@ -35,7 +35,7 @@ Source-verified from `src/config.c`:
 |-----------|---------|-------|-------------|
 | `tracking-table-max-keys` | `1000000` | 0-LONG_MAX | Maximum number of keys tracked server-side. When exceeded, the server evicts keys from the tracking table and sends invalidation to affected clients. 0 means unlimited. |
 
-This is the only server-side configuration for client tracking. The feature is
+The only server-side configuration for client tracking. The feature is
 activated per-client using the `CLIENT TRACKING` command, not via config file.
 
 ### Setting the Tracking Table Size

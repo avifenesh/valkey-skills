@@ -131,7 +131,7 @@ void aof_background_fsync(int fd) {
 
 ### AOF_FSYNC_NO
 
-No explicit fsync. Relies on the OS to flush data to disk (typically every 30 seconds on Linux). Best performance, worst durability.
+No explicit fsync. Relies on the OS to flush data to disk (every ~30 seconds on Linux). Best performance, worst durability.
 
 ---
 

@@ -11,7 +11,7 @@ Use when designing key patterns for multi-key commands in Valkey Cluster, resolv
 
 ## Hash Tags for Multi-Key Commands
 
-Valkey Cluster distributes keys across 16,384 hash slots. Each key maps to exactly one slot based on a CRC16 hash. Multi-key commands (`MGET`, `MSET`, `SINTER`, `SUNION`, Lua scripts with multiple keys) only work when all keys are in the same slot.
+Valkey Cluster distributes keys across 16,384 hash slots via CRC16 hash. Multi-key commands (`MGET`, `MSET`, `SINTER`, `SUNION`, Lua scripts with multiple keys) only work when all keys are in the same slot.
 
 Hash tags force the slot assignment to use only the substring between `{` and `}`:
 
@@ -75,7 +75,7 @@ async def get_user_data(redis, user_id: str):
 
 ## Cross-Slot Errors
 
-When a multi-key command references keys in different slots, Valkey returns a `CROSSSLOT` error:
+Multi-key commands referencing keys in different slots return a `CROSSSLOT` error:
 
 ```
 SET user:1:name "Alice"

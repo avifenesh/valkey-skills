@@ -80,7 +80,7 @@ Redis 8 developed its own feature set after the fork:
 | Time series | Built-in time series data type |
 | Probabilistic data structures | Extended bloom filters, count-min sketch, top-k |
 
-Valkey covers some of these through modules (valkey-search for full-text and vector search, valkey-bloom for bloom filters, valkey-json for JSON). For time series and other gaps, see the valkey-ecosystem skill's module gaps reference.
+Valkey covers some through modules (valkey-search for full-text and vector search, valkey-bloom for bloom filters, valkey-json for JSON). For time series and other gaps, see the valkey-ecosystem skill's module gaps reference.
 
 ---
 

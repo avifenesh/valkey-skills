@@ -129,7 +129,7 @@ ValkeyModule_GetLRU(key, &idle);
 ValkeyModule_CloseKey(key);
 ```
 
-This is important for background maintenance tasks, monitoring commands, or any operation that should not extend a key's life in the eviction pool.
+Essential for background maintenance tasks, monitoring commands, or any operation that should not extend a key's life in the eviction pool.
 
 ## mem_usage Callback
 

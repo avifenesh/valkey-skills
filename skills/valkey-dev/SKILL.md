@@ -7,10 +7,6 @@ argument-hint: "[subsystem or source file]"
 
 # Valkey Contributor Reference
 
-64 source-verified reference docs covering every major subsystem of the Valkey server.
-
-Browse by subsystem below or ask about a specific topic. Each link leads to a focused reference doc with struct definitions, function signatures, and implementation details verified against the actual C source.
-
 ## Routing
 
 - Building/compiling -> Build & Test (building, sanitizers)

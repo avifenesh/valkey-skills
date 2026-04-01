@@ -73,7 +73,7 @@ save ""
 | `rdb-del-sync-files` | `no` | Yes | Delete RDB files created for replication |
 | `rdb-version-check` | `strict` | Yes | RDB version validation mode (`strict` or `relaxed`) |
 
-Note: `rdbchecksum` is IMMUTABLE - it cannot be changed at runtime via CONFIG SET. Plan this at deployment time.
+`rdbchecksum` is IMMUTABLE - it cannot be changed at runtime via CONFIG SET. Plan at deployment time.
 
 ### RDB Commands
 

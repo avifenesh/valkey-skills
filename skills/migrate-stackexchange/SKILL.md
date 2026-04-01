@@ -31,7 +31,7 @@ Use when migrating a .NET application from StackExchange.Redis to the GLIDE clie
 | Transactions | `ITransaction` with conditions | `Batch` API |
 | Connection model | Multiplexed | Multiplexed (single connection per node) |
 
-Both libraries use multiplexed connections and async/await - the programming model is similar.
+Both libraries use multiplexed connections and async/await.
 
 ## Quick Start - Connection Setup
 
@@ -48,7 +48,7 @@ var config = new StandaloneClientConfigurationBuilder()
 await using var client = await GlideClient.CreateClient(config);
 ```
 
-GLIDE has no `IDatabase` layer. Commands are called directly on the client instance.
+No `IDatabase` layer - commands are called directly on the client instance.
 
 ## Configuration Mapping
 
@@ -65,7 +65,7 @@ GLIDE has no `IDatabase` layer. Commands are called directly on the client insta
 
 ## Incremental Migration Strategy
 
-No drop-in compatibility layer exists for C#, though the GLIDE C# client intentionally mirrors StackExchange.Redis naming to reduce effort. The recommended approach:
+No drop-in compatibility layer exists for C#. The GLIDE C# client intentionally mirrors StackExchange.Redis naming to reduce effort. Migration approach:
 
 1. Add `Valkey.Glide` NuGet package alongside `StackExchange.Redis`
 2. Create a service interface abstracting your Redis operations
@@ -75,7 +75,7 @@ No drop-in compatibility layer exists for C#, though the GLIDE C# client intenti
 6. Migrate one service at a time and run integration tests
 7. Remove `StackExchange.Redis` NuGet package once all services are migrated
 
-**Important**: Since GLIDE C# is in preview, evaluate feature coverage before committing to production migration.
+GLIDE C# is in preview - evaluate feature coverage before committing to production migration.
 
 ## Reference
 
@@ -92,12 +92,12 @@ No drop-in compatibility layer exists for C#, though the GLIDE C# client intenti
 
 ## Gotchas
 
-1. **Preview status.** Not recommended for production. Check [GLIDE C# releases](https://www.nuget.org/packages/Valkey.Glide) for the latest API surface.
+1. **Preview status.** Not production-ready. Check [GLIDE C# releases](https://www.nuget.org/packages/Valkey.Glide) for the latest API surface.
 2. **Separate client types.** StackExchange.Redis auto-detects cluster mode. GLIDE requires `GlideClient` or `GlideClusterClient` explicitly.
 3. **No `IDatabase` layer.** Commands are on the client directly. No `GetDatabase(n)` - set database in configuration.
 4. **No `RedisKey`/`RedisValue` wrappers.** GLIDE uses plain strings.
 5. **No fire-and-forget.** All commands are awaitable. Use batching for throughput.
 6. **.NET 8.0+ required.** Earlier .NET versions are not supported.
 7. **Platform support.** Pre-built native libraries for Linux (x86_64, arm64), macOS, and Windows.
-8. **API stability.** Method signatures may change between releases. Pin your dependency version.
+8. **API stability.** Method signatures may change between releases. Pin the dependency version.
 9. **Ecosystem gap.** StackExchange.Redis has 597M+ NuGet downloads. Evaluate feature coverage carefully.

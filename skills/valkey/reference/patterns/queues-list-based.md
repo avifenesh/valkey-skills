@@ -11,7 +11,7 @@ Use when implementing simple task queues with LPUSH/BRPOP or reliable queues wit
 
 ## Simple Queue (LPUSH/BRPOP)
 
-The simplest queue pattern: producers push to one end, consumers pop from the other.
+Producers push to one end, consumers pop from the other.
 
 ### How It Works
 
@@ -70,7 +70,7 @@ async def process_queue(redis, queue_name: str, handler):
 
 ## Reliable Queue (LMOVE)
 
-Adds reliability by moving messages to a processing list instead of removing them. If the consumer crashes, messages can be recovered.
+Moves messages to a processing list instead of removing them. Crashed consumers' messages can be recovered.
 
 ### How It Works
 
@@ -99,7 +99,7 @@ BLMOVE queue:tasks queue:tasks:processing RIGHT LEFT 30
 
 ### Recovery Process
 
-Periodically scan the processing list for stuck messages (consumers that crashed):
+Periodically scan the processing list for stuck messages:
 
 ```python
 async def recover_stuck_messages(redis, queue_name: str, timeout_secs: int = 300):

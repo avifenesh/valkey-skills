@@ -14,9 +14,9 @@ Use when working with Valkey in cluster mode and you want to understand the new 
 
 ### Background
 
-In Redis and Valkey prior to 9.0, cluster mode was restricted to database 0. The `SELECT` command returned an error if you tried to switch databases. This was a long-standing limitation that forced applications to use key prefixes for namespace isolation instead of database numbers.
+Before 9.0, cluster mode was restricted to database 0. `SELECT` returned an error, forcing applications to use key prefixes for namespace isolation.
 
-Valkey 9.0 lifts this restriction. Multiple databases are available in cluster mode when configured via the `cluster-databases` directive (default 1, meaning only database 0). Set `cluster-databases 16` to enable databases 0-15.
+Valkey 9.0 lifts this restriction. Configure via `cluster-databases` (default 1, only database 0). Set `cluster-databases 16` to enable databases 0-15.
 
 ### How It Works
 
@@ -28,7 +28,7 @@ SELECT 5
 SET mykey "db5_value"    # Different namespace, same key name, same slot
 ```
 
-Each database is a separate namespace. The same key name in database 0 and database 5 are independent entries. Hash slot assignment still applies - `mykey` maps to the same slot regardless of which database you are in.
+Each database is a separate namespace. The same key name in database 0 and database 5 are independent entries. Hash slot assignment still applies - `mykey` maps to the same slot regardless of database.
 
 ### Use Cases
 
@@ -49,7 +49,7 @@ MOVE mykey 0
 
 ### Limitations
 
-Applications should be aware of these constraints:
+Constraints:
 
 | Limitation | Detail |
 |-----------|--------|
@@ -66,15 +66,15 @@ For strong isolation between workloads, separate Valkey instances or clusters re
 
 ### Background
 
-In traditional Valkey/Redis cluster resharding, keys are migrated one at a time from a source node to a target node. During migration, clients hitting the slot receive ASK redirects and must query both the source and target. This causes:
+Traditional cluster resharding migrates keys one at a time. During migration, clients hitting the slot receive ASK redirects and must query both source and target, causing:
 
-- Increased client latency from redirects
+- Increased latency from redirects
 - Potential errors from partial slot states
-- Complexity in client redirect handling during resharding
+- Complex client redirect handling
 
 ### How Atomic Migration Works
 
-Valkey 9.0 introduces atomic slot migration. Instead of moving keys individually, the entire slot is serialized as an AOF-format payload and transferred atomically. Once complete, clients redirect instantly to the target node with zero intermediate states.
+Valkey 9.0 serializes the entire slot as an AOF-format payload and transfers it atomically. Clients redirect instantly to the target node with zero intermediate states.
 
 ### What This Means for Application Developers
 
@@ -91,7 +91,7 @@ Valkey 9.0 introduces atomic slot migration. Instead of moving keys individually
 - **Simpler client behavior** - no need to handle ASK redirects during slot migration
 - **Faster resharding** - bulk transfer is faster than key-by-key migration for slots with many keys
 
-This is transparent to application code. Existing clients that handle MOVED redirects (which all production-grade clients do) work without changes.
+Transparent to application code. Existing clients handling MOVED redirects work without changes.
 
 ---
 

@@ -30,7 +30,7 @@ Bee-Queue (2.0.0, Dec 2025) uses Redis-based list polling. It does not include:
 - Bundled TypeScript types
 - Workflow orchestration
 
-glide-mq is built on Valkey using FCALL and includes cluster support, workflows, and scheduling. Throughput characteristics differ due to the FCALL-based architecture - see benchmarks at the glide-mq documentation site.
+glide-mq is built on Valkey using FCALL with cluster support, workflows, and scheduling. Throughput characteristics differ due to the FCALL-based architecture - see benchmarks at the glide-mq documentation site.
 
 ## Install
 
@@ -57,7 +57,7 @@ const queue = new Queue('tasks', { connection });
 
 ## Chained Builder to Options Object
 
-The biggest migration change. Bee-Queue uses chained methods; glide-mq uses an options object.
+Bee-Queue uses chained methods; glide-mq uses an options object.
 
 **Bee-Queue (chained builder):**
 ```typescript

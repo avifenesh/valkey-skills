@@ -214,6 +214,6 @@ static ConnectionType CT_RDMA = {
 };
 ```
 
-Note that RDMA implements `postpone_update_state` / `update_state` to
+RDMA implements `postpone_update_state` / `update_state` to
 coordinate with IO threads - the IO threads must not modify event loop
 state directly.

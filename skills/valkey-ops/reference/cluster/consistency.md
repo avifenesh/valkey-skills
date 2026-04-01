@@ -16,7 +16,7 @@ Use when evaluating Valkey Cluster's write safety for your use case, understandi
 
 ## Consistency Model
 
-Valkey Cluster uses **asynchronous replication**. The primary acknowledges a write to the client before replicating it to replicas. This is a deliberate trade-off: higher throughput and lower latency at the cost of potential data loss during failures.
+Valkey Cluster uses **asynchronous replication**. The primary acknowledges a write to the client before replicating it to replicas - higher throughput and lower latency at the cost of potential data loss during failures.
 
 Valkey Cluster does NOT provide strong consistency. It provides eventual consistency under normal operation and best-effort consistency during failures.
 
@@ -32,7 +32,7 @@ Client -> Primary (acknowledges write) -> [CRASH] -> Replica (never received wri
 
 The write is confirmed to the client but lost. The promoted replica does not have it.
 
-**Window**: The time between the primary acknowledging the write and the replica receiving and acknowledging it. Typically sub-millisecond on a healthy local network, but can be larger under load or network congestion.
+**Window**: The time between the primary acknowledging the write and the replica receiving and acknowledging it. Sub-millisecond on a healthy local network, but can be larger under load or network congestion.
 
 ### Scenario 2: Network Partition with Minority Writes
 
@@ -55,7 +55,7 @@ Partition A (minority):        Partition B (majority):
 
 A client with a cached slot routing table may continue sending writes to a node that has lost ownership of a slot (after resharding or failover). The node responds with `-MOVED`, but there is a brief window where the client may not yet know about the topology change.
 
-This is generally handled by client libraries that refresh their routing table on MOVED responses. The data loss risk here is minimal.
+Client libraries handle this by refreshing their routing table on MOVED responses. The data loss risk is minimal.
 
 ---
 
@@ -78,7 +78,7 @@ WAIT 1 5000
 
 `WAIT` is synchronous - it blocks the client connection until the condition is met or the timeout expires. It does NOT make the write transactional or prevent the write from succeeding if replicas are unreachable. The write is already applied on the primary; `WAIT` only confirms replication.
 
-Important: `WAIT` reduces but does not eliminate the data loss window. If the primary crashes after `WAIT` returns but before the replica applies the write (e.g., during a network partition that started after the ACK), the write can still be lost.
+`WAIT` reduces but does not eliminate the data loss window. If the primary crashes after `WAIT` returns but before the replica applies the write (e.g., during a network partition that started after the ACK), the write can still be lost.
 
 ### min-replicas-to-write (Server-Side)
 
@@ -93,7 +93,7 @@ When the number of connected, non-lagging replicas drops below the threshold, al
 
 ### cluster-require-full-coverage
 
-When enabled (default), the cluster rejects all writes if any of the 16384 slots are unassigned or served by a node in FAIL state. This prevents writes to a degraded cluster but reduces availability.
+When enabled (default), the cluster rejects all writes if any of the 16384 slots are unassigned or served by a node in FAIL state. Prevents writes to a degraded cluster but reduces availability.
 
 | Setting | Behavior | Trade-off |
 |---------|----------|-----------|

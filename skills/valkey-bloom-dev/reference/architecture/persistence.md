@@ -22,9 +22,9 @@ Source: `src/wrapper/bloom_callback.rs`, `src/bloom/data_type.rs`, `src/bloom/ut
 
 Two version constants control serialization compatibility:
 
-**`BLOOM_TYPE_ENCODING_VERSION`** (line 16 of `data_type.rs`): Set to `1`. This is the RDB encoding version passed to `ValkeyType::new`. During RDB load, if the file's `encver` exceeds this value, the load is rejected with a warning.
+**`BLOOM_TYPE_ENCODING_VERSION`** (line 16 of `data_type.rs`): Set to `1`. The RDB encoding version passed to `ValkeyType::new`. During RDB load, if the file's `encver` exceeds this value, the load is rejected with a warning.
 
-**`BLOOM_OBJECT_VERSION`** (line 13 of `data_type.rs`): Set to `1`. This is the bincode serialization version prepended to the byte stream in `encode_object`. Must be incremented when the `BloomObject` struct changes.
+**`BLOOM_OBJECT_VERSION`** (line 13 of `data_type.rs`): Set to `1`. The bincode serialization version prepended to the byte stream in `encode_object`. Must be incremented when the `BloomObject` struct changes.
 
 ## RDB Save Format
 
@@ -42,7 +42,7 @@ The `bloom_rdb_save` function (line 27 of `bloom_callback.rs`) writes each Bloom
 [bitmap: string_buffer]   // raw bit vector bytes from bloom.as_slice()
 ```
 
-The `num_items` optimization: only the last filter's `num_items` is stored. For all previous filters, `num_items` is assumed equal to `capacity` (they are full - that's why scaling created the next filter). This saves space in RDB for objects with many sub-filters.
+The `num_items` optimization: only the last filter's `num_items` is stored. For all previous filters, `num_items` is assumed equal to `capacity` (they are full - that's why scaling created the next filter). Saves space in RDB for objects with many sub-filters.
 
 The bitmap is written via `RedisModule_SaveStringBuffer` as raw bytes. The bitmap includes the SipHash keys embedded by the bloomfilter crate, so seed information is preserved implicitly without a separate seed field in RDB.
 
@@ -95,7 +95,7 @@ if !is_seed_random && filter.seed() != configs::FIXED_SEED {
 }
 ```
 
-This catches the case where a fixed-seed object was created on a node with a different `FIXED_SEED` constant, preventing silent data corruption.
+Catches the case where a fixed-seed object was created on a node with a different `FIXED_SEED` constant, preventing silent data corruption.
 
 **Step 5 - Assemble**: `BloomObject::from_existing(expansion, fp_rate, tightening_ratio, is_seed_random, filters)`.
 
@@ -120,7 +120,7 @@ RedisModule_EmitAOF(aof, cmd.as_ptr(), fmt.as_ptr(), key, hex.as_ptr(), hex.len(
 
 The format string `"sb"` means: `s` = RedisModuleString (the key), `b` = binary buffer (the serialized bytes). The `BF.LOAD` command handler on the receiving end calls `decode_object` to reconstruct the BloomObject.
 
-Unlike RDB save which writes fields individually, AOF rewrite serializes the entire struct in one shot via bincode. This is simpler but produces a larger payload since it includes serde metadata.
+Unlike RDB save which writes fields individually, AOF rewrite serializes the entire struct in one shot via bincode. Simpler but produces a larger payload since it includes serde metadata.
 
 ## Bincode Encode
 
@@ -140,7 +140,7 @@ pub fn encode_object(&self) -> Result<Vec<u8>, BloomError> {
 }
 ```
 
-The version byte (`BLOOM_OBJECT_VERSION = 1`) is prepended before the bincode data. This allows future struct changes to be handled by version-specific deserialization logic.
+The version byte (`BLOOM_OBJECT_VERSION = 1`) is prepended before the bincode data. Future struct changes can be handled by version-specific deserialization logic.
 
 The `BloomObject` derives `Serialize` and `Deserialize`. The `BloomFilter`'s `bloom` field uses custom serde functions from the bloomfilter crate to handle the `Bloom<[u8]>` type.
 

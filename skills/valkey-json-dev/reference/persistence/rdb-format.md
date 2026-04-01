@@ -63,7 +63,7 @@ case 3: {
 }
 ```
 
-This is simple and human-readable if you dump the RDB, but requires a full parse on load.
+Simple and human-readable in RDB dumps, but requires a full parse on load.
 
 ## Encoding Version 0 - Legacy Binary
 
@@ -191,7 +191,7 @@ if (params->nestLevel >= json_get_max_path_limit()) {
 }
 ```
 
-This prevents stack overflow from maliciously deep documents in legacy RDB files. Version 3 relies on `dom_parse` which has its own recursion depth limit (`config_max_parser_recursion_depth`, default 200).
+Prevents stack overflow from maliciously deep documents in legacy RDB files. Version 3 relies on `dom_parse` which has its own recursion depth limit (`config_max_parser_recursion_depth`, default 200).
 
 ## Error Handling
 

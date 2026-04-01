@@ -119,13 +119,13 @@ client.unsubscribe();     // all channels
 client.punsubscribe();    // all patterns
 ```
 
-Lettuce uses a listener adapter pattern (RedisPubSubAdapter) on a dedicated PubSub connection. GLIDE uses either callbacks (set at creation time) or polling (getPubSubMessage / tryGetPubSubMessage). Both require a dedicated client for subscriptions. GLIDE automatically resubscribes on reconnection.
+Lettuce uses a listener adapter pattern (RedisPubSubAdapter) on a dedicated PubSub connection. GLIDE uses callbacks (set at creation time) or polling (getPubSubMessage / tryGetPubSubMessage). Both require a dedicated client for subscriptions. GLIDE automatically resubscribes on reconnection.
 
 ---
 
 ## Spring Data Valkey as an Alternative
 
-If your application uses Spring Data Redis with Lettuce, consider Spring Data Valkey (`spring-boot-starter-data-valkey`) instead of a direct migration. Set `spring.data.valkey.client-type=valkeyglide` to use the GLIDE driver. Migration involves renaming `RedisTemplate` to `ValkeyTemplate` and `ReactiveRedisTemplate` to `ReactiveValkeyTemplate`. Note: the reactive API remains Lettuce-based, not GLIDE.
+For Spring Data Redis with Lettuce, Spring Data Valkey (`spring-boot-starter-data-valkey`) is an alternative to direct migration. Set `spring.data.valkey.client-type=valkeyglide` to use the GLIDE driver. Migration involves renaming `RedisTemplate` to `ValkeyTemplate` and `ReactiveRedisTemplate` to `ReactiveValkeyTemplate`. The reactive API remains Lettuce-based, not GLIDE.
 
 ---
 

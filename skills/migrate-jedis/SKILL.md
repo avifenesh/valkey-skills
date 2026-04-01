@@ -59,7 +59,7 @@ GlideClientConfiguration config = GlideClientConfiguration.builder()
 try (GlideClient client = GlideClient.createClient(config).get()) { client.ping().get(); }
 ```
 
-No connection pool configuration needed. GLIDE uses a single multiplexed connection.
+No connection pool configuration needed - GLIDE uses a single multiplexed connection.
 
 ## Configuration Mapping
 
@@ -103,11 +103,11 @@ For the zero-code-change path using the Jedis compatibility layer, see the Migra
 
 ## Gotchas
 
-1. **Every command returns CompletableFuture.** You must call .get() for synchronous behavior.
+1. **Every command returns CompletableFuture.** Call .get() for synchronous behavior.
 2. **Array args, not varargs.** Multi-key commands take String[] arrays, not varargs.
 3. **No connection pool management.** Drop JedisPool and JedisPoolConfig entirely.
 4. **Builder pattern everywhere.** Configuration, set options, and batch options all use the builder pattern.
 5. **Batch replaces Transaction and Pipeline.** Use new Batch(true) for atomic and new Batch(false) for non-atomic.
 6. **Classifier required in Maven/Gradle.** Use os-maven-plugin or osdetector-gradle-plugin. An uber JAR (GLIDE 2.3+) bundles all native libraries.
-7. **Compatibility layer gotchas.** After calling `multi()`, you must use the returned `Transaction` object. `HashSet<byte[]>` operations degrade to O(n) because `byte[].hashCode()` returns identity hash.
+7. **Compatibility layer gotchas.** After calling `multi()`, use the returned `Transaction` object. `HashSet<byte[]>` operations degrade to O(n) because `byte[].hashCode()` returns identity hash.
 8. **No Sentinel support.** GLIDE does not support Redis Sentinel - use cluster mode or direct connection.

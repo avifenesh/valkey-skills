@@ -65,7 +65,7 @@ INCR events:2026-03-29T15
 EXPIRE events:2026-03-29T15 7200    # 2-hour TTL for safety margin
 ```
 
-**Gotcha**: `INCR` on a non-existent key sets it to 1. But `EXPIRE` is a separate command - if the process crashes between INCR and EXPIRE, the key lives forever. Use a pipeline:
+`INCR` on a non-existent key sets it to 1, but `EXPIRE` is separate - a crash between INCR and EXPIRE leaves a permanent key. Use a pipeline:
 
 ```javascript
 const pipeline = redis.pipeline();
@@ -74,15 +74,15 @@ pipeline.expire(key, 7200);
 await pipeline.exec();
 ```
 
-This is safe because even if EXPIRE runs on an already-existing key, it just resets the TTL (which is acceptable for windowed counters).
+Safe because EXPIRE on an existing key just resets the TTL (acceptable for windowed counters).
 
 ---
 
 ## Sharded Counters
 
-When a single key receives extremely high write throughput (thousands of increments per second), it becomes a hot key. The Valkey main thread processes all writes to that key sequentially, creating a bottleneck.
+A single key receiving thousands of increments per second becomes a hot key - the main thread processes all writes sequentially, creating a bottleneck.
 
-Sharded counters distribute writes across N keys and sum them on read.
+Sharded counters distribute writes across N keys and sum on read.
 
 ### How It Works
 
