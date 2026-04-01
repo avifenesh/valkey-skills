@@ -172,7 +172,7 @@ def verify_index(client):
 
 
 def main():
-    client = valkey.Valkey(host="localhost", port=6379, decode_responses=False)
+    client = valkey.Valkey(host="localhost", port=6408, decode_responses=False)
     wait_for_valkey(client)
     print("[OK] Connected to Valkey")
 

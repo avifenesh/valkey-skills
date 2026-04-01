@@ -106,7 +106,7 @@ docker compose up -d --wait 2>/dev/null || docker-compose up -d 2>/dev/null || t
 sleep 2
 
 # Check Valkey is running
-if valkey-cli -p 6379 PING 2>/dev/null | grep -q PONG; then
+if valkey-cli -p 6401 PING 2>/dev/null | grep -q PONG; then
 
   # Run the reproduce script to confirm bug exists
   if [[ -f "$WORK_DIR/reproduce.sh" ]]; then

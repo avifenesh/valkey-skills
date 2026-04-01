@@ -67,7 +67,7 @@ services:
   valkey:
     image: valkey/valkey:8.1
     ports:
-      - "6399:6379"
+      - "6406:6379"
     volumes:
       - bloom_lib:/modules
     command: ["valkey-server", "--loadmodule", "/modules/libvalkey_bloom.so"]
@@ -88,7 +88,7 @@ services:
   valkey:
     image: valkey/valkey:8.1
     ports:
-      - "6399:6379"
+      - "6406:6379"
     volumes:
       - $WORK_DIR/bloom_lib:/modules:ro
     command: ["valkey-server", "--loadmodule", "/modules/$(basename "$LIB_PATH")"]
@@ -103,7 +103,7 @@ cd "$WORK_DIR"
 docker compose up -d --wait 2>/dev/null || docker-compose up -d 2>/dev/null || true
 sleep 3
 
-CLI="valkey-cli -p 6399"
+CLI="valkey-cli -p 6406"
 
 # --- Check 3: Module loads ---
 if $CLI MODULE LIST 2>/dev/null | grep -qi "bloom\|bf"; then

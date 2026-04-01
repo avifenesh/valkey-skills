@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Task 8: valkey-json Type-Aware Operations - Test Script
 # Usage: test.sh <work_dir>
-# Expects Valkey running on localhost:6379 with valkey-json loaded and setup.py already run.
+# Expects Valkey running on localhost:6409 with valkey-json loaded and setup.py already run.
 
 set -uo pipefail
 
@@ -32,7 +32,7 @@ echo ""
 # Verify op1 found the right number of orders with item price>100 AND qty>2
 filter_result=$(python3 -c "
 import json, valkey
-r = valkey.Valkey(host='localhost', port=6379, decode_responses=True)
+r = valkey.Valkey(host='localhost', port=6409, decode_responses=True)
 count = 0
 for i in range(1, 101):
     key = f'order:ORD-{i:03d}'
@@ -58,7 +58,7 @@ fi
 # --- Check 2: Failed orders have incremented retryCount ---
 retry_check=$(python3 -c "
 import json, valkey
-r = valkey.Valkey(host='localhost', port=6379, decode_responses=True)
+r = valkey.Valkey(host='localhost', port=6409, decode_responses=True)
 incremented = 0
 for i in range(1, 101):
     key = f'order:ORD-{i:03d}'
@@ -83,7 +83,7 @@ fi
 # --- Check 3: Tracking event at index 0 for shipped orders ---
 tracking_check=$(python3 -c "
 import json, valkey
-r = valkey.Valkey(host='localhost', port=6379, decode_responses=True)
+r = valkey.Valkey(host='localhost', port=6409, decode_responses=True)
 correct = 0
 for i in range(1, 101):
     key = f'order:ORD-{i:03d}'
@@ -108,7 +108,7 @@ fi
 # --- Check 4: MGET returns 50 emails ---
 mget_check=$(python3 -c "
 import json, valkey
-r = valkey.Valkey(host='localhost', port=6379, decode_responses=True)
+r = valkey.Valkey(host='localhost', port=6409, decode_responses=True)
 keys = [f'order:ORD-{i:03d}' for i in range(1, 51)]
 result = r.execute_command('JSON.MGET', *keys, '$.customer.email')
 valid = 0
@@ -136,7 +136,7 @@ fi
 # --- Check 5: No statusHistory longer than 5 entries ---
 over_five=$(python3 -c "
 import json, valkey
-r = valkey.Valkey(host='localhost', port=6379, decode_responses=True)
+r = valkey.Valkey(host='localhost', port=6409, decode_responses=True)
 over = 0
 for i in range(1, 101):
     key = f'order:ORD-{i:03d}'
@@ -157,7 +157,7 @@ fi
 # --- Check 6: Existing refundIds unchanged ---
 refund_check=$(python3 -c "
 import json, valkey
-r = valkey.Valkey(host='localhost', port=6379, decode_responses=True)
+r = valkey.Valkey(host='localhost', port=6409, decode_responses=True)
 preserved = 0
 newly_set = 0
 for i in range(1, 101):
@@ -210,7 +210,7 @@ fi
 # Re-run with a key that has minimal structure to check crash handling
 crash_check=$(python3 -c "
 import json, valkey
-r = valkey.Valkey(host='localhost', port=6379, decode_responses=True)
+r = valkey.Valkey(host='localhost', port=6409, decode_responses=True)
 # Create a minimal order missing several expected fields
 r.execute_command('JSON.SET', 'order:ORD-TEST', '$', json.dumps({
     'orderId': 'ORD-TEST',
@@ -231,7 +231,7 @@ fi
 # Cleanup test key
 python3 -c "
 import valkey
-r = valkey.Valkey(host='localhost', port=6379, decode_responses=True)
+r = valkey.Valkey(host='localhost', port=6409, decode_responses=True)
 r.delete('order:ORD-TEST')
 " 2>/dev/null || true
 

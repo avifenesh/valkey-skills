@@ -110,12 +110,12 @@ def make_order(order_num, payment_status, is_shipped):
 
 
 def main():
-    r = valkey.Valkey(host="localhost", port=6379, decode_responses=True)
+    r = valkey.Valkey(host="localhost", port=6409, decode_responses=True)
 
     try:
         r.ping()
     except valkey.ConnectionError:
-        print("[ERROR] Cannot connect to Valkey on localhost:6379")
+        print("[ERROR] Cannot connect to Valkey on localhost:6409")
         print("Run: docker compose up -d")
         sys.exit(1)
 

@@ -2,7 +2,7 @@ services:
   valkey-primary:
     image: valkey/valkey:8.1
     ports:
-      - "6400:6379"
+      - "6404:6379"
     volumes:
       - ./target/release:/modules:ro
       - primary-data:/data
@@ -21,7 +21,7 @@ services:
   valkey-replica:
     image: valkey/valkey:8.1
     ports:
-      - "6401:6379"
+      - "6405:6379"
     volumes:
       - ./target/release:/modules:ro
     command: >

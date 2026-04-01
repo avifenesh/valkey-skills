@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # Reproduce hash field TTL bug in Valkey 9.0.3
-# Requires: valkey-cli available, server running on localhost:6379
+# Requires: valkey-cli available, server running on localhost:6401
 
-CLI="valkey-cli -h 127.0.0.1 -p 6379"
+CLI="valkey-cli -h 127.0.0.1 -p 6401"
 
 echo "=== Hash Field TTL Bug Reproduction ==="
 echo ""

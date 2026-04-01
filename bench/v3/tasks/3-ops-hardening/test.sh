@@ -9,7 +9,7 @@ WORK="$1"
 CONF="$WORK/valkey.conf"
 AUDIT="$WORK/AUDIT.md"
 CONTAINER_NAME="valkey-hardening-test"
-PORT=6379
+PORT=6403
 PASS=0
 FAIL=0
 

@@ -7,8 +7,8 @@ set -uo pipefail
 # verifies persistence and replication.
 
 WORK_DIR="${1:-.}"
-PRIMARY_PORT=6400
-REPLICA_PORT=6401
+PRIMARY_PORT=6404
+REPLICA_PORT=6405
 PASS=0
 FAIL=0
 

@@ -2,7 +2,7 @@ services:
   valkey:
     image: valkey/valkey:8.1
     ports:
-      - "6379:6379"
+      - "6410:6379"
     command: >
       valkey-server
       --loadmodule /opt/valkey-bloom/valkey-bloom.so

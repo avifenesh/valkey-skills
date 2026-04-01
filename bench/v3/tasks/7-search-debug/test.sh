@@ -51,7 +51,7 @@ check "Query 2: numeric range returns >0 matches" \
 # Verify prices are actually in range by spot-checking via valkey-cli
 Q2_VERIFY=$(python3 -c "
 import valkey
-c = valkey.Valkey(host='localhost', port=6379, decode_responses=True)
+c = valkey.Valkey(host='localhost', port=6408, decode_responses=True)
 res = c.execute_command('FT.SEARCH', 'products', '@price:[100 500]', 'LIMIT', '0', '5')
 if not isinstance(res, list) or res[0] == 0:
     print('empty')

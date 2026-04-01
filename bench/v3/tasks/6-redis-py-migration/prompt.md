@@ -10,6 +10,6 @@ Requirements:
 6. Preserve all async/await patterns.
 7. Update requirements.txt to use valkey-glide instead of redis.
 8. Update conftest.py to create a GLIDE client instead of a redis client.
-9. All 8 existing tests must pass against a running Valkey instance on localhost:6379.
+9. All 8 existing tests must pass against a running Valkey instance on localhost:6407.
 
 Do not change the test file. The tests define the contract - your migration must satisfy them.

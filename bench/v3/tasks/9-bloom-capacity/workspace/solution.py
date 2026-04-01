@@ -12,7 +12,7 @@ Requirements:
 import valkey
 
 # Connection
-client = valkey.Valkey(host="localhost", port=6379, decode_responses=True)
+client = valkey.Valkey(host="localhost", port=6410, decode_responses=True)
 
 # Constants
 FILTER_PREFIX = "bloom:email:day:"

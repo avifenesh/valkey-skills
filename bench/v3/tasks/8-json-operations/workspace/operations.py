@@ -21,11 +21,11 @@ import valkey
 
 def get_client():
     """Return a connected Valkey client."""
-    r = valkey.Valkey(host="localhost", port=6379, decode_responses=True)
+    r = valkey.Valkey(host="localhost", port=6409, decode_responses=True)
     try:
         r.ping()
     except valkey.ConnectionError:
-        print("[ERROR] Cannot connect to Valkey on localhost:6379")
+        print("[ERROR] Cannot connect to Valkey on localhost:6409")
         sys.exit(1)
     return r
 

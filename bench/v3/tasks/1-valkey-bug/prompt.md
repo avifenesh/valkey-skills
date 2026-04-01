@@ -4,7 +4,7 @@ You are a Valkey server developer investigating a bug in a custom Valkey 9.0.3 b
 
 ## Situation
 
-An operator has reported anomalous behavior with hash field expiration. A Docker container running the buggy Valkey build is available at localhost:6379 (see docker-compose.yml). The workspace contains:
+An operator has reported anomalous behavior with hash field expiration. A Docker container running the buggy Valkey build is available at localhost:6401 (see docker-compose.yml). The workspace contains:
 
 - `symptoms.md` - the operator's bug report describing observed symptoms
 - `reproduce.sh` - a script that demonstrates the bug against the running instance
@@ -45,7 +45,7 @@ Write a patch file to `fix.patch` that fixes the bug. The patch should:
 
 Write a verification script `verify.sh` that:
 
-- Connects to the Valkey instance at localhost:6379
+- Connects to the Valkey instance at localhost:6401
 - Demonstrates the bug is present (before fix)
 - Applies the fix (you may describe the expected post-fix behavior)
 - Tests that HEXPIRE on a deleted field returns 0 (not 1)

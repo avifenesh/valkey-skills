@@ -2,7 +2,7 @@ services:
   valkey:
     image: valkey/valkey:8.1
     ports:
-      - "6379:6379"
+      - "6409:6379"
     command: >
       valkey-server
       --loadmodule /usr/lib/valkey/modules/json.so

@@ -31,7 +31,7 @@ cd "$WORK_DIR" && docker compose up -d 2>&1
 
 # Wait for Valkey to be ready
 for i in $(seq 1 30); do
-  if valkey-cli -p 6379 PING 2>/dev/null | grep -q PONG; then
+  if valkey-cli -p 6410 PING 2>/dev/null | grep -q PONG; then
     break
   fi
   sleep 1

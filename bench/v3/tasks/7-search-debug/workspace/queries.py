@@ -19,7 +19,7 @@ import valkey
 
 EMBEDDING_DIM = 128
 
-client = valkey.Valkey(host="localhost", port=6379, decode_responses=True)
+client = valkey.Valkey(host="localhost", port=6408, decode_responses=True)
 
 
 def run_query(label, command_args):
@@ -93,7 +93,7 @@ def query_4():
 
     # Note: decode_responses=True on the client will mangle binary params.
     # The vector blob must be sent as raw bytes.
-    raw_client = valkey.Valkey(host="localhost", port=6379, decode_responses=False)
+    raw_client = valkey.Valkey(host="localhost", port=6408, decode_responses=False)
     try:
         result = raw_client.execute_command(
             "FT.SEARCH", "products",
