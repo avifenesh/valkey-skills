@@ -15,7 +15,6 @@ Source: `src/quicklist.c`, `src/quicklist.h`
 - Node Merging and Splitting (line 218)
 - Bookmarks (line 228)
 - Performance (line 240)
-- See Also (line 251)
 
 ---
 

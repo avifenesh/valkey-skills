@@ -1,7 +1,6 @@
-Use when tuning Valkey throughput on multi-core systems, deciding whether to
-
 # I/O Threads Configuration
-enable I/O threads, or choosing the right thread count for your workload.
+
+Use when tuning Valkey throughput on multi-core systems, deciding whether to enable I/O threads, or choosing the right thread count for your workload.
 
 ## Contents
 
@@ -14,7 +13,6 @@ enable I/O threads, or choosing the right thread count for your workload.
 - Performance Benchmarks (line 120)
 - Applying the Configuration (line 160)
 - Troubleshooting I/O Threads (line 176)
-- See Also (line 193)
 
 ---
 

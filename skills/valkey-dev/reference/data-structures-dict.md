@@ -13,7 +13,6 @@ Source: `src/dict.c`, `src/dict.h`
 - Utility Macros (line 183)
 - Where Dict Is Still Used (post-8.1) (line 192)
 - Hash Function (line 209)
-- See Also (line 218)
 
 ---
 

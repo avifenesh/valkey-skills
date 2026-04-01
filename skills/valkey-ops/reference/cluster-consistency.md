@@ -1,6 +1,6 @@
-Use when evaluating Valkey Cluster's write safety for your use case, understanding what can go wrong during network partitions, or deciding between consistency and availability trade-offs.
-
 # Cluster Consistency Guarantees
+
+Use when evaluating Valkey Cluster's write safety for your use case, understanding what can go wrong during network partitions, or deciding between consistency and availability trade-offs.
 
 ## Contents
 
@@ -10,7 +10,6 @@ Use when evaluating Valkey Cluster's write safety for your use case, understandi
 - Cluster State Determination (line 118)
 - Trade-Offs Operators Should Understand (line 130)
 - Failure Detection Timing (line 171)
-- See Also (line 181)
 
 ---
 

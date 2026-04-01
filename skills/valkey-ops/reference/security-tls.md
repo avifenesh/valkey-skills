@@ -1,8 +1,6 @@
-Use when setting up TLS encryption for Valkey - certificate generation,
-
 # TLS Configuration
-server configuration, mutual TLS, replication encryption, and cluster bus
-encryption.
+
+Use when setting up TLS encryption for Valkey - certificate generation, server configuration, mutual TLS, replication encryption, and cluster bus encryption.
 
 Source-verified against `src/tls.c` and `src/config.c` in valkey-io/valkey.
 
@@ -19,7 +17,6 @@ Source-verified against `src/tls.c` and `src/config.c` in valkey-io/valkey.
 - Recommended Cipher Suites (line 228)
 - TLS Material Validation (line 257)
 - Troubleshooting (line 270)
-- See Also (line 288)
 
 ---
 

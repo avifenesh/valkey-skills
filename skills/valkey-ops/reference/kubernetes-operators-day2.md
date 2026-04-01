@@ -1,6 +1,6 @@
-Use when deploying Valkey via the SAP Kubernetes operator, performing day-2 operator operations (scaling, upgrades), or choosing between the available operators.
-
 # Kubernetes Operators - SAP, Day-2, and Selection
+
+Use when deploying Valkey via the SAP Kubernetes operator, performing day-2 operator operations (scaling, upgrades), or choosing between the available operators.
 
 ## Contents
 

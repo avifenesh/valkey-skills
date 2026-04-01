@@ -14,7 +14,6 @@ Source: `src/multi.c`
 - EXEC Command (line 99)
 - WATCH Mechanism (line 138)
 - Memory Overhead Tracking (line 178)
-- See Also (line 186)
 
 ---
 

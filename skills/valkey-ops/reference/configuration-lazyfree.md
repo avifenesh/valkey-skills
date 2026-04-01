@@ -1,8 +1,6 @@
-Use when tuning background deletion behavior, reducing latency spikes from
-
 # Lazy Free Configuration
-large key eviction/expiry, or understanding the difference between DEL and
-UNLINK.
+
+Use when tuning background deletion behavior, reducing latency spikes from large key eviction/expiry, or understanding the difference between DEL and UNLINK.
 
 ## Contents
 
@@ -12,7 +10,6 @@ UNLINK.
 - FLUSHDB / FLUSHALL with ASYNC (line 92)
 - Impact on Latency and Memory (line 108)
 - Recommended Settings (line 141)
-- See Also (line 157)
 
 ---
 

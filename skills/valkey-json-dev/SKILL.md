@@ -1,6 +1,6 @@
 ---
 name: valkey-json-dev
-description: "Use when contributing to valkey-io/valkey-json source code - C++ internals, RapidJSON DOM, JSONPath engine, RDB serialization, defrag, cross-module API, build system. Not for using JSON commands in apps (valkey-modules) or building custom modules (valkey-module-dev)."
+description: "Use when contributing to valkey-io/valkey-json - C++ internals, RapidJSON DOM, JSONPath engine, RDB serialization, defrag, cross-module API, build. Not for JSON commands in apps (valkey-modules) or custom modules (valkey-module-dev)."
 version: 1.0.0
 argument-hint: "[subsystem or source file]"
 ---

@@ -14,7 +14,6 @@ Source: `src/module.c` (lines 542-663, 2646-2737, 3127-3130, 11409-11437)
 - AutoMemory Internals (line 187)
 - TrimStringAllocation (line 213)
 - Choosing the Right Allocator (line 217)
-- See Also (line 227)
 
 ---
 

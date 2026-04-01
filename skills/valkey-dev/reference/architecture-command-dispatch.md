@@ -10,7 +10,6 @@ Use when you need to understand how a client request goes from raw bytes on the 
 - call() - Command Execution (`server.c:3831`) (line 145)
 - Pipelining (line 179)
 - MULTI/EXEC Transactions (line 196)
-- See Also (line 202)
 
 ---
 

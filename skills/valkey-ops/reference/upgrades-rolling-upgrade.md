@@ -1,6 +1,6 @@
-Use when upgrading Valkey with zero downtime in Sentinel or Cluster setups, performing planned primary swaps, or executing maintenance windows.
-
 # Rolling Upgrades
+
+Use when upgrading Valkey with zero downtime in Sentinel or Cluster setups, performing planned primary swaps, or executing maintenance windows.
 
 ## Contents
 
@@ -11,7 +11,6 @@ Use when upgrading Valkey with zero downtime in Sentinel or Cluster setups, perf
 - Health Checks Between Steps (line 200)
 - Valkey 9.0 Cluster Upgrade Considerations (line 218)
 - Rollback Plan (line 238)
-- See Also (line 268)
 
 ---
 

@@ -1,6 +1,6 @@
-Use when deploying a new Valkey Cluster, configuring cluster parameters, or understanding hash slot mechanics.
-
 # Cluster Setup
+
+Use when deploying a new Valkey Cluster, configuring cluster parameters, or understanding hash slot mechanics.
 
 ## Contents
 
@@ -9,7 +9,6 @@ Use when deploying a new Valkey Cluster, configuring cluster parameters, or unde
 - Cluster Configuration (line 71)
 - Creating a Cluster (line 123)
 - Hash Slots and Hash Tags (line 208)
-- See Also (line 261)
 
 ---
 

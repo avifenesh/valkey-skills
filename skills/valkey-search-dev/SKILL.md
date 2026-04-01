@@ -1,6 +1,6 @@
 ---
 name: valkey-search-dev
-description: "Use when contributing to valkey-io/valkey-search - C++ internals, HNSW/FLAT vector indexes, full-text/numeric/tag indexes, query engine, cluster coordinator, build system. Not for using FT.SEARCH in apps (valkey-modules) or building custom modules (valkey-module-dev)."
+description: "Use when contributing to valkey-io/valkey-search - C++ internals, HNSW/FLAT vector indexes, full-text/numeric/tag indexes, query engine, cluster coordinator, build. Not for FT.SEARCH in apps (valkey-modules) or custom modules (valkey-module-dev)."
 version: 1.0.0
 argument-hint: "[subsystem or source file]"
 ---

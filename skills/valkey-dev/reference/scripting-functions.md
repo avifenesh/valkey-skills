@@ -22,7 +22,6 @@ Source files: `src/functions.c`, `src/functions.h`, `src/script.c`
 - Persistence and Replication (line 212)
 - Memory Accounting (line 218)
 - Initialization (line 227)
-- See Also (line 235)
 
 ---
 

@@ -14,7 +14,6 @@ Source: `src/blocked.c`
 - Cleanup Helpers (line 201)
 - Mass Unblock (line 214)
 - Event Loop Integration (line 230)
-- See Also (line 244)
 
 ---
 

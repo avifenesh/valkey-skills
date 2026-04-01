@@ -20,7 +20,6 @@ Source: `src/object.c` (1,931 lines), `src/server.h` (struct definition)
 - Encoding Optimization (line 224)
 - Memory Dismissal (CoW Optimization) (line 237)
 - OBJECT Command (line 247)
-- See Also (line 258)
 
 ---
 

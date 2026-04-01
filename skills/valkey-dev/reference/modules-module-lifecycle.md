@@ -12,7 +12,6 @@ Source: `src/valkeymodule.h`, `src/module.c`, `src/module.h`
 - Subcommands (line 124)
 - Command Metadata (line 132)
 - The Context Object: ValkeyModuleCtx (line 137)
-- See Also (line 163)
 
 ---
 

@@ -1,6 +1,6 @@
-Use when deploying Valkey on Kubernetes via Helm, choosing between the official and Bitnami charts, or configuring chart values for production.
-
 # Helm Charts for Valkey on Kubernetes
+
+Use when deploying Valkey on Kubernetes via Helm, choosing between the official and Bitnami charts, or configuring chart values for production.
 
 ## Contents
 
@@ -11,7 +11,6 @@ Use when deploying Valkey on Kubernetes via Helm, choosing between the official 
 - Production Values Recommendations (line 219)
 - Upgrading Helm Releases (line 264)
 - Migrating from Bitnami to Official Chart (line 282)
-- See Also (line 299)
 
 ---
 

@@ -1,6 +1,6 @@
-Use when tuning memory usage for small collections or diagnosing unexpected memory consumption. All thresholds verified against `src/config.c`.
-
 # Memory Encoding Thresholds
+
+Use when tuning memory usage for small collections or diagnosing unexpected memory consumption. All thresholds verified against `src/config.c`.
 
 ## Contents
 
@@ -9,7 +9,6 @@ Use when tuning memory usage for small collections or diagnosing unexpected memo
 - Checking Current Encoding (line 99)
 - Tuning for Memory Efficiency (line 124)
 - Memory Impact Example (line 160)
-- See Also (line 171)
 
 ---
 

@@ -1,6 +1,6 @@
-Use when tuning Sentinel timing, deploying across datacenters, handling Docker/NAT environments, using coordinated failover (Valkey 9.0+), or setting up Sentinel as a systemd service.
-
 # Sentinel Advanced Configuration
+
+Use when tuning Sentinel timing, deploying across datacenters, handling Docker/NAT environments, using coordinated failover (Valkey 9.0+), or setting up Sentinel as a systemd service.
 
 ## Contents
 
@@ -9,7 +9,6 @@ Use when tuning Sentinel timing, deploying across datacenters, handling Docker/N
 - Docker and NAT Considerations (line 49)
 - Coordinated Failover (Valkey 9.0+) (line 87)
 - Systemd Service Files (line 136)
-- See Also (line 157)
 
 ---
 

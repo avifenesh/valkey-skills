@@ -1,13 +1,12 @@
-Use when investigating a production Valkey issue - the 7-phase diagnostic runbook, fork latency diagnosis, and memory testing.
-
 # Diagnostics Runbook
+
+Use when investigating a production Valkey issue - the 7-phase diagnostic runbook, fork latency diagnosis, and memory testing.
 
 ## Contents
 
 - 7-Phase Diagnostic Runbook (line 14)
 - Fork Latency (line 58)
 - Memory Testing (line 130)
-- See Also (line 162)
 
 ---
 

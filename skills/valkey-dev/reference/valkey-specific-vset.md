@@ -19,7 +19,6 @@ Source: `src/vset.c` (2,446 lines), `src/vset.h`
 - Bucket Splitting Strategy (line 146)
 - Usage in the Codebase (line 160)
 - Thread Safety (line 172)
-- See Also (line 179)
 
 ---
 

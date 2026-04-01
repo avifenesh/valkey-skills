@@ -52,8 +52,8 @@
 
 ## Architecture
 
-Core skills (valkey, valkey-dev, valkey-ops, valkey-glide, valkey-modules, glide-dev, valkey-module-dev, valkey-json-dev, valkey-search-dev, valkey-bloom-dev), migration skills (migrate-jedis, migrate-lettuce, migrate-ioredis, migrate-redis-py, migrate-go-redis, migrate-stackexchange), spring-data-valkey, and per-language GLIDE skills all follow the router pattern:
-- `SKILL.md` - concise router (<200 lines) with trigger phrases and reference tables
+All skills follow the router pattern:
+- `SKILL.md` - concise router (<250 lines) with trigger phrases and reference tables
 - `reference/` - deep RAG library of focused docs (each under 300 lines)
 
 Per-language GLIDE skills (Python, Java, Node.js, Go have 9 files; C#, PHP, Ruby have 4 files) are fully language-specific - each contains its own complete API reference, patterns, and examples with no shared reference files. Migration skills each have 2 reference files (api-mapping and advanced-patterns). Glide-MQ skills are self-contained single-file SKILL.md documents.
@@ -69,7 +69,7 @@ Skills are auto-discovered from the `skills/` directory tree - no registration i
 ## Editing Skills
 
 - New reference docs go in the relevant `skills/{skill}/reference/` subdirectory
-- Follow existing subdirectory grouping (e.g., `commands/`, `patterns/`, `architecture/`)
+- Reference directories are flat - place new files directly in reference/ with a descriptive prefix matching the SKILL.md table grouping (e.g., patterns-caching-strategies.md, architecture-overview.md)
 - Keep reference files focused on one topic, under 300 lines when possible
 - Start each reference doc with a "Use when" trigger line
 - Update the SKILL.md router table to include the new file

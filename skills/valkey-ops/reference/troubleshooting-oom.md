@@ -1,7 +1,6 @@
-Use when Valkey returns OOM errors on writes, the Linux OOM killer terminates
-
 # Out of Memory (OOM) Diagnosis and Resolution
-Valkey, or memory usage is approaching limits.
+
+Use when Valkey returns OOM errors on writes, the Linux OOM killer terminates Valkey, or memory usage is approaching limits.
 
 ## Contents
 
@@ -11,7 +10,6 @@ Valkey, or memory usage is approaching limits.
 - Root Causes (line 182)
 - Production Thresholds (line 198)
 - Prevention (line 210)
-- See Also (line 231)
 
 ---
 

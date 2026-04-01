@@ -12,7 +12,6 @@ Source: `src/module.c` (lines 2448-2471, 3155-3166, 4013-4015, 11044-11060, 1405
 - Random Bytes (line 97)
 - WrongArity (line 122)
 - Feature Detection (line 126)
-- See Also (line 146)
 
 ---
 

@@ -14,7 +14,6 @@ Source: `src/debug.c` (2646 lines)
 - Software Watchdog (line 200)
 - Assertion Infrastructure (line 234)
 - Utility Functions (line 254)
-- See Also (line 269)
 
 ---
 

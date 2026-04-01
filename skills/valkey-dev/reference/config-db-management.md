@@ -17,7 +17,6 @@ Source: `src/db.c` (3,054 lines)
 - SCAN Implementation (line 196)
 - Database Flushing (line 236)
 - Key Space Change Hooks (line 276)
-- See Also (line 294)
 
 ---
 

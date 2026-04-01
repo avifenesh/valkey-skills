@@ -1,6 +1,6 @@
-Use when performing disaster recovery - restoring from RDB or AOF backups, recovering from accidental FLUSHALL, point-in-time recovery, or verifying backup integrity.
-
 # Disaster Recovery
+
+Use when performing disaster recovery - restoring from RDB or AOF backups, recovering from accidental FLUSHALL, point-in-time recovery, or verifying backup integrity.
 
 ## Contents
 
@@ -10,7 +10,6 @@ Use when performing disaster recovery - restoring from RDB or AOF backups, recov
 - Point-in-Time Recovery (line 77)
 - Recovery Time Estimates (line 87)
 - Backup Verification (line 104)
-- See Also (line 140)
 
 ---
 

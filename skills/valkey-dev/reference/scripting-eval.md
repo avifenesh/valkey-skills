@@ -16,7 +16,6 @@ Source files: `src/eval.c`, `src/script.c`, `src/script.h`
 - Script Execution Lifecycle (script.c) (line 165)
 - Memory Accounting (line 177)
 - Replication (line 186)
-- See Also (line 190)
 
 ---
 

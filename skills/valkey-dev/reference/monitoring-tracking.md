@@ -19,7 +19,6 @@ Source: `src/tracking.c`
 - Pending Key Invalidations (line 193)
 - Prefix Collision Detection (line 206)
 - INFO Metrics (line 212)
-- See Also (line 221)
 
 ---
 

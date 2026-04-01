@@ -14,7 +14,6 @@ Source: `src/notify.c`
 - Callers (line 122)
 - Subscribing to Notifications (line 136)
 - Performance Notes (line 147)
-- See Also (line 153)
 
 ---
 

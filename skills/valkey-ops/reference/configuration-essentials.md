@@ -1,6 +1,6 @@
-Use when setting up a new Valkey instance or auditing an existing config. All defaults verified against `src/config.c` in the Valkey source.
-
 # Essential Configuration
+
+Use when setting up a new Valkey instance or auditing an existing config. All defaults verified against `src/config.c` in the Valkey source.
 
 ---
 
@@ -18,7 +18,6 @@ Valkey reads configuration from `valkey.conf`. Most parameters can be changed at
 - Replication (line 118)
 - Cluster (line 138)
 - General (line 152)
-- See Also (line 166)
 
 ## Network
 

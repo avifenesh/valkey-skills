@@ -1,8 +1,6 @@
-Use when investigating slow commands, large requests, or large replies.
-
 # Commandlog
-The commandlog is Valkey's evolution of Redis SLOWLOG, expanded to cover
-network bandwidth in addition to execution time.
+
+Use when investigating slow commands, large requests, or large replies. The commandlog is Valkey's evolution of Redis SLOWLOG, expanded to cover network bandwidth in addition to execution time.
 
 ## Contents
 
@@ -13,7 +11,6 @@ network bandwidth in addition to execution time.
 - Migration from SLOWLOG (line 134)
 - Operational Patterns (line 156)
 - Grafana Panels for Commandlog (line 215)
-- See Also (line 235)
 
 ---
 

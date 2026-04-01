@@ -1,13 +1,12 @@
-Use when looking up Valkey diagnostic commands, investigating real incident patterns, or running a quick health check script.
-
 # Diagnostic Commands and Incident Patterns
+
+Use when looking up Valkey diagnostic commands, investigating real incident patterns, or running a quick health check script.
 
 ## Contents
 
 - Diagnostic Commands Reference (line 13)
 - Real Incident Patterns (line 86)
 - Quick Health Check Script (line 163)
-- See Also (line 179)
 
 ---
 

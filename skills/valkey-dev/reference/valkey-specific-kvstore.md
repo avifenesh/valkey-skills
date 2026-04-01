@@ -19,7 +19,6 @@ Source: `src/kvstore.c`, `src/kvstore.h`
 - Key API Functions (line 150)
 - Cluster Migration Support (line 167)
 - Iterator Types (line 179)
-- See Also (line 188)
 
 ---
 

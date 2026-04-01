@@ -15,7 +15,6 @@ Source: `src/commandlog.c`, `src/commandlog.h`
 - Client Commands (line 123)
 - Timing Measurement (line 149)
 - Memory Management (line 160)
-- See Also (line 171)
 
 ---
 

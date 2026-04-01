@@ -1,6 +1,6 @@
-Use when deploying Valkey on physical servers or VMs without containers - systemd service, kernel tuning, directory structure, and permissions.
-
 # Bare Metal Production Setup
+
+Use when deploying Valkey on physical servers or VMs without containers - systemd service, kernel tuning, directory structure, and permissions.
 
 ## Contents
 
@@ -13,7 +13,6 @@ Use when deploying Valkey on physical servers or VMs without containers - system
 - EC2 and Cloud VM Considerations (line 267)
 - Low-Latency Tuning (NUMA, cgroups) (line 275)
 - Health Checks (line 289)
-- See Also (line 307)
 
 ---
 

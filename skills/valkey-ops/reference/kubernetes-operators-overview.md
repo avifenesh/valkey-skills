@@ -1,13 +1,12 @@
-Use when comparing Kubernetes operators for Valkey, writing CRD manifests for the Official or Hyperspike operators, or deciding between operators and Helm charts.
-
 # Kubernetes Operators - Overview and CRDs
+
+Use when comparing Kubernetes operators for Valkey, writing CRD manifests for the Official or Hyperspike operators, or deciding between operators and Helm charts.
 
 ## Contents
 
 - Operator Comparison (line 16)
 - Valkey Official Operator (valkey-io/valkey-operator) (line 38)
 - Hyperspike Valkey Operator (line 164)
-- See Also (line 287)
 
 ---
 

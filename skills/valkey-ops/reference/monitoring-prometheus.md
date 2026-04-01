@@ -1,6 +1,6 @@
-Use when configuring Prometheus to scrape Valkey metrics - exporter deployment, scrape configuration, metric naming, and multi-instance setups.
-
 # Prometheus Exporter Setup
+
+Use when configuring Prometheus to scrape Valkey metrics - exporter deployment, scrape configuration, metric naming, and multi-instance setups.
 
 ## Contents
 
@@ -12,7 +12,6 @@ Use when configuring Prometheus to scrape Valkey metrics - exporter deployment, 
 - Scrape Intervals (line 270)
 - ACL User for Exporter (line 281)
 - Verification (line 294)
-- See Also (line 311)
 
 ---
 

@@ -15,7 +15,6 @@ Source: `src/pubsub.c`
 - Client Lifecycle (line 162)
 - RESP Protocol Differences (line 173)
 - Counting Functions (line 177)
-- See Also (line 186)
 
 ---
 

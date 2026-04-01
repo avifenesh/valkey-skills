@@ -18,7 +18,6 @@ Source: `src/hashtable.c`, `src/hashtable.h`
 - Key API (line 178)
 - Hash Function (line 236)
 - Differences from Legacy Dict (line 245)
-- See Also (line 257)
 
 ---
 

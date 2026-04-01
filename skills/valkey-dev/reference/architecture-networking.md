@@ -11,7 +11,6 @@ Use when you need to understand client connections, read/write buffers, or the r
 - Connection Acceptance (`networking.c:1792`) (line 195)
 - Client Cleanup: freeClient (`networking.c:2048`) (line 221)
 - I/O Threading (line 233)
-- See Also (line 243)
 
 ---
 

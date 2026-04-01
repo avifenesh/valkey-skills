@@ -1,7 +1,6 @@
-Use when reducing read latency, offloading read traffic from the server, or
-
 # Client-Side Caching
-implementing a local cache in application code with server-assisted invalidation.
+
+Use when reducing read latency, offloading read traffic from the server, or implementing a local cache in application code with server-assisted invalidation.
 
 ## Contents
 
@@ -13,7 +12,6 @@ implementing a local cache in application code with server-assisted invalidation
 - Monitoring (line 149)
 - Performance Impact (line 182)
 - Operational Considerations (line 194)
-- See Also (line 205)
 
 ---
 

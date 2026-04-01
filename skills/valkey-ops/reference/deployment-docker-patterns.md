@@ -1,6 +1,6 @@
-Use when writing Docker Compose files for Valkey - single instance, primary-replica, Sentinel patterns, volume mounts, networking, config injection, and resource limits.
-
 # Docker Compose Patterns and Configuration
+
+Use when writing Docker Compose files for Valkey - single instance, primary-replica, Sentinel patterns, volume mounts, networking, config injection, and resource limits.
 
 ## Contents
 
@@ -11,7 +11,6 @@ Use when writing Docker Compose files for Valkey - single instance, primary-repl
 - Networking (line 126)
 - Config Injection Patterns (line 145)
 - Resource Limits (line 178)
-- See Also (line 197)
 
 ---
 

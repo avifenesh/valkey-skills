@@ -1,6 +1,6 @@
-Use when tuning Valkey alert thresholds, setting up Prometheus recording rules for Valkey, or configuring Alertmanager routing for Valkey alerts.
-
 # Alert Threshold Tuning and Alertmanager Configuration
+
+Use when tuning Valkey alert thresholds, setting up Prometheus recording rules for Valkey, or configuring Alertmanager routing for Valkey alerts.
 
 ## Contents
 
@@ -8,7 +8,6 @@ Use when tuning Valkey alert thresholds, setting up Prometheus recording rules f
 - Recording Rules (line 42)
 - Alertmanager Routing (line 60)
 - Community Alert Sources (line 92)
-- See Also (line 100)
 
 ---
 

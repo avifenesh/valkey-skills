@@ -14,7 +14,6 @@ Source: `src/t_zset.c`, `src/server.h`
 - Span Tracking (line 189)
 - Performance (line 205)
 - When Used (line 218)
-- See Also (line 229)
 
 ---
 

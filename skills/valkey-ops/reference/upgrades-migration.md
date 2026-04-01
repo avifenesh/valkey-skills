@@ -1,6 +1,6 @@
-Use when migrating from Redis OSS to Valkey, planning a migration strategy, or understanding what changes between the two systems.
-
 # Redis to Valkey Migration
+
+Use when migrating from Redis OSS to Valkey, planning a migration strategy, or understanding what changes between the two systems.
 
 ## Contents
 
@@ -15,7 +15,6 @@ Use when migrating from Redis OSS to Valkey, planning a migration strategy, or u
 - Data Validation After Migration (line 220)
 - Downtime Estimates by Method (line 236)
 - Migration Checklist (line 251)
-- See Also (line 265)
 
 ---
 

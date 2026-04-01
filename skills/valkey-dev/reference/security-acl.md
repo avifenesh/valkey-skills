@@ -20,7 +20,6 @@ Source: `src/acl.c` (~3,500 lines), structs in `src/server.h`.
 - Persistence (line 241)
 - ACL LOG - Audit System (line 272)
 - User Deletion and Rule Ordering (line 287)
-- See Also (line 300)
 
 ---
 

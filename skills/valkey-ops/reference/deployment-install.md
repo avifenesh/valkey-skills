@@ -1,6 +1,6 @@
-Use when setting up Valkey on a new machine - package manager, source build, or PREFIX install.
-
 # Installing Valkey
+
+Use when setting up Valkey on a new machine - package manager, source build, or PREFIX install.
 
 ## Contents
 
@@ -8,7 +8,6 @@ Use when setting up Valkey on a new machine - package manager, source build, or 
 - Package Manager Install (line 34)
 - Building from Source (line 58)
 - Verifying the Installation (line 159)
-- See Also (line 185)
 
 ---
 

@@ -1,6 +1,6 @@
-Use when configuring write-ahead logging for durability, choosing fsync policies, setting up hybrid persistence, or troubleshooting AOF corruption.
-
 # AOF (Append-Only File) Persistence
+
+Use when configuring write-ahead logging for durability, choosing fsync policies, setting up hybrid persistence, or troubleshooting AOF corruption.
 
 Source: `src/config.c`, `src/aof.c` (Valkey source). Cross-ref: valkey-dev `reference/persistence/aof.md` for multi-part architecture internals.
 
@@ -15,7 +15,6 @@ Source: `src/config.c`, `src/aof.c` (Valkey source). Cross-ref: valkey-dev `refe
 - AOF Rewrite (line 153)
 - Operational Procedures (line 185)
 - Production Recommendations (line 244)
-- See Also (line 254)
 
 ---
 

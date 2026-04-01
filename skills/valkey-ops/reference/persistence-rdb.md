@@ -1,6 +1,6 @@
-Use when configuring point-in-time snapshots, tuning BGSAVE behavior, or understanding RDB trade-offs for backup and recovery scenarios.
-
 # RDB Snapshot Persistence
+
+Use when configuring point-in-time snapshots, tuning BGSAVE behavior, or understanding RDB trade-offs for backup and recovery scenarios.
 
 Source: `src/config.c`, `src/rdb.c` (Valkey source). Cross-ref: valkey-dev `reference/persistence/rdb.md` for binary format internals.
 
@@ -12,7 +12,6 @@ Source: `src/config.c`, `src/rdb.c` (Valkey source). Cross-ref: valkey-dev `refe
 - Operational Procedures (line 93)
 - Production Recommendations (line 163)
 - RDB File Format Overview (line 173)
-- See Also (line 184)
 
 ---
 

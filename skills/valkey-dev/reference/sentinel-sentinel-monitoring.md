@@ -13,7 +13,6 @@ Source: `src/sentinel.c` (5,441 lines)
 - Monitoring (line 111)
 - Failure Detection (line 145)
 - TILT Mode (line 186)
-- See Also (line 196)
 
 ---
 

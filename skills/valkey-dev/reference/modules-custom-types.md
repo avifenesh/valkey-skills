@@ -14,7 +14,6 @@ Source: `src/valkeymodule.h` (lines 1413-1433), `src/module.c` (lines 7088-7290)
 - RDB Serialization Primitives (line 126)
 - Setting and Getting Module Type Values on Keys (line 165)
 - Quick Reference: Custom Type Skeleton (line 186)
-- See Also (line 212)
 
 ---
 

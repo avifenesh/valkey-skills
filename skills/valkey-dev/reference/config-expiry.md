@@ -13,7 +13,6 @@ Source: `src/expire.c` (~500 lines for active expiry), `src/db.c` (~300 lines fo
 - Expire Management Functions (line 193)
 - EXPIRE Command Family (line 219)
 - Writable Replica Key Expiration (line 238)
-- See Also (line 254)
 
 ---
 

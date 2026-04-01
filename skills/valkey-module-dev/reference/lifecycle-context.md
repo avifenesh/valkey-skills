@@ -12,7 +12,6 @@ Source: `src/module.c` (lines 161-204, 4093-4174), `src/valkeymodule.h` (lines 1
 - Context Flag Constants (line 91)
 - GetContextFlagsAll (line 142)
 - Practical Patterns (line 161)
-- See Also (line 191)
 
 ---
 

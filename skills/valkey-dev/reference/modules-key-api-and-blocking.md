@@ -14,7 +14,6 @@ Source: `src/valkeymodule.h`, `src/module.c` (lines 8053-8672)
 - Blocking Commands (line 84)
 - Blocking on Keys (line 117)
 - Thread-Safe Contexts (line 124)
-- See Also (line 131)
 
 ---
 

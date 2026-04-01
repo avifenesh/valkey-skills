@@ -1,6 +1,6 @@
 ---
 name: valkey-dev
-description: "Use when contributing to the Valkey server - C internals, event loop, command dispatch, data structures, cluster, replication, RDB/AOF, memory/eviction, threading, modules, Lua scripting, RESP, RDMA, tests, PR workflow."
+description: "Use when contributing to the Valkey server - C internals, event loop, commands, data structures, cluster, replication, RDB/AOF, memory, threading, modules, Lua, RESP, tests. Not for app development (valkey) or ops (valkey-ops)."
 version: 1.0.0
 argument-hint: "[subsystem or source file]"
 ---

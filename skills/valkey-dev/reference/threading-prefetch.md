@@ -16,7 +16,6 @@ Source: `src/memory_prefetch.c`, `src/memory_prefetch.h`
 - Configuration (line 244)
 - Performance Impact (line 252)
 - Statistics (line 268)
-- See Also (line 277)
 
 ---
 

@@ -1,6 +1,6 @@
-Use when deploying Valkey on Kubernetes with raw StatefulSets - configuring PVCs, pod scheduling, health probes, resource sizing, or Pod Disruption Budgets.
-
 # StatefulSet Patterns for Valkey - Configuration
+
+Use when deploying Valkey on Kubernetes with raw StatefulSets - configuring PVCs, pod scheduling, health probes, resource sizing, or Pod Disruption Budgets.
 
 ## Contents
 
@@ -10,7 +10,6 @@ Use when deploying Valkey on Kubernetes with raw StatefulSets - configuring PVCs
 - Health Probes (line 113)
 - Resource Sizing (line 179)
 - Pod Disruption Budget (line 213)
-- See Also (line 237)
 
 ---
 

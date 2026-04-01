@@ -17,7 +17,6 @@ Source: `src/rdma.c` (1,932 lines)
 - Event Handling (line 166)
 - Pending Write List (line 190)
 - ConnectionType Registration (line 197)
-- See Also (line 221)
 
 ---
 

@@ -1,8 +1,6 @@
-Use when setting up monitoring for Valkey - understanding INFO command output,
-
 # Monitoring Metrics
-identifying critical metrics, setting alert thresholds, and running diagnostic
-commands.
+
+Use when setting up monitoring for Valkey - understanding INFO command output, identifying critical metrics, setting alert thresholds, and running diagnostic commands.
 
 Source-verified against `src/server.c` INFO output generation in
 valkey-io/valkey.
@@ -14,7 +12,6 @@ valkey-io/valkey.
 - Derived Metrics (line 148)
 - Operational Diagnostic Commands (line 163)
 - APM Integrations (line 241)
-- See Also (line 282)
 
 ---
 

@@ -1,8 +1,6 @@
-Use when choosing persistence settings, tuning TCP/client connections, or
-
 # Durability vs Performance
-evaluating Valkey 9.0 performance features. Covers the full spectrum from
-maximum safety to maximum speed.
+
+Use when choosing persistence settings, tuning TCP/client connections, or evaluating Valkey 9.0 performance features. Covers the full spectrum from maximum safety to maximum speed.
 
 ## Contents
 
@@ -12,7 +10,6 @@ maximum safety to maximum speed.
 - Valkey 9.0 Performance Features (line 173)
 - Kernel Tuning for Performance (line 203)
 - Quick Decision Guide (line 220)
-- See Also (line 232)
 
 ---
 

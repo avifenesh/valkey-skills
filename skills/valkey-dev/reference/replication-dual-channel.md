@@ -14,7 +14,6 @@ Source file: `src/replication.c` (search for `dualChannel`)
 - Primary-Side Handling (line 193)
 - Benefits (line 220)
 - Configuration and Backwards Compatibility (line 230)
-- See Also (line 260)
 
 ---
 

@@ -15,7 +15,6 @@ Source: `src/latency.c`, `src/latency.h`
 - Event Types and Their Callers (line 111)
 - Duration Stats (line 140)
 - Client Commands (line 157)
-- See Also (line 195)
 
 ---
 

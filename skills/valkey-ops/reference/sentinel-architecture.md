@@ -1,6 +1,6 @@
-Use when you need to understand how Sentinel provides high availability for non-clustered Valkey - how it monitors instances, detects failures, elects leaders, and promotes replicas.
-
 # Sentinel Architecture and Failure Detection
+
+Use when you need to understand how Sentinel provides high availability for non-clustered Valkey - how it monitors instances, detects failures, elects leaders, and promotes replicas.
 
 ## Contents
 
@@ -10,7 +10,6 @@ Use when you need to understand how Sentinel provides high availability for non-
 - Replica Selection Algorithm (line 139)
 - Key Timing Constants (line 180)
 - Pub/Sub Events (line 206)
-- See Also (line 218)
 
 ---
 

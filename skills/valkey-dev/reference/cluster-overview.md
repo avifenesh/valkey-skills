@@ -14,7 +14,6 @@ Source files: `cluster.h`, `cluster.c`, `cluster_legacy.h`, `cluster_legacy.c`
 - MOVED and ASK Redirects (line 207)
 - Cluster State Determination (line 233)
 - Key Lifecycle Functions (line 243)
-- See Also (line 259)
 
 ---
 

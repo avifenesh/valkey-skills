@@ -1,7 +1,6 @@
-Use when you need to disable or rename dangerous commands in Valkey. Covers
-
 # Command Restriction with rename-command
-the legacy `rename-command` directive and the preferred ACL alternative.
+
+Use when you need to disable or rename dangerous commands in Valkey. Covers the legacy `rename-command` directive and the preferred ACL alternative.
 
 Source-verified against `src/config.c` in valkey-io/valkey.
 
@@ -15,7 +14,6 @@ Source-verified against `src/config.c` in valkey-io/valkey.
 - Migration from rename-command to ACL (line 195)
 - Full Dangerous Command Reference (line 219)
 - Troubleshooting (line 241)
-- See Also (line 252)
 
 ---
 

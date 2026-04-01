@@ -1,7 +1,6 @@
-Use when configuring Grafana dashboards for Valkey monitoring - importing
-
 # Grafana Dashboard Setup
-community dashboards, configuring data sources, and building key panels.
+
+Use when configuring Grafana dashboards for Valkey monitoring - importing community dashboards, configuring data sources, and building key panels.
 
 ## Contents
 
@@ -13,7 +12,6 @@ community dashboards, configuring data sources, and building key panels.
 - Dashboard JSON Export (line 164)
 - Grafana Provisioning (line 177)
 - Percona PMM Dashboards (line 200)
-- See Also (line 232)
 
 ---
 

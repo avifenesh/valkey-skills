@@ -13,7 +13,6 @@ Source: `src/module.c` (lines 100-108, 11062-11175)
 - Lazy Resolution Pattern (line 113)
 - Unload Behavior (line 147)
 - Complete Example (line 157)
-- See Also (line 220)
 
 ---
 

@@ -15,7 +15,6 @@ Use when you need to compile Valkey from source, understand build options, or se
 - Cross-Platform Notes (line 207)
 - Compiler Detection (line 216)
 - Troubleshooting (line 220)
-- See Also (line 228)
 
 ---
 

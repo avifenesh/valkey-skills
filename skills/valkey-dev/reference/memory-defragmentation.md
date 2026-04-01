@@ -15,7 +15,6 @@ Source: `src/defrag.c`, `src/allocator_defrag.c`, `src/allocator_defrag.h`
 - Configuration (line 232)
 - Statistics (INFO memory) (line 251)
 - Interaction with Child Processes (line 264)
-- See Also (line 278)
 
 ---
 

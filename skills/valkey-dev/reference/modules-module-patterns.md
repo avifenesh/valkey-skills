@@ -12,7 +12,6 @@ Source: `src/valkeymodule.h`, `src/module.c`
 - Backward Compatibility with Redis Modules (line 89)
 - Minimal Complete Module Example (line 97)
 - Reply Helpers (line 147)
-- See Also (line 168)
 
 ---
 

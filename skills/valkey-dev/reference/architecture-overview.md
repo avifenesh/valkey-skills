@@ -7,7 +7,6 @@ Use when you need a map of the Valkey codebase, the global server state, or the 
 - Repository Layout (line 14)
 - Global Server State (line 62)
 - main() Boot Sequence (line 148)
-- See Also (line 199)
 
 ---
 

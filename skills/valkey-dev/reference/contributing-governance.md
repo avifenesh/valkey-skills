@@ -13,7 +13,6 @@ Use when you need to understand Valkey's decision-making process, who the mainta
 - Process Transparency (line 120)
 - How to Influence Decisions (line 127)
 - License (line 139)
-- See Also (line 143)
 
 ---
 

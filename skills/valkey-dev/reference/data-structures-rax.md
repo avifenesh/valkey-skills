@@ -12,7 +12,6 @@ Source: `src/rax.c`, `src/rax.h`
 - Key Operations (line 146)
 - Where Used in Valkey (line 208)
 - Performance (line 219)
-- See Also (line 231)
 
 ---
 

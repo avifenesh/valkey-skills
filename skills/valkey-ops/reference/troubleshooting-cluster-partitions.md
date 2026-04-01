@@ -1,7 +1,6 @@
-Use when cluster state is degraded, nodes are marked as failed, slots are
-
 # Cluster Partition Issues
-uncovered, or clients receive CLUSTERDOWN errors.
+
+Use when cluster state is degraded, nodes are marked as failed, slots are uncovered, or clients receive CLUSTERDOWN errors.
 
 ## Contents
 
@@ -12,7 +11,6 @@ uncovered, or clients receive CLUSTERDOWN errors.
 - Prevention (line 208)
 - Large Key Migration Blocked (Cluster Incident Pattern) (line 228)
 - Cluster Scaling Improvements (Valkey 8.1+) (line 246)
-- See Also (line 260)
 
 ---
 

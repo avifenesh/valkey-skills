@@ -16,7 +16,6 @@ Source: `src/io_threads.c`, `src/io_threads.h`
 - Synchronization (line 222)
 - Configuration (line 252)
 - Performance Characteristics (line 264)
-- See Also (line 278)
 
 ---
 

@@ -12,7 +12,6 @@ Source: `src/listpack.c`, `src/listpack.h`
 - Key Operations (line 95)
 - When Valkey Uses Listpack (line 168)
 - Performance Characteristics (line 181)
-- See Also (line 193)
 
 ---
 

@@ -15,7 +15,6 @@ Source: `src/lazyfree.c`
 - Statistics (line 173)
 - Configuration Options (line 189)
 - Integration with BIO (line 208)
-- See Also (line 217)
 
 ---
 

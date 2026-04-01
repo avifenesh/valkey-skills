@@ -1,6 +1,6 @@
-Use when performing manual failovers, checking cluster health, diagnosing node issues, or planning for cluster scalability.
-
 # Cluster Operations
+
+Use when performing manual failovers, checking cluster health, diagnosing node issues, or planning for cluster scalability.
 
 ## Contents
 
@@ -9,7 +9,6 @@ Use when performing manual failovers, checking cluster health, diagnosing node i
 - Automatic Replica Migration (line 186)
 - Cluster Scalability (line 208)
 - Operational Runbook: Rolling Restart (line 248)
-- See Also (line 280)
 
 ---
 

@@ -18,7 +18,6 @@ Source: `src/connection.c`, `src/connection.h`, `src/socket.c`
 - Pending Data (IO Threads Support) (line 240)
 - How to Add a New Connection Type (line 257)
 - Cached Type Lookups (line 266)
-- See Also (line 278)
 
 ---
 

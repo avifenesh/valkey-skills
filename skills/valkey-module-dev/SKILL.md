@@ -1,6 +1,6 @@
 ---
 name: valkey-module-dev
-description: "Use when building custom Valkey modules in C or Rust. Covers ValkeyModule_* API, command registration, custom data types, RDB/AOF persistence, blocking commands, events, cluster, threading, defrag, scripting engines, and testing. Not for using existing modules (valkey-modules) or contributing to the server (valkey-dev)."
+description: "Use when building custom Valkey modules in C or Rust. Covers ValkeyModule_* API, commands, custom data types, RDB/AOF, blocking, events, cluster, threading, defrag, and testing. Not for module usage (valkey-modules) or server internals (valkey-dev)."
 version: 1.0.0
 argument-hint: "[API area or task]"
 ---

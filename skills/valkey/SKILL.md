@@ -1,6 +1,6 @@
 ---
 name: valkey
-description: "Build applications with Valkey - choose commands, data types, and patterns. Use when implementing caching, sessions, queues, locks, rate-limiting, leaderboards, counters, search, pub-sub, streams, scripting, transactions, or migrating from Redis. Covers Valkey-specific features: SET IFEQ, DELIFEQ, hash field TTL, COMMANDLOG, polygon geo queries, cluster enhancements. Not for server internals (valkey-dev) or ops (valkey-ops)."
+description: "Use when building apps with Valkey - caching, sessions, queues, locks, rate-limiting, leaderboards, counters, pub-sub, streams, scripting. Covers IFEQ/DELIFEQ, hash field TTL, COMMANDLOG. Not for server internals (valkey-dev) or ops (valkey-ops)."
 version: 2.0.0
 argument-hint: "[feature, pattern, or scenario]"
 ---

@@ -16,7 +16,6 @@ Source: `src/object.c`, `src/t_list.c`, `src/t_set.c`, `src/t_zset.c`, `src/t_ha
 - Configuration Reference (line 168)
 - Memory Impact (line 192)
 - Checking Current Encoding (line 206)
-- See Also (line 224)
 
 ---
 

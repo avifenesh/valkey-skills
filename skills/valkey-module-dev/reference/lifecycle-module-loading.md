@@ -14,7 +14,6 @@ Source: `src/module.c` (lines 12821-13096), `src/valkeymodule.h` (lines 2213-231
 - Unloading (line 118)
 - MODULE LIST (line 140)
 - Minimal Example (line 155)
-- See Also (line 180)
 
 ---
 

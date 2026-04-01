@@ -11,7 +11,6 @@ Use when you need to understand what CI checks run on your PR, diagnose CI failu
 - CI Duration (line 145)
 - Common Failure Patterns (line 154)
 - Required Checks (line 186)
-- See Also (line 190)
 
 ---
 

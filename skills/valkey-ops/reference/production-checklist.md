@@ -1,6 +1,6 @@
-Use when preparing a Valkey deployment for production, auditing an existing setup, or verifying readiness before go-live.
-
 # Production Deployment Checklist
+
+Use when preparing a Valkey deployment for production, auditing an existing setup, or verifying readiness before go-live.
 
 ## Contents
 
@@ -14,7 +14,6 @@ Use when preparing a Valkey deployment for production, auditing an existing setu
 - Kubernetes-Specific (line 116)
 - Persistence Specifics (line 125)
 - Pre-Upgrade Verification (line 133)
-- See Also (line 142)
 
 ---
 

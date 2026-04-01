@@ -1,8 +1,6 @@
-Use when measuring Valkey throughput, comparing performance across versions or
-
 # Benchmarking
-configurations, validating tuning changes, or establishing performance baselines
-for capacity planning.
+
+Use when measuring Valkey throughput, comparing performance across versions or configurations, validating tuning changes, or establishing performance baselines for capacity planning.
 
 ## Contents
 
@@ -10,7 +8,6 @@ for capacity planning.
 - valkey-benchmark (Built-in) (line 29)
 - valkey-perf-benchmark (CI/Regression Harness) (line 78)
 - Benchmarking Best Practices (line 208)
-- See Also (line 224)
 
 ---
 

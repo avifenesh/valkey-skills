@@ -1,6 +1,6 @@
-Use when configuring Valkey for a specific use case. Each preset lists the parameters to set and why. Defaults verified against `src/config.c`.
-
 # Configuration Presets by Workload
+
+Use when configuring Valkey for a specific use case. Each preset lists the parameters to set and why. Defaults verified against `src/config.c`.
 
 ## Contents
 
@@ -10,7 +10,6 @@ Use when configuring Valkey for a specific use case. Each preset lists the param
 - Message Queue / Job Queue (line 185)
 - Rate Limiter / Counter (line 236)
 - Shared Tuning Notes (line 269)
-- See Also (line 305)
 
 ---
 

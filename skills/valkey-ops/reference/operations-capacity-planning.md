@@ -1,6 +1,6 @@
-Use when sizing Valkey instances, planning memory allocation, estimating connection requirements, or deciding when to scale a cluster. All config defaults verified against `src/config.c` in valkey-io/valkey.
-
 # Capacity Planning
+
+Use when sizing Valkey instances, planning memory allocation, estimating connection requirements, or deciding when to scale a cluster. All config defaults verified against `src/config.c` in valkey-io/valkey.
 
 ## Contents
 
@@ -10,7 +10,6 @@ Use when sizing Valkey instances, planning memory allocation, estimating connect
 - Connection Count Planning (line 190)
 - Cluster Sizing (line 245)
 - Capacity Planning Checklist (line 296)
-- See Also (line 309)
 
 ---
 

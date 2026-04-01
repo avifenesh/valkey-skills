@@ -12,7 +12,6 @@ Source: `src/sds.c`, `src/sds.h`
 - Key Functions (line 92)
 - Why SDS Over C Strings (line 162)
 - Implementation Notes (line 173)
-- See Also (line 180)
 
 ---
 

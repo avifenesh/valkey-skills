@@ -1,7 +1,6 @@
-Use when investigating latency spikes, establishing baseline latency, analyzing
-
 # Latency Diagnosis
-slow commands, or using LATENCY DOCTOR for automated diagnostics.
+
+Use when investigating latency spikes, establishing baseline latency, analyzing slow commands, or using LATENCY DOCTOR for automated diagnostics.
 
 ## Contents
 
@@ -14,7 +13,6 @@ slow commands, or using LATENCY DOCTOR for automated diagnostics.
 - Step 6: Software Watchdog (Emergency) (line 205)
 - Transparent Huge Pages - The #1 Linux Misconfiguration (line 222)
 - Common Latency Causes (line 251)
-- See Also (line 267)
 
 ---
 

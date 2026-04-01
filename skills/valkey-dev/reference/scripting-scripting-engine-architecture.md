@@ -11,7 +11,6 @@ Source files: `src/scripting_engine.c`, `src/scripting_engine.h`, `src/valkeymod
 - Key Data Structures (line 39)
 - Engine Methods (ABI) (line 94)
 - Backward Compatibility (line 149)
-- See Also (line 156)
 
 ---
 

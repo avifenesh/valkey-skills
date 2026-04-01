@@ -13,7 +13,6 @@ Source: `src/module.c` (lines 7903-7989), `src/valkeymodule.h` (lines 291-295)
 - ValkeyModule_LatencyAddSample (line 122)
 - Output Format (line 147)
 - Practical Patterns (line 158)
-- See Also (line 192)
 
 ---
 

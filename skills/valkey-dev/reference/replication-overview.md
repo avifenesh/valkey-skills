@@ -12,7 +12,6 @@ Source file: `src/replication.c`
 - Replica Handshake Sequence (line 157)
 - Write Propagation (line 207)
 - Key Server State Fields (line 251)
-- See Also (line 268)
 
 ---
 

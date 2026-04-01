@@ -1,7 +1,6 @@
-Use when memory fragmentation ratio is high, Valkey is consuming more RSS than
-
 # Active Defragmentation
-expected, or you want to reclaim memory without restarting.
+
+Use when memory fragmentation ratio is high, Valkey is consuming more RSS than expected, or you want to reclaim memory without restarting.
 
 ## Contents
 
@@ -11,7 +10,6 @@ expected, or you want to reclaim memory without restarting.
 - Common Causes of Fragmentation (line 109)
 - When to Use vs When to Restart (line 131)
 - Operational Notes (line 153)
-- See Also (line 165)
 
 ---
 

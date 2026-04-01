@@ -1,6 +1,6 @@
-Use when implementing automated backup strategies for Valkey - RDB snapshot scripts, AOF backup procedures, off-site backup, or replica-based backup.
-
 # Backup Strategies
+
+Use when implementing automated backup strategies for Valkey - RDB snapshot scripts, AOF backup procedures, off-site backup, or replica-based backup.
 
 ## Contents
 
@@ -10,7 +10,6 @@ Use when implementing automated backup strategies for Valkey - RDB snapshot scri
 - Off-Site Backup (line 143)
 - Replica-Based Backup (line 184)
 - Retention Strategy (line 201)
-- See Also (line 212)
 
 ---
 

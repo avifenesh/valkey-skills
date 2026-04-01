@@ -1,6 +1,6 @@
-Use when configuring Valkey replication, setting up read replicas, promoting replicas to primary, or understanding how initial synchronization works.
-
 # Primary-Replica Replication Setup
+
+Use when configuring Valkey replication, setting up read replicas, promoting replicas to primary, or understanding how initial synchronization works.
 
 Source: `src/config.c`, `src/replication.c` (Valkey source).
 
@@ -12,7 +12,6 @@ Source: `src/config.c`, `src/replication.c` (Valkey source).
 - Setup Procedures (line 82)
 - Synchronization Mechanisms (line 136)
 - Operational Notes (line 167)
-- See Also (line 194)
 
 ---
 

@@ -16,7 +16,6 @@ Use when you need to submit a patch, understand coding conventions, or navigate 
 - Communication Channels (line 202)
 - Review Criteria (line 210)
 - Common Mistakes (line 222)
-- See Also (line 230)
 
 ---
 

@@ -1,6 +1,6 @@
-Use when moving hash slots between nodes, adding or removing cluster nodes, or migrating to Valkey 9.0's atomic slot migration.
-
 # Cluster Resharding
+
+Use when moving hash slots between nodes, adding or removing cluster nodes, or migrating to Valkey 9.0's atomic slot migration.
 
 ## Contents
 
@@ -9,7 +9,6 @@ Use when moving hash slots between nodes, adding or removing cluster nodes, or m
 - Atomic Slot Migration (Valkey 9.0+) (line 84)
 - Adding Nodes (line 171)
 - Removing Nodes (line 214)
-- See Also (line 246)
 
 ---
 

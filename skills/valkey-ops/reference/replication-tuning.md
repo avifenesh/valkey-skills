@@ -1,6 +1,6 @@
-Use when sizing the replication backlog, configuring diskless or dual-channel replication, tuning sync behavior, or handling Docker/NAT networking for replicas.
-
 # Replication Tuning
+
+Use when sizing the replication backlog, configuring diskless or dual-channel replication, tuning sync behavior, or handling Docker/NAT networking for replicas.
 
 Source: `src/config.c`, `src/replication.c` (Valkey source).
 
@@ -12,7 +12,6 @@ Source: `src/config.c`, `src/replication.c` (Valkey source).
 - Connection Tuning (line 151)
 - Docker and NAT Considerations (line 169)
 - Monitoring Replication Health (line 219)
-- See Also (line 239)
 
 ---
 

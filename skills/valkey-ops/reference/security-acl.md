@@ -1,8 +1,6 @@
-Use when setting up access control for Valkey - creating users, assigning
-
 # ACL Configuration
-permissions, restricting commands and keys, managing ACL files, and auditing
-access denials.
+
+Use when setting up access control for Valkey - creating users, assigning permissions, restricting commands and keys, managing ACL files, and auditing access denials.
 
 Source-verified against `src/acl.c` and `src/server.h` in valkey-io/valkey.
 
@@ -17,7 +15,6 @@ Source-verified against `src/acl.c` and `src/server.h` in valkey-io/valkey.
 - ACL Management Commands (line 239)
 - Default User (line 266)
 - Key Permission Granularity (line 285)
-- See Also (line 294)
 
 ---
 

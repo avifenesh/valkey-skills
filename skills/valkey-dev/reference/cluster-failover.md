@@ -12,7 +12,6 @@ Source files: `cluster_legacy.c` (all failover logic), `cluster_legacy.h` (flag 
 - Replica Migration (line 241)
 - State Machine Summary (line 256)
 - Key Functions Reference (line 284)
-- See Also (line 302)
 
 ---
 

@@ -16,7 +16,6 @@ Source: `src/config.c` (3,681 lines)
 - CONFIG GET Implementation (line 162)
 - CONFIG REWRITE Implementation (line 175)
 - Adding a New Config Parameter (line 201)
-- See Also (line 221)
 
 ---
 

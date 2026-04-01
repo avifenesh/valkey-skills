@@ -1,12 +1,11 @@
-Use when you need a complete, copy-paste StatefulSet manifest for Valkey on Kubernetes, or when troubleshooting common StatefulSet issues.
-
 # StatefulSet for Valkey - Complete Example and Gotchas
+
+Use when you need a complete, copy-paste StatefulSet manifest for Valkey on Kubernetes, or when troubleshooting common StatefulSet issues.
 
 ## Contents
 
 - Complete StatefulSet Example (line 13)
 - Common StatefulSet Gotchas for Valkey (line 103)
-- See Also (line 124)
 
 ---
 

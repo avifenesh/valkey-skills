@@ -1,13 +1,12 @@
-Use when tuning kernel parameters for Valkey in Kubernetes, setting up init containers for sysctl, handling Docker/NAT limitations, or configuring monitoring in K8s.
-
 # Kubernetes Tuning for Valkey
+
+Use when tuning kernel parameters for Valkey in Kubernetes, setting up init containers for sysctl, handling Docker/NAT limitations, or configuring monitoring in K8s.
 
 ## Contents
 
 - Kernel Tuning (line 14)
 - Docker and NAT Limitations (line 136)
 - Monitoring in Kubernetes (line 199)
-- See Also (line 291)
 
 ---
 

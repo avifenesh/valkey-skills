@@ -13,7 +13,6 @@ Use when you need to understand how Valkey multiplexes I/O, processes timers, or
 - The afterSleep Hook (`server.c:2015`) (line 202)
 - The epoll Backend (`ae_epoll.c`) (line 211)
 - Thread Safety (line 226)
-- See Also (line 230)
 
 ---
 

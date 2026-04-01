@@ -15,7 +15,6 @@ Source files: `src/scripting_engine.c`, `src/scripting_engine.h`, `src/valkeymod
 - Adding a New Scripting Engine (line 138)
 - Engine Iterator (line 172)
 - Memory Reporting (line 180)
-- See Also (line 190)
 
 ---
 

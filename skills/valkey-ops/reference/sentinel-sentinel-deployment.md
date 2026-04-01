@@ -1,13 +1,12 @@
-Use when deploying Sentinel for the first time - tested Docker example, step-by-step deployment on bare metal, and configuration directives.
-
 # Sentinel Deployment
+
+Use when deploying Sentinel for the first time - tested Docker example, step-by-step deployment on bare metal, and configuration directives.
 
 ## Contents
 
 - Tested Example: Minimal Sentinel Setup (Docker) (line 15)
 - Step-by-Step Deployment (line 51)
 - Sentinel Configuration Directives (line 161)
-- See Also (line 199)
 
 ---
 

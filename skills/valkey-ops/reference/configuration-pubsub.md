@@ -1,8 +1,6 @@
-Use when running Pub/Sub workloads, managing subscriber memory, configuring
-
 # Pub/Sub Operational Configuration
-keyspace notifications, or operating sharded Pub/Sub in cluster mode. All
-defaults verified against `src/config.c` and `src/server.h` in valkey-io/valkey.
+
+Use when running Pub/Sub workloads, managing subscriber memory, configuring keyspace notifications, or operating sharded Pub/Sub in cluster mode. All defaults verified against `src/config.c` and `src/server.h` in valkey-io/valkey.
 
 ## Contents
 
@@ -13,7 +11,6 @@ defaults verified against `src/config.c` and `src/server.h` in valkey-io/valkey.
 - Pattern Subscription Performance (line 221)
 - Scaling Pub/Sub (line 246)
 - Monitoring Subscriber Count and Memory (line 253)
-- See Also (line 293)
 
 ---
 

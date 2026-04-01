@@ -1,12 +1,11 @@
-Use when configuring Prometheus alert rules for Valkey - complete YAML for availability, memory, connections, replication, persistence, performance, and cluster alerts.
-
 # Prometheus Alert Rules for Valkey
+
+Use when configuring Prometheus alert rules for Valkey - complete YAML for availability, memory, connections, replication, persistence, performance, and cluster alerts.
 
 ## Contents
 
 - Alert Rule File (line 12)
 - Complete Alert Rules (line 25)
-- See Also (line 234)
 
 ---
 

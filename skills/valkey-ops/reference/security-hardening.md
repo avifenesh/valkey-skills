@@ -1,8 +1,6 @@
-Use when hardening a Valkey deployment - defense in depth, protected mode,
-
 # Security Hardening
-restricting dangerous commands, network security, and pre-production security
-audits.
+
+Use when hardening a Valkey deployment - defense in depth, protected mode, restricting dangerous commands, network security, and pre-production security audits.
 
 Source-verified against `src/config.c`, `src/networking.c`, `src/acl.c`,
 and `src/server.h` in valkey-io/valkey.
@@ -18,7 +16,6 @@ and `src/server.h` in valkey-io/valkey.
 - PCI DSS Key Mappings (line 211)
 - Credential Management (line 225)
 - Security Checklist (line 235)
-- See Also (line 257)
 
 ---
 

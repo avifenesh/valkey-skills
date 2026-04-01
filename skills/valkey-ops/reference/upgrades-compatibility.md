@@ -1,6 +1,6 @@
-Use when planning upgrades between Valkey versions, checking replication compatibility, or evaluating whether a version jump is safe.
-
 # Version Compatibility
+
+Use when planning upgrades between Valkey versions, checking replication compatibility, or evaluating whether a version jump is safe.
 
 ## Contents
 
@@ -14,7 +14,6 @@ Use when planning upgrades between Valkey versions, checking replication compati
 - Feature Compatibility Between Versions (line 126)
 - Client Library Compatibility (line 141)
 - Deprecated Configurations (line 150)
-- See Also (line 162)
 
 ---
 

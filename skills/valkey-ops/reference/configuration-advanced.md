@@ -1,8 +1,6 @@
-Use when tuning structured logging, OOM behavior, graceful shutdown, active
-
 # Advanced Configuration
-expiration, CPU pinning, Unix sockets, or protocol limits. All defaults
-verified against `src/config.c` in valkey-io/valkey.
+
+Use when tuning structured logging, OOM behavior, graceful shutdown, active expiration, CPU pinning, Unix sockets, or protocol limits. All defaults verified against `src/config.c` in valkey-io/valkey.
 
 ## Contents
 
@@ -16,7 +14,6 @@ verified against `src/config.c` in valkey-io/valkey.
 - Quick Reference Summary (line 231)
 - Common Anti-Patterns (line 248)
 - Config Interaction Warnings (line 266)
-- See Also (line 287)
 
 ---
 

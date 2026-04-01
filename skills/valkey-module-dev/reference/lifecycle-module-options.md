@@ -15,7 +15,6 @@ Source: `src/module.c` (lines 2589-2643), `src/valkeymodule.h` (lines 320-348)
 - SKIP_COMMAND_VALIDATION (line 149)
 - HANDLE_ATOMIC_SLOT_MIGRATION (line 159)
 - GetModuleOptionsAll (line 169)
-- See Also (line 188)
 
 ---
 

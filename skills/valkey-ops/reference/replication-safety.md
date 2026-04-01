@@ -1,6 +1,6 @@
-Use when configuring write safety guarantees, preventing data loss during network partitions, understanding auto-restart risks, or hardening a replication deployment against failure modes.
-
 # Replication Safety
+
+Use when configuring write safety guarantees, preventing data loss during network partitions, understanding auto-restart risks, or hardening a replication deployment against failure modes.
 
 Source: `src/config.c`, `src/replication.c` (Valkey source).
 
@@ -11,7 +11,6 @@ Source: `src/config.c`, `src/replication.c` (Valkey source).
 - Critical Warnings (line 81)
 - Monitoring Checklist (line 191)
 - Pre-Deployment Safety Checklist (line 201)
-- See Also (line 211)
 
 ---
 

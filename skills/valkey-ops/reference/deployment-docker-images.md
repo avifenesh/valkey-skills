@@ -1,13 +1,12 @@
-Use when choosing a Valkey Docker image (official vs Bitnami), running quick containers, or setting up a Docker Compose cluster.
-
 # Docker Images and Cluster Setup
+
+Use when choosing a Valkey Docker image (official vs Bitnami), running quick containers, or setting up a Docker Compose cluster.
 
 ## Contents
 
 - Official Image (line 14)
 - Bitnami Image (line 68)
 - Tested Example: 3-Node Cluster via Docker Compose (line 105)
-- See Also (line 138)
 
 ---
 

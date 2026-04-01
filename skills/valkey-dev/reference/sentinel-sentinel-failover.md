@@ -16,7 +16,6 @@ Source: `src/sentinel.c` (5,441 lines)
 - Pub/Sub Event Channels (line 165)
 - Script Execution (line 192)
 - Key Timing Constants (line 204)
-- See Also (line 218)
 
 ---
 

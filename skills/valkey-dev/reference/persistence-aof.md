@@ -14,7 +14,6 @@ Source file: `src/aof.c`
 - Hybrid RDB+AOF Preamble Mode (line 217)
 - AOF State Machine (line 237)
 - Key Configuration Parameters (line 249)
-- See Also (line 265)
 
 ---
 

@@ -12,7 +12,6 @@ Use when you need to understand the wire format, how Valkey parses client reques
 - How Valkey Parses RESP (line 162)
 - Buffer Size Constants (line 199)
 - Push Protocol (Client-Side Caching) (line 210)
-- See Also (line 241)
 
 ---
 

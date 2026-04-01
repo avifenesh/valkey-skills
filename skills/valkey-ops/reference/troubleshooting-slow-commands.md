@@ -1,7 +1,6 @@
-Use when clients report high latency, timeouts, or when monitoring shows
-
 # Slow Command Investigation
-elevated command execution times.
+
+Use when clients report high latency, timeouts, or when monitoring shows elevated command execution times.
 
 ## Contents
 
@@ -10,7 +9,6 @@ elevated command execution times.
 - Common Culprits (line 111)
 - Resolution (line 177)
 - Hot Key Detection (line 228)
-- See Also (line 261)
 
 ---
 

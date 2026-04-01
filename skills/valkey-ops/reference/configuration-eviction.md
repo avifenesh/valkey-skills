@@ -1,6 +1,6 @@
-Use when choosing or tuning the maxmemory eviction policy. All 8 policy names verified against `maxmemory_policy_enum` in `src/config.c`.
-
 # Eviction Policies
+
+Use when choosing or tuning the maxmemory eviction policy. All 8 policy names verified against `maxmemory_policy_enum` in `src/config.c`.
 
 ## Contents
 
@@ -11,7 +11,6 @@ Use when choosing or tuning the maxmemory eviction policy. All 8 policy names ve
 - LFU Tuning (line 104)
 - Monitoring Eviction (line 143)
 - Common Mistakes (line 159)
-- See Also (line 169)
 
 ---
 
