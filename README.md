@@ -1,19 +1,23 @@
 # valkey-skills
 
-Domain-specific AI skills for the [Valkey](https://valkey.io) ecosystem. Give your AI coding assistant deep knowledge of Valkey commands, architecture, operations, and the official GLIDE client across 7 languages.
+AI skills for the [Valkey](https://valkey.io) ecosystem - 27 skills, 343 files, 67K lines of source-verified reference material.
 
-## What This Is
+Gives AI coding assistants (Claude Code, Cursor, Codex, Copilot, Gemini CLI, OpenCode, Kiro) deep knowledge of Valkey commands, server internals, operations, [GLIDE](https://github.com/valkey-io/valkey-glide) client across 7 languages, module development, and message queues.
 
-A collection of 15 AI skills that teach Claude Code, Cursor, Codex, and other AI assistants how to work with Valkey. Instead of relying on potentially outdated training data, these skills provide source-verified, up-to-date reference material that the AI loads on demand.
+## Use this when
 
-Each skill is a focused knowledge package:
-- A **SKILL.md** router that the AI reads to understand what's available
-- **reference/** docs (100-300 lines each) that get loaded only when relevant
-- No context bloat - the AI reads only what it needs per question
+- Building applications with Valkey (caching, queues, sessions, rate limiting, pub/sub, leaderboards)
+- Contributing to the Valkey server C codebase
+- Deploying and operating self-hosted Valkey (Sentinel, cluster, Kubernetes)
+- Using the GLIDE client in Python, Java, Node.js, Go, C#, PHP, or Ruby
+- Migrating from Redis clients (redis-py, Jedis, Lettuce, ioredis, go-redis, StackExchange.Redis)
+- Building custom Valkey modules in C or Rust
+- Contributing to valkey-search, valkey-json, or valkey-bloom modules
+- Building message queues with glide-mq
 
 ## Install
 
-### Agent Skills CLI (any tool)
+### Agent Skills standard (any tool)
 
 ```bash
 npx skills add avifenesh/valkey-skills
@@ -22,118 +26,134 @@ npx skills add avifenesh/valkey-skills
 ### Claude Code
 
 ```
-/plugin marketplace add avifenesh/valkey-skills
-/plugin install valkey@valkey-skills
+/install avifenesh/valkey-skills
 ```
 
-### Manual (Cursor, Codex, OpenCode, Kiro, or any tool)
+### Manual (Cursor, Codex, OpenCode, Kiro, Copilot)
 
 ```bash
-git clone https://github.com/avifenesh/valkey-skills.git
+git clone https://github.com/avifenesh/valkey-skills.git .agents/skills/valkey-skills
 ```
 
-Then copy to your tool's skills directory:
+## Skills
 
-| Tool | Skills Directory |
-|------|-----------------|
-| Codex CLI | `~/.codex/skills/` |
-| OpenCode | `~/.config/opencode/skills/` |
-| Cursor | `.cursor/skills/` |
-| Kiro | `.kiro/skills/` |
+### Application Development
 
-## Skills Overview
+| Skill | Audience | Files |
+|-------|----------|-------|
+| **valkey** | App developers - commands, data types, patterns, best practices | 36 |
+| **valkey-modules** | Module users - valkey-search, valkey-json, valkey-bloom | 6 |
 
-### Core Skills
+### Server and Module Development
 
-| Skill | Who It's For | What It Covers |
-|-------|-------------|----------------|
-| **valkey** | App developers | Commands, data types, patterns (caching, queues, rate limiting, pub/sub), best practices |
-| **valkey-dev** | Server contributors | C source internals, data structures, threading, memory, replication, cluster protocol |
-| **valkey-ops** | Operators | Deployment, monitoring, security, persistence, upgrades, troubleshooting |
-| **valkey-glide** | GLIDE users (all languages) | Shared architecture, connection model, features, migration guides |
-| **valkey-ecosystem** | Evaluators & integrators | Modules (JSON, Bloom, Search), managed services, monitoring tools, Docker, K8s |
+| Skill | Audience | Files |
+|-------|----------|-------|
+| **valkey-dev** | Server contributors - C internals, data structures, threading, cluster, replication | 65 |
+| **valkey-module-dev** | Custom module developers - ValkeyModule_* C API (376 functions, 42 categories) | 46 |
+| **valkey-bloom-dev** | valkey-bloom contributors - Rust, scalable bloom filters, replication | 13 |
+| **valkey-json-dev** | valkey-json contributors - C++, RapidJSON, JSONPath engine, KeyTable | 15 |
+| **valkey-search-dev** | valkey-search contributors - C++, vector/text indexes, query engine, gRPC coordinator | 21 |
+| **glide-dev** | GLIDE client contributors - Rust core, FFI bindings, build system | 7 |
+
+### Operations
+
+| Skill | Audience | Files |
+|-------|----------|-------|
+| **valkey-ops** | Self-hosted operators - deployment, monitoring, security, Kubernetes, troubleshooting | 61 |
 
 ### GLIDE Per-Language
 
-For language-specific API reference, code examples, and migration from your current Redis client:
-
 | Skill | Language | Migrating From |
-|-------|----------|---------------|
+|-------|----------|----------------|
 | **valkey-glide-python** | Python (async + sync) | redis-py |
 | **valkey-glide-java** | Java | Jedis, Lettuce |
 | **valkey-glide-nodejs** | Node.js / TypeScript | ioredis |
 | **valkey-glide-go** | Go | go-redis |
-| **valkey-glide-csharp** | C# (.NET 6.0+) | StackExchange.Redis |
-| **valkey-glide-php** | PHP 8.1+ | phpredis, Predis |
+| **valkey-glide-csharp** | C# (.NET 8.0+) | StackExchange.Redis |
+| **valkey-glide-php** | PHP 8.1+ | phpredis |
 | **valkey-glide-ruby** | Ruby | redis-rb |
 
-### Glide-MQ (Message Queues)
+### Migration
+
+| Skill | From | To |
+|-------|------|----|
+| **migrate-jedis** | Jedis | GLIDE Java |
+| **migrate-lettuce** | Lettuce | GLIDE Java |
+| **migrate-ioredis** | ioredis | GLIDE Node.js |
+| **migrate-redis-py** | redis-py | GLIDE Python |
+| **migrate-go-redis** | go-redis | GLIDE Go |
+| **migrate-stackexchange** | StackExchange.Redis | GLIDE C# |
+| **spring-data-valkey** | Spring Data Redis | Spring Data Valkey |
+
+### Message Queues
 
 | Skill | Purpose |
 |-------|---------|
-| **glide-mq** | Build queues, workers, schedulers, and workflows on Valkey |
+| **glide-mq** | Queues, workers, schedulers, workflows on Valkey |
 | **glide-mq-migrate-bullmq** | Migrate from BullMQ |
 | **glide-mq-migrate-bee** | Migrate from Bee-Queue |
 
-## How It Works
+## How it works
 
-When you ask your AI assistant a Valkey question, it:
-
-1. Reads the relevant **SKILL.md** (the router)
-2. Matches your question to a reference topic
-3. Loads only that specific reference file into context
-4. Answers with verified, current information
-
-Example: asking "how do I set up a reliable task queue?" triggers the **valkey** skill, which routes to `reference/patterns/queues.md` - a focused doc covering list-based queues, stream-based consumer groups, and priority queues with code examples.
-
-## What's Inside
+Each skill follows a router pattern:
 
 ```
-valkey-skills/
-  .claude-plugin/            # Plugin manifest
-  skills/
-    valkey/                  # 37 reference docs - commands, patterns, best practices
-    valkey-dev/              # 59 reference docs - server internals (C source verified)
-    valkey-ops/              # 52 reference docs - operations, monitoring, security
-    valkey-glide/            # 32 reference docs - shared GLIDE architecture
-      python/                #   Python API reference (async + sync)
-      java/                  #   Java API reference (Spring, CompletableFuture)
-      nodejs/                #   Node.js/TypeScript API reference
-      go/                    #   Go API reference
-      csharp/                #   C# API reference (.NET 6.0+)
-      php/                   #   PHP API reference (8.1+)
-      ruby/                  #   Ruby API reference (valkey-rb)
-    valkey-ecosystem/        # 28 reference docs - modules, services, tools
-    glide-mq/                # Queue development guide
-      migrate-bullmq/        #   BullMQ migration
-      migrate-bee/           #   Bee-Queue migration
+skills/valkey/
+  SKILL.md                          # Router (<250 lines) - loaded into AI context
+  reference/
+    patterns-caching-strategies.md   # Loaded on demand when relevant
+    patterns-queues-streams.md
+    best-practices-memory.md
+    ...35 focused reference files
 ```
 
-208 reference files across the 5 core skills. Every claim verified against actual source code - Valkey C source, GLIDE Rust core, and official documentation.
+1. AI reads the SKILL.md router (routing table maps queries to files)
+2. AI identifies which reference file answers the question
+3. AI loads only that file (100-300 lines each)
+4. No context bloat - 67K lines available, only ~250 loaded per question
 
 ## Quality
 
-Built with a 13-phase pipeline including multi-agent review:
+Every reference file is source-verified against actual code:
 
-- Source-verified against actual code (not just web docs)
-- 5-critic Opus review per skill with fix-validation passes
-- Per-language GLIDE skills validated against the Rust FFI source
-- 28 audit findings caught and fixed post-launch
+- **valkey-dev**: verified against `src/server.c`, `src/module.c`, `src/cluster.c` (Valkey 9.0.3)
+- **valkey-module-dev**: verified against all 376 `REGISTER_API()` calls in `module.c` (14,857 lines)
+- **valkey-bloom-dev**: verified against the Rust source (`src/bloom/utils.rs`, `command_handler.rs`)
+- **valkey-json-dev**: verified against the C++ source (`src/json/dom.cc`, `selector.cc`, `keytable.cc`)
+- **valkey-search-dev**: verified against the C++ source (37,050 lines across 143 files)
+- **GLIDE skills**: verified against the Rust FFI core and per-language bindings
+
+Built with a 13-step pipeline: write, gap analysis, gap fill, deep research, enrichment, enhance, merge, unification, adversarial validation, fix, router write, router enhance, commit. Optimized per RAG research for AI consumption (flat reference dirs, descriptions under 250 chars, no filler language, every file under 300 lines).
+
+Passes [agnix](https://github.com/agent-sh/agnix) linter with 0 errors, 0 warnings.
+
+## Version baseline
+
+| Component | Version |
+|-----------|---------|
+| Valkey server | 9.0.3 |
+| Valkey GLIDE | 2.3.0 |
+| valkey-search | 1.2.0 |
+| valkey-json | GA |
+| valkey-bloom | GA |
+| glide-mq | 0.14.0 |
+| Spring Data Valkey | 1.0 |
 
 ## Contributing
 
-Found an error or want to add coverage for a new Valkey feature?
+Found an error or gap?
 
-1. Open an issue describing what's wrong or missing
-2. Reference the specific file and line number
-3. Include a source link (Valkey source, official docs, or GLIDE repo)
+1. Open an issue with the file path and what's wrong
+2. Include a source link (Valkey repo, GLIDE repo, or module repo)
+3. PRs welcome - follow the router pattern (SKILL.md + flat reference/ files under 300 lines)
 
 ## Related
 
 - [Valkey](https://github.com/valkey-io/valkey) - The Valkey server
 - [Valkey GLIDE](https://github.com/valkey-io/valkey-glide) - Official multi-language client
 - [glide-mq](https://github.com/avifenesh/glide-mq) - Message queue library for Valkey
-- [agent-sh](https://github.com/agent-sh) - The AI plugin ecosystem these skills are part of
+- [agent-sh](https://github.com/agent-sh) - AI plugin ecosystem
+- [Agent Skills standard](https://agentskills.io) - Cross-tool skill specification
 
 ## License
 
