@@ -11,14 +11,14 @@ argument-hint: "[API or config question]"
 
 | Question | Reference |
 |----------|-----------|
-| Install, setup, client creation, TLS, auth, reconnect | [connection](reference/features/connection.md) |
-| PubSub, subscribe, publish, sharded channels | [pubsub](reference/features/pubsub.md) |
-| Batching, transactions, pipelines | [batching](reference/features/batching.md) |
-| Streams, consumer groups, XADD, XREAD | [streams](reference/features/streams.md) |
-| OTel, Lua scripting, cluster SCAN, command routing, logging, custom commands | [advanced](reference/features/advanced.md) |
-| Error types, retry, reconnection patterns | [error-handling](reference/best-practices/error-handling.md) |
-| Benchmarks, throughput, batching perf | [performance](reference/best-practices/performance.md) |
-| Timeouts, connection management, cloud defaults | [production](reference/best-practices/production.md) |
+| Install, setup, client creation, TLS, auth, reconnect | [connection](reference/features-connection.md) |
+| PubSub, subscribe, publish, sharded channels | [pubsub](reference/features-pubsub.md) |
+| Batching, transactions, pipelines | [batching](reference/features-batching.md) |
+| Streams, consumer groups, XADD, XREAD | [streams](reference/features-streams.md) |
+| OTel, Lua scripting, cluster SCAN, command routing, logging, custom commands | [advanced](reference/features-advanced.md) |
+| Error types, retry, reconnection patterns | [error-handling](reference/best-practices-error-handling.md) |
+| Benchmarks, throughput, batching perf | [performance](reference/best-practices-performance.md) |
+| Timeouts, connection management, cloud defaults | [production](reference/best-practices-production.md) |
 
 ## Cross-References
 

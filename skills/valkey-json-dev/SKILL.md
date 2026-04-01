@@ -68,32 +68,32 @@ argument-hint: "[subsystem or source file]"
 
 | Topic | Reference |
 |-------|-----------|
-| JDocument/JValue type hierarchy, JParser, RapidJsonAllocator, GenericMember, flags | [jdocument](reference/document/jdocument.md) |
-| Object vector vs hash table storage, conversion threshold, GenericMemberHT, linear probing | [object-hashtable](reference/document/object-hashtable.md) |
-| KeyTable singleton, shard architecture, PtrWithMetaData, FNV-1a hash, ref counting | [keytable](reference/document/keytable.md) |
-| Three-layer memory (traps -> dom_alloc -> RapidJsonAllocator), TLS tracking, stats | [memory-layers](reference/document/memory-layers.md) |
+| JDocument/JValue type hierarchy, JParser, RapidJsonAllocator, GenericMember, flags | [jdocument](reference/document-jdocument.md) |
+| Object vector vs hash table storage, conversion threshold, GenericMemberHT, linear probing | [object-hashtable](reference/document-object-hashtable.md) |
+| KeyTable singleton, shard architecture, PtrWithMetaData, FNV-1a hash, ref counting | [keytable](reference/document-keytable.md) |
+| Three-layer memory (traps -> dom_alloc -> RapidJsonAllocator), TLS tracking, stats | [memory-layers](reference/document-memory-layers.md) |
 
 ## JSONPath Engine
 
 | Topic | Reference |
 |-------|-----------|
-| Selector class, Lexer, Token types, v1/v2 path syntax, EBNF grammar, safety limits | [selector](reference/jsonpath/selector.md) |
-| Filter expressions `[?(...)]`, comparison/boolean operators, type coercion, partial paths | [expressions](reference/jsonpath/expressions.md) |
-| Dot/bracket notation, wildcards, recursive descent, array slicing, unions, DOM mutation mapping | [path-operations](reference/jsonpath/path-operations.md) |
+| Selector class, Lexer, Token types, v1/v2 path syntax, EBNF grammar, safety limits | [selector](reference/jsonpath-selector.md) |
+| Filter expressions `[?(...)]`, comparison/boolean operators, type coercion, partial paths | [expressions](reference/jsonpath-expressions.md) |
+| Dot/bracket notation, wildcards, recursive descent, array slicing, unions, DOM mutation mapping | [path-operations](reference/jsonpath-path-operations.md) |
 
 ## Persistence and Cross-Module
 
 | Topic | Reference |
 |-------|-----------|
-| RDB save/load, encoding versions 0 and 3, metacodes, AOF rewrite, data type registration | [rdb-format](reference/persistence/rdb-format.md) |
-| Defrag callback, copy-swap strategy, defrag_threshold, defrag stats | [defrag](reference/persistence/defrag.md) |
-| SharedJSON_Get, C API functions, CONFIG SET json.*, KeyTable/HashTable tuning | [cross-module](reference/persistence/cross-module.md) |
+| RDB save/load, encoding versions 0 and 3, metacodes, AOF rewrite, data type registration | [rdb-format](reference/persistence-rdb-format.md) |
+| Defrag callback, copy-swap strategy, defrag_threshold, defrag stats | [defrag](reference/persistence-defrag.md) |
+| SharedJSON_Get, C API functions, CONFIG SET json.*, KeyTable/HashTable tuning | [cross-module](reference/persistence-cross-module.md) |
 
 ## Build and Contributing
 
 | Topic | Reference |
 |-------|-----------|
-| CMake build system, dependencies, compiler flags, SIMD, ASAN, build.sh options | [build](reference/contributing/build.md) |
-| GoogleTest unit tests, module_sim stubs, pytest integration tests, test data | [testing](reference/contributing/testing.md) |
-| GitHub Actions CI, 4 job types, server version matrix, ASAN leak detection | [ci-pipeline](reference/contributing/ci-pipeline.md) |
-| Command handler pattern, registration, ACL, key-spec, v1/v2 paths, PR checklist | [adding-commands](reference/contributing/adding-commands.md) |
+| CMake build system, dependencies, compiler flags, SIMD, ASAN, build.sh options | [build](reference/contributing-build.md) |
+| GoogleTest unit tests, module_sim stubs, pytest integration tests, test data | [testing](reference/contributing-testing.md) |
+| GitHub Actions CI, 4 job types, server version matrix, ASAN leak detection | [ci-pipeline](reference/contributing-ci-pipeline.md) |
+| Command handler pattern, registration, ACL, key-spec, v1/v2 paths, PR checklist | [adding-commands](reference/contributing-adding-commands.md) |

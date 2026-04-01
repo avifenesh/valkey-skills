@@ -15,9 +15,9 @@ Async/await C# client for Valkey built on the GLIDE Rust core via native interop
 
 | Question | Reference |
 |----------|-----------|
-| Setup, client creation, TLS, auth, config builders, read strategy | [connection](reference/features/connection.md) |
-| PubSub, subscribe, publish, sharded channels | [pubsub](reference/features/pubsub.md) |
-| Install, API status, platform support, command groups, limitations | [overview](reference/features/overview.md) |
+| Setup, client creation, TLS, auth, config builders, read strategy | [connection](reference/features-connection.md) |
+| PubSub, subscribe, publish, sharded channels | [pubsub](reference/features-pubsub.md) |
+| Install, API status, platform support, command groups, limitations | [overview](reference/features-overview.md) |
 
 ## Cross-References
 

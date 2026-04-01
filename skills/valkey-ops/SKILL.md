@@ -29,137 +29,137 @@ argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 
 | Topic | Reference |
 |-------|-----------|
-| Package managers, building from source, build flags | [install](reference/deployment/install.md) |
-| Docker images (official, Bitnami), cluster example | [docker-images](reference/deployment/docker-images.md) |
-| Compose patterns, volumes, networking, config injection | [docker-patterns](reference/deployment/docker-patterns.md) |
-| systemd service, kernel tuning, multi-instance | [bare-metal](reference/deployment/bare-metal.md) |
+| Package managers, building from source, build flags | [install](reference/deployment-install.md) |
+| Docker images (official, Bitnami), cluster example | [docker-images](reference/deployment-docker-images.md) |
+| Compose patterns, volumes, networking, config injection | [docker-patterns](reference/deployment-docker-patterns.md) |
+| systemd service, kernel tuning, multi-instance | [bare-metal](reference/deployment-bare-metal.md) |
 
 
 ## Configuration
 
 | Topic | Reference |
 |-------|-----------|
-| Essential parameters with verified defaults | [essentials](reference/configuration/essentials.md) |
-| Eviction policies, LRU/LFU tuning | [eviction](reference/configuration/eviction.md) |
-| Memory encoding thresholds per data type | [encoding](reference/configuration/encoding.md) |
-| Config presets by workload (cache, store, session, queue) | [workload-presets](reference/configuration/workload-presets.md) |
-| Lazy free config (UNLINK, async eviction/expiry) | [lazyfree](reference/configuration/lazyfree.md) |
-| Logging, OOM score, shutdown, CPU pinning, unix sockets | [advanced](reference/configuration/advanced.md) |
-| Pub/Sub buffer limits, keyspace notifications | [pubsub](reference/configuration/pubsub.md) |
+| Essential parameters with verified defaults | [essentials](reference/configuration-essentials.md) |
+| Eviction policies, LRU/LFU tuning | [eviction](reference/configuration-eviction.md) |
+| Memory encoding thresholds per data type | [encoding](reference/configuration-encoding.md) |
+| Config presets by workload (cache, store, session, queue) | [workload-presets](reference/configuration-workload-presets.md) |
+| Lazy free config (UNLINK, async eviction/expiry) | [lazyfree](reference/configuration-lazyfree.md) |
+| Logging, OOM score, shutdown, CPU pinning, unix sockets | [advanced](reference/configuration-advanced.md) |
+| Pub/Sub buffer limits, keyspace notifications | [pubsub](reference/configuration-pubsub.md) |
 
 
 ## Sentinel (High Availability)
 
 | Topic | Reference |
 |-------|-----------|
-| How Sentinel works, failure detection, election | [architecture](reference/sentinel/architecture.md) |
-| Step-by-step deployment, config directives | [sentinel-deployment](reference/sentinel/sentinel-deployment.md) |
-| Tuning, cross-DC, Docker/NAT, coordinated failover, systemd | [sentinel-advanced](reference/sentinel/sentinel-advanced.md) |
-| Split-brain prevention, min-replicas settings | [split-brain](reference/sentinel/split-brain.md) |
+| How Sentinel works, failure detection, election | [architecture](reference/sentinel-architecture.md) |
+| Step-by-step deployment, config directives | [sentinel-deployment](reference/sentinel-sentinel-deployment.md) |
+| Tuning, cross-DC, Docker/NAT, coordinated failover, systemd | [sentinel-advanced](reference/sentinel-sentinel-advanced.md) |
+| Split-brain prevention, min-replicas settings | [split-brain](reference/sentinel-split-brain.md) |
 
 
 ## Cluster
 
 | Topic | Reference |
 |-------|-----------|
-| Network requirements, config, cluster creation, hash slots | [setup](reference/cluster/setup.md) |
-| Resharding, adding/removing nodes, atomic migration (9.0) | [resharding](reference/cluster/resharding.md) |
-| Manual failover, health checks, replica migration, scaling | [operations](reference/cluster/operations.md) |
-| Consistency guarantees, write safety, partition behavior | [consistency](reference/cluster/consistency.md) |
+| Network requirements, config, cluster creation, hash slots | [setup](reference/cluster-setup.md) |
+| Resharding, adding/removing nodes, atomic migration (9.0) | [resharding](reference/cluster-resharding.md) |
+| Manual failover, health checks, replica migration, scaling | [operations](reference/cluster-operations.md) |
+| Consistency guarantees, write safety, partition behavior | [consistency](reference/cluster-consistency.md) |
 
 
 ## Persistence
 
 | Topic | Reference |
 |-------|-----------|
-| RDB configuration, save directives, BGSAVE | [rdb](reference/persistence/rdb.md) |
-| AOF configuration, fsync policies, hybrid mode | [aof](reference/persistence/aof.md) |
-| Automated backup scripts, off-site backup, retention | [backup-strategies](reference/persistence/backup-strategies.md) |
-| Disaster recovery, FLUSHALL recovery, verification | [disaster-recovery](reference/persistence/disaster-recovery.md) |
+| RDB configuration, save directives, BGSAVE | [rdb](reference/persistence-rdb.md) |
+| AOF configuration, fsync policies, hybrid mode | [aof](reference/persistence-aof.md) |
+| Automated backup scripts, off-site backup, retention | [backup-strategies](reference/persistence-backup-strategies.md) |
+| Disaster recovery, FLUSHALL recovery, verification | [disaster-recovery](reference/persistence-disaster-recovery.md) |
 
 
 ## Replication
 
 | Topic | Reference |
 |-------|-----------|
-| Primary-replica setup, REPLICAOF, sync mechanisms | [setup](reference/replication/setup.md) |
-| Backlog sizing, diskless sync, dual-channel, Docker/NAT | [tuning](reference/replication/tuning.md) |
-| min-replicas safety, critical warnings, data loss prevention | [safety](reference/replication/safety.md) |
+| Primary-replica setup, REPLICAOF, sync mechanisms | [setup](reference/replication-setup.md) |
+| Backlog sizing, diskless sync, dual-channel, Docker/NAT | [tuning](reference/replication-tuning.md) |
+| min-replicas safety, critical warnings, data loss prevention | [safety](reference/replication-safety.md) |
 
 
 ## Security
 
 | Topic | Reference |
 |-------|-----------|
-| ACL users, roles, categories, practical examples | [acl](reference/security/acl.md) |
-| TLS setup, certificates, mutual TLS, auto-reload | [tls](reference/security/tls.md) |
-| Defense in depth, protected mode, network hardening | [hardening](reference/security/hardening.md) |
-| Disabling dangerous commands via rename-command and ACL | [rename-commands](reference/security/rename-commands.md) |
+| ACL users, roles, categories, practical examples | [acl](reference/security-acl.md) |
+| TLS setup, certificates, mutual TLS, auto-reload | [tls](reference/security-tls.md) |
+| Defense in depth, protected mode, network hardening | [hardening](reference/security-hardening.md) |
+| Disabling dangerous commands via rename-command and ACL | [rename-commands](reference/security-rename-commands.md) |
 
 
 ## Monitoring
 
 | Topic | Reference |
 |-------|-----------|
-| INFO sections, critical metrics, diagnostic commands | [metrics](reference/monitoring/metrics.md) |
-| Prometheus exporter setup, scrape configs | [prometheus](reference/monitoring/prometheus.md) |
-| Grafana dashboards, panel definitions, PromQL queries | [grafana](reference/monitoring/grafana.md) |
-| Alert rules YAML (complete rule set) | [alerting-rules](reference/monitoring/alerting-rules.md) |
-| Threshold tuning, recording rules, Alertmanager routing | [alerting-config](reference/monitoring/alerting-config.md) |
-| Commandlog (slow/large request/reply tracking) | [commandlog](reference/monitoring/commandlog.md) |
+| INFO sections, critical metrics, diagnostic commands | [metrics](reference/monitoring-metrics.md) |
+| Prometheus exporter setup, scrape configs | [prometheus](reference/monitoring-prometheus.md) |
+| Grafana dashboards, panel definitions, PromQL queries | [grafana](reference/monitoring-grafana.md) |
+| Alert rules YAML (complete rule set) | [alerting-rules](reference/monitoring-alerting-rules.md) |
+| Threshold tuning, recording rules, Alertmanager routing | [alerting-config](reference/monitoring-alerting-config.md) |
+| Commandlog (slow/large request/reply tracking) | [commandlog](reference/monitoring-commandlog.md) |
 
 
 ## Performance
 
 | Topic | Reference |
 |-------|-----------|
-| I/O threads config, when to enable, thread count | [io-threads](reference/performance/io-threads.md) |
-| maxmemory, eviction, encoding, fragmentation | [memory](reference/performance/memory.md) |
-| Latency diagnosis workflow, LATENCY DOCTOR, watchdog | [latency](reference/performance/latency.md) |
-| Durability vs performance spectrum, TCP tuning | [durability](reference/performance/durability.md) |
-| Active defragmentation config and monitoring | [defragmentation](reference/performance/defragmentation.md) |
-| Client-side caching (CLIENT TRACKING) | [client-caching](reference/performance/client-caching.md) |
-| valkey-benchmark, valkey-perf-benchmark, best practices | [benchmarking](reference/performance/benchmarking.md) |
+| I/O threads config, when to enable, thread count | [io-threads](reference/performance-io-threads.md) |
+| maxmemory, eviction, encoding, fragmentation | [memory](reference/performance-memory.md) |
+| Latency diagnosis workflow, LATENCY DOCTOR, watchdog | [latency](reference/performance-latency.md) |
+| Durability vs performance spectrum, TCP tuning | [durability](reference/performance-durability.md) |
+| Active defragmentation config and monitoring | [defragmentation](reference/performance-defragmentation.md) |
+| Client-side caching (CLIENT TRACKING) | [client-caching](reference/performance-client-caching.md) |
+| valkey-benchmark, valkey-perf-benchmark, best practices | [benchmarking](reference/performance-benchmarking.md) |
 
 
 ## Troubleshooting
 
 | Topic | Reference |
 |-------|-----------|
-| Out of memory: symptoms, diagnosis, resolution | [oom](reference/troubleshooting/oom.md) |
-| Replication lag: diagnosis, backlog, buffer tuning | [replication-lag](reference/troubleshooting/replication-lag.md) |
-| Slow commands: commandlog, common culprits, fixes | [slow-commands](reference/troubleshooting/slow-commands.md) |
-| Cluster partitions: network splits, recovery | [cluster-partitions](reference/troubleshooting/cluster-partitions.md) |
-| 7-phase runbook, fork latency, memory testing | [diagnostics-runbook](reference/troubleshooting/diagnostics-runbook.md) |
-| Diagnostic commands, incident patterns, health script | [diagnostics-commands](reference/troubleshooting/diagnostics-commands.md) |
+| Out of memory: symptoms, diagnosis, resolution | [oom](reference/troubleshooting-oom.md) |
+| Replication lag: diagnosis, backlog, buffer tuning | [replication-lag](reference/troubleshooting-replication-lag.md) |
+| Slow commands: commandlog, common culprits, fixes | [slow-commands](reference/troubleshooting-slow-commands.md) |
+| Cluster partitions: network splits, recovery | [cluster-partitions](reference/troubleshooting-cluster-partitions.md) |
+| 7-phase runbook, fork latency, memory testing | [diagnostics-runbook](reference/troubleshooting-diagnostics-runbook.md) |
+| Diagnostic commands, incident patterns, health script | [diagnostics-commands](reference/troubleshooting-diagnostics-commands.md) |
 
 
 ## Upgrades
 
 | Topic | Reference |
 |-------|-----------|
-| Version compatibility, RDB versions, feature matrix | [compatibility](reference/upgrades/compatibility.md) |
-| Redis to Valkey migration, 3 methods | [migration](reference/upgrades/migration.md) |
-| Rolling upgrades for Sentinel and Cluster | [rolling-upgrade](reference/upgrades/rolling-upgrade.md) |
+| Version compatibility, RDB versions, feature matrix | [compatibility](reference/upgrades-compatibility.md) |
+| Redis to Valkey migration, 3 methods | [migration](reference/upgrades-migration.md) |
+| Rolling upgrades for Sentinel and Cluster | [rolling-upgrade](reference/upgrades-rolling-upgrade.md) |
 
 
 ## Kubernetes
 
 | Topic | Reference |
 |-------|-----------|
-| Official and Bitnami Helm charts, key values | [helm](reference/kubernetes/helm.md) |
-| Official and Hyperspike operators, CRD examples | [operators-overview](reference/kubernetes/operators-overview.md) |
-| SAP operator, day-2 operations, choosing operators | [operators-day2](reference/kubernetes/operators-day2.md) |
-| StatefulSet PVCs, probes, resource sizing, PDB | [statefulset-config](reference/kubernetes/statefulset-config.md) |
-| Complete StatefulSet manifest, common gotchas | [statefulset-example](reference/kubernetes/statefulset-example.md) |
-| Kernel tuning, Docker/NAT, monitoring sidecars | [tuning-k8s](reference/kubernetes/tuning-k8s.md) |
+| Official and Bitnami Helm charts, key values | [helm](reference/kubernetes-helm.md) |
+| Official and Hyperspike operators, CRD examples | [operators-overview](reference/kubernetes-operators-overview.md) |
+| SAP operator, day-2 operations, choosing operators | [operators-day2](reference/kubernetes-operators-day2.md) |
+| StatefulSet PVCs, probes, resource sizing, PDB | [statefulset-config](reference/kubernetes-statefulset-config.md) |
+| Complete StatefulSet manifest, common gotchas | [statefulset-example](reference/kubernetes-statefulset-example.md) |
+| Kernel tuning, Docker/NAT, monitoring sidecars | [tuning-k8s](reference/kubernetes-tuning-k8s.md) |
 
 
 ## Operations
 
 | Topic | Reference |
 |-------|-----------|
-| Memory sizing, connection planning, cluster sizing | [capacity-planning](reference/operations/capacity-planning.md) |
+| Memory sizing, connection planning, cluster sizing | [capacity-planning](reference/operations-capacity-planning.md) |
 
 
 ## Production Checklist

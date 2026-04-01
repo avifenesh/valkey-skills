@@ -17,9 +17,9 @@ Synchronous Ruby client for Valkey built on the GLIDE Rust core via FFI. Drop-in
 
 | Question | Reference |
 |----------|-----------|
-| Setup, client creation, TLS, auth, config, redis-rb migration, reconnection | [connection](reference/features/connection.md) |
-| PubSub, subscribe, publish, sharded channels, introspection | [pubsub](reference/features/pubsub.md) |
-| Install, API status, platform support, command groups, pipelining, OpenTelemetry, limitations | [overview](reference/features/overview.md) |
+| Setup, client creation, TLS, auth, config, redis-rb migration, reconnection | [connection](reference/features-connection.md) |
+| PubSub, subscribe, publish, sharded channels, introspection | [pubsub](reference/features-pubsub.md) |
+| Install, API status, platform support, command groups, pipelining, OpenTelemetry, limitations | [overview](reference/features-overview.md) |
 
 ## Cross-References
 

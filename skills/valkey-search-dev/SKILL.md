@@ -71,43 +71,43 @@ argument-hint: "[subsystem or source file]"
 
 | Topic | Reference |
 |-------|-----------|
-| Module loading, ValkeySearch singleton, VMSDK, thread pools, config | [module-overview](reference/architecture/module-overview.md) |
-| IndexSchema class, attribute map, keyspace mutations, backfill | [index-schema](reference/architecture/index-schema.md) |
-| SchemaManager singleton, index CRUD, replication staging, RDB | [schema-manager](reference/architecture/schema-manager.md) |
-| Thread pools, TimeSlicedMRMWMutex, fork suspension, concurrency | [thread-model](reference/architecture/thread-model.md) |
+| Module loading, ValkeySearch singleton, VMSDK, thread pools, config | [module-overview](reference/architecture-module-overview.md) |
+| IndexSchema class, attribute map, keyspace mutations, backfill | [index-schema](reference/architecture-index-schema.md) |
+| SchemaManager singleton, index CRUD, replication staging, RDB | [schema-manager](reference/architecture-schema-manager.md) |
+| Thread pools, TimeSlicedMRMWMutex, fork suspension, concurrency | [thread-model](reference/architecture-thread-model.md) |
 
 ## Index Types
 
 | Topic | Reference |
 |-------|-----------|
-| HNSW graph index, VectorHNSW, hnswlib, ef/M params, inline filtering | [hnsw](reference/indexes/hnsw.md) |
-| FLAT brute-force index, VectorFlat, block-size growth, exact KNN | [flat](reference/indexes/flat.md) |
-| Numeric index, BTreeNumeric, SegmentTree overlay, range queries | [numeric](reference/indexes/numeric.md) |
-| Tag index, PatriciaTree storage, separator, prefix wildcard matching | [tag](reference/indexes/tag.md) |
-| Full-text search, Rax prefix/suffix trees, postings, stemming, fuzzy | [text](reference/indexes/text.md) |
+| HNSW graph index, VectorHNSW, hnswlib, ef/M params, inline filtering | [hnsw](reference/indexes-hnsw.md) |
+| FLAT brute-force index, VectorFlat, block-size growth, exact KNN | [flat](reference/indexes-flat.md) |
+| Numeric index, BTreeNumeric, SegmentTree overlay, range queries | [numeric](reference/indexes-numeric.md) |
+| Tag index, PatriciaTree storage, separator, prefix wildcard matching | [tag](reference/indexes-tag.md) |
+| Full-text search, Rax prefix/suffix trees, postings, stemming, fuzzy | [text](reference/indexes-text.md) |
 
 ## Query Engine
 
 | Topic | Reference |
 |-------|-----------|
-| Filter expression parser, predicate AST, QueryOperations, safety limits | [parsing](reference/query/parsing.md) |
-| Search execution, prefilter vs inline, async dispatch, content resolution | [execution](reference/query/execution.md) |
-| FT.SEARCH handler, parameter parsing, RETURN/LIMIT/SORTBY, response format | [ft-search](reference/query/ft-search.md) |
-| FT.AGGREGATE pipeline, GROUPBY/REDUCE, APPLY, expression engine, Records | [ft-aggregate](reference/query/ft-aggregate.md) |
+| Filter expression parser, predicate AST, QueryOperations, safety limits | [parsing](reference/query-parsing.md) |
+| Search execution, prefilter vs inline, async dispatch, content resolution | [execution](reference/query-execution.md) |
+| FT.SEARCH handler, parameter parsing, RETURN/LIMIT/SORTBY, response format | [ft-search](reference/query-ft-search.md) |
+| FT.AGGREGATE pipeline, GROUPBY/REDUCE, APPLY, expression engine, Records | [ft-aggregate](reference/query-ft-aggregate.md) |
 
 ## Cluster and Replication
 
 | Topic | Reference |
 |-------|-----------|
-| gRPC coordinator, cluster topology, MetadataManager, reconciliation | [coordinator](reference/cluster/coordinator.md) |
-| RDB protobuf format, SafeRDB, FT.INTERNAL_UPDATE, replication staging | [replication](reference/cluster/replication.md) |
-| FT.INFO fanout, FT._DEBUG subcommands, Metrics singleton, latency samplers | [metrics](reference/cluster/metrics.md) |
+| gRPC coordinator, cluster topology, MetadataManager, reconciliation | [coordinator](reference/cluster-coordinator.md) |
+| RDB protobuf format, SafeRDB, FT.INTERNAL_UPDATE, replication staging | [replication](reference/cluster-replication.md) |
+| FT.INFO fanout, FT._DEBUG subcommands, Metrics singleton, latency samplers | [metrics](reference/cluster-metrics.md) |
 
 ## Build and Contributing
 
 | Topic | Reference |
 |-------|-----------|
-| CMake build system, Ninja, dependencies, build.sh options, sanitizers | [build](reference/contributing/build.md) |
-| Unit tests (GoogleTest), integration tests (pytest), stability tests | [testing](reference/contributing/testing.md) |
-| CI workflows, Docker-based CI, pre-built debs, debugging CI failures | [ci-pipeline](reference/contributing/ci-pipeline.md) |
-| Directory layout, IndexBase hierarchy, adding features, VMSDK layer | [code-structure](reference/contributing/code-structure.md) |
+| CMake build system, Ninja, dependencies, build.sh options, sanitizers | [build](reference/contributing-build.md) |
+| Unit tests (GoogleTest), integration tests (pytest), stability tests | [testing](reference/contributing-testing.md) |
+| CI workflows, Docker-based CI, pre-built debs, debugging CI failures | [ci-pipeline](reference/contributing-ci-pipeline.md) |
+| Directory layout, IndexBase hierarchy, adding features, VMSDK layer | [code-structure](reference/contributing-code-structure.md) |

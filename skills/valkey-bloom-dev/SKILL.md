@@ -73,25 +73,25 @@ Commands: BF.ADD, BF.MADD, BF.EXISTS, BF.MEXISTS, BF.CARD, BF.RESERVE, BF.INFO, 
 
 | Topic | Reference |
 |-------|-----------|
-| BloomObject struct, scaling mechanism, FP tightening, memory limits, VALIDATESCALETO | [bloom-object](reference/architecture/bloom-object.md) |
-| BloomFilter struct, bloomfilter crate, seed handling, item add/check flow | [bloom-filter](reference/architecture/bloom-filter.md) |
-| RDB save/load, AOF rewrite, bincode encode/decode, copy callback, data type registration | [persistence](reference/architecture/persistence.md) |
-| Defrag callbacks, cursor-based incremental defrag, INFO bf metrics, atomic counters | [defrag-metrics](reference/architecture/defrag-metrics.md) |
+| BloomObject struct, scaling mechanism, FP tightening, memory limits, VALIDATESCALETO | [bloom-object](reference/architecture-bloom-object.md) |
+| BloomFilter struct, bloomfilter crate, seed handling, item add/check flow | [bloom-filter](reference/architecture-bloom-filter.md) |
+| RDB save/load, AOF rewrite, bincode encode/decode, copy callback, data type registration | [persistence](reference/architecture-persistence.md) |
+| Defrag callbacks, cursor-based incremental defrag, INFO bf metrics, atomic counters | [defrag-metrics](reference/architecture-defrag-metrics.md) |
 
 ## Commands and Replication
 
 | Topic | Reference |
 |-------|-----------|
-| BF.ADD, BF.MADD, BF.EXISTS, BF.MEXISTS, BF.CARD, BF.INFO handlers | [command-handlers](reference/commands/command-handlers.md) |
-| BF.RESERVE, BF.INSERT, BF.LOAD, NOCREATE, VALIDATESCALETO, replication args | [bf-reserve-insert](reference/commands/bf-reserve-insert.md) |
-| Deterministic replication, must_obey_client, keyspace notifications | [replication](reference/commands/replication.md) |
-| All 7 configs, defaults, ranges, on_string_config_set, module_args_as_configuration | [module-configs](reference/commands/module-configs.md) |
+| BF.ADD, BF.MADD, BF.EXISTS, BF.MEXISTS, BF.CARD, BF.INFO handlers | [command-handlers](reference/commands-command-handlers.md) |
+| BF.RESERVE, BF.INSERT, BF.LOAD, NOCREATE, VALIDATESCALETO, replication args | [bf-reserve-insert](reference/commands-bf-reserve-insert.md) |
+| Deterministic replication, must_obey_client, keyspace notifications | [replication](reference/commands-replication.md) |
+| All 7 configs, defaults, ranges, on_string_config_set, module_args_as_configuration | [module-configs](reference/commands-module-configs.md) |
 
 ## Build and Contributing
 
 | Topic | Reference |
 |-------|-----------|
-| Cargo.toml, cdylib, dependencies, feature flags, ValkeyAlloc, build.sh | [build](reference/contributing/build.md) |
-| Unit tests (rstest, parameterized), integration test framework, test helpers | [testing](reference/contributing/testing.md) |
-| GitHub Actions CI jobs, matrix versions, ASAN/LeakSanitizer, release workflow | [ci-pipeline](reference/contributing/ci-pipeline.md) |
-| Directory layout, module registration, command metadata JSON, error types, adding new commands | [code-structure](reference/contributing/code-structure.md) |
+| Cargo.toml, cdylib, dependencies, feature flags, ValkeyAlloc, build.sh | [build](reference/contributing-build.md) |
+| Unit tests (rstest, parameterized), integration test framework, test helpers | [testing](reference/contributing-testing.md) |
+| GitHub Actions CI jobs, matrix versions, ASAN/LeakSanitizer, release workflow | [ci-pipeline](reference/contributing-ci-pipeline.md) |
+| Directory layout, module registration, command metadata JSON, error types, adding new commands | [code-structure](reference/contributing-code-structure.md) |

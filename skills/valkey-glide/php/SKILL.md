@@ -15,9 +15,9 @@ Synchronous PHP client for Valkey built on the GLIDE Rust core via native C exte
 
 | Question | Reference |
 |----------|-----------|
-| Setup, client creation, TLS, auth, config, read strategy, PHPRedis aliases | [connection](reference/features/connection.md) |
-| PubSub, subscribe, publish, pattern subscriptions | [pubsub](reference/features/pubsub.md) |
-| Install, API status, platform support, command groups, batching, phpredis compat, limitations | [overview](reference/features/overview.md) |
+| Setup, client creation, TLS, auth, config, read strategy, PHPRedis aliases | [connection](reference/features-connection.md) |
+| PubSub, subscribe, publish, pattern subscriptions | [pubsub](reference/features-pubsub.md) |
+| Install, API status, platform support, command groups, batching, phpredis compat, limitations | [overview](reference/features-overview.md) |
 
 ## Cross-References
 
