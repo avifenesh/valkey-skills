@@ -96,8 +96,7 @@ for task in $TASKS; do
         --max-turns 60 \
         --model "$MODEL_ID" \
         --output-format json \
-        --dangerously-skip-permissions \
-        --disallowedTools "WebFetch,WebSearch" \
+        --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent" \
         > "$rd/agent_output.json" 2>"$rd/agent_stderr.log"
       echo "[AGENT-DONE] ${task}_${cond}"
     ) &
