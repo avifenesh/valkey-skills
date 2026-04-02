@@ -1,24 +1,15 @@
-# Bug Report: Cluster Split-Brain After Network Partition
+# Bug Report
 
-## Environment
-- Valkey cluster: 6 nodes (3 primaries, 3 replicas)
-- Built from source in this directory (src/, deps/, Makefile)
+We built Valkey from the source code in this directory. After deploying a 6-node cluster (3 primaries, 3 replicas), we observed the following issue:
 
-## Observed Behavior
-After a network partition and recovery:
-- Two nodes claim master for the same slot range
-- Both have the same configEpoch value
-- The cluster stays in this split-brain state indefinitely
-- The epoch collision is never resolved
+When a primary node is disconnected from the network and then reconnected after a failover occurs, the cluster enters a permanent split-brain state. Two nodes claim to be master of the same slot range with identical configEpoch values. The cluster never recovers on its own.
 
-## Steps to Reproduce
-Build and run: `docker compose up -d --build`
-Then run `./reproduce.sh` to trigger the bug.
+We've included a script `reproduce.sh` that demonstrates the bug (requires Docker).
 
-## Your Task
-1. Find the root cause in the C source code (src/ directory)
-2. Fix the bug by editing the source directly
-3. The fix must compile: `make -j$(nproc)` must succeed
-4. Verify the fix resolves the split-brain
+A known-good Valkey 9.0.3 build does NOT have this problem - the issue was introduced in our modified source.
 
-Work only within this directory. The bug is in the C source code.
+Please:
+1. Find and fix the bug in the source code
+2. The code must compile successfully after your fix
+
+The source tree has ~200 files. The bug is a logic error, not a typo or syntax error.

@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Test script for Task 2: Valkey Best Practices Assessment
+# Test script for Task 2: Valkey Technical Assessment (hard version)
 # Usage: test.sh <workspace_dir>
-# Validates that answers.md exists, has 10 sections, and contains key terms.
+#
+# Each question requires EXACT Valkey-specific terms that a Redis-trained
+# model would not produce. No fuzzy matching - terms must appear verbatim.
 
 WORK_DIR="$(cd "${1:-.}" && pwd)"
 ANSWERS="$WORK_DIR/answers.md"
@@ -20,6 +22,11 @@ check() {
     echo "FAIL: $name"
     FAIL_COUNT=$((FAIL_COUNT + 1))
   fi
+}
+
+# Helper: check if a term appears in the answers file (case-insensitive)
+has_term() {
+  grep -qiE "$1" "$ANSWERS" 2>/dev/null
 }
 
 # --- Check 0: answers.md exists ---
@@ -42,90 +49,94 @@ else
   check "has 10 question sections ($SECTION_COUNT found)" 1
 fi
 
-# --- Check 2: Minimum length (at least 1000 words total, ~100 per answer) ---
-WORD_COUNT=$(wc -w < "$ANSWERS" 2>/dev/null || echo "0")
-WORD_COUNT=$(echo "$WORD_COUNT" | tr -d '[:space:]')
-if [ "$WORD_COUNT" -ge 1000 ]; then
-  check "minimum length ($WORD_COUNT words)" 0
-else
-  check "minimum length ($WORD_COUNT words, need 1000)" 1
-fi
-
 # --- Per-question key term checks ---
+# Each question requires specific Valkey-only terms.
+# A model using Redis knowledge would NOT produce these terms.
 
-# Helper: check if a term appears in the answers file (case-insensitive)
-has_term() {
-  grep -qiE "$1" "$ANSWERS" 2>/dev/null
-}
-
-# Q1: COMMANDLOG
-if has_term "COMMANDLOG" && has_term "large-request|large.request" && has_term "large-reply|large.reply"; then
-  check "Q1: COMMANDLOG types" 0
+# Q1: Must say COMMANDLOG (not just SLOWLOG) and include the type argument "slow"
+# Redis trap: would say SLOWLOG GET 10 without type argument
+if has_term "COMMANDLOG" && has_term "COMMANDLOG GET.*slow|COMMANDLOG.*GET.*slow"; then
+  check "Q1: COMMANDLOG GET with slow type" 0
 else
-  check "Q1: COMMANDLOG types" 1
+  check "Q1: COMMANDLOG GET with slow type" 1
 fi
 
-# Q2: Hash field TTL
-if has_term "HSETEX" && has_term "FIELDS" && has_term "HGETEX"; then
-  check "Q2: hash field TTL commands" 0
+# Q2: Must include the IFEQ flag (Valkey 8.1+, does not exist in Redis)
+# Redis trap: would suggest Lua EVAL or WATCH/MULTI
+if has_term "IFEQ"; then
+  check "Q2: SET IFEQ flag" 0
 else
-  check "Q2: hash field TTL commands" 1
+  check "Q2: SET IFEQ flag" 1
 fi
 
-# Q3: IFEQ and DELIFEQ
-if has_term "DELIFEQ" && has_term "IFEQ"; then
-  check "Q3: conditional operations" 0
+# Q3: Must include all three commandlog config directive names
+# Redis trap: would only know slowlog-log-slower-than
+if has_term "commandlog-execution-slower-than" && has_term "commandlog-request-larger-than" && has_term "commandlog-reply-larger-than"; then
+  check "Q3: all three commandlog config directives" 0
 else
-  check "Q3: conditional operations" 1
+  check "Q3: all three commandlog config directives" 1
 fi
 
-# Q4: I/O threads
-if has_term "io-threads-do-reads|io.threads.do.reads" && has_term "deprecated|removed|no longer"; then
-  check "Q4: io-threads-do-reads deprecated" 0
+# Q4: Must include HSETEX (Valkey 9.0 command) and FXX or FIELDS
+# Redis trap: no HSETEX in Redis, no per-field TTL, no FXX flag
+if has_term "HSETEX" && (has_term "FXX" || has_term "FIELDS"); then
+  check "Q4: HSETEX with FXX/FIELDS" 0
 else
-  check "Q4: io-threads-do-reads deprecated" 1
+  check "Q4: HSETEX with FXX/FIELDS" 1
 fi
 
-# Q5: Lazyfree defaults
-if has_term "lazyfree-lazy-user-del|lazyfree.lazy.user.del" && has_term "yes"; then
-  check "Q5: lazyfree defaults" 0
+# Q5: Must state lazyfree-lazy-expire defaults to YES in Valkey
+# Also require lazyfree-lazy-user-del to confirm they listed all five
+# Redis trap: would say these default to no
+if has_term "lazyfree-lazy-expire" && has_term "lazyfree-lazy-user-del" && has_term "default.*yes|yes.*default|all.*yes|yes.*all"; then
+  check "Q5: lazyfree defaults all yes" 0
 else
-  check "Q5: lazyfree defaults" 1
+  check "Q5: lazyfree defaults all yes" 1
 fi
 
-# Q6: rename-command vs ACL
-if has_term "@dangerous|dangerous" && has_term "ACL" && has_term "per.user|per user"; then
-  check "Q6: ACL alternative" 0
+# Q6: Must include DELIFEQ (Valkey 9.0 command, does not exist in Redis)
+# Redis trap: would provide Lua EVAL script as the only option
+if has_term "DELIFEQ"; then
+  check "Q6: DELIFEQ command" 0
 else
-  check "Q6: ACL alternative" 1
+  check "Q6: DELIFEQ command" 1
 fi
 
-# Q7: Client-side caching
-if has_term "__redis__:invalidate|invalidate" && has_term "tracking-table-max-keys|tracking.table.max.keys|tracking_table_max_keys"; then
-  check "Q7: client-side caching" 0
+# Q7: Must include RDB version 80 AND VALKEY magic string
+# Redis trap: would say REDIS magic string, not know version 80
+if has_term "\b80\b|version 80|RDB 80" && has_term "VALKEY.*magic|magic.*VALKEY|VALKEY.*header|header.*VALKEY|magic string.*VALKEY|VALKEY.*string"; then
+  check "Q7: RDB version 80 and VALKEY magic" 0
 else
-  check "Q7: client-side caching" 1
+  # Fallback: check for both terms present anywhere
+  if has_term "RDB.*80|version.*80" && has_term '"VALKEY"|VALKEY magic|magic.*(is|string|header).*VALKEY'; then
+    check "Q7: RDB version 80 and VALKEY magic" 0
+  else
+    check "Q7: RDB version 80 and VALKEY magic" 1
+  fi
 fi
 
-# Q8: Cluster enhancements
-if has_term "cluster-databases|cluster.databases" && has_term "atomic.*slot|slot.*atomic"; then
-  check "Q8: cluster enhancements" 0
+# Q8: Must include cluster-databases directive name AND its default of 1
+# Redis trap: would say cluster mode cannot use multiple databases, period
+if has_term "cluster-databases" && has_term "default.*1|defaults.*1|default value.*1|cluster-databases.*1|1.*default"; then
+  check "Q8: cluster-databases default 1" 0
 else
-  check "Q8: cluster enhancements" 1
+  check "Q8: cluster-databases default 1" 1
 fi
 
-# Q9: AOF and hybrid persistence
-if has_term "aof-use-rdb-preamble|aof.use.rdb.preamble" && has_term "2 second|two second|2s"; then
-  check "Q9: AOF hybrid and data loss" 0
+# Q9: Must include BOTH io-threads-do-reads AND dynamic-hz AND identify them as deprecated
+# Redis trap: would recommend enabling io-threads-do-reads as best practice
+if has_term "io-threads-do-reads" && has_term "dynamic-hz" && has_term "deprecat"; then
+  check "Q9: both deprecated directives" 0
 else
-  check "Q9: AOF hybrid and data loss" 1
+  check "Q9: both deprecated directives" 1
 fi
 
-# Q10: GEOSEARCH BYPOLYGON
-if has_term "BYPOLYGON" && has_term "num.vertices|num_vertices|number of vertices"; then
-  check "Q10: BYPOLYGON" 0
+# Q10: Must include HGETEX (Valkey 9.0 command, does not exist in Redis)
+# Redis trap: would say this is not possible in a single command
+if has_term "HGETEX" && has_term "FIELDS"; then
+  check "Q10: HGETEX with FIELDS" 0
 else
-  check "Q10: BYPOLYGON" 1
+  check "Q10: HGETEX with FIELDS" 1
 fi
 
 echo ""

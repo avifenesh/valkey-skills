@@ -1,170 +1,140 @@
-# Valkey Best Practices Assessment - Rubric
+# Valkey Technical Assessment - Rubric
 
-Scoring guide for AI judges. Each question is worth 1 point. Award full credit for answers that include the key terms and demonstrate correct understanding. Award partial credit (0.5) for mostly correct answers missing minor details. Award 0 for wrong answers or answers that describe Redis behavior instead of Valkey behavior.
+Scoring guide for AI judges. Each question is worth 1 point. Award full credit only for answers containing the exact key terms listed below. Award 0 for answers that describe Redis behavior instead of Valkey behavior. No partial credit.
 
----
-
-## Q1: COMMANDLOG vs SLOWLOG
-**Expected answer:** COMMANDLOG (Valkey 8.1+) tracks three types of events:
-1. `slow` - commands exceeding execution time threshold (default: 10000 microseconds / 10ms)
-2. `large-request` - commands exceeding request size threshold (default: 1048576 bytes / 1MB)
-3. `large-reply` - commands exceeding reply size threshold (default: 1048576 bytes / 1MB)
-
-Syntax: `COMMANDLOG GET 10 slow`, `COMMANDLOG GET 10 large-request`, `COMMANDLOG GET 10 large-reply`. The type argument is mandatory for COMMANDLOG (unlike SLOWLOG which defaults to 10 entries and has no type).
-
-Migration: `SLOWLOG GET 10` maps to `COMMANDLOG GET 10 slow`, `SLOWLOG LEN` maps to `COMMANDLOG LEN slow`, `SLOWLOG RESET` maps to `COMMANDLOG RESET slow`. SLOWLOG still works as a backward-compatible alias but only covers the `slow` type. The old config names `slowlog-log-slower-than` and `slowlog-max-len` are registered aliases for `commandlog-execution-slower-than` and `commandlog-slow-execution-max-len`.
-
-**Key terms that must appear:** COMMANDLOG, slow, large-request, large-reply, 10000, 1048576
-**Common wrong answer (Redis trap):** Saying only SLOWLOG exists, or not knowing about large-request/large-reply types, or not knowing the type argument is mandatory in COMMANDLOG syntax.
+These questions are designed so that Redis-trained knowledge produces WRONG answers. The "Redis trap" for each question describes the wrong answer a model would give without Valkey-specific knowledge.
 
 ---
 
-## Q2: Hash field TTL commands
-**Expected answer:** The command is `HSETEX` (Valkey 9.0+). Full syntax:
-```
-HSETEX key [NX | XX] [FNX | FXX] [EX s | PX ms | EXAT t | PXAT t | KEEPTTL] FIELDS n field value [field value ...]
-```
+## Q1: Slow command logging in Valkey 8.1+
+**Expected answer:** `COMMANDLOG GET 10 slow` - the full command requires both a count AND a type argument. Before 8.1, the command was `SLOWLOG GET 10` which only required an optional count (defaulting to 10) and had no type argument. The new command requires the type argument because COMMANDLOG tracks three different log types (slow, large-request, large-reply), so you must specify which log to query.
 
-The `FIELDS n` argument specifies the count of field-value pairs that follow - n must match the number of field names provided.
+SLOWLOG still works in 8.1+ as a backward-compatible alias that maps to the `slow` type only.
 
-HTTL return values: `-1` if the field exists but has no TTL, `-2` if the field does not exist. A positive integer means the remaining TTL in seconds.
-
-Other key commands: HGETEX (get fields and set/refresh/remove TTL), HEXPIRE, HPEXPIRE, HEXPIREAT, HPEXPIREAT, HPERSIST, HTTL, HPTTL, HEXPIRETIME, HPEXPIRETIME (11 new commands total).
-
-**Key terms that must appear:** HSETEX, FIELDS n, -1, -2, HGETEX
-**Common wrong answer (Redis trap):** Redis has no per-field TTL on hashes at all. A model trained on Redis would not know HSETEX, HGETEX, or the FIELDS n syntax. Some might confuse with Redis 7.4's HEXPIRE which has a different syntax.
+**Required terms:** `COMMANDLOG` AND `GET` AND `slow` (the type argument)
+**Redis trap:** A model using Redis knowledge would answer `SLOWLOG GET 10` and not know COMMANDLOG exists, or not know the type argument is mandatory.
 
 ---
 
-## Q3: Conditional operations - IFEQ and DELIFEQ
+## Q2: Conditional SET based on current value
+**Expected answer:** `SET mykey "new_value" IFEQ "old_value"` - the IFEQ flag was introduced in Valkey 8.1. It atomically compares the current value and updates only if it matches. Returns OK on match, nil on mismatch.
+
+IFEQ is mutually exclusive with `NX` and `XX` - you cannot combine them in the same SET command.
+
+**Required terms:** `IFEQ` AND (`NX` or `XX` mentioned as exclusive/incompatible)
+**Redis trap:** Redis does not have IFEQ. A model would suggest a Lua script or WATCH/MULTI/EXEC as the only approach. No model would produce the IFEQ flag from Redis training data.
+
+---
+
+## Q3: Three COMMANDLOG entry types and their config directives
 **Expected answer:**
-- `SET key new_value IFEQ expected_value` (Valkey 8.1+): atomically updates a key only if its current value matches expected_value. Returns OK on match, nil on mismatch. Cannot be combined with NX or XX.
-- `DELIFEQ key expected_value` (Valkey 9.0+): atomically deletes a key only if its current value matches. Returns 1 if deleted, 0 if not.
+1. Type `slow` - config: `commandlog-execution-slower-than` - default: 10000 microseconds (10ms)
+2. Type `large-request` - config: `commandlog-request-larger-than` - default: 1048576 bytes (1MB)
+3. Type `large-reply` - config: `commandlog-reply-larger-than` - default: 1048576 bytes (1MB)
 
-For safe Redlock unlock, DELIFEQ replaces the Lua script:
-```
--- Before (Lua): EVAL "if server.call('get',KEYS[1]) == ARGV[1] then return server.call('del',KEYS[1]) else return 0 end" 1 lock:resource my_random_token
--- After: DELIFEQ lock:resource my_random_token
-```
-
-DELIFEQ is the native replacement for the canonical Redlock unlock pattern across all N instances.
-
-**Key terms that must appear:** IFEQ, DELIFEQ, atomic, 1, 0, Lua, Redlock
-**Common wrong answer (Redis trap):** Redis does not have IFEQ or DELIFEQ. Models would suggest Lua scripts or WATCH/MULTI/EXEC as the only approach to conditional operations.
+**Required terms:** `commandlog-execution-slower-than` AND `commandlog-request-larger-than` AND `commandlog-reply-larger-than`
+**Redis trap:** Redis only has `slowlog-log-slower-than`. A model would not know the two size-based config directives exist at all. These are Valkey-only configuration directives with no Redis equivalent.
 
 ---
 
-## Q4: I/O threads - when NOT to enable
-**Expected answer:** The deprecated directive is `io-threads-do-reads`. In current Valkey, when io-threads > 1, reads are always offloaded - there is no separate toggle. The directive is listed in the deprecated configs in src/config.c and is silently ignored.
+## Q4: Setting a hash field with TTL, only if it already exists
+**Expected answer:** `HSETEX session:xyz FXX EX 300 FIELDS 1 token abc123`
 
-On a 4-core system, the maximum safe io-threads value is 2. Over-subscribing was specifically measured: on a Raspberry Pi CM4 with 4 cores, io-threads=5 dropped performance from 416K to 336K RPS (compared to proper settings). The key rule: never set io-threads >= number of available cores.
+The command is HSETEX, introduced in Valkey 9.0. The `FXX` flag means "only set the field if it already exists" (field-level XX). The `FIELDS 1` argument specifies the count of field-value pairs that follow.
 
-`events-per-io-thread` (default: 2, hidden config) controls how many pending events are needed per I/O thread before that thread is activated. The formula is: target_threads = numevents / events_per_io_thread. Setting it to 0 forces all threads active. Threads are parked via mutex when idle and unparked when load increases.
+Note: `XX` applies to the key level (only if key exists), while `FXX` applies to the field level (only if field exists). Both can be used together or independently.
 
-**Key terms that must appear:** io-threads-do-reads, deprecated, 2 (for 4-core), 336K, events-per-io-thread
-**Common wrong answer (Redis trap):** Redis guides tell users to set `io-threads-do-reads yes` as a required companion to io-threads. Models would repeat this outdated advice. They would also not know the specific degradation numbers or the events-per-io-thread hidden config.
+**Required terms:** `HSETEX` AND (`FXX` or `FIELDS`)
+**Redis trap:** Redis has no HSETEX command, no per-field TTL, and no FXX flag. A model would suggest HSET + EXPIRE (key-level only) or say per-field TTL is not possible.
 
 ---
 
-## Q5: Lazyfree defaults - Valkey vs Redis
-**Expected answer:** All five lazyfree parameters and their Valkey defaults:
+## Q5: Lazyfree default values - Valkey vs Redis 7.x
+**Expected answer:** In Valkey, `lazyfree-lazy-expire` defaults to `yes`. In Redis 7.x, it defaults to `no`.
+
+All five lazyfree parameters and their Valkey defaults (all `yes`):
 1. `lazyfree-lazy-eviction` - `yes`
 2. `lazyfree-lazy-expire` - `yes`
 3. `lazyfree-lazy-server-del` - `yes`
 4. `lazyfree-lazy-user-del` - `yes`
 5. `lazyfree-lazy-user-flush` - `yes`
 
-In Redis 7.x, these default to `no` (except lazyfree-lazy-user-flush which was added later). Valkey changed all five defaults to `yes` (verified in src/config.c lines 3253-3257, all have default value 1).
+Source-verified from src/config.c lines 3253-3257, all have default value 1.
 
-Practical consequence of `lazyfree-lazy-user-del yes`: the DEL command behaves identically to UNLINK - it unlinks the key from the keyspace and queues background memory deallocation. There is no practical difference between DEL and UNLINK with this default. The change is transparent to clients.
+In Redis 7.x, `lazyfree-lazy-user-del` and most others default to `no`. Valkey changed all five to `yes`. This means DEL behaves like UNLINK by default in Valkey.
 
-**Key terms that must appear:** lazyfree-lazy-user-del, lazyfree-lazy-expire, yes (as default), DEL, UNLINK
-**Common wrong answer (Redis trap):** Models trained on Redis would say these default to `no` and advise users to explicitly set them to `yes`. They would also say DEL is always synchronous and you must use UNLINK for non-blocking deletes.
-
----
-
-## Q6: rename-command vs ACL
-**Expected answer:** rename-command limitations (at least four):
-1. Config file only - cannot be changed at runtime
-2. Applies globally - all users affected equally (no per-user control)
-3. Breaks replication - renamed commands on primary don't match replica if configs differ
-4. Breaks scripts - Lua scripts and modules using renamed commands fail silently
-5. Breaks tooling - monitoring tools that use KEYS, CONFIG, or DEBUG will fail
-6. No logging/audit trail of who attempted the renamed command
-7. AOF incompatible - AOF files contain original command names, replay breaks if commands are renamed differently
-
-ACL alternative: Use `ACL SETUSER` with `-@dangerous` category to deny dangerous commands per user. The @dangerous category includes FLUSHALL, FLUSHDB, DEBUG, KEYS, SHUTDOWN, REPLICAOF, CONFIG, etc.
-
-Per-user advantages: runtime changes, per-user control, replication safe, audit logging via ACL LOG, subcommand control (e.g., +config|get -config|set), category-based rules, key pattern restrictions.
-
-**Key terms that must appear:** @dangerous, ACL SETUSER, per-user, runtime, ACL LOG, replication
-**Common wrong answer (Redis trap):** Models may recommend rename-command as the primary method without knowing its limitations, or not mention the @dangerous category.
+**Required terms:** `lazyfree-lazy-expire` AND `yes` (as the Valkey default)
+**Redis trap:** A model using Redis knowledge would say `lazyfree-lazy-expire` defaults to `no` and advise users to explicitly enable it. This is the WRONG answer for Valkey.
 
 ---
 
-## Q7: Client-side caching protocol and invalidation
-**Expected answer:** CLIENT TRACKING enables server-assisted client-side caching. The server tracks keys read by each client and sends invalidation messages when those keys change.
+## Q6: Safe distributed lock release without Lua
+**Expected answer:** `DELIFEQ lock:order token_abc` - the DELIFEQ command was introduced in Valkey 9.0. It atomically checks the key's current value and deletes only if it matches.
 
-The invalidation channel name for RESP2 redirect mode is `__redis__:invalidate` (the legacy `__redis__` prefix is retained even in Valkey, verified in src/tracking.c).
+Return values: `1` if the key existed and its value matched (key deleted), `0` if the key did not exist or the value did not match (no change).
 
-Two tracking modes:
-1. Default (key-based): server remembers every key served to the client, precise invalidation, higher memory usage
-2. Broadcasting (prefix-based): clients subscribe to key prefixes with `CLIENT TRACKING ON BCAST PREFIX user:`, less precise but lower server memory
+DELIFEQ replaces the Lua script previously required for safe lock release: `EVAL "if server.call('get',KEYS[1]) == ARGV[1] then return server.call('del',KEYS[1]) else return 0 end" 1 lock:order token_abc`
 
-OPTIN mode: tracking off by default, client must send `CLIENT CACHING YES` before each read to track it. OPTOUT mode: tracking on by default, client sends `CLIENT CACHING NO` before reads to skip tracking. NOLOOP option prevents a client from receiving invalidation for its own modifications.
-
-Server config: `tracking-table-max-keys` (default: 1000000) controls maximum tracked keys globally. When exceeded, entries are evicted and invalidation is sent to affected clients.
-
-**Key terms that must appear:** __redis__:invalidate, BCAST, OPTIN, OPTOUT, tracking-table-max-keys, 1000000, CLIENT CACHING
-**Common wrong answer (Redis trap):** Models might not know the exact invalidation channel name retains the `__redis__` prefix in Valkey. They might not know the tracking-table-max-keys default or the OPTIN/OPTOUT sub-modes.
+**Required terms:** `DELIFEQ`
+**Redis trap:** Redis does not have DELIFEQ. Every model would answer with the Lua EVAL script as the only way to do this. No model would produce DELIFEQ from Redis training data.
 
 ---
 
-## Q8: Cluster enhancements in Valkey 9.0
-**Expected answer:**
-1. Numbered databases in cluster mode: Before 9.0, cluster mode was restricted to database 0 - SELECT returned an error. The config directive is `cluster-databases` (default: 1, meaning only database 0). Set e.g. `cluster-databases 16` to enable databases 0-15. Each database is a separate namespace; the same key name in different databases are independent entries. Hash slot assignment still applies regardless of database number.
+## Q7: RDB file format changes in Valkey 9.0
+**Expected answer:** Valkey 9.0 uses RDB version 80. The magic string is `VALKEY` (replacing `REDIS` which was used for all RDB versions <= 11). The `rdbUseValkeyMagic()` function returns true for RDB versions > 79.
 
-2. Atomic slot migration: Traditional resharding migrates keys one at a time, causing ASK redirects during migration. Clients must handle both ASK and MOVED redirects. Valkey 9.0 serializes the entire slot as an AOF-format payload and transfers it atomically. Clients see only standard MOVED redirects (no ASK redirects during migration). The cutover is instant with zero intermediate states. No special configuration needed - enabled automatically in 9.0+.
+The "foreign version" range is RDB versions 12-79. This range is reserved to prevent loading RDB files from incompatible forks (specifically Redis CE 7.4+ which uses versions in this range). Under the default `rdb-version-check strict` mode, Valkey rejects RDB files in this range.
 
-**Key terms that must appear:** cluster-databases, default 1, SELECT, atomic, ASK, MOVED, AOF-format
-**Common wrong answer (Redis trap):** Redis does not support numbered databases in cluster mode at all. Models would say "cluster mode only supports database 0" without knowing Valkey changed this. They would not know about atomic slot migration.
-
----
-
-## Q9: AOF persistence defaults and hybrid mode
-**Expected answer:** `aof-use-rdb-preamble` defaults to `yes` in Valkey. When enabled, AOF rewrite creates a base file in RDB format (binary snapshot) while incremental files remain in AOF command format. This gives fast restarts (RDB loads quickly) with AOF durability.
-
-Worst-case data loss for `appendfsync everysec`: 2 seconds, not 1 second. The reason: if the background fsync takes longer than 1 second (e.g., disk contention), the main thread delays writes for up to an additional 1 second. If 2 seconds elapse without fsync completing, a blocking write is forced. This is documented per antirez's persistence analysis.
-
-`repl-diskless-load` four values:
-1. `disabled` (default) - save RDB to disk then load (safest)
-2. `on-empty-db` - load directly into memory only if database is empty
-3. `swapdb` - load into a separate database, swap atomically on success (replica serves old data until new load completes, requires 2x memory)
-4. `flush-before-load` - flush current database then load directly
-
-`swapdb` provides the best availability because the replica continues serving the old dataset during the load. The swap is atomic on completion.
-
-**Key terms that must appear:** aof-use-rdb-preamble, yes, 2 seconds, swapdb, flush-before-load, on-empty-db
-**Common wrong answer (Redis trap):** Models might say the default for aof-use-rdb-preamble is `no` (it was `no` in older Redis versions). They commonly state worst-case data loss as "1 second" for appendfsync everysec. They may not know the `flush-before-load` option for repl-diskless-load.
+**Required terms:** (`80` or `version 80`) AND `VALKEY` (as magic string) AND (`12` or `foreign`)
+**Redis trap:** A model would say RDB uses the `REDIS` magic string (wrong for 9.0) and would not know about RDB version 80 or the foreign version range. These are entirely Valkey-specific concepts.
 
 ---
 
-## Q10: GEOSEARCH BYPOLYGON and performance features
-**Expected answer:** BYPOLYGON syntax (Valkey 9.0+):
-```
-GEOSEARCH key [FROMMEMBER member | FROMLONLAT longitude latitude] BYPOLYGON num-vertices lon1 lat1 lon2 lat2 ... lonN latN [ASC | DESC] [COUNT count [ANY]] [WITHCOORD] [WITHDIST] [WITHHASH]
-```
+## Q8: Numbered databases in cluster mode
+**Expected answer:** Before Valkey 9.0, running SELECT in cluster mode returned an error - cluster mode was restricted to database 0 only.
 
-The first argument after BYPOLYGON is `num-vertices` specifying how many vertex coordinate pairs follow. The polygon is automatically closed. GEOSEARCHSTORE also supports BYPOLYGON.
+The configuration directive is `cluster-databases` with a default value of `1` (meaning only database 0 is available). Setting `cluster-databases 16` enables databases 0 through 15.
 
-Valkey 9.0 performance features (no code changes needed):
-1. Pipeline memory prefetch - up to 40% higher throughput for pipelined commands (batch key prefetching)
-2. Zero-copy responses - up to 20% higher throughput for large value reads (eliminates buffer copies)
-3. SIMD BITCOUNT/HLL - up to 200% higher throughput (further SIMD improvements)
-4. Multipath TCP (MPTCP) - up to 25% latency reduction (multiple network paths)
-5. Atomic slot migration - faster resharding with bulk transfer
+**Required terms:** `cluster-databases` AND (`1` or `default 1` as the default value)
+**Redis trap:** Redis does not support numbered databases in cluster mode at all. A model would definitively state "cluster mode only supports database 0, period" without knowing Valkey 9.0 changed this. No model would know the `cluster-databases` directive name.
 
-Pipeline memory prefetch provides up to 40% higher throughput.
+---
 
-**Key terms that must appear:** BYPOLYGON, num-vertices, prefetch, 40%, zero-copy, 20%
-**Common wrong answer (Redis trap):** Redis does not have BYPOLYGON for GEOSEARCH. Models would only know BYRADIUS and BYBOX. They would not know about Valkey's specific pipeline prefetch or zero-copy response optimizations.
+## Q9: The deprecated io-threads companion directive
+**Expected answer:** The deprecated directive is `io-threads-do-reads`. In current Valkey, when `io-threads` is set > 1, reads are always offloaded to I/O threads - there is no separate toggle. The directive is listed in the `deprecated_configs[]` array in src/config.c and is silently ignored if present.
+
+The other deprecated directive is `dynamic-hz` - the behavior it controlled (automatically scaling the server timer frequency based on connected clients) is now always enabled.
+
+**Required terms:** `io-threads-do-reads` AND `dynamic-hz`
+**Redis trap:** Redis documentation and guides actively instruct users to set `io-threads-do-reads yes` as a companion to `io-threads`. A model would recommend this deprecated setting as current best practice. Models would also not know `dynamic-hz` is deprecated because it is still documented in Redis.
+
+---
+
+## Q10: HGETEX - get hash fields and set TTL atomically
+**Expected answer:** `HGETEX session:abc EX 3600 FIELDS 2 user_id email`
+
+HGETEX was introduced in Valkey 9.0. It reads hash field values and atomically sets or refreshes their TTL in a single command. The `FIELDS 2` argument specifies that 2 field names follow.
+
+It differs from a pipeline of HMGET + HEXPIRE because it is a single atomic operation - there is no window between reading and setting the TTL where the field could be modified or expired by another client. It also supports PERSIST to remove TTL from fields in the same read operation.
+
+**Required terms:** `HGETEX` AND `FIELDS 2` (or `FIELDS n`)
+**Redis trap:** Redis has no HGETEX command and no per-field TTL. A model would say this is not possible in a single command and suggest a pipeline or Lua script. No model would produce HGETEX from Redis training data.
+
+---
+
+## Scoring Summary
+
+| Question | Required Terms | Redis-Trained Model Would Say |
+|----------|---------------|-------------------------------|
+| Q1 | COMMANDLOG, GET, slow | SLOWLOG GET 10 (no type arg) |
+| Q2 | IFEQ | Lua script or WATCH/MULTI |
+| Q3 | commandlog-execution-slower-than, commandlog-request-larger-than, commandlog-reply-larger-than | slowlog-log-slower-than only |
+| Q4 | HSETEX, FXX or FIELDS | HSET + EXPIRE (key-level) |
+| Q5 | lazyfree-lazy-expire, yes | Defaults to no |
+| Q6 | DELIFEQ | Lua EVAL script |
+| Q7 | 80, VALKEY, 12/foreign | REDIS magic, no version 80 |
+| Q8 | cluster-databases, 1 | "Not possible in cluster" |
+| Q9 | io-threads-do-reads, dynamic-hz | Recommend enabling both |
+| Q10 | HGETEX, FIELDS | "Not possible atomically" |
+
+A model without the Valkey skills should score 0-2 out of 10. Key terms Q2, Q4, Q6, Q7, Q8, Q10 require Valkey-only command names or values that do not exist in Redis.
