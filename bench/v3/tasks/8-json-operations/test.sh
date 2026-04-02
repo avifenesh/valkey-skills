@@ -45,7 +45,7 @@ print(count)
 " 2>/dev/null || echo "-1")
 
 # Check operations_output.txt for the reported count
-reported_filter=$(grep -oP 'Matching orders:\s*(\d+)' operations_output.txt | grep -oP '\d+' | head -1 || echo "-1")
+reported_filter=$(grep -oE 'Matching orders: *[0-9]+' operations_output.txt | grep -oE '[0-9]+' | head -1 || echo "-1")
 
 if [[ "$reported_filter" -gt 0 && "$reported_filter" == "$FILTER_COUNT" ]]; then
 echo "PASS: Filter returns correct count ($reported_filter matching orders)"
@@ -123,7 +123,7 @@ print(valid)
 " 2>/dev/null || echo "0")
 
 # Check the output reports 50 emails
-reported_emails=$(grep -oP 'Emails fetched:\s*(\d+)' operations_output.txt | grep -oP '\d+' | head -1 || echo "0")
+reported_emails=$(grep -oE 'Emails fetched: *[0-9]+' operations_output.txt | grep -oE '[0-9]+' | head -1 || echo "0")
 
 if [[ "$reported_emails" -eq 50 ]]; then
 echo "PASS: MGET returns 50 emails"
@@ -196,7 +196,7 @@ src=$(cat operations.py 2>/dev/null || true)
 json_cmds=$(echo "$src" | grep -ciE "JSON\.(GET|SET|MGET|NUMINCRBY|ARRINSERT|ARRTRIM|ARRLEN)" || true)
 plain_cmds=$(echo "$src" | grep -ciE "\br\.get\b|\br\.set\b|\br\.mget\b" | grep -v "JSON\." || true)
 # More precise check: look for r.get( or r.set( patterns that are not JSON commands
-plain_get_set=$(echo "$src" | grep -cP "(?<!\w)r\.(get|set|mget)\s*\(" || true)
+plain_get_set=$(echo "$src" | grep -cE '(^|[^a-zA-Z_])r\.(get|set|mget) *\(' || true)
 json_exec=$(echo "$src" | grep -ciE "execute_command.*JSON\.|json\(\)|\.json\." || true)
 total_json=$((json_cmds + json_exec))
 

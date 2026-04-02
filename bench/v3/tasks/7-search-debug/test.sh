@@ -36,7 +36,7 @@ QUERY_OUTPUT=$(python3 queries.py 2>&1)
 # -----------------------------------------------------------------------
 # Test 1: Query 1 returns >0 matches (full-text search on name field)
 # -----------------------------------------------------------------------
-Q1_MATCHES=$(echo "$QUERY_OUTPUT" | grep -A2 "Find products with" | grep -oP 'Results: \K\d+' || echo "0")
+Q1_MATCHES=$(echo "$QUERY_OUTPUT" | grep -A2 "Find products with" | grep -oE 'Results: [0-9]+' | grep -oE '[0-9]+' || echo "0")
 check "Query 1: full-text search returns >0 matches" \
   "$([ "$Q1_MATCHES" -gt 0 ] 2>/dev/null && echo true || echo false)"
 
@@ -44,7 +44,7 @@ check "Query 1: full-text search returns >0 matches" \
 # Test 2: Query 2 returns records in price range 100-500
 # The fixed query should use correct numeric filter syntax
 # -----------------------------------------------------------------------
-Q2_MATCHES=$(echo "$QUERY_OUTPUT" | grep -A2 "Products priced between" | grep -oP 'Results: \K\d+' || echo "0")
+Q2_MATCHES=$(echo "$QUERY_OUTPUT" | grep -A2 "Products priced between" | grep -oE 'Results: [0-9]+' | grep -oE '[0-9]+' || echo "0")
 check "Query 2: numeric range returns >0 matches" \
   "$([ "$Q2_MATCHES" -gt 0 ] 2>/dev/null && echo true || echo false)"
 
@@ -72,14 +72,14 @@ check "Query 2: returned prices are within 100-500 range" \
 # -----------------------------------------------------------------------
 # Test 3: Query 3 matches correct tag (case-sensitive Electronics)
 # -----------------------------------------------------------------------
-Q3_MATCHES=$(echo "$QUERY_OUTPUT" | grep -A2 "Products in Electronics" | grep -oP 'Results: \K\d+' || echo "0")
+Q3_MATCHES=$(echo "$QUERY_OUTPUT" | grep -A2 "Products in Electronics" | grep -oE 'Results: [0-9]+' | grep -oE '[0-9]+' || echo "0")
 check "Query 3: tag filter returns >0 matches" \
   "$([ "$Q3_MATCHES" -gt 0 ] 2>/dev/null && echo true || echo false)"
 
 # -----------------------------------------------------------------------
 # Test 4: Query 4 returns 5 similar items (KNN vector search)
 # -----------------------------------------------------------------------
-Q4_MATCHES=$(echo "$QUERY_OUTPUT" | grep -A2 "Find 5 similar products by vector" | grep -oP 'Results: \K\d+' || echo "0")
+Q4_MATCHES=$(echo "$QUERY_OUTPUT" | grep -A2 "Find 5 similar products by vector" | grep -oE 'Results: [0-9]+' | grep -oE '[0-9]+' || echo "0")
 check "Query 4: KNN vector search returns 5 matches" \
   "$([ "$Q4_MATCHES" -eq 5 ] 2>/dev/null && echo true || echo false)"
 
@@ -95,7 +95,7 @@ check "Query 5: aggregate output includes total and count" \
 # Test 6: FIXES.md exists with 5 explanations
 # -----------------------------------------------------------------------
 if [[ -f "FIXES.md" ]]; then
-  SECTION_COUNT=$(grep -cP '^#{1,3}\s.*[Qq]uery\s*[1-5]' FIXES.md 2>/dev/null || echo "0")
+  SECTION_COUNT=$(grep -cE '^#{1,3} .*[Qq]uery *[1-5]' FIXES.md 2>/dev/null || echo "0")
   check "FIXES.md exists with 5 query sections" \
     "$([ "$SECTION_COUNT" -ge 5 ] && echo true || echo false)"
 else

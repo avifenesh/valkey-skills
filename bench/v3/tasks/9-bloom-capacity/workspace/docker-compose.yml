@@ -1,11 +1,10 @@
 services:
   valkey:
-    image: valkey/valkey:8.1
+    image: valkey/valkey-bundle:latest
     ports:
       - "6410:6379"
     command: >
       valkey-server
-      --loadmodule /opt/valkey-bloom/valkey-bloom.so
       --maxmemory 8gb
       --maxmemory-policy noeviction
       --save ""

@@ -1,11 +1,8 @@
 services:
   valkey:
-    image: valkey/valkey:8.1
+    image: valkey/valkey-bundle:latest
     ports:
       - "6408:6379"
-    command: >
-      valkey-server
-      --loadmodule /usr/lib/valkey/modules/search.so
     volumes:
       - valkey-data:/data
     healthcheck:
