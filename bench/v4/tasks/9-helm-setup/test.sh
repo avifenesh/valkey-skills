@@ -129,10 +129,50 @@ if [ -f "$VALUES" ]; then
   else
     check "values.yaml: references correct Helm chart repo" 1
   fi
+  # Check 13: helm template renders without errors
+  # Try both bitnami/valkey and bitnami/valkey-cluster charts
+  HELM_OK=1
+  if command -v helm >/dev/null 2>&1; then
+    helm repo add bitnami https://charts.bitnami.com/bitnami >/dev/null 2>&1 || true
+    helm repo update >/dev/null 2>&1 || true
+
+    TEMPLATE_OUT=$(helm template test-valkey bitnami/valkey -f "$VALUES" 2>&1) && TEMPLATE_EXIT=0 || TEMPLATE_EXIT=$?
+    if [ "$TEMPLATE_EXIT" != "0" ]; then
+      # Try valkey-cluster chart
+      TEMPLATE_OUT=$(helm template test-valkey bitnami/valkey-cluster -f "$VALUES" 2>&1) && TEMPLATE_EXIT=0 || TEMPLATE_EXIT=$?
+    fi
+
+    if [ "$TEMPLATE_EXIT" = "0" ]; then
+      check "helm template renders without errors" 0
+      HELM_OK=0
+
+      # Check 14: Rendered manifests have StatefulSet
+      if echo "$TEMPLATE_OUT" | grep -q "kind: StatefulSet"; then
+        check "helm template: produces StatefulSet" 0
+      else
+        check "helm template: produces StatefulSet" 1
+      fi
+
+      # Check 15: Rendered manifests have correct replica count
+      REPLICAS=$(echo "$TEMPLATE_OUT" | grep -A1 "replicas:" | grep -oE '[0-9]+' | head -1)
+      if [ -n "$REPLICAS" ] && [ "$REPLICAS" -ge 3 ] 2>/dev/null; then
+        check "helm template: replica count >= 3 ($REPLICAS)" 0
+      else
+        check "helm template: replica count >= 3" 1
+      fi
+    else
+      check "helm template renders without errors" 1
+      echo "  helm template error: $(echo "$TEMPLATE_OUT" | head -3)"
+    fi
+  else
+    check "helm template renders without errors (helm not installed)" 1
+  fi
+
 else
   # If values.yaml missing, fail all content checks
   for name in "cluster sizing" "TLS enabled" "authentication" "512MB memory" \
-              "maxmemory-policy" "persistence" "resource requests" "AOF" "chart repo"; do
+              "maxmemory-policy" "persistence" "resource requests" "AOF" "chart repo" \
+              "helm template" "StatefulSet" "replica count"; do
     check "values.yaml: $name" 1
   done
 fi
