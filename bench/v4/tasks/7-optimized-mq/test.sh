@@ -213,8 +213,19 @@ echo "Running performance benchmark..."
 cd "$WORK_DIR"
 
 # Run bench.ts if it exists, or a simple inline perf test
-if [ -f "src/bench.ts" ]; then
-  BENCH_OUTPUT=$(npx ts-node --esm src/bench.ts 2>&1) && BENCH_EXIT=0 || BENCH_EXIT=$?
+BENCH_JS=""
+if [ -f "dist/bench.js" ]; then
+  BENCH_JS="dist/bench.js"
+elif [ -f "build/bench.js" ]; then
+  BENCH_JS="build/bench.js"
+elif [ -f "src/bench.js" ]; then
+  BENCH_JS="src/bench.js"
+fi
+
+if [ -n "$BENCH_JS" ]; then
+  BENCH_OUTPUT=$(node "$BENCH_JS" 2>&1) && BENCH_EXIT=0 || BENCH_EXIT=$?
+elif [ -f "src/bench.ts" ]; then
+  BENCH_OUTPUT=$(npx tsx src/bench.ts 2>&1) && BENCH_EXIT=0 || BENCH_EXIT=$?
   echo "$BENCH_OUTPUT"
 
   # Extract ops/sec from output (look for patterns like "1234 ops/sec" or "ops/s: 1234")
