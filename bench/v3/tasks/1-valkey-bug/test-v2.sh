@@ -1,148 +1,162 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
-# Test script for Task 1 v2: Cluster Split-Brain Bug Investigation
-# The bug: clusterShouldDeferEpochBump() prevents epoch collision resolution
-# after failover, causing permanent split-brain.
+# Test for Task 1 v2: Cluster split-brain bug
+# The bug: clusterShouldDeferEpochBump() prevents epoch collision resolution.
+# Test: does it build, and does the fix resolve the split-brain?
 
 WORK_DIR="$(cd "${1:-.}" && pwd)"
 
-PASS_COUNT=0
-FAIL_COUNT=0
+PASS=0
+FAIL=0
 
 check() {
-  local name="$1" result="$2"
-  if [[ "$result" == "0" ]]; then
-    echo "PASS: $name"
-    PASS_COUNT=$((PASS_COUNT + 1))
+  if [[ "$2" == "0" ]]; then
+    echo "PASS: $1"; PASS=$((PASS + 1))
   else
-    echo "FAIL: $name"
-    FAIL_COUNT=$((FAIL_COUNT + 1))
+    echo "FAIL: $1"; FAIL=$((FAIL + 1))
   fi
 }
 
-# --- Part 1: Analysis quality (4 checks) ---
+cleanup() {
+  cd "$WORK_DIR"
+  docker-compose down -v --remove-orphans 2>/dev/null || true
+}
+trap cleanup EXIT
 
-ANALYSIS=$(find "$WORK_DIR" -maxdepth 1 -iname "*.md" ! -iname "CLAUDE.md" ! -iname "symptoms.md" -type f | head -1)
+cd "$WORK_DIR"
 
-if [[ -z "$ANALYSIS" || ! -f "$ANALYSIS" ]]; then
-  check "Analysis file exists" 1
-  check "Identifies cluster_legacy.c" 1
-  check "Identifies epoch collision resolution" 1
-  check "Identifies the defer mechanism as root cause" 1
-else
-  check "Analysis file exists" 0
-  CONTENT=$(cat "$ANALYSIS" | tr '[:upper:]' '[:lower:]')
-
-  echo "$CONTENT" | grep -qE 'cluster_legacy\.c|cluster.legacy'
-  check "Identifies cluster_legacy.c as the source file" "$?"
-
-  echo "$CONTENT" | grep -qE 'epoch.*(collision|conflict|resolution)|collision.*(epoch|resolution)|configepoch.*(collision|conflict)'
-  check "Identifies epoch collision resolution" "$?"
-
-  # The actual root cause: the defer function prevents collision resolution
-  if echo "$CONTENT" | grep -qE 'defer|shoulddefer|clusterShouldDeferEpochBump|deferep|prevent.*resolv|block.*resolv|never.*resolv|skip.*resolv'; then
-    check "Identifies the defer mechanism as root cause" 0
-  else
-    # Also accept if they identify the infinite/permanent stall
-    echo "$CONTENT" | grep -qE 'always.*true|never.*false|infinite.*defer|permanent.*defer|always.*defer|stuck.*loop|never.*bump'
-    check "Identifies the defer mechanism as root cause" "$?"
-  fi
-fi
-
-# --- Part 2: Patch quality (5 checks) ---
-
-# Look for a patch file (any .patch or .diff, or changes in cluster_legacy.c)
-PATCH=$(find "$WORK_DIR" -maxdepth 1 -name "*.patch" -o -name "*.diff" | head -1)
+# -----------------------------------------------------------------------
+# Check 1: Source was modified (agent actually changed something)
+# -----------------------------------------------------------------------
 CLUSTER_SRC="$WORK_DIR/src/cluster_legacy.c"
-
-if [[ -n "$PATCH" && -f "$PATCH" ]]; then
-  check "Patch file exists" 0
-
-  grep -qE 'cluster_legacy\.c' "$PATCH" 2>/dev/null
-  check "Patch targets cluster_legacy.c" "$?"
-
-  grep -qE '^\-\-\- |^\+\+\+ |^@@' "$PATCH" 2>/dev/null
-  check "Patch is valid unified diff" "$?"
-
-  # Patch should modify/remove the defer logic
-  PATCH_CONTENT=$(cat "$PATCH" | tr '[:upper:]' '[:lower:]')
-  if echo "$PATCH_CONTENT" | grep -qE 'defer|shoulddefer|clusterShouldDeferEpochBump'; then
-    check "Patch addresses the defer mechanism" 0
-  else
-    check "Patch addresses the defer mechanism" 1
-  fi
-
-  # Patch should preserve the epoch bump in clusterHandleConfigEpochCollision
-  if echo "$PATCH_CONTENT" | grep -qE 'currentepoch\+\+|configepoch|handleconfigepochcollision'; then
-    check "Patch preserves epoch collision handler" 0
-  else
-    check "Patch preserves epoch collision handler" 1
-  fi
-
-elif [[ -f "$CLUSTER_SRC" ]]; then
-  # Check if they edited the source directly instead of creating a patch
-  MODIFIED=$(cat "$CLUSTER_SRC" | tr '[:upper:]' '[:lower:]')
-
-  # Check if clusterShouldDeferEpochBump was removed or neutered
-  if echo "$MODIFIED" | grep -qE 'clustershoulddeferepochbump'; then
-    # Function still exists - check if the call was removed or the function always returns 0
-    FUNC_BODY=$(sed -n '/clusterShouldDeferEpochBump/,/^}/p' "$CLUSTER_SRC")
-    if echo "$FUNC_BODY" | grep -qE 'return 0|return false'; then
-      check "Patch file exists" 0
-      check "Patch targets cluster_legacy.c" 0
-      check "Patch is valid unified diff" 1
-      check "Patch addresses the defer mechanism" 0
-      check "Patch preserves epoch collision handler" 0
-    else
-      # Check if the call site was modified
-      CALL_LINE=$(grep -n "clusterShouldDeferEpochBump" "$CLUSTER_SRC" | grep -v "^.*int\|^.*void\|^.*static\|^.*{" | head -1)
-      if [[ -z "$CALL_LINE" ]] || echo "$CALL_LINE" | grep -qE '//|/\*|\bif\b.*!'; then
-        check "Patch file exists" 0
-        check "Patch targets cluster_legacy.c" 0
-        check "Patch is valid unified diff" 1
-        check "Patch addresses the defer mechanism" 0
-        check "Patch preserves epoch collision handler" 0
-      else
-        check "Patch file exists" 0
-        check "Patch targets cluster_legacy.c" 0
-        check "Patch is valid unified diff" 1
-        check "Patch addresses the defer mechanism" 1
-        check "Patch preserves epoch collision handler" 0
-      fi
-    fi
-  else
-    # Function was completely removed - that's a valid fix
-    check "Patch file exists" 0
-    check "Patch targets cluster_legacy.c" 0
-    check "Patch is valid unified diff" 1
-    check "Patch addresses the defer mechanism" 0
-    check "Patch preserves epoch collision handler" 0
-  fi
-else
-  check "Patch file exists" 1
-  check "Patch targets cluster_legacy.c" 1
-  check "Patch is valid unified diff" 1
-  check "Patch addresses the defer mechanism" 1
-  check "Patch preserves epoch collision handler" 1
+if [[ ! -f "$CLUSTER_SRC" ]]; then
+  check "cluster_legacy.c exists" 1
+  echo "Results: $PASS passed, $FAIL failed out of $((PASS + FAIL)) checks"
+  exit 0
 fi
 
-# --- Part 3: Root cause accuracy (3 checks) ---
+# Compare against the original buggy defer function
+# The original has: if (clusterShouldDeferEpochBump()) return;
+# A fix should remove/neuter that call or the function
+ORIG_DEFER_CALL=$(grep -c "clusterShouldDeferEpochBump" "$CLUSTER_SRC" 2>/dev/null || echo 0)
+ORIG_DEFER_ACTIVE=$(grep -c 'if (clusterShouldDeferEpochBump())' "$CLUSTER_SRC" 2>/dev/null || echo 0)
 
-# Search all text files for evidence they found the right function
-ALL_TEXT=$(find "$WORK_DIR" -maxdepth 1 \( -name "*.md" -o -name "*.txt" -o -name "*.patch" -o -name "*.diff" \) ! -name "symptoms.md" ! -name "CLAUDE.md" -exec cat {} + 2>/dev/null | tr '[:upper:]' '[:lower:]')
+# Either function removed entirely, or the call is commented/removed/negated
+if [[ "$ORIG_DEFER_ACTIVE" -eq 0 ]]; then
+  check "Defer mechanism was modified" 0
+elif grep -qE '//.*clusterShouldDeferEpochBump|/\*.*clusterShouldDeferEpochBump|!clusterShouldDeferEpochBump' "$CLUSTER_SRC" 2>/dev/null; then
+  check "Defer mechanism was modified" 0
+else
+  # Check if function body now returns 0
+  FUNC_RETURNS_0=$(sed -n '/int clusterShouldDeferEpochBump/,/^}/p' "$CLUSTER_SRC" 2>/dev/null | grep -c 'return 0' || echo 0)
+  if [[ "$FUNC_RETURNS_0" -gt 0 ]]; then
+    check "Defer mechanism was modified" 0
+  else
+    check "Defer mechanism was modified" 1
+  fi
+fi
 
-# Must mention clusterHandleConfigEpochCollision
-echo "$ALL_TEXT" | grep -qE 'clusterhandleconfigepochcollision|handleconfigepochcollision|handle.*config.*epoch.*collision'
-check "Mentions clusterHandleConfigEpochCollision" "$?"
+# -----------------------------------------------------------------------
+# Check 2: clusterHandleConfigEpochCollision still has the epoch bump
+# (agent didn't break the collision handler itself)
+# -----------------------------------------------------------------------
+if grep -A20 'void clusterHandleConfigEpochCollision' "$CLUSTER_SRC" 2>/dev/null | grep -q 'currentEpoch++'; then
+  check "Epoch collision handler preserved" 0
+else
+  check "Epoch collision handler preserved" 1
+fi
 
-# Must mention clusterShouldDeferEpochBump or the defer logic
-echo "$ALL_TEXT" | grep -qE 'clustershoulddeferepochbump|shoulddeferepochbump|defer.*epoch.*bump|defer.*bump'
-check "Mentions clusterShouldDeferEpochBump" "$?"
+# -----------------------------------------------------------------------
+# Check 3: Docker build succeeds (the fix compiles)
+# -----------------------------------------------------------------------
+BUILD_OUT=$(docker-compose build 2>&1)
+BUILD_RC=$?
+check "Docker build succeeds" "$BUILD_RC"
 
-# Must explain WHY it causes permanent split-brain
-echo "$ALL_TEXT" | grep -qE 'always.*defer|always.*true|never.*resolv|permanent|indefinit|infinite|stuck|deadlock|configepoch.*equal.*currentepoch|match.*currentepoch'
-check "Explains why split-brain is permanent" "$?"
+if [[ "$BUILD_RC" -ne 0 ]]; then
+  echo "Build failed, skipping runtime checks"
+  echo ""
+  echo "Results: $PASS passed, $FAIL failed out of $((PASS + FAIL)) checks"
+  exit 0
+fi
+
+# -----------------------------------------------------------------------
+# Check 4: Cluster starts and forms
+# -----------------------------------------------------------------------
+docker-compose up -d 2>/dev/null
+sleep 5
+
+# Create cluster
+docker-compose exec -T valkey-1 valkey-cli --cluster create \
+  172.30.0.11:7001 172.30.0.12:7002 172.30.0.13:7003 \
+  172.30.0.14:7004 172.30.0.15:7005 172.30.0.16:7006 \
+  --cluster-replicas 1 --cluster-yes 2>/dev/null
+
+sleep 3
+
+CLUSTER_STATE=$(docker-compose exec -T valkey-1 valkey-cli -p 7001 CLUSTER INFO 2>/dev/null | grep cluster_state | tr -d '\r')
+if echo "$CLUSTER_STATE" | grep -q "cluster_state:ok"; then
+  check "Cluster forms successfully" 0
+else
+  check "Cluster forms successfully" 1
+  echo "Results: $PASS passed, $FAIL failed out of $((PASS + FAIL)) checks"
+  exit 0
+fi
+
+# -----------------------------------------------------------------------
+# Check 5: Write data
+# -----------------------------------------------------------------------
+WRITE_OK=0
+for i in $(seq 1 50); do
+  docker-compose exec -T valkey-1 valkey-cli -p 7001 -c SET "key:$i" "val:$i" 2>/dev/null && WRITE_OK=$((WRITE_OK + 1))
+done
+check "Writes succeed (>40 of 50)" "$([ "$WRITE_OK" -gt 40 ] && echo 0 || echo 1)"
+
+# -----------------------------------------------------------------------
+# Check 6-7: Partition test - the real test
+# Disconnect a primary, wait for failover, reconnect, check no split-brain
+# -----------------------------------------------------------------------
+
+# Find primary for slot 0
+NODES_BEFORE=$(docker-compose exec -T valkey-2 valkey-cli -p 7002 CLUSTER NODES 2>/dev/null)
+
+# Disconnect valkey-1
+CONTAINER=$(docker-compose ps -q valkey-1)
+NETWORK=$(docker inspect "$CONTAINER" --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null | head -1)
+
+if [[ -n "$CONTAINER" && -n "$NETWORK" ]]; then
+  docker network disconnect "$NETWORK" "$CONTAINER" 2>/dev/null
+
+  # Wait for failover
+  sleep 15
+
+  # Reconnect
+  docker network connect "$NETWORK" "$CONTAINER" 2>/dev/null
+
+  # Wait for convergence
+  sleep 15
+
+  # Check for split-brain: count masters claiming overlapping slots
+  NODES_AFTER=$(docker-compose exec -T valkey-2 valkey-cli -p 7002 CLUSTER NODES 2>/dev/null)
+
+  # Count how many nodes are master
+  MASTER_COUNT=$(echo "$NODES_AFTER" | grep -c "master" || echo 0)
+  check "Exactly 3 masters after partition heal" "$([ "$MASTER_COUNT" -eq 3 ] && echo 0 || echo 1)"
+
+  # Check no two masters claim the same slot range
+  # Extract slot ranges for masters, check for duplicates
+  SLOT_RANGES=$(echo "$NODES_AFTER" | grep "master" | grep -oE '[0-9]+-[0-9]+' | sort)
+  UNIQUE_RANGES=$(echo "$SLOT_RANGES" | sort -u)
+  if [[ "$SLOT_RANGES" == "$UNIQUE_RANGES" && -n "$SLOT_RANGES" ]]; then
+    check "No overlapping slot ranges (no split-brain)" 0
+  else
+    check "No overlapping slot ranges (no split-brain)" 1
+  fi
+else
+  check "Exactly 3 masters after partition heal" 1
+  check "No overlapping slot ranges (no split-brain)" 1
+fi
 
 echo ""
-echo "Results: $PASS_COUNT passed, $FAIL_COUNT failed out of $((PASS_COUNT + FAIL_COUNT)) checks"
+echo "Results: $PASS passed, $FAIL failed out of $((PASS + FAIL)) checks"
