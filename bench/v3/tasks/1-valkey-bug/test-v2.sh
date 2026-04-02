@@ -39,7 +39,8 @@ fi
 # The original bug: if (clusterShouldDeferEpochBump()) return;
 # Valid fixes: remove the call, remove the function, negate it, return 0
 # -----------------------------------------------------------------------
-HAS_ACTIVE_CALL=$(grep -c 'if (clusterShouldDeferEpochBump())' "$CLUSTER_SRC" 2>/dev/null || echo 0)
+HAS_ACTIVE_CALL=$(grep -c 'if (clusterShouldDeferEpochBump())' "$CLUSTER_SRC" 2>/dev/null)
+HAS_ACTIVE_CALL=${HAS_ACTIVE_CALL:-0}
 
 if [ "$HAS_ACTIVE_CALL" -eq 0 ]; then
   # Call removed or function removed entirely
