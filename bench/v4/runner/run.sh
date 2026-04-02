@@ -51,10 +51,8 @@ for task in $TASKS; do
             git clone --depth 1 https://github.com/valkey-io/valkey-bloom.git "$d/valkey-bloom" 2>/dev/null || true
           fi
           ;;
-        6-search-review)
-          if [ ! -d "$d/valkey-search" ]; then
-            git clone --depth 1 https://github.com/valkey-io/valkey-search.git "$d/valkey-search" 2>/dev/null || true
-          fi
+        6-search-queries)
+          # No repo clone needed - uses docker valkey-bundle
           ;;
       esac
     fi

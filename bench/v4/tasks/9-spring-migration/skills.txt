@@ -1,2 +1,0 @@
-skills/spring-data-valkey
-skills/valkey-glide/java
