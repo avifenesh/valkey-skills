@@ -5,6 +5,8 @@
 
 set -uo pipefail
 export DOCKER_HOST="${DOCKER_HOST:-unix:///var/run/docker.sock}"
+export CLAUDE_CODE_USE_BEDROCK="${CLAUDE_CODE_USE_BEDROCK:-1}"
+export AWS_REGION="${AWS_REGION:-us-west-2}"
 
 MODEL_ID="${1:?Usage: run.sh <model_id> <model_name>}"
 MODEL_NAME="${2:?Usage: run.sh <model_id> <model_name>}"
