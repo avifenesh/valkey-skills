@@ -39,6 +39,10 @@ After a failover and partition recovery, the epoch collision resolution should e
 - Something prevents the cluster from resolving the epoch collision between the old and new primary
 - The bug is in the C source code in this directory
 
-## Investigation
+## Your Task
 
-Run `./reproduce.sh` to see this happen. Then investigate the source code in `src/` to find the root cause.
+1. Investigate the source code in `src/` to find the root cause of this bug.
+2. Fix the bug by editing the C source code directly.
+3. Rebuild and verify: run `docker compose up -d --build` and then `./reproduce.sh` to confirm the split-brain no longer occurs after partition recovery.
+
+The fix should be minimal - do not rewrite large sections of code.

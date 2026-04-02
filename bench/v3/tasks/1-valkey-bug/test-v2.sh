@@ -11,7 +11,7 @@ PASS=0
 FAIL=0
 
 check() {
-  if [[ "$2" == "0" ]]; then
+  if [ "$2" = "0" ]; then
     echo "PASS: $1"; PASS=$((PASS + 1))
   else
     echo "FAIL: $1"; FAIL=$((FAIL + 1))
@@ -30,7 +30,7 @@ cd "$WORK_DIR"
 # Check 1: Source was modified (agent actually changed something)
 # -----------------------------------------------------------------------
 CLUSTER_SRC="$WORK_DIR/src/cluster_legacy.c"
-if [[ ! -f "$CLUSTER_SRC" ]]; then
+if [  ! -f "$CLUSTER_SRC" ] ; then
   check "cluster_legacy.c exists" 1
   echo "Results: $PASS passed, $FAIL failed out of $((PASS + FAIL)) checks"
   exit 0
@@ -39,18 +39,18 @@ fi
 # Compare against the original buggy defer function
 # The original has: if (clusterShouldDeferEpochBump()) return;
 # A fix should remove/neuter that call or the function
-ORIG_DEFER_CALL=$(grep -c "clusterShouldDeferEpochBump" "$CLUSTER_SRC" 2>/dev/null || echo 0)
-ORIG_DEFER_ACTIVE=$(grep -c 'if (clusterShouldDeferEpochBump())' "$CLUSTER_SRC" 2>/dev/null || echo 0)
+ORIG_DEFER_ACTIVE=$(grep -c 'if (clusterShouldDeferEpochBump())' "$CLUSTER_SRC" 2>/dev/null || true)
+ORIG_DEFER_ACTIVE=${ORIG_DEFER_ACTIVE:-0}
 
 # Either function removed entirely, or the call is commented/removed/negated
-if [[ "$ORIG_DEFER_ACTIVE" -eq 0 ]]; then
+if [ "$ORIG_DEFER_ACTIVE" -eq 0 ]; then
   check "Defer mechanism was modified" 0
 elif grep -qE '//.*clusterShouldDeferEpochBump|/\*.*clusterShouldDeferEpochBump|!clusterShouldDeferEpochBump' "$CLUSTER_SRC" 2>/dev/null; then
   check "Defer mechanism was modified" 0
 else
   # Check if function body now returns 0
   FUNC_RETURNS_0=$(sed -n '/int clusterShouldDeferEpochBump/,/^}/p' "$CLUSTER_SRC" 2>/dev/null | grep -c 'return 0' || echo 0)
-  if [[ "$FUNC_RETURNS_0" -gt 0 ]]; then
+  if [  "$FUNC_RETURNS_0" -gt 0 ] ; then
     check "Defer mechanism was modified" 0
   else
     check "Defer mechanism was modified" 1
@@ -74,7 +74,7 @@ BUILD_OUT=$(docker-compose build 2>&1)
 BUILD_RC=$?
 check "Docker build succeeds" "$BUILD_RC"
 
-if [[ "$BUILD_RC" -ne 0 ]]; then
+if [  "$BUILD_RC" -ne 0 ] ; then
   echo "Build failed, skipping runtime checks"
   echo ""
   echo "Results: $PASS passed, $FAIL failed out of $((PASS + FAIL)) checks"
@@ -125,7 +125,7 @@ NODES_BEFORE=$(docker-compose exec -T valkey-2 valkey-cli -p 7002 CLUSTER NODES 
 CONTAINER=$(docker-compose ps -q valkey-1)
 NETWORK=$(docker inspect "$CONTAINER" --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null | head -1)
 
-if [[ -n "$CONTAINER" && -n "$NETWORK" ]]; then
+if [ -n "$CONTAINER" ] && [ -n "$NETWORK" ]; then
   docker network disconnect "$NETWORK" "$CONTAINER" 2>/dev/null
 
   # Wait for failover
@@ -148,7 +148,7 @@ if [[ -n "$CONTAINER" && -n "$NETWORK" ]]; then
   # Extract slot ranges for masters, check for duplicates
   SLOT_RANGES=$(echo "$NODES_AFTER" | grep "master" | grep -oE '[0-9]+-[0-9]+' | sort)
   UNIQUE_RANGES=$(echo "$SLOT_RANGES" | sort -u)
-  if [[ "$SLOT_RANGES" == "$UNIQUE_RANGES" && -n "$SLOT_RANGES" ]]; then
+  if [ "$SLOT_RANGES" = "$UNIQUE_RANGES" ] && [ -n "$SLOT_RANGES" ]; then
     check "No overlapping slot ranges (no split-brain)" 0
   else
     check "No overlapping slot ranges (no split-brain)" 1
