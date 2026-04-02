@@ -35,13 +35,21 @@ trap cleanup EXIT
 
 echo "Building valkey-json module..."
 cd "$JSON_DIR"
-BUILD_OUTPUT=$(cargo build --release 2>&1) && BUILD_EXIT=0 || BUILD_EXIT=$?
+if [ -f "build.sh" ]; then
+  BUILD_OUTPUT=$(bash build.sh 2>&1) && BUILD_EXIT=0 || BUILD_EXIT=$?
+elif [ -f "CMakeLists.txt" ]; then
+  mkdir -p build && cd build
+  BUILD_OUTPUT=$(cmake .. 2>&1 && make -j4 2>&1) && BUILD_EXIT=0 || BUILD_EXIT=$?
+  cd "$JSON_DIR"
+else
+  BUILD_OUTPUT=$(cargo build --release 2>&1) && BUILD_EXIT=0 || BUILD_EXIT=$?
+fi
 
 if [ "$BUILD_EXIT" = "0" ]; then
-  check "cargo build --release succeeds" 0
+  check "build succeeds" 0
 else
-  echo "$BUILD_OUTPUT"
-  check "cargo build --release succeeds" 1
+  echo "$BUILD_OUTPUT" | tail -10
+  check "build succeeds" 1
   echo ""
   echo "========================================="
   echo "Results: $PASS_COUNT passed, $FAIL_COUNT failed out of $((PASS_COUNT + FAIL_COUNT)) checks"
@@ -50,7 +58,7 @@ else
 fi
 
 # Check .so/.dylib file exists
-SO_FILE=$(find "$JSON_DIR/target/release/" -maxdepth 1 \( -name "*.so" -o -name "*.dylib" \) | head -1)
+SO_FILE=$(find "$JSON_DIR" -maxdepth 3 \( -name "*.so" -o -name "*.dylib" \) -path "*/build/*" -o \( -name "*.so" -o -name "*.dylib" \) -path "*/release/*" 2>/dev/null | head -1)
 if [ -n "$SO_FILE" ]; then
   check ".so/.dylib file exists" 0
 else

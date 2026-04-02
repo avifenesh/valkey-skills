@@ -11,4 +11,4 @@ Behavior:
 - Returns OK on success
 - Returns error if key doesn't exist or path is invalid
 
-The valkey-json source is in `valkey-json/`. Look at how existing commands are implemented. Must compile with `cargo build --release`.
+The valkey-json source is in `valkey-json/`. Look at how existing commands are implemented. Must compile cleanly - check `build.sh` for the build process.
