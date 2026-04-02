@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 # Test script for Task 1: GLIDE Multi-Language Microservices
 # Usage: test.sh <workspace_dir>

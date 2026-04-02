@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 # Test script for Task 8: Session Store with Per-Field Independent Expiration
 # Usage: test.sh <workspace_dir>

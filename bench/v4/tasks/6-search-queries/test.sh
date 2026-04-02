@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 # Test script for Task 6: valkey-search Query Builder
 # Usage: test.sh <workspace_dir>

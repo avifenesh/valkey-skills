@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 WORK_DIR="$(cd "${1:-.}" && pwd)"
 ANSWERS="$WORK_DIR/answers.md"

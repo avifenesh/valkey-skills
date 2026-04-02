@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 # Test script for Task 3: Valkey Bug Fix (two bugs: AOF key duplication + epoch split-brain)
 # Usage: test.sh <workspace_dir>

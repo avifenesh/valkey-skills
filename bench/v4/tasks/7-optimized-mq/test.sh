@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 # Test script for Task 7: Optimized Message Queue with Distributed Locking
 # Usage: test.sh <workspace_dir>
