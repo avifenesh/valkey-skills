@@ -97,6 +97,7 @@ for task in $TASKS; do
         --model "$MODEL_ID" \
         --output-format json \
         --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent" \
+        --disallowedTools "WebFetch,WebSearch,Bash(curl:*),Bash(wget:*)" \
         > "$rd/agent_output.json" 2>"$rd/agent_stderr.log"
       echo "[AGENT-DONE] ${task}_${cond}"
     ) &
