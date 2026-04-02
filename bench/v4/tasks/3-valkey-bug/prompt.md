@@ -1,15 +1,33 @@
-# Bug Report
+# Bug Report: Key Duplication After Server Restart
 
-We built Valkey from the source code in this directory. After deploying a 6-node cluster (3 primaries, 3 replicas), we observed the following issue:
+## Environment
+- Valkey cluster mode, 3 primaries + 3 replicas
+- AOF persistence enabled (appendonly yes)
+- Built from source in this directory
 
-When a primary node is disconnected from the network and then reconnected after a failover occurs, the cluster enters a permanent split-brain state. Two nodes claim to be master of the same slot range with identical configEpoch values. The cluster never recovers on its own.
+## Observed Behavior
+After a server restart (or `DEBUG LOADAOF`), we observe:
+- `KEYS *` returns duplicate key names that shouldn't exist
+- Some keys appear to be in the wrong hash slot
+- Replication to replicas fails with errors about duplicate keys
+- If the server saves the corrupted state and restarts again, it may crash
 
-We've included a script `reproduce.sh` that demonstrates the bug (requires Docker).
+## Reproduction
+The issue only occurs when:
+1. AOF is enabled with cluster mode
+2. MULTI/EXEC transactions contain keys that hash to different slots
+3. The server restarts and replays the AOF
 
-A known-good Valkey 9.0.3 build does NOT have this problem - the issue was introduced in our modified source.
+## Steps to Reproduce
+1. Build and start a cluster: `docker compose up -d --build`
+2. Write some data using MULTI/EXEC with keys in different slots
+3. Restart the server (or run `DEBUG LOADAOF`)
+4. Run `KEYS *` and observe duplicate keys
 
-Please:
-1. Find and fix the bug in the source code
-2. The code must compile successfully after your fix
+## Notes
+- The bug is in the C source code in this directory
+- A known-good Valkey 9.0.3 does not have this issue
+- The fix is small (a few lines) but hard to find
+- The source tree has ~200 files
 
-The source tree has ~200 files. The bug is a logic error, not a typo or syntax error.
+Please find and fix the bug. The code must compile after your fix.
