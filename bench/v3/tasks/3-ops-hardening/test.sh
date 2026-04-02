@@ -27,7 +27,7 @@ check() {
 
 cleanup() {
     echo "--- Cleanup ---"
-    cd "$WORK" && docker compose down -v --remove-orphans 2>/dev/null || true
+    cd "$WORK" && docker-compose down -v --remove-orphans 2>/dev/null || true
 }
 trap cleanup EXIT
 
@@ -46,7 +46,7 @@ conf_absent() {
 
 # ---- Start Valkey with the fixed config ----
 echo "--- Starting Valkey with fixed config ---"
-cd "$WORK" && docker compose up -d 2>&1
+cd "$WORK" && docker-compose up -d 2>&1
 # Wait for Valkey to accept connections
 STARTED=0
 # Detect auth: if requirepass is set in config, use it for CLI

@@ -23,13 +23,13 @@ check() {
 
 cleanup() {
     echo "--- Cleanup ---"
-    cd "$WORK_DIR" && docker compose down -v --remove-orphans 2>/dev/null || true
+    cd "$WORK_DIR" && docker-compose down -v --remove-orphans 2>/dev/null || true
 }
 trap cleanup EXIT
 
 # ---- Check 1: Docker cluster starts ----
 echo "--- Check 1: Docker cluster ---"
-cd "$WORK_DIR" && docker compose up -d 2>&1
+cd "$WORK_DIR" && docker-compose up -d 2>&1
 # Wait for cluster-init to finish (it sleeps 3s then creates the cluster)
 sleep 8
 

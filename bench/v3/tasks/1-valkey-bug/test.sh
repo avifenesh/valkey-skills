@@ -7,7 +7,7 @@ set -euo pipefail
 
 WORK_DIR="$(cd "${1:-.}" && pwd)"
 
-cleanup() { cd "$WORK_DIR"; docker compose down -v --remove-orphans 2>/dev/null || true; }
+cleanup() { cd "$WORK_DIR"; docker-compose down -v --remove-orphans 2>/dev/null || true; }
 trap cleanup EXIT
 
 ANALYSIS="$WORK_DIR/ANALYSIS.md"
@@ -102,7 +102,7 @@ fi
 
 # Start the Docker container
 cd "$WORK_DIR"
-docker compose up -d --wait 2>/dev/null || docker-compose up -d 2>/dev/null || true
+docker-compose up -d --wait 2>/dev/null || docker-compose up -d 2>/dev/null || true
 sleep 2
 
 # Check Valkey is running

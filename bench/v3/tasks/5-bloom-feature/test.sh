@@ -24,7 +24,7 @@ check() {
 
 cleanup() {
   cd "$WORK_DIR"
-  docker compose down 2>/dev/null || docker-compose down 2>/dev/null || true
+  docker-compose down 2>/dev/null || docker-compose down 2>/dev/null || true
 }
 trap cleanup EXIT
 
@@ -100,7 +100,7 @@ services:
 DOCKER
 
 cd "$WORK_DIR"
-docker compose up -d --wait 2>/dev/null || docker-compose up -d 2>/dev/null || true
+docker-compose up -d --wait 2>/dev/null || docker-compose up -d 2>/dev/null || true
 sleep 3
 
 CLI="valkey-cli -p 6406"

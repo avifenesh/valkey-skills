@@ -40,7 +40,7 @@ rcli() {
 
 cleanup() {
     echo "--- Cleanup ---"
-    docker compose down -v --remove-orphans 2>/dev/null || true
+    docker-compose down -v --remove-orphans 2>/dev/null || true
 }
 trap cleanup EXIT
 
@@ -72,8 +72,8 @@ else
 fi
 
 # ---- Start containers ----
-echo "--- Starting docker compose ---"
-docker compose up -d --wait --wait-timeout 30 2>&1
+echo "--- Starting docker-compose ---"
+docker-compose up -d --wait --wait-timeout 30 2>&1
 
 # Wait for primary to accept commands
 for i in $(seq 1 20); do
@@ -145,7 +145,7 @@ pcli BGSAVE >/dev/null
 sleep 2
 
 # Restart primary container
-docker compose restart valkey-primary 2>&1
+docker-compose restart valkey-primary 2>&1
 for i in $(seq 1 20); do
     pcli PING 2>/dev/null | grep -q PONG && break
     sleep 1

@@ -6,7 +6,7 @@ set -uo pipefail
 
 WORK_DIR="${1:-.}"
 
-cleanup() { cd "$WORK_DIR"; docker compose down -v --remove-orphans 2>/dev/null || true; }
+cleanup() { cd "$WORK_DIR"; docker-compose down -v --remove-orphans 2>/dev/null || true; }
 trap cleanup EXIT
 
 PASS=0
@@ -27,7 +27,7 @@ check() {
 cd "$WORK_DIR" || exit 1
 
 # Start services if not running
-docker compose up -d --wait 2>/dev/null || true
+docker-compose up -d --wait 2>/dev/null || true
 python3 setup.py > /dev/null 2>&1 || true
 
 # Run the fixed queries and capture output

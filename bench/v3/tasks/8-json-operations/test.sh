@@ -8,11 +8,11 @@ set -uo pipefail
 DIR="${1:-.}"
 cd "$DIR"
 
-cleanup() { cd "$DIR"; docker compose down -v --remove-orphans 2>/dev/null || true; }
+cleanup() { cd "$DIR"; docker-compose down -v --remove-orphans 2>/dev/null || true; }
 trap cleanup EXIT
 
 # Ensure docker is running and data is loaded
-docker compose up -d --wait 2>/dev/null || true
+docker-compose up -d --wait 2>/dev/null || true
 python3 setup.py > /dev/null 2>&1 || true
 
 # Run the operations

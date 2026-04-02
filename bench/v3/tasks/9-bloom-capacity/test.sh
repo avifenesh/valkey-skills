@@ -21,13 +21,13 @@ check() {
   fi
 }
 
-# Start Valkey+bloom via docker compose
+# Start Valkey+bloom via docker-compose
 cleanup() {
-  cd "$WORK_DIR" && docker compose down -v --remove-orphans 2>/dev/null || true
+  cd "$WORK_DIR" && docker-compose down -v --remove-orphans 2>/dev/null || true
 }
 trap cleanup EXIT
 
-cd "$WORK_DIR" && docker compose up -d 2>&1
+cd "$WORK_DIR" && docker-compose up -d 2>&1
 
 # Wait for Valkey to be ready
 for i in $(seq 1 30); do
