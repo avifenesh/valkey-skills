@@ -26,9 +26,7 @@ When a primary node is disconnected from the network and then reconnected after 
 ## Notes
 - Both bugs are in the C source code in this directory
 - A known-good Valkey 9.0.3 does not have either issue
-- Each fix is small but hard to find
-- The source tree has ~200 files
 - There are exactly 2 bugs to find and fix
 
-Please find and fix both bugs. The code must compile after your fixes.
+Find and fix both bugs. Compile the code when finished.
 
