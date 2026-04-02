@@ -79,9 +79,9 @@ fi
 
 # --- Check 3: Code compiles ---
 echo ""
-echo "Building valkey (make -j$(nproc))..."
+echo "Building valkey (make -j4)..."
 cd "$WORK_DIR"
-if make -j"$(nproc)" 2>&1; then
+if make -j4 2>&1; then
   check "make succeeds" 0
 else
   check "make succeeds" 1

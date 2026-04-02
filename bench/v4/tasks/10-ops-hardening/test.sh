@@ -46,30 +46,7 @@ fi
 check "valkey-fixed.conf exists" 0
 
 # =========================================
-# CHECK 2: Server starts with fixed config
-# =========================================
-echo "Starting valkey-server with fixed config on port $PORT..."
-
-# Override port, daemonize, and disable ACL auth for testing
-valkey-server "$FIXED_CONF" --port $PORT --daemonize yes \
-  --loglevel warning --save "" --appendonly no \
-  --requirepass "" --protected-mode no \
-  --aclfile "" --user "default on nopass ~* &* +@all" 2>&1 || true
-sleep 2
-
-if valkey-cli -p $PORT PING 2>/dev/null | grep -q "PONG"; then
-  check "valkey-server starts with fixed config" 0
-else
-  check "valkey-server starts with fixed config" 1
-  echo ""
-  echo "========================================="
-  echo "Results: $PASS_COUNT passed, $FAIL_COUNT failed out of $((PASS_COUNT + FAIL_COUNT)) checks"
-  echo "========================================="
-  exit 1
-fi
-
-# =========================================
-# CONFIG FILE CONTENT CHECKS
+# CONFIG FILE CONTENT CHECKS (before server start)
 # =========================================
 echo ""
 echo "Checking fixed config file contents..."
