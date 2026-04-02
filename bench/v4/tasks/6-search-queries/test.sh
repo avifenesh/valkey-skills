@@ -33,7 +33,12 @@ trap cleanup EXIT
 # =========================================
 
 echo "Starting valkey-bundle container on port $PORT..."
+# Kill any container using our port or name
 docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+for cid in $(docker ps -q --filter "publish=$PORT" 2>/dev/null); do
+  docker rm -f "$cid" 2>/dev/null || true
+done
+sleep 1
 docker run -d --name "$CONTAINER_NAME" -p "$PORT:6379" valkey/valkey-bundle:latest >/dev/null 2>&1
 
 # Wait for server to be ready
