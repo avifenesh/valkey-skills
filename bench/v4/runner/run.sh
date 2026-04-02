@@ -99,6 +99,7 @@ for task in $TASKS; do
         --max-turns 60 \
         --model "$MODEL_ID" \
         --output-format json \
+        --dangerously-skip-permissions \
         > "$rd/agent_output.json" 2>"$rd/agent_stderr.log"
       echo "[AGENT-DONE] ${task}_${cond}"
     ) &
