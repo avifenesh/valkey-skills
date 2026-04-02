@@ -1,31 +1,21 @@
-Hey, I've been going through the Valkey docs and I'm stuck on a few things. Some of these I half-know but I want to make sure I have the exact details right before I put them in our team wiki. Can you write up answers to all of these in `answers.md`? One section per question is fine.
+I'm running Valkey 9.1 in production and have some questions. Write answers in `answers.md`.
 
-## Q1: Slow command logging in Valkey 8.1+
-What is the exact command to retrieve the last 10 slow-executing commands in Valkey 8.1+? Give the full command with all required arguments. What was this command called before Valkey 8.1, and why does the new command require an additional argument that the old one did not?
+We're seeing intermittent latency spikes and some clients timing out. Our monitoring only shows average latency which looks fine. How should we dig into this to find the actual problematic commands? We want to catch both slow commands and commands that return abnormally large results.
 
-## Q2: Conditional SET based on current value
-How do I atomically set the key `mykey` to `"new_value"` but only if its current value equals `"old_value"`? I need the exact command with all arguments. What version introduced this flag, and what two existing SET flags is it mutually exclusive with?
+We're building a reservation system. When a user starts checkout, we set a hold on the item. The hold should only be created once (no double-holds), and once it exists, only the holding user's session should be able to modify it (by providing the current hold token). We want to avoid Lua scripts if possible. How would you design the SET/update/release flow?
 
-## Q3: Three COMMANDLOG entry types and their config directives
-I know COMMANDLOG tracks three types of entries but I keep mixing them up. For each type, what is: (a) the exact type name used in the COMMANDLOG GET command, (b) the exact configuration directive that controls its threshold, and (c) the default threshold value with units?
+Our app stores user sessions as Valkey hashes. The problem: an auth refresh should reset the auth_token TTL without affecting the CSRF token's shorter TTL, and the user_preferences field should never expire. Right now we're using EXPIRE on the whole key which kills everything. We tried separate keys but it's a maintenance nightmare. Ideas?
 
-## Q4: Setting a hash field with a TTL, only if it already exists
-I need to set hash field `token` to value `abc123` on key `session:xyz` with a 300-second TTL, but ONLY if the field already exists. What is the exact command with all arguments and flags? What command is this, and what version introduced it?
+We have a distributed task scheduler. Workers acquire tasks by setting a lock key with their worker ID. When a worker finishes or crashes, the lock needs to be released. The critical requirement: a worker must never release a lock it doesn't own. What's the safest pattern for this in current Valkey?
 
-## Q5: Lazyfree default values - Valkey vs Redis 7.x
-In Valkey, what is the default value of `lazyfree-lazy-expire`? What was the default for this same parameter in Redis 7.x? Can you list all five lazyfree parameters and confirm whether each defaults to `yes` or `no` in current Valkey?
+We migrated from Redis 7.2 to Valkey and carried over the config file. Performance is good but we noticed some background behavior differences - lazy deletion seems more aggressive, and some config warnings appear in logs about deprecated directives. What should we look at?
 
-## Q6: Safe distributed lock release without Lua
-How do I atomically delete the key `lock:order` only if its current value equals `token_abc` - without using a Lua script? What is this command called, what version introduced it, and what does it return on success vs failure (exact integer values)?
+Our payment processing pipeline stores transaction state in hashes with per-field expiration. When we read a field, we often need to also bump its TTL to prevent expiry during processing. Currently we pipeline a read + expire command, but there's a race window. Better approach?
 
-## Q7: RDB file format changes in Valkey 9.0
-What RDB version number does Valkey 9.0 use? What magic string appears at the start of RDB files in this version, and how does it differ from all previous versions? What is the "foreign version" range and what is its purpose?
+One of our replicas keeps falling behind and doing full resyncs. The dataset is 40GB. We've tuned repl-backlog-size but it's still happening during traffic spikes. What else controls resync behavior? Are there Valkey improvements we should know about?
 
-## Q8: Numbered databases in cluster mode
-Before Valkey 9.0, what happened when you ran SELECT in cluster mode? What exact configuration directive enables multiple databases in cluster mode, and what is its default value? If you set it to 16, what databases become available?
+We set `io-threads 8` on our 16-core cluster nodes but benchmarks show barely any improvement. CPU is spread across cores but throughput is about the same as single-threaded. What are the common reasons this happens?
 
-## Q9: The deprecated io-threads companion directive
-Older Redis guides say to set a companion directive alongside `io-threads`. What is the exact name of this deprecated directive? Why is it no longer needed in current Valkey? What other configuration directive is also deprecated because its behavior is now always enabled?
+We want to isolate our multi-tenant data using database numbers, but we're running in cluster mode. What are our options?
 
-## Q10: HGETEX - get hash fields and set TTL atomically
-How do I read hash fields `user_id` and `email` from key `session:abc` while simultaneously setting a 3600-second TTL on those fields? What is the exact command, what version introduced it, and how does it differ from a pipeline of HMGET + HEXPIRE?
+Our ops team runs a nightly audit that iterates every key in the cluster to check TTLs. They wrote a script that SSHes into each node and runs SCAN separately. It takes 20 minutes. Can we do better?

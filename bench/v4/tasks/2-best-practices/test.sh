@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Test script for Task 2: Valkey Technical Assessment (hard version)
-# Usage: test.sh <workspace_dir>
-#
-# Each question requires EXACT Valkey-specific terms that a Redis-trained
-# model would not produce. No fuzzy matching - terms must appear verbatim.
-
 WORK_DIR="$(cd "${1:-.}" && pwd)"
 ANSWERS="$WORK_DIR/answers.md"
 
@@ -24,12 +18,6 @@ check() {
   fi
 }
 
-# Helper: check if a term appears in the answers file (case-insensitive)
-has_term() {
-  grep -qiE "$1" "$ANSWERS" 2>/dev/null
-}
-
-# --- Check 0: answers.md exists ---
 if [ ! -f "$ANSWERS" ]; then
   echo "FAIL: answers.md not found at $ANSWERS"
   echo ""
@@ -40,110 +28,61 @@ if [ ! -f "$ANSWERS" ]; then
 fi
 check "answers.md exists" 0
 
-# --- Check 1: Has 10 question sections ---
-SECTION_COUNT=$(grep -ciE '^#+ *Q(uestion)? *[0-9]+' "$ANSWERS" 2>/dev/null || true)
-SECTION_COUNT=${SECTION_COUNT:-0}
-if [ "$SECTION_COUNT" -ge 10 ]; then
-  check "has 10 question sections" 0
-else
-  check "has 10 question sections ($SECTION_COUNT found)" 1
-fi
+CONTENT=$(cat "$ANSWERS" | tr '[:upper:]' '[:lower:]')
 
-# --- Per-question key term checks ---
-# Each question requires specific Valkey-only terms.
-# A model using Redis knowledge would NOT produce these terms.
+# Q1: COMMANDLOG with large-reply/large-request (not just SLOWLOG)
+echo "$CONTENT" | grep -q 'commandlog'
+check "Q1: mentions COMMANDLOG" "$?"
+echo "$CONTENT" | grep -qE 'large.reply|large.request'
+check "Q1: mentions large-reply or large-request types" "$?"
 
-# Q1: Must say COMMANDLOG (not just SLOWLOG) and include the type argument "slow"
-# Redis trap: would say SLOWLOG GET 10 without type argument
-if has_term "COMMANDLOG" && has_term "COMMANDLOG GET.*slow|COMMANDLOG.*GET.*slow"; then
-  check "Q1: COMMANDLOG GET with slow type" 0
-else
-  check "Q1: COMMANDLOG GET with slow type" 1
-fi
+# Q2: SET IFEQ for conditional update
+echo "$CONTENT" | grep -q 'ifeq'
+check "Q2: mentions SET IFEQ" "$?"
 
-# Q2: Must include the IFEQ flag (Valkey 8.1+, does not exist in Redis)
-# Redis trap: would suggest Lua EVAL or WATCH/MULTI
-if has_term "IFEQ"; then
-  check "Q2: SET IFEQ flag" 0
-else
-  check "Q2: SET IFEQ flag" 1
-fi
+# Q3: Hash field TTL (HSETEX/HEXPIRE/HTTL)
+echo "$CONTENT" | grep -qE 'hsetex|hexpire|httl|hgetex|hash.field.*ttl|field.*expir'
+check "Q3: mentions hash field TTL commands" "$?"
 
-# Q3: Must include all three commandlog config directive names
-# Redis trap: would only know slowlog-log-slower-than
-if has_term "commandlog-execution-slower-than" && has_term "commandlog-request-larger-than" && has_term "commandlog-reply-larger-than"; then
-  check "Q3: all three commandlog config directives" 0
-else
-  check "Q3: all three commandlog config directives" 1
-fi
+# Q4: DELIFEQ for lock release without Lua
+echo "$CONTENT" | grep -q 'delifeq'
+check "Q4: mentions DELIFEQ" "$?"
 
-# Q4: Must include HSETEX (Valkey 9.0 command) and FXX or FIELDS
-# Redis trap: no HSETEX in Redis, no per-field TTL, no FXX flag
-if has_term "HSETEX" && (has_term "FXX" || has_term "FIELDS"); then
-  check "Q4: HSETEX with FXX/FIELDS" 0
-else
-  check "Q4: HSETEX with FXX/FIELDS" 1
-fi
+# Q5: Lazyfree defaults are yes in Valkey
+echo "$CONTENT" | grep -qE 'lazyfree.*yes|default.*yes'
+check "Q5: mentions lazyfree defaults are yes" "$?"
 
-# Q5: Must state lazyfree-lazy-expire defaults to YES in Valkey
-# Also require lazyfree-lazy-user-del to confirm they listed all five
-# Redis trap: would say these default to no
-if has_term "lazyfree-lazy-expire" && has_term "lazyfree-lazy-user-del" && has_term "default.*yes|yes.*default|all.*yes|yes.*all"; then
-  check "Q5: lazyfree defaults all yes" 0
-else
-  check "Q5: lazyfree defaults all yes" 1
-fi
+# Q6: HGETEX for atomic read + TTL refresh
+echo "$CONTENT" | grep -q 'hgetex'
+check "Q6: mentions HGETEX" "$?"
 
-# Q6: Must include DELIFEQ (Valkey 9.0 command, does not exist in Redis)
-# Redis trap: would provide Lua EVAL script as the only option
-if has_term "DELIFEQ"; then
-  check "Q6: DELIFEQ command" 0
-else
-  check "Q6: DELIFEQ command" 1
-fi
+# Q7: Replication backlog + dual-channel or diskless
+echo "$CONTENT" | grep -qE 'repl.backlog|backlog.size'
+check "Q7: mentions repl-backlog-size" "$?"
+echo "$CONTENT" | grep -qE 'dual.channel|diskless'
+check "Q7: mentions dual-channel or diskless replication" "$?"
 
-# Q7: Must include RDB version 80 AND VALKEY magic string
-# Redis trap: would say REDIS magic string, not know version 80
-if has_term "\b80\b|version 80|RDB 80" && has_term "VALKEY.*magic|magic.*VALKEY|VALKEY.*header|header.*VALKEY|magic string.*VALKEY|VALKEY.*string"; then
-  check "Q7: RDB version 80 and VALKEY magic" 0
-else
-  # Fallback: check for both terms present anywhere
-  if has_term "RDB.*80|version.*80" && has_term '"VALKEY"|VALKEY magic|magic.*(is|string|header).*VALKEY'; then
-    check "Q7: RDB version 80 and VALKEY magic" 0
-  else
-    check "Q7: RDB version 80 and VALKEY magic" 1
-  fi
-fi
+# Q8: io-threads-do-reads deprecated
+echo "$CONTENT" | grep -qE 'io.threads.do.reads.*(deprecat|not.need|remov|always|unnecessary)|deprecat.*io.threads.do.reads'
+check "Q8: mentions io-threads-do-reads deprecated" "$?"
 
-# Q8: Must include cluster-databases directive name AND its default of 1
-# Redis trap: would say cluster mode cannot use multiple databases, period
-if has_term "cluster-databases" && has_term "default.*1|defaults.*1|default value.*1|cluster-databases.*1|1.*default"; then
-  check "Q8: cluster-databases default 1" 0
-else
-  check "Q8: cluster-databases default 1" 1
-fi
+# Q9: cluster-databases directive
+echo "$CONTENT" | grep -qE 'cluster.database'
+check "Q9: mentions cluster-databases" "$?"
 
-# Q9: Must include BOTH io-threads-do-reads AND dynamic-hz AND identify them as deprecated
-# Redis trap: would recommend enabling io-threads-do-reads as best practice
-if has_term "io-threads-do-reads" && has_term "dynamic-hz" && has_term "deprecat"; then
-  check "Q9: both deprecated directives" 0
-else
-  check "Q9: both deprecated directives" 1
-fi
+# Q10: CLUSTERSCAN
+echo "$CONTENT" | grep -q 'clusterscan'
+check "Q10: mentions CLUSTERSCAN" "$?"
 
-# Q10: Must include HGETEX (Valkey 9.0 command, does not exist in Redis)
-# Redis trap: would say this is not possible in a single command
-if has_term "HGETEX" && has_term "FIELDS"; then
-  check "Q10: HGETEX with FIELDS" 0
+# Length
+WORD_COUNT=$(wc -w < "$ANSWERS" 2>/dev/null | tr -d '[:space:]')
+if [ "$WORD_COUNT" -ge 300 ]; then
+  check "sufficient detail ($WORD_COUNT words)" 0
 else
-  check "Q10: HGETEX with FIELDS" 1
+  check "sufficient detail ($WORD_COUNT words, need 300)" 1
 fi
 
 echo ""
 echo "========================================="
 echo "Results: $PASS_COUNT passed, $FAIL_COUNT failed out of $((PASS_COUNT + FAIL_COUNT)) checks"
 echo "========================================="
-
-if [ "$FAIL_COUNT" -gt 0 ]; then
-  exit 1
-fi
