@@ -1,4 +1,4 @@
-I need to build a message queue system in Node.js/TypeScript using Valkey via `@valkey/valkey-glide`. This is a greenfield build - no migration, no wrappers around existing libraries.
+I need to build a message queue system in Node.js/TypeScript using Valkey via `@valkey/valkey-glide`. This will run against an ElastiCache Valkey cluster with TLS enabled in production, so keep that in mind for connection setup. This is a greenfield build - no migration, no wrappers around existing libraries. Performance and durability matter - we can't lose jobs.
 
 I need three things in `src/mq.ts`:
 
@@ -61,8 +61,8 @@ interface QueueMessage {
 ## Constraints
 
 - Use `@valkey/valkey-glide` - do NOT use `ioredis`, `redis`, or any other client library
-- Use `GlideClient` (standalone mode)
-- Valkey server is on `localhost:6507`
+- Use `GlideClient` or `GlideClusterClient` (whichever is appropriate for cluster mode)
+- For local testing, Valkey is on `localhost:6507` (no TLS). But the code should support TLS configuration for production.
 - All classes should accept a `GlideClient` instance in their constructor
 - Export all classes and types from `src/mq.ts`
 

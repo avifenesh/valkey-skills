@@ -46,13 +46,10 @@ for task in $TASKS; do
       # setup.sh expects to put files in its own workspace/
       # We need to adapt: clone into our temp dir
       case "$task" in
-        5-bloom-feature)
-          if [ ! -d "$d/valkey-bloom" ]; then
-            git clone --depth 1 https://github.com/valkey-io/valkey-bloom.git "$d/valkey-bloom" 2>/dev/null || true
+        5-json-feature)
+          if [ ! -d "$d/valkey-json" ]; then
+            git clone --depth 1 https://github.com/valkey-io/valkey-json.git "$d/valkey-json" 2>/dev/null || true
           fi
-          ;;
-        6-search-queries)
-          # No repo clone needed - uses docker valkey-bundle
           ;;
       esac
     fi
