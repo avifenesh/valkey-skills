@@ -9,7 +9,7 @@ export DOCKER_HOST="${DOCKER_HOST:-unix:///var/run/docker.sock}"
 MODEL_ID="${1:?Usage: run.sh <model_id> <model_name>}"
 MODEL_NAME="${2:?Usage: run.sh <model_id> <model_name>}"
 
-REPO="$(cd "$(dirname "$0")/../.." && pwd)"
+REPO="$(cd "$(dirname "$0")/../../.." && pwd)"
 TASKS_DIR="$REPO/bench/v4/tasks"
 BASE="/tmp/bench_v4_${MODEL_NAME}"
 RESULTS="$REPO/bench/v4/results/${MODEL_NAME}"
