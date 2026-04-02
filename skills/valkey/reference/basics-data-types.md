@@ -1,49 +1,32 @@
-# Data Types Quick Reference
+# Data Types - Valkey-Specific Extensions
 
-Use when looking up Valkey command syntax for strings, hashes, lists, sets, sorted sets, streams, pub/sub, HyperLogLog, bitmaps, geospatial, or key management operations.
+Use when looking up Valkey-only command additions to standard data types: conditional string ops, per-field hash expiry, or polygon geo search.
 
-Valkey supports all Redis data types. This is a brief listing - for Valkey-specific extensions to these types (IFEQ on strings, HEXPIRE on hashes, GEOSEARCH BYPOLYGON), see the Valkey-Specific Features section.
+Standard Redis commands (SET, GET, HSET, ZADD, etc.) are assumed known. This file covers only what Valkey adds.
 
 ## Strings
-`SET`, `GET`, `MSET`, `MGET`, `INCR`, `DECR`, `INCRBY`, `DECRBY`, `INCRBYFLOAT`, `APPEND`, `STRLEN`, `GETRANGE`, `SETRANGE`, `SETNX`, `GETSET`, `GETDEL`, `GETEX`
 
-**Valkey additions**: `SET key val IFEQ old_val` (conditional update), `DELIFEQ key val` (conditional delete)
+`SET key value IFEQ old_value` (Valkey 9.0+) - conditional update, only sets if current value equals `old_value`. Replaces WATCH/MULTI/EXEC for compare-and-swap.
 
-## Hashes
-`HSET`, `HGET`, `HMGET`, `HGETALL`, `HDEL`, `HEXISTS`, `HLEN`, `HKEYS`, `HVALS`, `HINCRBY`, `HINCRBYFLOAT`, `HSETNX`, `HRANDFIELD`, `HSCAN`
+`DELIFEQ key value` (Valkey 9.0+) - conditional delete, only deletes if current value equals `value`. Replaces Lua scripts for safe lock release.
 
-**Valkey additions**: `HSETEX` (set with TTL), `HGETEX` (get and set/refresh TTL), `HGETDEL` (get and delete), `HEXPIRE`/`HPEXPIRE` (per-field TTL), `HTTL`/`HPTTL`, `HEXPIRETIME`, `HPERSIST`
+## Hashes - Per-Field TTL (Valkey 7.4+)
 
-## Lists
-`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`, `LINDEX`, `LLEN`, `LPOS`, `LSET`, `LINSERT`, `LTRIM`, `LMOVE`, `BLPOP`, `BRPOP`, `BLMOVE`, `LMPOP`, `BLMPOP`
+`HSETEX key ttl-seconds field value [field value ...]` - set fields with TTL in one command.
 
-## Sets
-`SADD`, `SREM`, `SISMEMBER`, `SMISMEMBER`, `SMEMBERS`, `SCARD`, `SRANDMEMBER`, `SPOP`, `SINTER`, `SUNION`, `SDIFF`, `SINTERCARD`, `SINTERSTORE`, `SUNIONSTORE`, `SDIFFSTORE`, `SSCAN`
+`HGETEX key [EX seconds | PX ms | EXAT unix | PXAT unix-ms | PERSIST] FIELDS count field [field ...]` - get fields and optionally set/refresh/remove their TTL atomically.
 
-## Sorted Sets
-`ZADD`, `ZREM`, `ZSCORE`, `ZRANK`, `ZREVRANK`, `ZRANGE`, `ZREVRANGE`, `ZRANGEBYSCORE`, `ZRANGEBYLEX`, `ZINCRBY`, `ZCARD`, `ZCOUNT`, `ZLEXCOUNT`, `ZPOPMIN`, `ZPOPMAX`, `BZPOPMIN`, `BZPOPMAX`, `ZRANDMEMBER`, `ZMSCORE`, `ZRANGESTORE`, `ZDIFF`, `ZINTER`, `ZUNION`, `ZINTERCARD`, `ZSCAN`
+`HGETDEL key FIELDS count field [field ...]` - get fields and delete them atomically.
 
-## Streams
-`XADD`, `XREAD`, `XRANGE`, `XREVRANGE`, `XLEN`, `XTRIM`, `XINFO`, `XGROUP CREATE`, `XREADGROUP`, `XACK`, `XPENDING`, `XCLAIM`, `XAUTOCLAIM`, `XDEL`
+`HEXPIRE key seconds FIELDS count field [field ...]` - set per-field TTL (seconds).
+`HPEXPIRE key ms FIELDS count field [field ...]` - set per-field TTL (milliseconds).
+`HTTL key FIELDS count field [field ...]` - get remaining TTL per field.
+`HPTTL key FIELDS count field [field ...]` - get remaining TTL in ms per field.
+`HEXPIRETIME key FIELDS count field [field ...]` - get expiry as Unix timestamp.
+`HPERSIST key FIELDS count field [field ...]` - remove per-field TTL.
 
-## Pub/Sub
-`SUBSCRIBE`, `UNSUBSCRIBE`, `PUBLISH`, `PSUBSCRIBE`, `PUNSUBSCRIBE`, `SSUBSCRIBE`, `SUNSUBSCRIBE`, `SPUBLISH`, `PUBSUB CHANNELS/NUMSUB/NUMPAT`
-
-## HyperLogLog
-`PFADD`, `PFCOUNT`, `PFMERGE`
-
-## Bitmaps
-`SETBIT`, `GETBIT`, `BITCOUNT`, `BITOP`, `BITPOS`, `BITFIELD`
+Per-field expiry is the primary Valkey advantage for session storage - individual hash fields expire without needing to manage separate keys. See `patterns-sessions-field-expiry.md`.
 
 ## Geospatial
-`GEOADD`, `GEOPOS`, `GEODIST`, `GEOHASH`, `GEOSEARCH`, `GEOSEARCHSTORE`
 
-**Valkey additions**: `GEOSEARCH ... BYPOLYGON` (arbitrary polygon region matching)
-
-## Key Management
-`DEL`, `UNLINK` (async), `EXISTS`, `TYPE`, `RENAME`, `RENAMENX`, `COPY`, `OBJECT ENCODING/IDLETIME/FREQ/REFCOUNT`, `SCAN`, `RANDOMKEY`, `TOUCH`, `DUMP`, `RESTORE`
-
-**Valkey additions**: `DELIFEQ key expected_value` (conditional delete - only if value matches)
-
-## Expiration
-`EXPIRE`, `PEXPIRE`, `EXPIREAT`, `PEXPIREAT`, `TTL`, `PTTL`, `EXPIRETIME`, `PEXPIRETIME`, `PERSIST`
+`GEOSEARCH key FROMMEMBER member | FROMLONLAT lon lat BYPOLYGON numpoints lon lat [lon lat ...] [ASC|DESC] [COUNT count]` (Valkey 9.0+) - match members inside an arbitrary polygon. Standard Redis only supports BYRADIUS and BYBOX.

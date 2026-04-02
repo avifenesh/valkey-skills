@@ -1,54 +1,44 @@
-# Server, Scripting, and Transactions Quick Reference
+# Server Commands - Valkey-Specific Extensions
 
-Use when looking up server management, Lua scripting (EVAL/FCALL), transaction (MULTI/EXEC), monitoring (SLOWLOG, LATENCY), configuration, or client management commands.
+Use when looking up Valkey-only server and monitoring commands: COMMANDLOG, CLUSTERSCAN, or noting which Lua patterns now have native replacements.
 
-Standard Redis-compatible server management, Lua scripting, and transaction commands. For Valkey-specific monitoring, use COMMANDLOG (see valkey-features/commandlog.md).
+Standard commands (INFO, CONFIG, CLIENT, MULTI/EXEC, EVAL, SCAN) are assumed known. This file covers only what Valkey adds or replaces.
 
-## Server Information
-`INFO [section]`, `DBSIZE`, `LASTSAVE`, `TIME`, `MEMORY USAGE key`, `MEMORY DOCTOR`, `MEMORY STATS`
+## COMMANDLOG (Valkey 8.1+)
 
-## Client Management
-`CLIENT ID`, `CLIENT SETNAME name`, `CLIENT GETNAME`, `CLIENT LIST`, `CLIENT INFO`, `CLIENT NO-EVICT ON|OFF`, `CLIENT NO-TOUCH ON|OFF`, `CLIENT KILL`, `CLIENT PAUSE`
+Replaces SLOWLOG. Tracks slow commands, large payloads, and rejected commands in separate logs.
 
-## Configuration
-`CONFIG GET pattern`, `CONFIG SET param value`, `CONFIG REWRITE`, `CONFIG RESETSTAT`
+```
+COMMANDLOG GET count <slow|large|denied>
+COMMANDLOG LEN <slow|large|denied>
+COMMANDLOG RESET <slow|large|denied>
+```
 
-## Monitoring
-`COMMANDLOG GET count type` (Valkey 8.1+ - see valkey-features/commandlog.md)
-`SLOWLOG GET [count]` (legacy, pre-8.1)
-`MONITOR` (debug only, not production)
-`LATENCY LATEST`, `LATENCY HISTORY event`
+Configuration:
+```
+commandlog-slow-execution-time 10000   # microseconds
+commandlog-max-slow-entries 128
+commandlog-large-request-threshold 1048576   # bytes
+commandlog-max-large-entries 128
+```
 
-## Keyspace Scanning
-`SCAN cursor [MATCH pattern] [COUNT hint] [TYPE type]`
-`HSCAN`, `SSCAN`, `ZSCAN` (per-type variants)
+SLOWLOG remains available for backward compatibility but COMMANDLOG is the preferred interface.
 
-Never use `KEYS pattern` in production - use SCAN instead.
+## CLUSTERSCAN (Valkey 8.0+)
 
-## Lua Scripting
-`EVAL script numkeys key [key ...] arg [arg ...]`
-`EVALSHA sha1 numkeys key [key ...] arg [arg ...]`
-`SCRIPT LOAD script`, `SCRIPT EXISTS sha1`, `SCRIPT FLUSH`
+Cluster-wide SCAN across all slots without client-side orchestration.
 
-Many patterns that previously required Lua (compare-and-swap, safe lock release) now have native commands in Valkey - SET IFEQ and DELIFEQ.
+```
+CLUSTERSCAN cursor [MATCH pattern] [COUNT hint] [TYPE type]
+```
 
-## Functions (Valkey 7.0+)
-`FUNCTION LOAD [REPLACE] function-code`
-`FCALL function numkeys key [key ...] arg [arg ...]`
-`FCALL_RO function numkeys key [key ...] arg [arg ...]`
-`FUNCTION LIST`, `FUNCTION DELETE`, `FUNCTION DUMP`, `FUNCTION RESTORE`
+Standard SCAN only covers the local node's keyspace. CLUSTERSCAN iterates across the entire cluster transparently. Use in cluster mode wherever you would use SCAN in standalone mode.
 
-## Transactions
-`MULTI`, `EXEC`, `DISCARD`, `WATCH key [key ...]`, `UNWATCH`
+## Native Replacements for Common Lua Patterns
 
-For simple compare-and-swap, prefer SET IFEQ over WATCH/MULTI/EXEC.
+Two patterns that previously required Lua scripts now have native commands:
 
-## Replication and Durability
-`WAIT numreplicas timeout`, `WAITAOF numlocal numreplicas timeout`
-`REPLICAOF host port`, `REPLICAOF NO ONE`
+- Compare-and-swap: use `SET key value IFEQ old_value` instead of WATCH/MULTI/EXEC or Lua.
+- Safe lock release: use `DELIFEQ key value` instead of a Lua CAS script.
 
-## Cluster
-`CLUSTER INFO`, `CLUSTER NODES`, `CLUSTER SLOTS`, `CLUSTER SHARDS`
-`CLUSTER MEET host port`, `CLUSTER FORGET node-id`
-`CLUSTER FAILOVER [FORCE|TAKEOVER]`
-`CLUSTERSCAN cursor ...` (cluster-wide scanning)
+See `basics-data-types.md` for full syntax.

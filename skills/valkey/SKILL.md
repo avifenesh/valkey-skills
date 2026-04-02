@@ -26,11 +26,16 @@ argument-hint: "[feature, pattern, or scenario]"
 - Search, autocomplete, prefix, inverted index, tag filtering -> Patterns (search-autocomplete)
 - Counters, atomic increment, HyperLogLog, idempotency, sharded counters -> Patterns (counters)
 - Key naming, memory, performance, persistence, cluster, HA -> Best Practices
+- Memory fragmentation, mem_fragmentation_ratio, active defrag, jemalloc, MEMORY USAGE, MEMORY DOCTOR -> Advanced (defrag)
+- Replication internals, PSYNC, partial resync, full resync, backlog sizing, diskless replication, dual-channel, replica priority, min-replicas-to-write -> Advanced (replication)
+- Latency diagnosis, high p99, LATENCY LATEST, LATENCY DOCTOR, latency-monitor-threshold, slow commands, fork pauses, THP, event loop -> Advanced (latency)
 - Auth, ACLs, TLS, network security -> Security
 - Common mistakes, KEYS in production, missing TTL, unbounded collections -> Anti-Patterns
 - Redis compatibility, migration, fork history -> Overview
 - Data types, strings, hashes, lists, sets, sorted sets, streams, bitmaps, geo, HyperLogLog -> Basics (data-types)
 - Transactions, MULTI/EXEC, Lua scripting, EVAL, FCALL, INFO, SCAN, CONFIG -> Basics (server-and-scripting)
+- EVAL vs FCALL, EVALSHA, FUNCTION LOAD, Lua script replication, determinism, EVAL_RO, FCALL_RO, busy-script-time, lua-time-limit, script timeout, SCRIPT KILL, sliding window rate limiter, CAS Lua -> Advanced (lua-functions)
+- CLIENT TRACKING, RESP3 push invalidation, RESP2 redirect, BCAST mode, OPTIN, OPTOUT, tracking-table-max-keys, __redis__:invalidate, GLIDE cache, redis-py tracking, ioredis tracking, invalidation consistency -> Advanced (client-side-caching)
 
 
 ## Valkey-Specific Features
@@ -86,6 +91,17 @@ argument-hint: "[feature, pattern, or scenario]"
 | Hash tags, cross-slot errors, CROSSSLOT fixes | [cluster-hash-tags](reference/best-practices-cluster-hash-tags.md) |
 | MOVED/ASK redirects, replica reads, pipelining in cluster, CLUSTERSCAN | [cluster-operations](reference/best-practices-cluster-operations.md) |
 | Sentinel, failover, retries, WAIT/WAITAOF, replication lag, Sentinel vs Cluster decision | [high-availability](reference/best-practices-high-availability.md) |
+
+
+## Advanced Topics
+
+| Topic | Reference |
+|-------|-----------|
+| Memory fragmentation, `mem_fragmentation_ratio`, active defrag config, `MEMORY USAGE`, `MEMORY DOCTOR`, Valkey 8.1 hashtable impact | [defrag](reference/advanced-memory-defrag.md) |
+| Replication internals (PSYNC2), partial vs full resync triggers, backlog sizing, diskless sync, dual-channel replication (8.0+), replica chains, `min-replicas-to-write` | [replication-internals](reference/advanced-replication-internals.md) |
+| End-to-end latency diagnosis, `LATENCY LATEST/HISTORY/DOCTOR`, COMMANDLOG correlation, fork pauses, THP, expiration storms, I/O thread impact, p99 playbook | [latency-diagnosis](reference/advanced-latency-diagnosis.md) |
+| EVAL vs FCALL, EVALSHA, FUNCTION LOAD, script replication (effects vs commands), determinism, EVAL_RO/FCALL_RO for replica reads, `busy-script-time`, SCRIPT KILL, memory limits, SET IFEQ/DELIFEQ as Lua replacements, sliding window rate limiter | [lua-functions](reference/advanced-lua-functions.md) |
+| CLIENT TRACKING protocol (RESP3 push, RESP2 redirect), default/BCAST/OPTIN/OPTOUT modes, `tracking-table-max-keys` eviction, GLIDE CacheConfig, redis-py/ioredis manual wiring, consistency guarantees, connection management, what to track vs skip | [client-side-caching](reference/advanced-client-side-caching.md) |
 
 
 ## Security
