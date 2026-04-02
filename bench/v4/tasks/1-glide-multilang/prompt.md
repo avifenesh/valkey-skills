@@ -1,10 +1,6 @@
-# Multi-Language Microservices with Shared Valkey
+I need three microservices that share one Valkey instance. Each in a different language, all using valkey-glide as the client library.
 
-Build three microservices that share a single Valkey instance. Each service is in a different language and uses the valkey-glide client library for that language.
-
-## Shared Infrastructure
-
-All three services connect to the same Valkey server at `localhost:6379`. Each service uses its own key prefix to avoid collisions.
+All three connect to the same Valkey at `localhost:6379`. Each uses its own key prefix.
 
 ## Service 1: Leaderboard (Go) - `leaderboard-go/`
 

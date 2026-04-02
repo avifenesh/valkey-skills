@@ -1,12 +1,8 @@
-# Build an Optimized Message Queue with Distributed Locking
+I need to build a message queue system in Node.js/TypeScript using Valkey via `@valkey/valkey-glide`. This is a greenfield build - no migration, no wrappers around existing libraries.
 
-Build a high-performance message queue system in Node.js/TypeScript using Valkey via `@valkey/valkey-glide`. This is a greenfield build - no migration, no wrappers around existing libraries.
+I need three things in `src/mq.ts`:
 
-## Requirements
-
-Implement `src/mq.ts` with three classes:
-
-### 1. WorkQueue
+## 1. WorkQueue
 
 A reliable work queue backed by Valkey Streams with consumer group support.
 
@@ -21,7 +17,7 @@ The queue must:
 - Use stream auto-generated IDs
 - Support multiple concurrent consumers in the same group
 
-### 2. DistributedLock
+## 2. DistributedLock
 
 A single-instance distributed lock using the SET NX pattern (NOT Redlock).
 
@@ -30,12 +26,12 @@ A single-instance distributed lock using the SET NX pattern (NOT Redlock).
 - `release(resource: string): Promise<boolean>` - Release the lock only if the caller still holds it. Returns true if released.
 - `extend(resource: string, ttlMs: number): Promise<boolean>` - Extend the lock TTL if the caller still holds it.
 
-Critical safety requirements:
+Critical safety stuff:
 - Lock values must be unique per acquisition (use UUID or random token)
 - Release MUST atomically verify ownership before deleting - use a Lua script that checks the stored value matches before calling DEL. A plain GET-then-DEL is NOT safe (race condition between the two commands).
 - Extend must also verify ownership before setting new TTL
 
-### 3. RateLimiter
+## 3. RateLimiter
 
 A sliding window rate limiter using sorted sets.
 
@@ -48,7 +44,7 @@ The implementation must:
 - Add the new entry and check the count atomically (use a pipeline or Lua script to prevent race conditions)
 - Set a TTL on the sorted set key to auto-cleanup
 
-### Types
+## Types
 
 ```typescript
 interface Job {
@@ -62,7 +58,7 @@ interface QueueMessage {
 }
 ```
 
-## Technical Constraints
+## Constraints
 
 - Use `@valkey/valkey-glide` - do NOT use `ioredis`, `redis`, or any other client library
 - Use `GlideClient` (standalone mode)
@@ -70,12 +66,12 @@ interface QueueMessage {
 - All classes should accept a `GlideClient` instance in their constructor
 - Export all classes and types from `src/mq.ts`
 
-## What to Deliver
+## What I need delivered
 
 1. `src/mq.ts` - Complete implementation of all three classes
 2. All existing tests in `src/mq.test.ts` must pass
 3. The code must compile with `npm run build`
 
-## Performance Target
+## Performance
 
 The queue should handle 1000+ enqueue/dequeue operations per second on a single Valkey instance. Use efficient patterns - minimize round trips, use pipelines where appropriate, prefer blocking reads over polling.
