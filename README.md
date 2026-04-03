@@ -1,18 +1,17 @@
 # valkey-skills
 
-AI skills for the [Valkey](https://valkey.io) ecosystem - 27 skills, 343 files, 67K lines of source-verified reference material.
+AI skills for the [Valkey](https://valkey.io) ecosystem. 15 skills across 281 files of source-verified reference material.
 
-Gives AI coding assistants (Claude Code, Cursor, Codex, Copilot, Gemini CLI, OpenCode, Kiro) deep knowledge of Valkey commands, server internals, operations, [GLIDE](https://github.com/valkey-io/valkey-glide) client across 7 languages, module development, and message queues.
+Gives AI coding assistants deep knowledge of Valkey commands, server internals, operations, [GLIDE](https://github.com/valkey-io/valkey-glide) client across 7 languages, module development, and message queues. Works with Claude Code, Cursor, Codex, Copilot, Gemini CLI, OpenCode, Kiro, and any tool supporting the [Agent Skills standard](https://agentskills.io).
 
 ## Use this when
 
 - Building applications with Valkey (caching, queues, sessions, rate limiting, pub/sub, leaderboards)
 - Contributing to the Valkey server C codebase
-- Deploying and operating self-hosted Valkey (Sentinel, cluster, Kubernetes)
+- Deploying and operating self-hosted Valkey (Sentinel, cluster, Kubernetes, Helm)
 - Using the GLIDE client in Python, Java, Node.js, Go, C#, PHP, or Ruby
 - Migrating from Redis clients (redis-py, Jedis, Lettuce, ioredis, go-redis, StackExchange.Redis)
-- Building custom Valkey modules in C or Rust
-- Contributing to valkey-search, valkey-json, or valkey-bloom modules
+- Contributing to valkey-search, valkey-bloom modules
 - Building message queues with glide-mq
 
 ## Install
@@ -24,45 +23,44 @@ Gives AI coding assistants (Claude Code, Cursor, Codex, Copilot, Gemini CLI, Ope
 /plugin install valkey-skills@valkey-skills
 ```
 
-### Codex CLI
-
-Codex discovers `.codex-plugin/plugin.json` automatically when the repo is cloned:
-
-```bash
-git clone https://github.com/avifenesh/valkey-skills.git
-codex --plugin-dir ./valkey-skills
-```
-
-Or copy skills directly:
-
-```bash
-cp -r valkey-skills/skills/* ~/.codex/skills/
-```
-
 ### Agent Skills CLI (cross-tool)
 
 ```bash
 npx skills add avifenesh/valkey-skills
 ```
 
-Installs into `.agents/skills/` in your project. Works with Cursor, Copilot, Gemini CLI, OpenCode, Kiro, and any tool supporting the [Agent Skills standard](https://agentskills.io).
+Works with Cursor, Copilot, Gemini CLI, OpenCode, Kiro, and any tool supporting the Agent Skills standard.
 
-### Manual (any tool)
-
-Clone and copy to your tool's skills directory:
+### Codex CLI
 
 ```bash
 git clone https://github.com/avifenesh/valkey-skills.git
+codex --plugin-dir ./valkey-skills
 ```
+
+### Manual
+
+Clone and copy to your tool's skills directory:
 
 | Tool | Copy to |
 |------|---------|
-| Claude Code | `~/.claude/skills/` or use `--plugin-dir ./valkey-skills` |
+| Claude Code | `~/.claude/skills/` or `--plugin-dir ./valkey-skills` |
 | Codex CLI | `~/.codex/skills/` |
 | Cursor | `.cursor/skills/` |
 | OpenCode | `~/.config/opencode/skills/` |
 | Kiro | `.kiro/skills/` |
-| Any Agent Skills tool | `.agents/skills/` |
+
+## Measured impact
+
+Benchmarked on Sonnet 4.6 and Opus 4.6 (Bedrock). Isolated workspaces, no web access, 60-turn limit per agent.
+
+| Skill | Task | Without | With | Result |
+|-------|------|---------|------|--------|
+| **valkey** | 10 Valkey 9.x problem-solving scenarios | Sonnet 6/14, Opus 5/14 | Sonnet 10/14, Opus 10/14 | **+4 to +5 checks**. Skill taught COMMANDLOG, SET IFEQ, HSETEX/HGETEX, DELIFEQ, CLUSTERSCAN. Without it, models fell back to Redis 7.x answers. |
+| **valkey-ops** | Helm chart for Valkey K8s cluster | Opus 16/19, $2.50 | Opus 18/19, $1.57 | **+2 checks, 37% cheaper**. Exact chart values the model couldn't guess. |
+| **valkey-ops** | Production config audit | Sonnet 16/22 | Sonnet 17/22 | **+1 check**. Caught COMMANDLOG config rename. |
+
+Skills that showed no measurable value were removed from the repo.
 
 ## Skills
 
@@ -70,17 +68,14 @@ git clone https://github.com/avifenesh/valkey-skills.git
 
 | Skill | Audience | Files |
 |-------|----------|-------|
-| **valkey** | App developers - commands, data types, patterns, best practices | 36 |
-| **valkey-modules** | Module users - valkey-search, valkey-json, valkey-bloom | 6 |
+| **valkey** | App developers - Valkey-specific features, patterns, best practices | 41 |
 
 ### Server and Module Development
 
 | Skill | Audience | Files |
 |-------|----------|-------|
 | **valkey-dev** | Server contributors - C internals, data structures, threading, cluster, replication | 65 |
-| **valkey-module-dev** | Custom module developers - ValkeyModule_* C API (376 functions, 42 categories) | 46 |
 | **valkey-bloom-dev** | valkey-bloom contributors - Rust, scalable bloom filters, replication | 13 |
-| **valkey-json-dev** | valkey-json contributors - C++, RapidJSON, JSONPath engine, KeyTable | 15 |
 | **valkey-search-dev** | valkey-search contributors - C++, vector/text indexes, query engine, gRPC coordinator | 21 |
 | **glide-dev** | GLIDE client contributors - Rust core, FFI bindings, build system | 7 |
 
@@ -88,7 +83,7 @@ git clone https://github.com/avifenesh/valkey-skills.git
 
 | Skill | Audience | Files |
 |-------|----------|-------|
-| **valkey-ops** | Self-hosted operators - deployment, monitoring, security, Kubernetes, troubleshooting | 61 |
+| **valkey-ops** | Self-hosted operators - deployment, monitoring, security, Kubernetes, Helm, troubleshooting | 61 |
 
 ### GLIDE Per-Language
 
@@ -131,28 +126,26 @@ skills/valkey/
   SKILL.md                          # Router (<250 lines) - loaded into AI context
   reference/
     patterns-caching-strategies.md   # Loaded on demand when relevant
-    patterns-queues-streams.md
-    best-practices-memory.md
-    ...35 focused reference files
+    valkey-features-hash-field-ttl.md
+    advanced-latency-diagnosis.md
+    ...focused reference files
 ```
 
-1. AI reads the SKILL.md router (routing table maps queries to files)
+1. AI reads the SKILL.md router (routing table maps queries to reference files)
 2. AI identifies which reference file answers the question
 3. AI loads only that file (100-300 lines each)
-4. No context bloat - 67K lines available, only ~250 loaded per question
+
+No context bloat. 67K lines available, only ~250 loaded per question.
 
 ## Quality
 
-Every reference file is source-verified against actual code:
+Every reference file is verified against actual source code, not web research.
 
-- **valkey-dev**: verified against `src/server.c`, `src/module.c`, `src/cluster.c` (Valkey 9.0.3)
-- **valkey-module-dev**: verified against all 376 `REGISTER_API()` calls in `module.c` (14,857 lines)
-- **valkey-bloom-dev**: verified against the Rust source (`src/bloom/utils.rs`, `command_handler.rs`)
-- **valkey-json-dev**: verified against the C++ source (`src/json/dom.cc`, `selector.cc`, `keytable.cc`)
-- **valkey-search-dev**: verified against the C++ source (37,050 lines across 143 files)
-- **GLIDE skills**: verified against the Rust FFI core and per-language bindings
-
-Built with a 13-step pipeline: write, gap analysis, gap fill, deep research, enrichment, enhance, merge, unification, adversarial validation, fix, router write, router enhance, commit. Optimized per RAG research for AI consumption (flat reference dirs, descriptions under 250 chars, no filler language, every file under 300 lines).
+- **valkey**: verified against Valkey 9.0.3 source, GLIDE 2.3.0, valkey-search 1.2.0
+- **valkey-dev**: verified against `src/server.c`, `src/cluster.c`, `src/replication.c`
+- **valkey-bloom-dev**: verified against Rust source
+- **valkey-search-dev**: verified against 37,050 lines across 143 C++ files
+- **GLIDE skills**: verified against Rust FFI core and per-language bindings
 
 Passes [agnix](https://github.com/agent-sh/agnix) linter with 0 errors, 0 warnings.
 
