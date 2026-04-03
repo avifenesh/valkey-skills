@@ -1,57 +1,50 @@
 # Benchmark Results
 
-Each task runs twice - once with skills loaded, once without. Isolated workspaces, no web access, no shared context. Tested on Sonnet 4.6 and Opus 4.6 (Bedrock).
+Each task runs with and without skills. Isolated workspaces, no web access, no shared context. Sonnet 4.6 and Opus 4.6 on Bedrock.
 
-## Tested Skills
+## Tested
 
-### valkey - Application development
+### valkey
 
-**What was tested**: 10 real-world Valkey 9.x scenarios (diagnosing slow commands, feature flags, per-field session TTLs, lock release, config migration from Redis 7.2, replication issues, I/O thread tuning, multi-database clustering, cluster-wide iteration).
+10 Valkey 9.x problem-solving scenarios. Without the skill, models default to Redis 7.x answers. The skill teaches commands that don't exist in Redis: COMMANDLOG, SET IFEQ, HSETEX/HGETEX, DELIFEQ, CLUSTERSCAN.
 
-**Why skills help**: Without the skill, models answer with Redis 7.x patterns. With it, they use Valkey-specific commands (COMMANDLOG, SET IFEQ, HSETEX/HGETEX, DELIFEQ, CLUSTERSCAN) that don't exist in Redis.
+| Model | Without | With | Delta |
+|-------|---------|------|-------|
+| Sonnet 4.6 | 6/14 | **10/14** | **+4** |
+| Opus 4.6 | 5/14 | **10/14** | **+5** |
 
-| Model | Without Skill | With Skill | Improvement |
-|-------|--------------|------------|-------------|
-| Sonnet 4.6 | 6/14 | **10/14** | +4 correct answers |
-| Opus 4.6 | 5/14 | **10/14** | +5 correct answers |
+### valkey-dev
 
-### valkey-dev - Server internals
+Find and fix a cluster split-brain bug in ~200 C source files. Only symptoms given. The skill maps the server architecture so the agent navigates to the right code path instead of searching blind.
 
-**What was tested**: Find and fix a cluster split-brain bug introduced in Valkey source code (~200 C files). Agent receives only symptoms, must locate the root cause and produce a compiling fix.
+| Model | Without | With | Delta |
+|-------|---------|------|-------|
+| Sonnet 4.6 | 8/12 | **11/12** | **+3** |
 
-**Why skills help**: The skill maps the server architecture - where cluster epoch resolution lives, how failover works, which functions handle collision detection. Without it, the agent searches blind.
+### valkey-ops
 
-| Model | Without Skill | With Skill | Improvement |
-|-------|--------------|------------|-------------|
-| Sonnet 4.6 | 8/12 | **11/12** | +3 checks passed |
+Two tasks: (1) Helm chart for a 6-node Valkey cluster on K8s with TLS, auth, persistence. (2) Fix a broken valkey.conf migrated from Redis 7.2. The skill provides exact chart values, renamed config directives, and Valkey-specific defaults that models can't guess.
 
-### valkey-ops - Operations
+| Model | Task | Without | With | Delta |
+|-------|------|---------|------|-------|
+| Opus 4.6 | Helm | 16/19 $2.50 | **18/19** $1.57 | **+2**, 37% cheaper |
+| Sonnet 4.6 | Config | 16/22 | **17/22** | **+1** |
 
-**What was tested**: Two tasks. (1) Create a Helm values file for a 6-node Valkey cluster on Kubernetes with TLS, auth, persistence, and resource limits - validated with `helm template`. (2) Fix a broken valkey.conf migrated from Redis 7.2 (15 problems) and answer 5 operational questions.
+## Not Yet Tested
 
-**Why skills help**: The skill provides exact Helm chart repo URLs, value key paths, and Valkey-specific config directives (COMMANDLOG replacing SLOWLOG, deprecated io-threads-do-reads, lazyfree defaults). Models can't guess Bitnami chart values or renamed config parameters.
+These skills teach APIs that aren't in model training data. The GLIDE client library has different method signatures, argument orders, and patterns than the Redis clients it replaces - code written from Redis knowledge won't compile.
 
-| Model | Task | Without Skill | With Skill | Improvement |
-|-------|------|--------------|------------|-------------|
-| Opus 4.6 | Helm chart | 16/19, $2.50 | **18/19**, $1.57 | +2 checks, 37% cheaper |
-| Sonnet 4.6 | Config audit | 16/22 | **17/22** | +1 check |
+| Skill | What models get wrong without it |
+|-------|--------------------------------|
+| **migrate-redis-py** | Writes `pipeline()` instead of `Batch`, `ex=60` instead of `ExpirySet`, varargs instead of list args |
+| **migrate-ioredis** | Writes `publish(channel, message)` instead of `publish(message, channel)`, runtime PubSub instead of creation-time |
+| **migrate-jedis** | Missing `CompletableFuture` patterns, wrong builder API, no `Batch` class |
+| **migrate-go-redis** | Uses `redis.Nil` error instead of `Result[T].IsNil()`, `redis.Options{}` instead of config builder |
+| **migrate-lettuce**, **migrate-stackexchange** | Same pattern - GLIDE APIs differ from the source client in ways models can't guess |
+| **spring-data-valkey** | Wrong Maven coordinates, missing `os-maven-plugin`, wrong property prefix (`spring.data.redis` vs `spring.data.valkey`) |
+| **glide-mq** | New library with no training data. Connection format, scheduling API, removed options all undiscoverable |
+| **valkey-glide-*** | Per-language GLIDE skills (7 languages). Newer clients (Go, C#, PHP, Ruby) have especially little training data |
 
-## Untested Skills (Expected High Value)
+## Removed (No Value)
 
-These skills follow the same pattern as the tested ones - they provide API details that don't exist in model training data. Migration skills are particularly strong candidates because GLIDE client APIs differ significantly from the Redis clients they replace.
-
-| Skill | Why Expected to Help |
-|-------|---------------------|
-| **migrate-redis-py** | GLIDE Python has different API shapes: `Batch` not `pipeline`, `ExpirySet` not `ex=`, list args not varargs, bytes returns (no `decode_responses`). Models will write redis-py patterns that don't compile. |
-| **migrate-ioredis** | GLIDE Node.js reverses `publish(message, channel)` arg order, requires creation-time PubSub config, uses `ClusterScanCursor`. Models will write ioredis code. |
-| **migrate-jedis** | GLIDE Java uses `CompletableFuture`, different builder patterns, `Batch` API. Zero-code-change compatibility layer exists but native rewrite needs the skill. |
-| **migrate-go-redis** | GLIDE Go uses `Result[T].IsNil()` instead of `redis.Nil` error sentinel, `config.NewClientConfiguration()` builder instead of `redis.Options{}`. |
-| **valkey-glide-*** | Per-language GLIDE skills (7 languages). Each has unique API patterns not in training data - especially Go, C#, PHP, Ruby which are newer clients. |
-| **glide-mq** | glide-mq is a new library with minimal public training data. Connection format, `upsertJobScheduler()`, removed `defaultJobOptions` - all undiscoverable without the skill. |
-| **spring-data-valkey** | Maven coordinates (`io.valkey.springframework.boot`), `os-maven-plugin` for native bindings, `spring.data.valkey.*` property prefix, `ValkeyTemplate` - all impossible to guess. |
-| **valkey-bloom-dev** | Contributor skill for Rust bloom filter module. Teaches BloomObject internals, command registration patterns, bincode serialization. |
-| **valkey-search-dev** | Contributor skill for C++ search module. Teaches HNSW/FLAT index internals, query engine, cluster coordinator, build system. |
-
-## Skills Removed (No Value)
-
-valkey-module-dev (Rust crate in training data), valkey-json-dev (C++ navigable without skills), valkey-modules (same query syntax as RediSearch).
+valkey-module-dev, valkey-json-dev, valkey-modules - models already knew these from training data.
