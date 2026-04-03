@@ -26,7 +26,7 @@ Cluster mode: multi-key set operations require all keys in the same slot - use h
 |------|---------------|
 | Simple prefix autocomplete | `ZRANGEBYLEX` sorted set |
 | Tag AND/OR filtering | `SINTER` / `SUNION` sets |
-| Full-text, fuzzy, stemming | valkey-search module (see `valkey-modules` skill) |
+| Full-text, fuzzy, stemming | valkey-search module |
 | Relevance scoring with field weights | valkey-search module |
 
 The valkey-search module supports `FT.SEARCH` with full-text indexes, numeric filters, geo filters, and vector similarity - all inside Valkey without an external engine.

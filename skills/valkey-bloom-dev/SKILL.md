@@ -1,6 +1,6 @@
 ---
 name: valkey-bloom-dev
-description: "Use when contributing to valkey-io/valkey-bloom source - Rust bloom filter internals, building, testing, RDB/AOF, replication, or reviewing PRs. Not for using BF commands in apps (valkey-modules) or building new modules (valkey-module-dev)."
+description: "Use when contributing to valkey-io/valkey-bloom source - Rust bloom filter internals, building, testing, RDB/AOF, replication, or reviewing PRs. Not for using BF commands in apps (valkey) or Valkey server internals (valkey-dev)."
 version: 1.0.0
 argument-hint: "[area or task]"
 ---
@@ -9,9 +9,8 @@ argument-hint: "[area or task]"
 
 ## Not This Skill
 
-- Using BF.ADD/BF.EXISTS/BF.RESERVE in applications -> use valkey-modules
-- Building custom Valkey modules from scratch -> use valkey-module-dev
-- valkey-module Rust SDK reference -> use valkey-module-dev
+- Using BF.ADD/BF.EXISTS/BF.RESERVE in applications -> use valkey
+- Valkey server internals -> use valkey-dev
 
 ## Routing
 
