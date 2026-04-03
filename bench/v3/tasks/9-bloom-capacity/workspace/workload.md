@@ -1,1 +1,0 @@
-Email dedup service: 50M unique emails/day, 30-day retention (1.5B total), max 0.1% FP rate, must fit in 8GB RAM. Use daily rotation with per-day bloom filters. Need: initial setup, daily rotation, multi-filter query, cleanup of expired filters.

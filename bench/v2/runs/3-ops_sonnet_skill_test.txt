@@ -1,8 +1,0 @@
-=== Task 3: Ops Cluster Validation ===
-  [PASS] YAML files present (2)
-  [FAIL] valkey-search module referenced
-  [FAIL] ACL users defined
-  [WARN] No deploy script found (expected deploy.sh)
-
-Result: 1/9 passed
-SCORE=1/9

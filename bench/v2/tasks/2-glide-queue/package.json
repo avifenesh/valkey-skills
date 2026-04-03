@@ -1,9 +1,0 @@
-{
-  "name": "glide-migration",
-  "version": "1.0.0",
-  "type": "module",
-  "dependencies": {
-    "@valkey/valkey-glide": "^2.3.0",
-    "ioredis": "^5.4.0"
-  }
-}

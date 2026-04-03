@@ -1,6 +1,0 @@
-services:
-  valkey:
-    image: valkey/valkey:9.0.3
-    ports:
-      - "6401:6379"
-    command: valkey-server --save "" --appendonly no
