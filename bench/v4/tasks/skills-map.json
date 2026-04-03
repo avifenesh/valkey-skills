@@ -1,11 +1,7 @@
 {
   "1-glide-multilang": ["skills/valkey-glide/go", "skills/valkey-glide/nodejs", "skills/valkey-glide/python"],
   "2-best-practices": ["skills/valkey"],
-  "3-valkey-bug": ["skills/valkey-dev"],
-  "5-json-feature": ["skills/valkey-json-dev"],
-  "6-search-queries": ["skills/valkey-modules"],
-  "7-optimized-mq": ["skills/valkey-glide/nodejs"],
-  "8-session-store": ["skills/valkey"],
+  "3-valkey-feature": ["skills/valkey-dev"],
   "9-helm-setup": ["skills/valkey-ops"],
   "10-ops-hardening": ["skills/valkey-ops"]
 }
