@@ -37,6 +37,16 @@ Fix a deliberately broken valkey.conf migrated from Redis 7.2 (15 problems), ans
 |-------|--------------|------------|-------------|
 | Sonnet 4.6 | 16/22 | **17/22** | +1 check. Skill caught the COMMANDLOG config directive rename that the model missed. |
 
+### valkey-dev (server internals skill)
+
+**Task: Find and fix a cluster split-brain bug in Valkey source**
+
+Agent receives Valkey source with an introduced bug (clusterShouldDeferEpochBump prevents epoch collision resolution after failover). Only symptoms provided - agent must find the root cause in ~200 source files and fix it.
+
+| Model | Without Skill | With Skill | Improvement |
+|-------|--------------|------------|-------------|
+| Sonnet 4.5 | 8/12 | **11/12** | +3 checks. Skill guided the agent to the cluster epoch resolution code path faster. |
+
 ## Skills Tested But Removed (No Value)
 
 | Skill | Why Removed |
