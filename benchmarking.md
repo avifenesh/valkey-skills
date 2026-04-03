@@ -30,6 +30,10 @@ Two tasks: (1) Helm chart for a 6-node Valkey cluster on K8s with TLS, auth, per
 | Opus 4.6 | Helm | 16/19 $2.50 | **18/19** $1.57 | **+2**, 37% cheaper |
 | Sonnet 4.6 | Config | 16/22 | **17/22** | **+1** |
 
+### glide-mq
+
+Tested separately across multiple glide-mq examples. With the skill, code compiled and ran correctly. Without it, models invented non-existent APIs and produced code with runtime errors.
+
 ## Not Yet Tested
 
 These skills teach APIs that aren't in model training data. The GLIDE client library has different method signatures, argument orders, and patterns than the Redis clients it replaces - code written from Redis knowledge won't compile.
@@ -42,7 +46,6 @@ These skills teach APIs that aren't in model training data. The GLIDE client lib
 | **migrate-go-redis** | Uses `redis.Nil` error instead of `Result[T].IsNil()`, `redis.Options{}` instead of config builder |
 | **migrate-lettuce**, **migrate-stackexchange** | Same pattern - GLIDE APIs differ from the source client in ways models can't guess |
 | **spring-data-valkey** | Wrong Maven coordinates, missing `os-maven-plugin`, wrong property prefix (`spring.data.redis` vs `spring.data.valkey`) |
-| **glide-mq** | New library with no training data. Connection format, scheduling API, removed options all undiscoverable |
 | **valkey-glide-*** | Per-language GLIDE skills (7 languages). Newer clients (Go, C#, PHP, Ruby) have especially little training data |
 
 ## Removed (No Value)
