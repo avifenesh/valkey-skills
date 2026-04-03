@@ -1,20 +1,17 @@
 # valkey-skills
 
-> Domain-specific AI skills for the Valkey ecosystem - application development, server internals, operations, GLIDE client (7 languages), GLIDE and module contributor skills, and message queues
+> Domain-specific AI skills for the Valkey ecosystem - application development, server internals, operations, GLIDE client (7 languages), module contributor skills, and message queues
 
 ## Skills
 
-### Valkey Core (9 skills)
+### Valkey Core (7 skills)
 
 | Directory | Skill | Audience | Files |
 |-----------|-------|----------|-------|
-| `skills/valkey/` | valkey | Application developers - Valkey-specific features, patterns, best practices | 36 |
+| `skills/valkey/` | valkey | Application developers - Valkey-specific features, patterns, best practices | 41 |
 | `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 65 |
 | `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 61 |
-| `skills/valkey-modules/` | valkey-modules | Module usage: search, JSON, bloom | 6 |
 | `skills/glide-dev/` | glide-dev | GLIDE client library contributors - Rust core, language bindings, build system | 7 |
-| `skills/valkey-module-dev/` | valkey-module-dev | Custom Valkey module developers - ValkeyModule_* C API | 46 |
-| `skills/valkey-json-dev/` | valkey-json-dev | valkey-json module contributors - architecture, JSONPath engine, RDB serialization | 15 |
 | `skills/valkey-search-dev/` | valkey-search-dev | valkey-search module contributors - C++ architecture, index types, query engine, build | 21 |
 | `skills/valkey-bloom-dev/` | valkey-bloom-dev | valkey-bloom module contributors - Rust scalable bloom filters, build, replication | 13 |
 
@@ -89,7 +86,7 @@ Skills were written and verified against these versions. Update when new release
 | glide-mq | 0.14.0 | glide-mq, migrate-bullmq, migrate-bee |
 | Spring Data Valkey | 1.0 | spring-data-valkey |
 
-Last full review: 2026-03-31
+Last full review: 2026-04-03
 
 ## Critical Rules
 
