@@ -45,7 +45,7 @@ Agent receives Valkey source with an introduced bug (clusterShouldDeferEpochBump
 
 | Model | Without Skill | With Skill | Improvement |
 |-------|--------------|------------|-------------|
-| Sonnet 4.5 | 8/12 | **11/12** | +3 checks. Skill guided the agent to the cluster epoch resolution code path faster. |
+| Sonnet 4.6 | 8/12 | **11/12** | +3 checks. Skill guided the agent to the cluster epoch resolution code path faster. |
 
 ## Skills Tested But Removed (No Value)
 
