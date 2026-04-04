@@ -1,18 +1,32 @@
 # valkey-skills
 
-AI skills for the [Valkey](https://valkey.io) ecosystem. 15 skills across 281 files of source-verified reference material.
+AI skills for the [Valkey](https://valkey.io) ecosystem. Teaches coding assistants what they don't know from training data - Valkey 9.x commands, GLIDE client APIs, operational defaults, and server internals.
 
-Gives AI coding assistants deep knowledge of Valkey commands, server internals, operations, [GLIDE](https://github.com/valkey-io/valkey-glide) client across 7 languages, module development, and message queues. Works with Claude Code, Cursor, Codex, Copilot, Gemini CLI, OpenCode, Kiro, and any tool supporting the [Agent Skills standard](https://agentskills.io).
+15 skills, 281 files, source-verified against actual Valkey/GLIDE source code. Works with Claude Code, Cursor, Codex, Copilot, Gemini CLI, OpenCode, Kiro, and any tool supporting the [Agent Skills standard](https://agentskills.io).
 
-## Use this when
+## Why
 
-- Building applications with Valkey (caching, queues, sessions, rate limiting, pub/sub, leaderboards)
-- Contributing to the Valkey server C codebase
-- Deploying and operating self-hosted Valkey (Sentinel, cluster, Kubernetes, Helm)
-- Using the GLIDE client in Python, Java, Node.js, Go, C#, PHP, or Ruby
-- Migrating from Redis clients (redis-py, Jedis, Lettuce, ioredis, go-redis, StackExchange.Redis)
-- Contributing to valkey-search, valkey-bloom modules
-- Building message queues with glide-mq
+AI models are trained on snapshots of the internet. Valkey-specific features - `COMMANDLOG`, `SET IFEQ`, `HSETEX`/`HGETEX`, `DELIFEQ`, `CLUSTERSCAN` - don't exist in training data. Without skills, models default to Redis 7.x answers.
+
+GLIDE has different method signatures, argument orders, and async patterns than every Redis client it replaces. Migration code generated from Redis knowledge doesn't compile.
+
+Skills fix this. Benchmarked, measured, proven.
+
+## Benchmarks
+
+Tested on Sonnet 4.6 and Opus 4.6 (Bedrock). Isolated workspaces, no web access, no shared context. Each condition ran multiple times. Skills that showed no value were removed.
+
+| Skill | Task | Model | Without | With | Delta |
+|-------|------|-------|---------|------|-------|
+| **valkey** | 10 Valkey 9.x problem-solving scenarios | Sonnet | 6/14 | **10/14** | **+4** |
+| **valkey** | Same | Opus | 5/14 | **10/14** | **+5** |
+| **valkey-dev** | Find and fix cluster split-brain bug in ~200 C files | Sonnet | 8/12 | **11/12** | **+3** |
+| **valkey-ops** | Helm chart for 6-node Valkey cluster on K8s | Opus | 16/19 ($2.50) | **18/19** ($1.57) | **+2**, 37% cheaper |
+| **valkey-ops** | Config audit migrated from Redis 7.2 | Sonnet | 16/22 | **17/22** | **+1** |
+
+Three skills were cut after benchmarking: `valkey-module-dev` (Rust crate already in training data), `valkey-json-dev` (C++ navigable without skills), and a query syntax skill (identical to RediSearch). We don't pad the count.
+
+Full results in [benchmarking.md](benchmarking.md).
 
 ## Install
 
@@ -50,132 +64,101 @@ Clone and copy to your tool's skills directory:
 | OpenCode | `~/.config/opencode/skills/` |
 | Kiro | `.kiro/skills/` |
 
-## Measured impact
-
-Benchmarked on Sonnet 4.6 and Opus 4.6 (Bedrock). Isolated workspaces, no web access, 60-turn limit per agent.
-
-| Skill | Task | Without | With | Result |
-|-------|------|---------|------|--------|
-| **valkey** | 10 Valkey 9.x problem-solving scenarios | Sonnet 6/14, Opus 5/14 | Sonnet 10/14, Opus 10/14 | **+4 to +5 checks**. Skill taught COMMANDLOG, SET IFEQ, HSETEX/HGETEX, DELIFEQ, CLUSTERSCAN. Without it, models fell back to Redis 7.x answers. |
-| **valkey-ops** | Helm chart for Valkey K8s cluster | Opus 16/19, $2.50 | Opus 18/19, $1.57 | **+2 checks, 37% cheaper**. Exact chart values the model couldn't guess. |
-| **valkey-ops** | Production config audit | Sonnet 16/22 | Sonnet 17/22 | **+1 check**. Caught COMMANDLOG config rename. |
-
-Skills that showed no measurable value were removed from the repo.
-
 ## Skills
 
 ### Application Development
 
 | Skill | Audience | Files |
 |-------|----------|-------|
-| **valkey** | App developers - Valkey-specific features, patterns, best practices | 41 |
+| **valkey** | App developers - Valkey 9.x features, patterns, best practices | 41 |
+
+### GLIDE Per-Language
+
+| Skill | Language | Files |
+|-------|----------|-------|
+| **valkey-glide-python** | Python (async + sync) | 9 |
+| **valkey-glide-java** | Java (CompletableFuture) | 9 |
+| **valkey-glide-nodejs** | Node.js / TypeScript | 9 |
+| **valkey-glide-go** | Go (synchronous, CGO) | 9 |
+| **valkey-glide-csharp** | C# (.NET 8.0+) | 4 |
+| **valkey-glide-php** | PHP 8.1+ | 4 |
+| **valkey-glide-ruby** | Ruby | 4 |
+
+### Migration
+
+| Skill | From | To |
+|-------|------|----|
+| **migrate-redis-py** | redis-py | GLIDE Python |
+| **migrate-jedis** | Jedis | GLIDE Java |
+| **migrate-lettuce** | Lettuce | GLIDE Java |
+| **migrate-ioredis** | ioredis | GLIDE Node.js |
+| **migrate-go-redis** | go-redis | GLIDE Go |
+| **migrate-stackexchange** | StackExchange.Redis | GLIDE C# |
+| **spring-data-valkey** | Spring Data Redis | Spring Data Valkey |
+
+### Operations
+
+| Skill | Audience | Files |
+|-------|----------|-------|
+| **valkey-ops** | Self-hosted operators - K8s, Helm, monitoring, security, config migration | 61 |
 
 ### Server and Module Development
 
 | Skill | Audience | Files |
 |-------|----------|-------|
 | **valkey-dev** | Server contributors - C internals, data structures, threading, cluster, replication | 65 |
-| **valkey-bloom-dev** | valkey-bloom contributors - Rust, scalable bloom filters, replication | 13 |
-| **valkey-search-dev** | valkey-search contributors - C++, vector/text indexes, query engine, gRPC coordinator | 21 |
-| **glide-dev** | GLIDE client contributors - Rust core, FFI bindings, build system | 7 |
-
-### Operations
-
-| Skill | Audience | Files |
-|-------|----------|-------|
-| **valkey-ops** | Self-hosted operators - deployment, monitoring, security, Kubernetes, Helm, troubleshooting | 61 |
-
-### GLIDE Per-Language
-
-| Skill | Language | Migrating From |
-|-------|----------|----------------|
-| **valkey-glide-python** | Python (async + sync) | redis-py |
-| **valkey-glide-java** | Java | Jedis, Lettuce |
-| **valkey-glide-nodejs** | Node.js / TypeScript | ioredis |
-| **valkey-glide-go** | Go | go-redis |
-| **valkey-glide-csharp** | C# (.NET 8.0+) | StackExchange.Redis |
-| **valkey-glide-php** | PHP 8.1+ | phpredis |
-| **valkey-glide-ruby** | Ruby | redis-rb |
-
-### Migration
-
-| Skill | From | To |
-|-------|------|----|
-| **migrate-jedis** | Jedis | GLIDE Java |
-| **migrate-lettuce** | Lettuce | GLIDE Java |
-| **migrate-ioredis** | ioredis | GLIDE Node.js |
-| **migrate-redis-py** | redis-py | GLIDE Python |
-| **migrate-go-redis** | go-redis | GLIDE Go |
-| **migrate-stackexchange** | StackExchange.Redis | GLIDE C# |
-| **spring-data-valkey** | Spring Data Redis | Spring Data Valkey |
+| **valkey-search-dev** | valkey-search contributors - C++, vector/text indexes, query engine | 21 |
+| **valkey-bloom-dev** | valkey-bloom contributors - Rust, scalable bloom filters | 13 |
+| **glide-dev** | GLIDE core contributors - Rust core, FFI bindings, build system | 7 |
 
 ### Message Queues
 
-| Skill | Purpose |
-|-------|---------|
-| **glide-mq** | Queues, workers, schedulers, workflows on Valkey |
-| **glide-mq-migrate-bullmq** | Migrate from BullMQ |
-| **glide-mq-migrate-bee** | Migrate from Bee-Queue |
+| Skill | Purpose | Files |
+|-------|---------|-------|
+| **glide-mq** | Queues, workers, schedulers, workflows on Valkey | 3 |
 
-## How it works
+## How It Works
 
-Each skill follows a router pattern:
+Each skill follows a router pattern. The AI loads only the frontmatter (name, description, trigger phrases) into context at startup. When it encounters a relevant question, it loads the full SKILL.md router, scans the routing table, and reads only the specific reference file it needs.
 
 ```
 skills/valkey/
-  SKILL.md                          # Router (<250 lines) - loaded into AI context
+  SKILL.md                          # Frontmatter loaded at startup, full content on demand
   reference/
-    patterns-caching-strategies.md   # Loaded on demand when relevant
     valkey-features-hash-field-ttl.md
+    patterns-caching-strategies.md   # Loaded only when relevant
     advanced-latency-diagnosis.md
-    ...focused reference files
+    ...
 ```
 
-1. AI reads the SKILL.md router (routing table maps queries to reference files)
-2. AI identifies which reference file answers the question
-3. AI loads only that file (100-300 lines each)
-
-No context bloat. 67K lines available, only ~250 loaded per question.
+37K lines available. ~250 loaded per subject.
 
 ## Quality
 
-Every reference file is verified against actual source code, not web research.
+Every reference file verified against actual source code.
 
-- **valkey**: verified against Valkey 9.0.3 source, GLIDE 2.3.0, valkey-search 1.2.0
-- **valkey-dev**: verified against `src/server.c`, `src/cluster.c`, `src/replication.c`
-- **valkey-bloom-dev**: verified against Rust source
-- **valkey-search-dev**: verified against 37,050 lines across 143 C++ files
-- **GLIDE skills**: verified against Rust FFI core and per-language bindings
+- **valkey**: Valkey 9.0.3 source
+- **valkey-dev**: `src/server.c`, `src/cluster.c`, `src/replication.c`, etc.
+- **valkey-ops**: Helm charts, official config templates
+- **GLIDE skills**: Rust FFI core and per-language bindings (GLIDE 2.3.0)
+- **valkey-search-dev**: 37,050 lines across 143 C++ files (v1.2.0)
+- **valkey-bloom-dev**: Rust source (GA)
 
-Passes [agnix](https://github.com/agent-sh/agnix) linter with 0 errors, 0 warnings.
+Passes [agnix](https://github.com/agent-sh/agnix) linter - 0 errors, 0 warnings.
 
-## Version baseline
+## Version Baseline
 
 | Component | Version |
 |-----------|---------|
 | Valkey server | 9.0.3 |
 | Valkey GLIDE | 2.3.0 |
 | valkey-search | 1.2.0 |
-| valkey-json | GA |
 | valkey-bloom | GA |
-| glide-mq | 0.14.0 |
 | Spring Data Valkey | 1.0 |
 
 ## Contributing
 
-Found an error or gap?
-
-1. Open an issue with the file path and what's wrong
-2. Include a source link (Valkey repo, GLIDE repo, or module repo)
-3. PRs welcome - follow the router pattern (SKILL.md + flat reference/ files under 300 lines)
-
-## Related
-
-- [Valkey](https://github.com/valkey-io/valkey) - The Valkey server
-- [Valkey GLIDE](https://github.com/valkey-io/valkey-glide) - Official multi-language client
-- [glide-mq](https://github.com/avifenesh/glide-mq) - Message queue library for Valkey
-- [agent-sh](https://github.com/agent-sh) - AI plugin ecosystem
-- [Agent Skills standard](https://agentskills.io) - Cross-tool skill specification
+Found an error or gap? Open an issue with the file path, what's wrong, and a source link. PRs welcome - follow the router pattern (SKILL.md + reference/ files under 300 lines).
 
 ## License
 
