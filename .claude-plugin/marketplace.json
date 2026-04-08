@@ -5,13 +5,13 @@
     "url": "https://github.com/avifenesh"
   },
   "metadata": {
-    "description": "AI skills for the Valkey ecosystem - 27 skills covering application development, server internals, operations, GLIDE client (7 languages), module development, and message queues",
+    "description": "AI skills for the Valkey ecosystem - 24 skills covering application development, server internals, operations, GLIDE client (7 languages), module development, and message queues",
     "version": "1.0.0"
   },
   "plugins": [
     {
       "name": "valkey-skills",
-      "description": "27 AI skills for Valkey - app development, server internals, ops, GLIDE client (7 languages), module development (C API, bloom, json, search), migration, message queues",
+      "description": "24 AI skills for Valkey - app development, server internals, ops, GLIDE client (7 languages), module development (C API, bloom, json, search), migration, message queues",
       "version": "1.0.0",
       "author": {
         "name": "Avi Fenesh"

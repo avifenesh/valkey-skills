@@ -228,3 +228,4 @@ The `Stats` struct tracks per-index metrics with atomic counters:
 | `mutations_queue_delay_` | Duration (mutex-guarded) | Sampled queue wait time |
 
 `RespondWithInfo()` formats these for `FT.INFO` responses. `GetInfoIndexPartitionData()` aggregates stats into the `InfoIndexPartitionData` struct for coordinator fanout, including `num_docs`, `num_records`, `backfill_complete_percent`, `mutation_queue_size`, and `state`.
+</uint32_t></uint32_t>

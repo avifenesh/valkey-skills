@@ -88,8 +88,8 @@ No drop-in replacement or compatibility layer exists for Python. Migration appro
 ## See Also
 
 - **valkey-glide-python** skill - full GLIDE Python API details
-- PubSub (see valkey-glide skill) - subscription patterns and dynamic PubSub
-- Batching (see valkey-glide skill) - pipeline and transaction patterns
+- PubSub (see valkey-glide-python skill) - subscription patterns and dynamic PubSub
+- Batching (see valkey-glide-python skill) - pipeline and transaction patterns
 
 ## Gotchas
 

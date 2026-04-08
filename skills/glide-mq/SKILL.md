@@ -2,7 +2,7 @@
 name: glide-mq
 description: "Use when building message queues with glide-mq. Covers queue setup, producer/consumer patterns, job scheduling, workflows, batch processing, streaming, and suspend/resume. Not for migrating from BullMQ (migrate-bullmq) or Bee-Queue (migrate-bee)."
 version: 1.1.0
-argument-hint: "[task description]"
+argument-hint: "[queue, worker, scheduler, or migration scenario]"
 ---
 
 # glide-mq

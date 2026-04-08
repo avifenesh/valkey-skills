@@ -54,6 +54,9 @@ benchmarks/     # Performance benchmarks
 | Java | JNI | `java/src/lib.rs` | JNI calls |
 | Node.js | NAPI v2 | `node/rust-client/` | Unix socket |
 | Go | CGO | `ffi/` | FFI calls |
+| PHP | PHP FFI | FFI extension (separate repo) | Direct FFI calls |
+| C# | P/Invoke | .NET interop (separate repo) | Direct FFI calls |
+| Ruby | FFI | `valkey-rb` gem (separate repo) | Direct FFI calls |
 
 | Topic | Reference |
 |-------|-----------|

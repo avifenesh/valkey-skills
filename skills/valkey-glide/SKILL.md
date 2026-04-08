@@ -25,6 +25,7 @@ Parent router for the official Valkey GLIDE multi-language client skills. Each p
 - Switching from go-redis -> **migrate-go-redis**
 - Switching from StackExchange.Redis -> **migrate-stackexchange**
 - Spring Boot / Spring Data Valkey -> **spring-data-valkey**
+- Building queues, job scheduling, workers, BullMQ/Bee-Queue migration -> **glide-mq**
 - How GLIDE works internally (Rust core, FFI, Protobuf) -> **glide-dev** (contributor skill)
 - Contributing to GLIDE, adding commands, build system -> **glide-dev**
 - Cluster vs standalone, slot routing, ReadFrom -> any per-language skill covers connection/cluster
@@ -55,3 +56,4 @@ Each skill includes connection setup, configuration, data types, features, best 
 | Lettuce (Java) | **migrate-lettuce** |
 | go-redis (Go) | **migrate-go-redis** |
 | StackExchange.Redis (C#) | **migrate-stackexchange** |
+| Spring Data Redis (Java) | **spring-data-valkey** |

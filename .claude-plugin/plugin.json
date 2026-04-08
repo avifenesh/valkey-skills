@@ -1,7 +1,7 @@
 {
   "name": "valkey-skills",
   "version": "1.0.0",
-  "description": "Domain-specific AI skills for the Valkey ecosystem - application development, server internals, operations, GLIDE client (7 languages), ecosystem tools, and message queues",
+  "description": "24 AI skills for the Valkey ecosystem - app development, server internals, ops, GLIDE client (7 languages), module development, migration, message queues",
   "author": {
     "name": "Avi Fenesh",
     "email": "avifenesh@gmail.com",
@@ -10,6 +10,7 @@
   "homepage": "https://github.com/avifenesh/valkey-skills",
   "repository": "https://github.com/avifenesh/valkey-skills",
   "license": "BSD-3-Clause",
+  "skills": "./skills/",
   "keywords": [
     "valkey",
     "redis",

@@ -12,7 +12,7 @@
 # - VER-001: Informational, no action needed
 # Suppress rules that conflict with our architecture
 disabled_rules = [
-    "AGM-004",
+    "AGM-004",  # Skills-only plugin - no agents to validate
     "AS-012",
     "AS-013",
     "AS-014",

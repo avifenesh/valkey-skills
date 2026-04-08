@@ -1,7 +1,7 @@
 {
   "name": "valkey-skills",
   "version": "1.0.0",
-  "description": "27 AI skills for the Valkey ecosystem - app development, server internals, ops, GLIDE client (7 languages), module development, migration, message queues",
+  "description": "24 AI skills for the Valkey ecosystem - app development, server internals, ops, GLIDE client (7 languages), module development, migration, message queues",
   "author": {
     "name": "Avi Fenesh",
     "url": "https://github.com/avifenesh"
