@@ -14,7 +14,7 @@
       "description": "Use when building apps with Valkey - caching, sessions, queues, locks, rate-limiting, leaderboards, counters, pub-sub, streams, scripting. Covers IFEQ/DELIFEQ, hash field TTL, COMMANDLOG.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey"
       }
     },
@@ -23,7 +23,7 @@
       "description": "Use when deploying, configuring, monitoring, or troubleshooting self-hosted Valkey. Covers Sentinel, cluster, persistence, replication, security, Kubernetes, performance tuning.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey-ops"
       }
     },
@@ -32,7 +32,7 @@
       "description": "Use when contributing to the Valkey server - C internals, event loop, commands, data structures, cluster, replication, RDB/AOF, memory, threading, modules, Lua, RESP, tests.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey-dev"
       }
     },
@@ -41,7 +41,7 @@
       "description": "Use when contributing to the GLIDE client - Rust core internals, language bindings (PyO3/JNI/NAPI/CGO/FFI), protocol layer, PubSub synchronizer, cluster topology, and build system.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/glide-dev"
       }
     },
@@ -50,7 +50,7 @@
       "description": "Use when contributing to valkey-io/valkey-search - C++ internals, HNSW/FLAT vector indexes, full-text/numeric/tag indexes, query engine, cluster coordinator, build.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey-search-dev"
       }
     },
@@ -59,7 +59,7 @@
       "description": "Use when contributing to valkey-io/valkey-bloom source - Rust bloom filter internals, building, testing, RDB/AOF, replication, or reviewing PRs.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey-bloom-dev"
       }
     },
@@ -68,7 +68,7 @@
       "description": "Router for Valkey GLIDE per-language skills. Use when you need to find the right language-specific GLIDE skill or migration skill.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey-glide"
       }
     },
@@ -77,7 +77,7 @@
       "description": "Use when building Python apps with Valkey GLIDE - async/sync APIs, GlideClient, GlideClusterClient, asyncio, TLS, OpenTelemetry, batching, PubSub, streams, Lua scripting.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey-glide-python"
       }
     },
@@ -86,7 +86,7 @@
       "description": "Use when building Java apps with Valkey GLIDE - CompletableFuture API, GlideClient, GlideClusterClient, Batch, TLS, OpenTelemetry, streams, Lua scripting.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey-glide-java"
       }
     },
@@ -95,7 +95,7 @@
       "description": "Use when building Node.js/TypeScript apps with Valkey GLIDE - Promise API, GlideClient, TypeScript types, ESM/CJS, TLS, OpenTelemetry, Batch, PubSub, streams.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey-glide-nodejs"
       }
     },
@@ -104,7 +104,7 @@
       "description": "Use when building Go apps with Valkey GLIDE - synchronous API, Client/ClusterClient, CGO bridge, Result[T] types, Batch, streams, TLS, OpenTelemetry, Lua scripting.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey-glide-go"
       }
     },
@@ -113,7 +113,7 @@
       "description": "Use when building C#/.NET apps with Valkey GLIDE - async/await API, .NET 8.0+ (preview), GlideClient, configuration builders, TLS, PubSub.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey-glide-csharp"
       }
     },
@@ -122,7 +122,7 @@
       "description": "Use when building PHP apps with Valkey GLIDE - synchronous C extension API (PHP 8.1+), PIE/Composer/PECL install, GlideClient, batching, phpredis compat, PubSub, TLS.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey-glide-php"
       }
     },
@@ -131,7 +131,7 @@
       "description": "Use when building Ruby apps with Valkey GLIDE - valkey-rb gem (GA), redis-rb drop-in replacement, FFI bridge, PubSub, pipelining, OpenTelemetry, TLS.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/valkey-glide-ruby"
       }
     },
@@ -140,7 +140,7 @@
       "description": "Use when migrating Java from Jedis to Valkey GLIDE. Covers zero-code-change compatibility layer, native CompletableFuture rewrite, PubSub, Batch API, cluster mode.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/migrate-jedis"
       }
     },
@@ -149,7 +149,7 @@
       "description": "Use when migrating Java from Lettuce to Valkey GLIDE. Covers Spring Data Valkey path, native rewrite from RedisFuture to CompletableFuture, PubSub, no reactive API or codec equivalent.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/migrate-lettuce"
       }
     },
@@ -158,7 +158,7 @@
       "description": "Use when migrating Node.js from ioredis to Valkey GLIDE. Covers API mapping, creation-time PubSub, reversed publish args, Batch API, TypeScript types.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/migrate-ioredis"
       }
     },
@@ -167,7 +167,7 @@
       "description": "Use when migrating Python from redis-py to Valkey GLIDE. Covers async-first API, bytes returns (no decode_responses), list args, PubSub, ExpirySet/ConditionalChange.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/migrate-redis-py"
       }
     },
@@ -176,7 +176,7 @@
       "description": "Use when migrating Go from go-redis to Valkey GLIDE. Covers Result[T] nil handling, CGO dependency, PubSub, SetWithOptions, Alpine/MUSL gotchas.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/migrate-go-redis"
       }
     },
@@ -185,7 +185,7 @@
       "description": "Use when migrating C#/.NET from StackExchange.Redis to Valkey GLIDE. Covers API mapping, async/await Task, no IDatabase layer, PubSub, Batch API (.NET 8.0+, preview).",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/migrate-stackexchange"
       }
     },
@@ -194,7 +194,7 @@
       "description": "Use when integrating Spring Boot with Valkey via Spring Data Valkey. Covers auto-configuration, ValkeyTemplate, caching, Actuator health, IAM auth, Spring Data Redis migration.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/spring-data-valkey"
       }
     },
@@ -203,7 +203,7 @@
       "description": "Use when building message queues with glide-mq. Covers queue setup, producer/consumer patterns, job scheduling, workflows, batch processing, streaming, and suspend/resume.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/glide-mq"
       }
     },
@@ -212,7 +212,7 @@
       "description": "Use when migrating BullMQ applications to glide-mq. Covers connection conversion, API mapping, and breaking changes.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/glide-mq-migrate-bullmq"
       }
     },
@@ -221,7 +221,7 @@
       "description": "Use when migrating Bee-Queue applications to glide-mq. Covers chained builder to options object conversion, API mapping, and architectural changes.",
       "source": {
         "source": "git-subdir",
-        "url": "avifenesh/valkey-skills",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/glide-mq-migrate-bee"
       }
     }
