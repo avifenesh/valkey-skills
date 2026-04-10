@@ -1,0 +1,12 @@
+{
+  "name": "glide-dev",
+  "version": "1.0.0",
+  "description": "Use when contributing to the GLIDE client - Rust core internals, language bindings (PyO3/JNI/NAPI/CGO/FFI), protocol layer, PubSub synchronizer, cluster topology, and build system. For using GLIDE in apps, see valkey-glide instead.",
+  "author": {
+    "name": "Avi Fenesh",
+    "url": "https://github.com/avifenesh"
+  },
+  "homepage": "https://github.com/avifenesh/valkey-skills",
+  "repository": "https://github.com/avifenesh/valkey-skills",
+  "license": "BSD-3-Clause"
+}

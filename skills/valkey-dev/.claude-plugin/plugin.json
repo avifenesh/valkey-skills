@@ -1,0 +1,12 @@
+{
+  "name": "valkey-dev",
+  "version": "1.0.0",
+  "description": "Use when contributing to the Valkey server - C internals, event loop, commands, data structures, cluster, replication, RDB/AOF, memory, threading, modules, Lua, RESP, tests. Not for app development (valkey) or ops (valkey-ops).",
+  "author": {
+    "name": "Avi Fenesh",
+    "url": "https://github.com/avifenesh"
+  },
+  "homepage": "https://github.com/avifenesh/valkey-skills",
+  "repository": "https://github.com/avifenesh/valkey-skills",
+  "license": "BSD-3-Clause"
+}

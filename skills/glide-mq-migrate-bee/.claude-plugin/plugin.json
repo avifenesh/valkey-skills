@@ -1,0 +1,12 @@
+{
+  "name": "glide-mq-migrate-bee",
+  "version": "1.0.0",
+  "description": "Use when migrating Bee-Queue applications to glide-mq. Covers chained builder to options object conversion, API mapping, and architectural changes. Not for BullMQ migration (migrate-bullmq) or greenfield glide-mq development (glide-mq).",
+  "author": {
+    "name": "Avi Fenesh",
+    "url": "https://github.com/avifenesh"
+  },
+  "homepage": "https://github.com/avifenesh/valkey-skills",
+  "repository": "https://github.com/avifenesh/valkey-skills",
+  "license": "BSD-3-Clause"
+}

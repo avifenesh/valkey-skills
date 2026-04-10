@@ -1,0 +1,12 @@
+{
+  "name": "valkey-glide-java",
+  "version": "2.0.0",
+  "description": "Use when building Java apps with Valkey GLIDE - CompletableFuture API, GlideClient, GlideClusterClient, Batch, TLS, OpenTelemetry, streams, Lua scripting. Not for Jedis/Lettuce migration - use migrate-jedis or migrate-lettuce skill.",
+  "author": {
+    "name": "Avi Fenesh",
+    "url": "https://github.com/avifenesh"
+  },
+  "homepage": "https://github.com/avifenesh/valkey-skills",
+  "repository": "https://github.com/avifenesh/valkey-skills",
+  "license": "BSD-3-Clause"
+}

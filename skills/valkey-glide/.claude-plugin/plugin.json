@@ -1,0 +1,12 @@
+{
+  "name": "valkey-glide",
+  "version": "1.1.0",
+  "description": "Router for Valkey GLIDE per-language skills. Use when you need to find the right language-specific GLIDE skill or migration skill. Not for GLIDE library internals or contributing to GLIDE source code - use glide-dev instead.",
+  "author": {
+    "name": "Avi Fenesh",
+    "url": "https://github.com/avifenesh"
+  },
+  "homepage": "https://github.com/avifenesh/valkey-skills",
+  "repository": "https://github.com/avifenesh/valkey-skills",
+  "license": "BSD-3-Clause"
+}

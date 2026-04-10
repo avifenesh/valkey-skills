@@ -1,0 +1,12 @@
+{
+  "name": "migrate-go-redis",
+  "version": "1.0.0",
+  "description": "Use when migrating Go from go-redis to Valkey GLIDE. Covers Result[T] nil handling, CGO dependency, PubSub, SetWithOptions, Alpine/MUSL gotchas. Not for greenfield Go apps - use valkey-glide-go instead.",
+  "author": {
+    "name": "Avi Fenesh",
+    "url": "https://github.com/avifenesh"
+  },
+  "homepage": "https://github.com/avifenesh/valkey-skills",
+  "repository": "https://github.com/avifenesh/valkey-skills",
+  "license": "BSD-3-Clause"
+}

@@ -1,0 +1,12 @@
+{
+  "name": "valkey-glide-php",
+  "version": "2.0.0",
+  "description": "Use when building PHP apps with Valkey GLIDE - synchronous C extension API (PHP 8.1+), PIE/Composer/PECL install, GlideClient, batching, phpredis compat, PubSub, TLS. Not for other languages - see valkey-glide router.",
+  "author": {
+    "name": "Avi Fenesh",
+    "url": "https://github.com/avifenesh"
+  },
+  "homepage": "https://github.com/avifenesh/valkey-skills",
+  "repository": "https://github.com/avifenesh/valkey-skills",
+  "license": "BSD-3-Clause"
+}

@@ -1,0 +1,12 @@
+{
+  "name": "spring-data-valkey",
+  "version": "1.1.0",
+  "description": "Use when integrating Spring Boot with Valkey via Spring Data Valkey. Covers auto-configuration, ValkeyTemplate, caching, Actuator health, IAM auth, Spring Data Redis migration. Not for raw GLIDE Java API.",
+  "author": {
+    "name": "Avi Fenesh",
+    "url": "https://github.com/avifenesh"
+  },
+  "homepage": "https://github.com/avifenesh/valkey-skills",
+  "repository": "https://github.com/avifenesh/valkey-skills",
+  "license": "BSD-3-Clause"
+}

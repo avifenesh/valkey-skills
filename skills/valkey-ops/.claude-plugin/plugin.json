@@ -1,0 +1,12 @@
+{
+  "name": "valkey-ops",
+  "version": "1.0.0",
+  "description": "Use when deploying, configuring, monitoring, or troubleshooting self-hosted Valkey. Covers Sentinel, cluster, persistence, replication, security, Kubernetes, performance tuning. Not for app development (valkey) or server internals (valkey-dev).",
+  "author": {
+    "name": "Avi Fenesh",
+    "url": "https://github.com/avifenesh"
+  },
+  "homepage": "https://github.com/avifenesh/valkey-skills",
+  "repository": "https://github.com/avifenesh/valkey-skills",
+  "license": "BSD-3-Clause"
+}

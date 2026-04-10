@@ -1,0 +1,12 @@
+{
+  "name": "valkey-glide-ruby",
+  "version": "2.0.0",
+  "description": "Use when building Ruby apps with Valkey GLIDE - valkey-rb gem (GA), redis-rb drop-in replacement, FFI bridge, PubSub, pipelining, OpenTelemetry, TLS. Not for other languages - see valkey-glide router.",
+  "author": {
+    "name": "Avi Fenesh",
+    "url": "https://github.com/avifenesh"
+  },
+  "homepage": "https://github.com/avifenesh/valkey-skills",
+  "repository": "https://github.com/avifenesh/valkey-skills",
+  "license": "BSD-3-Clause"
+}

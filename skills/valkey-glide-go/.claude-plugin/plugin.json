@@ -1,0 +1,12 @@
+{
+  "name": "valkey-glide-go",
+  "version": "2.0.0",
+  "description": "Use when building Go apps with Valkey GLIDE - synchronous API, Client/ClusterClient, CGO bridge, Result[T] types, Batch, streams, TLS, OpenTelemetry, Lua scripting. Not for go-redis migration - use migrate-go-redis skill.",
+  "author": {
+    "name": "Avi Fenesh",
+    "url": "https://github.com/avifenesh"
+  },
+  "homepage": "https://github.com/avifenesh/valkey-skills",
+  "repository": "https://github.com/avifenesh/valkey-skills",
+  "license": "BSD-3-Clause"
+}
