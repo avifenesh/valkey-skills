@@ -9,6 +9,12 @@ argument-hint: "[language or migration target]"
 
 Parent router for the official Valkey GLIDE multi-language client skills. Each per-language skill is fully self-contained - it includes its own connection setup, data types, batching, PubSub, streams, OTel, TLS, error handling, performance tuning, and production best practices. No shared reference files exist at this level.
 
+## Version Note - GLIDE 2.3.1
+
+- GLIDE 2.3.1 is a maintenance update over 2.3.0 - no broad public API or migration changes are required for existing applications.
+- OTel command spans now include DB semantic convention attributes - check the per-language OTel sections when wiring tracing exporters or dashboards.
+- IAM-auth clients now reuse cached tokens across cluster reconnects, and Java async JNI failures are surfaced instead of leaving `CompletableFuture`s pending indefinitely.
+
 ## Routing
 
 - Python setup, async/sync API, redis-py migration -> **valkey-glide-python**

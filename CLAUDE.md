@@ -88,15 +88,15 @@ Skills were written and verified against these versions. Update when new release
 | Component | Version | Skills Affected |
 |-----------|---------|----------------|
 | Valkey server | 9.0.3 | valkey, valkey-dev, valkey-ops |
-| Valkey GLIDE | 2.3.0 | valkey-glide, all per-language skills |
+| Valkey GLIDE | 2.3.1 | valkey-glide, all per-language skills |
 | valkey-search | 1.2.0 | valkey-search-dev |
 | valkey-json | GA | (reference only) |
 | valkey-bloom | GA | valkey-bloom-dev |
-| Valkey GLIDE (source) | 2.3.0 | glide-dev |
-| glide-mq | 0.14.0 | glide-mq, migrate-bullmq, migrate-bee |
+| Valkey GLIDE (source) | 2.3.1 | glide-dev |
+| glide-mq | 0.15.1 | glide-mq, migrate-bullmq, migrate-bee |
 | Spring Data Valkey | 1.0 | spring-data-valkey |
 
-Last full review: 2026-04-03
+Last full review: 2026-04-11
 
 ## Critical Rules
 

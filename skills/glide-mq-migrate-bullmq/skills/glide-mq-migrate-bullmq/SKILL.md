@@ -76,6 +76,7 @@ The processor function signature is similar, but glide-mq has breaking differenc
 | Per-key ordering | BullMQ Pro only | `opts.ordering.key` | Free in glide-mq |
 | Group concurrency | `group: { id, limit }` | `ordering: { key, concurrency }` | Renamed |
 | Runtime group rate limit | Not available | `job.rateLimitGroup(ms)` / `queue.rateLimitGroup(key, ms)` | New in glide-mq |
+| Admin/API surface | Bull Board or custom APIs | glide-mq 0.15 proxy + `/flows/*` endpoints | Useful for dashboards and non-Node producers |
 | Dead letter queue | Not native | Built-in `deadLetterQueue` option | New |
 | Compression | Not available | `compression: 'gzip'` | New |
 | Worker `'active'` event | Emits `(job, prev)` | Emits `(job, jobId)` | Breaking |
@@ -116,6 +117,7 @@ new Worker('q', processor, {
 - [ ] Remove `defaultJobOptions` - use wrapper pattern
 - [ ] Replace `settings.backoffStrategy` with `backoffStrategies` map
 - [ ] Update `waitUntilFinished()` call signatures
+- [ ] If you expose admin APIs or dashboards, map BullMQ-specific endpoints to glide-mq proxy and `/flows/*` endpoints
 - [ ] Run full test suite
 
 ## Deep Dive
