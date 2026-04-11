@@ -108,7 +108,7 @@ worker.on('completed', (job) => console.log('Done:', job.returnValue));
 | `succeeded` event | `queue.on('succeeded')` | `worker.on('completed')` | Renamed |
 | Producer-only | `{ isWorker: false }` | `new Producer('queue', { connection })` | Dedicated class |
 | Batch save | `queue.saveAll(jobs)` | `queue.addBulk(jobs)` | Renamed |
-| Admin/API surface | Custom Redis reads or app endpoints | glide-mq 0.15 proxy + `/flows/*` endpoints | Useful for dashboards and non-Node producers |
+| Admin/API surface | Custom Valkey reads or app endpoints | glide-mq 0.15 proxy + `/flows/*` endpoints | Useful for dashboards and non-Node producers |
 | Connection | `{ redis: { host, port } }` | `{ addresses: [{ host, port }] }` | Must convert |
 | Delayed jobs | Not supported | `delay` option (ms) | New |
 | Priority | Not supported | `priority` option (0 = highest) | New |
