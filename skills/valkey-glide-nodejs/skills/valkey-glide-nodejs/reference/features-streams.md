@@ -1,6 +1,6 @@
 # Valkey Streams
 
-Use when you need durable, ordered message processing with consumer groups, replay capability, or event sourcing in Node.js/TypeScript. For fire-and-forget messaging, see [Pub/Sub](pubsub.md).
+Use when you need durable, ordered message processing with consumer groups, replay capability, or event sourcing in Node.js/TypeScript. For fire-and-forget messaging, see [Pub/Sub](features-pubsub.md).
 
 ## Contents
 
@@ -267,6 +267,6 @@ await commandClient.set("key", "value"); // unaffected
 
 ## Related Features
 
-- [Pub/Sub](pubsub.md) - fire-and-forget broadcast without durability
-- [Batching](batching.md) - stream commands work in Batch and ClusterBatch
-- [Scripting](scripting.md) - Lua scripts can call stream commands atomically
+- [Pub/Sub](features-pubsub.md) - fire-and-forget broadcast without durability
+- [Batching](features-batching.md) - stream commands work in Batch and ClusterBatch
+- [Scripting](features-advanced.md) - Lua scripts can call stream commands atomically

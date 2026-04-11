@@ -1,6 +1,6 @@
 # Streams
 
-Use when you need durable, ordered message processing with consumer groups, message acknowledgment, and replay capability. For ephemeral real-time broadcasting, see [Pub/Sub](pubsub.md) instead.
+Use when you need durable, ordered message processing with consumer groups, message acknowledgment, and replay capability. For ephemeral real-time broadcasting, see [Pub/Sub](features-pubsub.md) instead.
 
 ## Contents
 

@@ -39,7 +39,7 @@ Valkey reads configuration from `valkey.conf`. Most parameters can be changed at
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `maxmemory` | `0` (unlimited) | Hard memory limit in bytes. Set explicitly in production. |
-| `maxmemory-policy` | `noeviction` | What to do when maxmemory is reached. See [eviction policies](eviction.md). |
+| `maxmemory-policy` | `noeviction` | What to do when maxmemory is reached. See [eviction policies](configuration-eviction.md). |
 | `maxmemory-clients` | `0` (disabled) | Max aggregate memory for client buffers. Accepts bytes or percentage (e.g., `5%`). |
 | `maxmemory-samples` | `5` | Number of keys sampled for LRU/LFU approximation. Higher = more accurate but slower. |
 | `maxmemory-eviction-tenacity` | `10` | Effort level for eviction (0-100). Higher values try harder to meet maxmemory. |
@@ -156,7 +156,7 @@ Similarly, `dynamic-hz` is deprecated - the behavior it controlled is now always
 | `hz` | `10` | Server timer frequency in calls/sec. Higher = more responsive but more CPU. |
 | `disable-thp` | `yes` | Disable Transparent Huge Pages for the Valkey process. |
 | `activerehashing` | `yes` | Incrementally rehash hash tables in background. |
-| `lazyfree-lazy-*` | all `yes` | All five lazyfree parameters default to yes. See [Lazy Free Configuration](lazyfree.md) for details. |
+| `lazyfree-lazy-*` | all `yes` | All five lazyfree parameters default to yes. See [Lazy Free Configuration](configuration-lazyfree.md) for details. |
 | `hide-user-data-from-log` | `yes` | Redact user data (keys, values) from log messages. |
 | `busy-reply-threshold` | `5000` | Milliseconds before long-running script triggers BUSY error. Alias: `lua-time-limit`. |
 | `proto-max-bulk-len` | `512mb` | Maximum size of a single RESP bulk string. |

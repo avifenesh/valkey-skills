@@ -187,7 +187,7 @@ valkey-cli MEMORY STATS             # detailed memory breakdown
 
 The commandlog supersedes the legacy SLOWLOG, adding large-request and
 large-reply tracking. SLOWLOG commands remain supported as aliases for the
-`slow` log type. See [Commandlog](commandlog.md) for full details.
+`slow` log type. See [Commandlog](monitoring-commandlog.md) for full details.
 
 ```bash
 valkey-cli COMMANDLOG GET 10 slow           # last 10 slow commands

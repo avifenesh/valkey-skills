@@ -1,6 +1,6 @@
 # Valkey Streams
 
-Use when you need durable, ordered message processing with consumer groups, replay capability, or event sourcing in Go. For fire-and-forget broadcast messaging, see [Pub/Sub](pubsub.md). Stream commands can be included in [batches](batching.md).
+Use when you need durable, ordered message processing with consumer groups, replay capability, or event sourcing in Go. For fire-and-forget broadcast messaging, see [Pub/Sub](features-pubsub.md). Stream commands can be included in [batches](features-batching.md).
 
 Packages: `github.com/valkey-io/valkey-glide/go/v2/options`, `github.com/valkey-io/valkey-glide/go/v2/models`.
 

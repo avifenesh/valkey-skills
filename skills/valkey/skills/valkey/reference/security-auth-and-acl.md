@@ -151,7 +151,7 @@ Specify:
 | `@dangerous` | Potentially destructive commands (FLUSHALL, KEYS, DEBUG) |
 | `@scripting` | Lua scripting and Functions |
 
-View all categories at runtime: `ACL CAT` (see [Server Commands](../basics/server-and-scripting.md) for ACL introspection)
+View all categories at runtime: `ACL CAT` (see [Server Commands](basics-server-and-scripting.md) for ACL introspection)
 
 ---
 
@@ -239,8 +239,8 @@ r = redis.Redis(
 | Do not embed credentials in code | Use environment variables or secrets management |
 | Rotate passwords regularly | Coordinate with ops for password rotation |
 | Do not use the default user in production | Create a named ACL user for each application |
-| Avoid `@admin` and `@dangerous` | Your application should not need FLUSHALL, KEYS, or CONFIG (see [Anti-Patterns](../anti-patterns/quick-reference.md)) |
-| Separate pub/sub connections | Subscriber connections are monopolized - use separate auth if needed (see [Pub/Sub Commands](../basics/data-types.md)) |
+| Avoid `@admin` and `@dangerous` | Your application should not need FLUSHALL, KEYS, or CONFIG (see [Anti-Patterns](anti-patterns-quick-reference.md)) |
+| Separate pub/sub connections | Subscriber connections are monopolized - use separate auth if needed (see [Pub/Sub Commands](basics-data-types.md)) |
 
 ---
 

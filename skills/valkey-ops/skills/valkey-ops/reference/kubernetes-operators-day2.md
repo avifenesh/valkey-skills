@@ -133,6 +133,6 @@ kubectl describe valkey my-cluster
 
 ## See Also
 
-- [operators-overview](operators-overview.md) - Operator comparison, Official and Hyperspike CRDs
-- [helm](helm.md) - Helm chart deployment
-- [statefulset-config](statefulset-config.md) - Raw StatefulSet patterns
+- [operators-overview](kubernetes-operators-overview.md) - Operator comparison, Official and Hyperspike CRDs
+- [helm](kubernetes-helm.md) - Helm chart deployment
+- [statefulset-config](kubernetes-statefulset-config.md) - Raw StatefulSet patterns
