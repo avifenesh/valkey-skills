@@ -108,6 +108,7 @@ worker.on('completed', (job) => console.log('Done:', job.returnValue));
 | `succeeded` event | `queue.on('succeeded')` | `worker.on('completed')` | Renamed |
 | Producer-only | `{ isWorker: false }` | `new Producer('queue', { connection })` | Dedicated class |
 | Batch save | `queue.saveAll(jobs)` | `queue.addBulk(jobs)` | Renamed |
+| Admin/API surface | Custom Valkey reads or app endpoints | glide-mq 0.15 proxy + `/flows/*` endpoints | Useful for dashboards and non-Node producers |
 | Connection | `{ redis: { host, port } }` | `{ addresses: [{ host, port }] }` | Must convert |
 | Delayed jobs | Not supported | `delay` option (ms) | New |
 | Priority | Not supported | `priority` option (0 = highest) | New |
@@ -121,6 +122,7 @@ worker.on('completed', (job) => console.log('Done:', job.returnValue));
 - [ ] Rename `.retries(n)` to `attempts: n` in all job options
 - [ ] Rename `'succeeded'` events to `'completed'`
 - [ ] Replace `queue.process()` with `new Worker()` constructor
+- [ ] If you expose admin APIs or dashboards, map custom Bee-Queue endpoints to glide-mq proxy and `/flows/*` endpoints
 - [ ] Run full test suite
 
 ## Deep Dive

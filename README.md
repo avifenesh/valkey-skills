@@ -140,7 +140,7 @@ Every reference file verified against actual source code.
 - **valkey**: Valkey 9.0.3 source
 - **valkey-dev**: `src/server.c`, `src/cluster.c`, `src/replication.c`, etc.
 - **valkey-ops**: Helm charts, official config templates
-- **GLIDE skills**: Rust FFI core and per-language bindings (GLIDE 2.3.0)
+- **GLIDE skills**: Rust FFI core and per-language bindings (GLIDE 2.3.1)
 - **valkey-search-dev**: 37,050 lines across 143 C++ files (v1.2.0)
 - **valkey-bloom-dev**: Rust source (GA)
 
@@ -151,7 +151,7 @@ Passes [agnix](https://github.com/agent-sh/agnix) linter - 0 errors, 0 warnings.
 | Component | Version |
 |-----------|---------|
 | Valkey server | 9.0.3 |
-| Valkey GLIDE | 2.3.0 |
+| Valkey GLIDE | 2.3.1 |
 | valkey-search | 1.2.0 |
 | valkey-bloom | GA |
 | Spring Data Valkey | 1.0 |

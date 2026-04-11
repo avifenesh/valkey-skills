@@ -79,7 +79,7 @@ Source: `cluster_legacy.c` - PFAIL is set when node is unresponsive for `cluster
 
 ### Comparison: Cluster vs Sentinel Failover
 
-Both use a majority-vote protocol, but differ in structure. Sentinel is a separate process that monitors non-clustered Valkey; cluster failover is built into the data nodes themselves. Sentinel uses SDOWN/ODOWN detection with a configurable quorum, while cluster uses PFAIL/FAIL with gossip-based agreement. See [Sentinel Architecture](../sentinel/architecture.md) for the Sentinel protocol details.
+Both use a majority-vote protocol, but differ in structure. Sentinel is a separate process that monitors non-clustered Valkey; cluster failover is built into the data nodes themselves. Sentinel uses SDOWN/ODOWN detection with a configurable quorum, while cluster uses PFAIL/FAIL with gossip-based agreement. See [Sentinel Architecture](sentinel-architecture.md) for the Sentinel protocol details.
 
 ### Comparison
 

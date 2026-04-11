@@ -137,5 +137,5 @@ valkey-cli --cluster create 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 \
 
 ## See Also
 
-- [docker-patterns](docker-patterns.md) - Compose patterns, volumes, networking, config injection, resource limits
-- [bare-metal](bare-metal.md) - Non-container deployment
+- [docker-patterns](deployment-docker-patterns.md) - Compose patterns, volumes, networking, config injection, resource limits
+- [bare-metal](deployment-bare-metal.md) - Non-container deployment

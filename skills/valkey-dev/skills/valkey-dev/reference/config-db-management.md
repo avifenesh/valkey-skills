@@ -9,6 +9,6 @@ Standard key-value database with `lookupKey()`, `dbAdd()`, `setKey()`, `dbDelete
 - **Multi-database cluster**: In cluster mode, each kvstore is partitioned into 16,384 hashtables (one per slot). `getKVStoreIndexForKey()` routes operations. Standalone mode uses a single hashtable (slot 0).
 - **Lazy database allocation**: `server.db[]` is an array of `serverDb*` pointers. Unused databases remain NULL; `createDatabaseIfNeeded(id)` allocates on first access.
 - **Hash field TTL tracking**: `db->keys_with_volatile_items` kvstore tracks hash keys that have per-field TTLs. Managed by `dbTrackKeyWithVolatileItems()` / `dbUntrackKeyWithVolatileItems()`.
-- **kvstore keyspace**: Main keyspace uses `kvstore` (wrapping `hashtable`) instead of `dict`. See [kvstore.md](../valkey-specific/kvstore.md).
+- **kvstore keyspace**: Main keyspace uses `kvstore` (wrapping `hashtable`) instead of `dict`. See [kvstore.md](valkey-specific-kvstore.md).
 
 Source: `src/db.c`

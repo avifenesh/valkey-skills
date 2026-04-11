@@ -81,7 +81,7 @@ worker.on('failed', (job, err) => console.error(`Job ${job.id} failed:`, err.mes
 
 | Class | Purpose | Key Methods |
 |-------|---------|-------------|
-| `Queue` | Enqueue and manage jobs | `add()`, `addBulk()`, `addAndWait()`, `pause()`, `resume()`, `drain()`, `rateLimitGroup()`, `signal()`, `readStream()`, `getFlowUsage()`, `search()` |
+| `Queue` | Enqueue and manage jobs | `add()`, `addBulk()`, `addAndWait()`, `pause()`, `resume()`, `drain()`, `rateLimitGroup()`, `signal()`, `readStream()`, `getFlowUsage()`, `getUsageSummary()`, `search()` |
 | `Worker` | Process jobs | Constructor takes `(name, processor, opts)`. Events: `completed`, `failed`, `active` |
 | `Producer` | Lightweight enqueue (serverless) | `add()` - no EventEmitter overhead |
 | `FlowProducer` | Parent-child job trees | `add()` for DAG workflows |
@@ -206,6 +206,16 @@ await queue.createIndex(schema, opts);
 const results = await queue.search(query, opts);
 ```
 
+## HTTP Proxy and Flow APIs (v0.15+)
+
+glide-mq 0.15 expands the HTTP surface for non-Node producers, admin tools, and dashboards:
+
+- Proxy parity now covers queue-wide event SSE, per-job lifecycle SSE, `jobs/wait`, worker inspection, metrics, scheduler CRUD, DLQ inspection/replay, suspended-job inspection, revoke, broadcast publish/SSE, and queue global rate-limit management.
+- Flow HTTP endpoints are available at `POST /flows`, `GET /flows/:id`, `GET /flows/:id/tree`, and `DELETE /flows/:id`.
+- Flow inspection responses include usage, budget, roots, and node state so external control planes can inspect tree flows and DAGs without custom Valkey reads.
+
+For in-process aggregation, `queue.getUsageSummary()` returns time-windowed usage totals across queues.
+
 ## Worker Options
 
 | Option | Type | Default | Description |
@@ -245,6 +255,9 @@ const worker = new TestWorker(queue, async (job) => ({ sent: true }));
 - Priority: lower number = higher priority (0 is highest)
 - Keys are hash-tagged (`glide:{queueName}:*`) for native cluster support
 - Single FCALL per operation - no Lua EVAL overhead
+- Upgrade to 0.15.1 if you use `debounce` with `ordering.key` - 0.15.1 fixes a deadlock where cancelled ordered jobs could block the group permanently
+- If an older queue is already wedged by that deadlock, recover with `HSET group:<key> nextSeq 0`
+- Suspended-job timeouts are now swept by any live runtime with a connected `Queue` or `Worker`, not only the worker that originally suspended the job
 
 ## Deep Dive
 

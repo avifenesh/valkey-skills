@@ -180,7 +180,7 @@ Valkey 8.0+ parallelizes network read/write via I/O multithreading while keeping
 
 Coordinate with ops to enable I/O threads for high throughput needs. Typical production configs use 4-9 total threads depending on available CPU cores.
 
-> Cross-reference: See valkey-ops [performance/io-threads](../../../valkey-ops/reference/performance/io-threads.md) for thread count guidelines, benchmarks, and CPU affinity tuning.
+> Cross-reference: See valkey-ops [performance/io-threads](../../../../valkey-ops/skills/valkey-ops/reference/performance-io-threads.md) for thread count guidelines, benchmarks, and CPU affinity tuning.
 
 ---
 

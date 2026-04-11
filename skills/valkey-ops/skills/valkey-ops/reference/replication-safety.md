@@ -155,7 +155,7 @@ The isolated primary stops accepting writes after `min-replicas-max-lag` seconds
 **Production incident pattern**: Primary restart or brief network blip causes all replicas to reconnect simultaneously. If the replication backlog is undersized, all replicas trigger full resync. The primary forks for each (or batches with diskless sync delay), consuming massive memory and CPU. This can cascade - the fork overhead causes further lag, triggering more resyncs.
 
 **Mitigation:**
-- Size `repl-backlog-size` generously to reduce full resyncs (see [Replication Tuning](tuning.md))
+- Size `repl-backlog-size` generously to reduce full resyncs (see [Replication Tuning](replication-tuning.md))
 - Use `repl-diskless-sync-delay 5` to batch multiple replicas into one transfer
 - Stagger replica restarts during maintenance
 - Monitor `sync_full` and `sync_partial_ok` counters in `INFO stats` to detect the pattern early

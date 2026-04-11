@@ -36,7 +36,7 @@ The project lives at https://github.com/valkey-io/spring-data-valkey and is main
     <groupId>io.valkey</groupId>
     <artifactId>valkey-glide</artifactId>
     <classifier>${os.detected.classifier}</classifier>
-    <version>2.3.0</version>
+    <version>2.3.1</version>
 </dependency>
 ```
 

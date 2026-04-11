@@ -176,6 +176,6 @@ echo "=== Slow Cmds ===";   $CLI SLOWLOG GET 5
 
 ## See Also
 
-- [diagnostics-runbook](diagnostics-runbook.md) - 7-phase investigation runbook, fork latency, memory testing
-- [oom](oom.md) - Out of memory troubleshooting
-- [slow-commands](slow-commands.md) - Slow command investigation
+- [diagnostics-runbook](troubleshooting-diagnostics-runbook.md) - 7-phase investigation runbook, fork latency, memory testing
+- [oom](troubleshooting-oom.md) - Out of memory troubleshooting
+- [slow-commands](troubleshooting-slow-commands.md) - Slow command investigation

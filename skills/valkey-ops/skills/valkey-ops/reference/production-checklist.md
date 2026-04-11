@@ -135,5 +135,5 @@ echo "=== Done ==="
 - [ ] **RDB/AOF backup taken** - fresh backup before any upgrade
 - [ ] **Release notes reviewed** - check for breaking changes, deprecated configs, new defaults
 - [ ] **Rollback plan documented** - know how to revert if the upgrade fails
-- [ ] **Replica versions compatible** - see [upgrades/compatibility.md](upgrades/compatibility.md)
+- [ ] **Replica versions compatible** - see [upgrades/compatibility.md](upgrades-compatibility.md)
 - [ ] **Valkey 9.0: use 9.0.3+** - 9.0.0-9.0.1 had critical hash field expiration bugs (memory leaks, crashes, data corruption). Sentinel 9.0+ requires `+failover` ACL permission (permanent requirement, not a regression).

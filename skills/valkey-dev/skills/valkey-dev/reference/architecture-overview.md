@@ -6,7 +6,7 @@ Standard single-threaded event loop server with `ae.c` event loop, `server.c` ma
 
 ## Valkey-Specific Architecture Changes
 
-- **kvstore**: Keyspace uses `kvstore` - a slot-aware wrapper around the new `hashtable` implementation. In cluster mode, 16,384 hashtables (one per slot); in standalone, one hashtable. Replaces the legacy `dict` for the main keyspace. See [kvstore.md](../valkey-specific/kvstore.md) and [hashtable.md](../data-structures/hashtable.md).
+- **kvstore**: Keyspace uses `kvstore` - a slot-aware wrapper around the new `hashtable` implementation. In cluster mode, 16,384 hashtables (one per slot); in standalone, one hashtable. Replaces the legacy `dict` for the main keyspace. See [kvstore.md](valkey-specific-kvstore.md) and [hashtable.md](data-structures-hashtable.md).
 - **Open-addressing hashtable**: `hashtable.c` replaces the chained `dict` for new code paths. Uses open addressing with Robin Hood hashing.
 - **Lazy database allocation**: `server.db[]` is an array of pointers; databases are allocated on first use via `createDatabaseIfNeeded()`.
 - **I/O threading**: `io_threads.c` provides dynamic I/O thread pool with read, write, and poll offloading. Thread count adjusts based on event load.

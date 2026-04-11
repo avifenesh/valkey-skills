@@ -163,6 +163,6 @@ sudo systemctl enable --now valkey-sentinel
 
 ## See Also
 
-- [sentinel-deployment](sentinel-deployment.md) - Step-by-step deployment, config directives
-- [architecture](architecture.md) - How Sentinel works
-- [split-brain](split-brain.md) - Split-brain prevention
+- [sentinel-deployment](sentinel-sentinel-deployment.md) - Step-by-step deployment, config directives
+- [architecture](sentinel-architecture.md) - How Sentinel works
+- [split-brain](sentinel-split-brain.md) - Split-brain prevention

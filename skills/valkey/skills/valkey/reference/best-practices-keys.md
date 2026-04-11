@@ -101,7 +101,7 @@ Route read traffic to replicas in Sentinel and cluster setups.
 
 **3. Client-side caching**:
 
-Use `CLIENT TRACKING` to cache hot read-only keys locally, eliminating server round-trips. See [patterns/caching](../patterns/caching.md).
+Use `CLIENT TRACKING` to cache hot read-only keys locally, eliminating server round-trips. See [patterns/caching](patterns-caching-strategies.md).
 
 **4. Local application cache with short TTL**:
 

@@ -16,4 +16,4 @@ Use when inspecting key expiration, coordinating TTLs across services, or auditi
 
 ## Hash Field TTL
 
-Valkey adds per-field expiration on hashes (not available in Redis). See [hash-field-ttl](hash-field-ttl.md) for `HEXPIRETIME`, `HTTL`, `HPERSIST`.
+Valkey adds per-field expiration on hashes (not available in Redis). See [hash-field-ttl](valkey-features-hash-field-ttl.md) for `HEXPIRETIME`, `HTTL`, `HPERSIST`.

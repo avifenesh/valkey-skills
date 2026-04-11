@@ -207,4 +207,4 @@ Redirection errors (MOVED, ASK) are always handled automatically.
 
 `BaseBatch` exposes the same commands as the client: `Get`, `Set`, `SetWithOptions`, `Incr`, `Decr`, `HSet`, `HGet`, `LPush`, `RPush`, `SAdd`, `ZAdd`, `XAdd`, `XRead`, and all other data-type commands. Each returns `*T` (the batch itself) for method chaining.
 
-Standalone-only batch commands: `Select(index)`. See also [Streams](streams.md) and [Connection](connection.md) for WATCH/UNWATCH.
+Standalone-only batch commands: `Select(index)`. See also [Streams](features-streams.md) and [Connection](features-connection.md) for WATCH/UNWATCH.

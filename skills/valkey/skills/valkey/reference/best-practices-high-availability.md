@@ -187,7 +187,7 @@ const result = await withRetry(() => redis.get('user:1000'));
 
 ### Idempotency Warning
 
-Only retry idempotent commands. `SET`, `GET`, `HSET`, `ZADD` are safe. `INCR`, `LPUSH`, `RPUSH` are NOT idempotent - retrying causes double-counting or duplicate entries. For non-idempotent operations, use the idempotency key pattern (see [Counter Patterns](../patterns/counters.md)).
+Only retry idempotent commands. `SET`, `GET`, `HSET`, `ZADD` are safe. `INCR`, `LPUSH`, `RPUSH` are NOT idempotent - retrying causes double-counting or duplicate entries. For non-idempotent operations, use the idempotency key pattern (see [Counter Patterns](patterns-counters-atomic.md)).
 
 ---
 

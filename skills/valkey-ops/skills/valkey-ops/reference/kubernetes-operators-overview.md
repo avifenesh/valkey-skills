@@ -286,6 +286,6 @@ spec:
 
 ## See Also
 
-- [operators-day2](operators-day2.md) - SAP operator, day-2 operations, choosing between operators
-- [helm](helm.md) - Helm chart deployment
-- [statefulset-config](statefulset-config.md) - Raw StatefulSet patterns
+- [operators-day2](kubernetes-operators-day2.md) - SAP operator, day-2 operations, choosing between operators
+- [helm](kubernetes-helm.md) - Helm chart deployment
+- [statefulset-config](kubernetes-statefulset-config.md) - Raw StatefulSet patterns
