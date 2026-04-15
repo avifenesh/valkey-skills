@@ -121,7 +121,7 @@ tracking_table_entries:1000000    # at the limit - spurious invalidations are oc
 GLIDE (Valkey's official multi-language client) has built-in client-side caching via `CacheConfig`. It handles the tracking protocol, push message parsing, connection management, and local cache eviction automatically.
 
 ```python
-# Python example (see valkey-glide-python skill for full reference)
+# Python example
 from glide import GlideClient, GlideClientConfiguration, CacheConfig
 
 config = GlideClientConfiguration(

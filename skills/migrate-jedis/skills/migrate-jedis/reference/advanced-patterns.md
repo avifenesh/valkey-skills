@@ -2,14 +2,6 @@
 
 Use when migrating Jedis transactions, pipelines, Pub/Sub, or evaluating Spring Data Valkey as an alternative migration path.
 
-## Contents
-
-- Transactions and Pipelines (line 12)
-- Pub/Sub (line 47)
-- Spring Data Valkey as an Alternative (line 119)
-
----
-
 ## Transactions and Pipelines
 
 **Jedis:**

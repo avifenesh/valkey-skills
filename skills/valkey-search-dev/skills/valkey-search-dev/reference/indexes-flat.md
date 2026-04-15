@@ -4,18 +4,6 @@ Use when working on the exact nearest neighbor vector index, modifying brute-for
 
 Source: `src/indexes/vector_flat.h`, `src/indexes/vector_flat.cc`, `src/indexes/vector_base.h`
 
-## Contents
-
-- [Class Overview](#class-overview)
-- [VectorFlat Template](#vectorflat-template)
-- [Block-Size Capacity Growth](#block-size-capacity-growth)
-- [KNN Search](#knn-search)
-- [Record Lifecycle](#record-lifecycle)
-- [Vector Tracking](#vector-tracking)
-- [Concurrency Model](#concurrency-model)
-- [RDB Persistence](#rdb-persistence)
-- [FLAT vs HNSW Comparison](#flat-vs-hnsw-comparison)
-
 ## Class Overview
 
 `VectorFlat<T>` is the brute-force (exact) vector search index. It wraps `hnswlib::BruteforceSearch<T>` and shares the `VectorBase` parent class with `VectorHNSW<T>`. FLAT provides exact KNN results with no graph overhead - every vector is compared during search.

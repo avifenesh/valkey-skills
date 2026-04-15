@@ -4,20 +4,6 @@ Use when understanding bloom module config defaults, ranges, types, the custom s
 
 Source: `src/configs.rs`, `src/lib.rs` (valkey_module! configurations block)
 
-## Contents
-
-- Configuration Table (line 22)
-- Integer Configs (line 36)
-- String Configs (line 46)
-- Boolean Configs (line 54)
-- Custom String Config Handler (line 60)
-- Config Storage Pattern (line 92)
-- module_args_as_configuration (line 115)
-- Fixed Seed Constant (line 134)
-- Other Constants (line 145)
-
----
-
 ## Configuration Table
 
 | Config | Type | Default | Min | Max | Purpose |

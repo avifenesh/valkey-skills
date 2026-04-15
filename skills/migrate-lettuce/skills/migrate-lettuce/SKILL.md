@@ -87,13 +87,6 @@ For native migration, the key steps:
 | Command-by-command API mapping (strings, hashes, lists, sets, sorted sets, delete, exists, cluster) | [api-mapping](reference/api-mapping.md) |
 | Transactions, pipelines, Pub/Sub, Spring Data Valkey alternative, compatibility layer status | [advanced-patterns](reference/advanced-patterns.md) |
 
-## See Also
-
-- **valkey-glide-java** skill - full GLIDE Java API details
-- Batching (see valkey-glide skill) - pipeline and transaction patterns
-- AZ Affinity (see valkey-glide skill) - availability zone aware routing
-- OpenTelemetry (see valkey-glide skill) - observability integration
-
 ## Gotchas
 
 1. **No reactive API.** Lettuce offers Project Reactor support (Flux/Mono). GLIDE only provides CompletableFuture. Adapt with `Mono.fromFuture()`. Significant for Spring WebFlux - the reactive `ReactiveRedisTemplate` is only available with Lettuce in Spring Data Valkey.

@@ -129,8 +129,3 @@ spring.data.valkey.valkey-glide.open-telemetry.metrics-endpoint=http://otel-coll
 | ValkeyTemplate, StringValkeyTemplate, caching, Actuator health, repositories | [auto-configuration](reference/auto-configuration.md) |
 | Spring Data Redis migration, driver comparison, when to use, hybrid approach | [migration-and-comparison](reference/migration-and-comparison.md) |
 
-## See Also
-
-- **valkey-glide-java** skill - full GLIDE Java API details
-- Production deployment (see valkey-glide skill) - timeout tuning, connection management, observability
-- Error handling (see valkey-glide skill) - error types, reconnection, batch error semantics

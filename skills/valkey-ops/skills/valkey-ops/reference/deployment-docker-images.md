@@ -2,14 +2,6 @@
 
 Use when choosing a Valkey Docker image (official vs Bitnami), running quick containers, or setting up a Docker Compose cluster.
 
-## Contents
-
-- Official Image (line 14)
-- Bitnami Image (line 68)
-- Tested Example: 3-Node Cluster via Docker Compose (line 105)
-
----
-
 ## Official Image
 
 The official image is `valkey/valkey` on Docker Hub.

@@ -75,20 +75,12 @@ No drop-in compatibility layer exists for C#. The GLIDE C# client intentionally 
 6. Migrate one service at a time and run integration tests
 7. Remove `StackExchange.Redis` NuGet package once all services are migrated
 
-GLIDE C# is in preview - evaluate feature coverage before committing to production migration.
-
 ## Reference
 
 | Topic | File |
 |-------|------|
 | Command-by-command API mapping (strings, hashes, lists, sets, sorted sets, delete, exists, cluster) | [api-mapping](reference/api-mapping.md) |
 | Transactions, Pub/Sub, key types, fire-and-forget, API compatibility | [advanced-patterns](reference/advanced-patterns.md) |
-
-## See Also
-
-- **valkey-glide-csharp** skill - full GLIDE C# API details
-- Batching (see valkey-glide skill) - pipeline and transaction patterns
-- PubSub (see valkey-glide skill) - subscription patterns and dynamic PubSub
 
 ## Gotchas
 
@@ -100,4 +92,3 @@ GLIDE C# is in preview - evaluate feature coverage before committing to producti
 6. **.NET 8.0+ required.** Earlier .NET versions are not supported.
 7. **Platform support.** Pre-built native libraries for Linux (x86_64, arm64), macOS, and Windows.
 8. **API stability.** Method signatures may change between releases. Pin the dependency version.
-9. **Ecosystem gap.** StackExchange.Redis has 597M+ NuGet downloads. Evaluate feature coverage carefully.

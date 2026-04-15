@@ -2,20 +2,6 @@
 
 Use when tuning Valkey throughput on multi-core systems, deciding whether to enable I/O threads, or choosing the right thread count for your workload.
 
-## Contents
-
-- Tested Example: Enable I/O Threads (line 21)
-- How It Works (line 47)
-- Configuration (line 58)
-- When to Enable (line 77)
-- Thread Count Guidelines (line 92)
-- Dynamic Thread Adjustment (line 106)
-- Performance Benchmarks (line 120)
-- Applying the Configuration (line 160)
-- Troubleshooting I/O Threads (line 176)
-
----
-
 ## Tested Example: Enable I/O Threads
 
 ```bash

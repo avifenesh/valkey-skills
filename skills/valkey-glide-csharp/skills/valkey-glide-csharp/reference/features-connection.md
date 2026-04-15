@@ -2,18 +2,6 @@
 
 Use when creating a GLIDE client in C#, choosing between standalone and cluster mode, configuring authentication, TLS, timeouts, reconnection backoff, read strategy, or the StackExchange.Redis-compatible ConnectionMultiplexer.
 
-## Contents
-
-- Client Classes (line 17)
-- Standalone Client (Builder Pattern) (line 27)
-- Cluster Client (Builder Pattern) (line 64)
-- ConnectionMultiplexer (StackExchange.Redis Compatibility) (line 80)
-- Authentication (line 92)
-- ReadFrom Strategy (line 109)
-- RetryStrategy (line 125)
-- TLS (line 140)
-- Other Options (line 147)
-
 ## Client Classes
 
 | Class | Mode | Description |

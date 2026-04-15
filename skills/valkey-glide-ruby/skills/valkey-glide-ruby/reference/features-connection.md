@@ -2,18 +2,6 @@
 
 Use when creating a GLIDE Ruby client, choosing between standalone and cluster mode, configuring authentication, TLS, timeouts, reconnection, read strategy, or migrating from redis-rb.
 
-## Contents
-
-- Client Class (line 17)
-- Standalone Connection (line 37)
-- URL-Based Connection (line 63)
-- Cluster Connection (line 71)
-- Authentication (line 85)
-- TLS/SSL (line 98)
-- Reconnection (line 121)
-- Other Options (line 133)
-- redis-rb Compatibility (line 140)
-
 ## Client Class
 
 The Ruby client uses a single `Valkey` class. Standalone and cluster modes are controlled by the `cluster_mode` option.

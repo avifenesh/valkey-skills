@@ -4,19 +4,6 @@ Use when building valkey-bloom from source, understanding Cargo configuration, f
 
 Source: `Cargo.toml`, `build.sh`, `src/lib.rs`
 
-## Contents
-
-- Crate Configuration (line 20)
-- Dependencies (line 42)
-- Feature Flags (line 64)
-- ValkeyAlloc Global Allocator (line 87)
-- Build Commands (line 102)
-- build.sh Script (line 136)
-- build.sh vs CI Differences (line 171)
-- Output Artifacts (line 183)
-
----
-
 ## Crate Configuration
 
 The crate produces a C-compatible dynamic library loaded by the Valkey server at runtime:

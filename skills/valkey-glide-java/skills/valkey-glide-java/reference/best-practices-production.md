@@ -2,16 +2,6 @@
 
 Use when deploying GLIDE Java to production, configuring timeouts, managing connections, or setting up observability.
 
-## Contents
-
-- Connection Management (line 15)
-- Timeout Configuration (line 59)
-- Cluster Configuration (line 90)
-- OpenTelemetry (line 117)
-- Connection Defaults (line 145)
-
----
-
 ## Connection Management
 
 ### Single Client Per Application

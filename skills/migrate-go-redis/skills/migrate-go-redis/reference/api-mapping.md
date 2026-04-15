@@ -2,18 +2,6 @@
 
 Use when migrating specific go-redis commands to their GLIDE equivalents, looking up return type differences, or converting data type operations.
 
-## Contents
-
-- String Operations (line 12)
-- Hash Operations (line 34)
-- List Operations (line 53)
-- Set Operations (line 72)
-- Sorted Set Operations (line 89)
-- Delete and Exists (line 104)
-- Cluster Mode (line 119)
-
----
-
 ## String Operations
 
 **go-redis:**

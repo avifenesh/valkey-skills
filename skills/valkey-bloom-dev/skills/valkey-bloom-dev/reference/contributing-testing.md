@@ -4,20 +4,6 @@ Use when writing or running unit tests, integration tests, understanding the tes
 
 Source: `src/bloom/utils.rs` (tests module), `tests/conftest.py`, `tests/valkey_bloom_test_case.py`, `tests/test_bloom_*.py`
 
-## Contents
-
-- Unit Tests Overview (line 21)
-- Parameterized Tests with rstest (line 33)
-- Running Unit Tests (line 65)
-- Integration Test Framework (line 78)
-- Test Base Class Helpers (line 99)
-- Test Parameterization (line 129)
-- Test File Inventory (line 137)
-- Running Integration Tests (line 155)
-- Writing New Tests (line 184)
-
----
-
 ## Unit Tests Overview
 
 Unit tests live in `src/bloom/utils.rs` inside a `#[cfg(test)] mod tests` block (approximately lines 722-1308). They test BloomObject and BloomFilter logic directly without a running Valkey server.

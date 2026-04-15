@@ -2,16 +2,6 @@
 
 Use when implementing error handling, retry logic, or batch error semantics in the GLIDE Go client.
 
-## Contents
-
-- Error Types (line 15)
-- Basic Error Handling (line 36)
-- Batch Error Handling (line 66)
-- Reconnection Behavior (line 111)
-- Failover and Timeout (line 133)
-
----
-
 ## Error Types
 
 Go GLIDE uses typed error structs with the standard `errors.As` pattern:

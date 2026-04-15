@@ -79,13 +79,6 @@ No drop-in compatibility layer exists for Node.js. Migration approach:
 | Command-by-command API mapping (strings, hashes, lists, sets, sorted sets, delete, exists, cluster) | [api-mapping](reference/api-mapping.md) |
 | Pipelines, transactions, Pub/Sub, Lua scripting, events, TypeScript | [advanced-patterns](reference/advanced-patterns.md) |
 
-## See Also
-
-- **valkey-glide-nodejs** skill - full GLIDE Node.js API details
-- Scripting (see valkey-glide skill) - Lua scripting and the Script class
-- PubSub (see valkey-glide skill) - subscription patterns and dynamic PubSub
-- Batching (see valkey-glide skill) - pipeline and transaction patterns
-
 ## Gotchas
 
 1. **Hash argument format.** ioredis accepts spread key-value pairs. GLIDE requires an object or HashDataType array.

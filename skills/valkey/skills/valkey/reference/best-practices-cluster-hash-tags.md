@@ -2,13 +2,6 @@
 
 Use when designing key patterns for multi-key commands in Valkey Cluster, resolving CROSSSLOT errors, or co-locating related keys in the same hash slot.
 
-## Contents
-
-- Hash Tags for Multi-Key Commands (line 14)
-- Cross-Slot Errors (line 78)
-
----
-
 ## Hash Tags for Multi-Key Commands
 
 Valkey Cluster distributes keys across 16,384 hash slots via CRC16 hash. Multi-key commands (`MGET`, `MSET`, `SINTER`, `SUNION`, Lua scripts with multiple keys) only work when all keys are in the same slot.

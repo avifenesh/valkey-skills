@@ -2,14 +2,6 @@
 
 Use when migrating redis-py Pub/Sub, pipelines, transactions, or handling platform-specific deployment concerns.
 
-## Contents
-
-- Pub/Sub (line 12)
-- Pipelines and Transactions (line 75)
-- Platform Notes (line 109)
-
----
-
 ## Pub/Sub
 
 **redis-py:**

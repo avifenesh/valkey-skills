@@ -2,15 +2,6 @@
 
 Use when setting up Valkey on a new machine - package manager, source build, or PREFIX install.
 
-## Contents
-
-- Current Versions (as of 2026-03-29) (line 15)
-- Package Manager Install (line 34)
-- Building from Source (line 58)
-- Verifying the Installation (line 159)
-
----
-
 ## Current Versions (as of 2026-03-29)
 
 | Branch | Latest | Docker Tags | Notes |

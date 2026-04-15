@@ -2,19 +2,6 @@
 
 Use when executing multiple Valkey commands together using Batch (pipeline or transaction), ClusterBatch, or the deprecated Transaction class.
 
-## Contents
-
-- Batch vs Transaction (line 18)
-- Atomic Batch (Transaction) (line 27)
-- Non-Atomic Batch (Pipeline) (line 42)
-- raiseOnError Parameter (line 57)
-- ClusterBatch (line 69)
-- Batch with Options (line 81)
-- Standalone-Only: SELECT in Batch (line 130)
-- Chaining (line 144)
-- Deprecated Transaction Class (line 160)
-- Error Handling (line 176)
-
 ## Batch vs Transaction
 
 `Transaction` is deprecated. Use `Batch` instead. A `Batch(true)` is atomic (transaction with MULTI/EXEC). A `Batch(false)` is non-atomic (pipeline).
@@ -159,19 +146,7 @@ Object[] results = client.exec(batch, false).get();
 
 ## Deprecated Transaction Class
 
-`Transaction` extends `Batch(true)`. `ClusterTransaction` extends `ClusterBatch(true)`. Both are deprecated - use `Batch`/`ClusterBatch` with `isAtomic=true` instead:
-
-```java
-// Deprecated
-Transaction tx = new Transaction();
-tx.set("key", "val").get("key");
-Object[] results = client.exec(tx).get();
-
-// Replacement
-Batch batch = new Batch(true);
-batch.set("key", "val").get("key");
-Object[] results = client.exec(batch, true).get();
-```
+`Transaction` and `ClusterTransaction` are deprecated - use `Batch`/`ClusterBatch` with `isAtomic=true` instead.
 
 ## Error Handling
 

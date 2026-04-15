@@ -4,18 +4,6 @@ Use when debugging CI failures, understanding the CI matrix, adding new CI jobs,
 
 Source: `.github/workflows/ci.yml`, `.github/workflows/trigger-bloom-release.yml`
 
-## Contents
-
-- CI Overview (line 19)
-- build-ubuntu-latest Job (line 33)
-- build-macos-latest Job (line 75)
-- asan-build Job (line 88)
-- LeakSanitizer Detection (line 114)
-- Release Trigger Workflow (line 142)
-- Debugging CI Failures (line 162)
-
----
-
 ## CI Overview
 
 The CI pipeline runs on every push and pull request. It has three jobs:

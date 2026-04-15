@@ -2,16 +2,6 @@
 
 Use when tuning Sentinel timing, deploying across datacenters, handling Docker/NAT environments, using coordinated failover (Valkey 9.0+), or setting up Sentinel as a systemd service.
 
-## Contents
-
-- Tuning Recommendations (line 14)
-- Cross-Datacenter Sentinel Placement (line 25)
-- Docker and NAT Considerations (line 49)
-- Coordinated Failover (Valkey 9.0+) (line 87)
-- Systemd Service Files (line 136)
-
----
-
 ## Tuning Recommendations
 
 | Scenario | `down-after-milliseconds` | `failover-timeout` | Notes |

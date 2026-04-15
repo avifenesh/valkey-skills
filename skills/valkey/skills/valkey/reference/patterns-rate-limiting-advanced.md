@@ -2,15 +2,6 @@
 
 Use when implementing token bucket rate limiting, per-field rate limits with Valkey 9.0+, or choosing between rate limiting algorithms for production APIs.
 
-## Contents
-
-- Token Bucket (Lua Script) (line 13)
-- Per-Field Rate Limiting (Valkey 9.0+) (line 81)
-- Comparison Table (line 123)
-- Production Tips (line 141)
-
----
-
 ## Token Bucket (Lua Script)
 
 Allows bursts up to a maximum while enforcing a sustained rate. Uses a Lua script for atomic check-and-update.

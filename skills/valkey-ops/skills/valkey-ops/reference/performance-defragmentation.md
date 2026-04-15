@@ -2,17 +2,6 @@
 
 Use when memory fragmentation ratio is high, Valkey is consuming more RSS than expected, or you want to reclaim memory without restarting.
 
-## Contents
-
-- What It Is (line 18)
-- Configuration (line 30)
-- Monitoring (line 74)
-- Common Causes of Fragmentation (line 109)
-- When to Use vs When to Restart (line 131)
-- Operational Notes (line 153)
-
----
-
 ## What It Is
 
 Over time, allocations and deallocations create gaps in memory (external

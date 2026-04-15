@@ -85,12 +85,6 @@ No drop-in replacement or compatibility layer exists for Python. Migration appro
 | Command-by-command API mapping (strings, hashes, lists, sets, sorted sets, delete, exists, cluster) | [api-mapping](reference/api-mapping.md) |
 | Pipelines, transactions, Pub/Sub, platform notes | [advanced-patterns](reference/advanced-patterns.md) |
 
-## See Also
-
-- **valkey-glide-python** skill - full GLIDE Python API details
-- PubSub (see valkey-glide-python skill) - subscription patterns and dynamic PubSub
-- Batching (see valkey-glide-python skill) - pipeline and transaction patterns
-
 ## Gotchas
 
 1. **Bytes everywhere.** GLIDE has no decode_responses option. All string values return as bytes. Call .decode() at each read site.

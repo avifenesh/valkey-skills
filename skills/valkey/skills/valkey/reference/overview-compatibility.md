@@ -198,8 +198,6 @@ All major Redis clients work with Valkey out of the box:
 | Go | rueidis | Works unchanged |
 | .NET | StackExchange.Redis | Works unchanged |
 
-For new projects or when upgrading, consider Valkey GLIDE - see clients overview (see valkey-glide skill).
-
 ---
 
 ## Application Code Changes

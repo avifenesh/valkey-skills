@@ -4,20 +4,6 @@ Use when understanding read and add command implementations, multi-item variants
 
 Source: `src/bloom/command_handler.rs`, `src/bloom/utils.rs`, `src/lib.rs`
 
-## Contents
-
-- BF.ADD and BF.MADD (line 22)
-- Auto-Creation Behavior (line 41)
-- handle_bloom_add Helper (line 55)
-- BF.EXISTS and BF.MEXISTS (line 65)
-- BF.CARD (line 81)
-- BF.INFO (line 94)
-- BF.INFO Field Queries (line 105)
-- BF.INFO Full Output (line 124)
-- Command Registration (line 146)
-
----
-
 ## BF.ADD and BF.MADD
 
 Both commands share the `bloom_filter_add_value` function, differentiated by a `multi: bool` parameter. The entry points in `lib.rs` are thin wrappers:

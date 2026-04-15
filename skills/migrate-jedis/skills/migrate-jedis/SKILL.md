@@ -94,13 +94,6 @@ For the zero-code-change path using the Jedis compatibility layer, see the Migra
 | Command-by-command API mapping (strings, hashes, lists, sets, sorted sets, delete, exists, cluster, errors) | [api-mapping](reference/api-mapping.md) |
 | Transactions, pipelines, Pub/Sub, Spring Data Valkey alternative | [advanced-patterns](reference/advanced-patterns.md) |
 
-## See Also
-
-- **valkey-glide-java** skill - full GLIDE Java API details
-- Batching (see valkey-glide skill) - pipeline and transaction patterns
-- TLS and authentication (see valkey-glide skill) - TLS setup and credential management
-- Production deployment (see valkey-glide skill) - timeout tuning, connection management, observability
-
 ## Gotchas
 
 1. **Every command returns CompletableFuture.** Call .get() for synchronous behavior.

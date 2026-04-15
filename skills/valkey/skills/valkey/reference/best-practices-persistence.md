@@ -2,19 +2,6 @@
 
 Use when choosing a persistence strategy for your application, understanding durability guarantees, or evaluating how persistence affects application latency.
 
-## Contents
-
-- What Application Developers Need to Know (line 19)
-- Persistence Strategies at a Glance (line 30)
-- RDB (Point-in-Time Snapshots) (line 42)
-- AOF (Append-Only File) (line 66)
-- Hybrid Persistence (Recommended) (line 93)
-- How Persistence Affects Your Application Latency (line 113)
-- Application-Level Durability Decisions (line 144)
-- What to Ask Your Ops Team (line 174)
-
----
-
 ## What Application Developers Need to Know
 
 Persistence is an operational concern, but affects applications in two ways:

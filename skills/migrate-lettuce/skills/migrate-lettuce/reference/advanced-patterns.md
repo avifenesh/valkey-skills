@@ -2,15 +2,6 @@
 
 Use when migrating Lettuce transactions, pipelines, Pub/Sub, or evaluating Spring Data Valkey as an alternative migration path.
 
-## Contents
-
-- Transactions and Pipelines (line 12)
-- Pub/Sub (line 46)
-- Spring Data Valkey as an Alternative (line 118)
-- Lettuce Compatibility Layer Status (line 124)
-
----
-
 ## Transactions and Pipelines
 
 **Lettuce:**

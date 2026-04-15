@@ -2,14 +2,6 @@
 
 Use when leveraging Valkey 9.0+ per-field TTL for session data with mixed volatility, counting active sessions per user, or enforcing concurrent session limits.
 
-## Contents
-
-- Hash Field Expiration (Valkey 9.0+) (line 13)
-- Session Counting and Management (line 117)
-- Production Tips (line 172)
-
----
-
 ## Hash Field Expiration (Valkey 9.0+)
 
 Valkey 9.0 per-field TTL eliminates splitting session data across multiple keys for different expiration needs.

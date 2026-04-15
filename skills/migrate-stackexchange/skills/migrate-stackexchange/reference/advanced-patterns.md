@@ -2,16 +2,6 @@
 
 Use when migrating StackExchange.Redis transactions, Pub/Sub, fire-and-forget patterns, or understanding GLIDE C# API compatibility and key type differences.
 
-## Contents
-
-- Transactions (line 12)
-- Pub/Sub (line 33)
-- Key Type Differences (line 85)
-- Fire-and-Forget (line 95)
-- API Compatibility Approach (line 107)
-
----
-
 ## Transactions
 
 **StackExchange.Redis:**

@@ -2,17 +2,6 @@
 
 Use when optimizing GLIDE Python throughput and latency, tuning inflight limits, or choosing batching strategies.
 
-## Contents
-
-- Batching Is the Top Optimization (line 16)
-- Async Best Practices (line 56)
-- Inflight Request Limit (line 87)
-- Connection Model (line 107)
-- Compression (line 120)
-- When to Choose GLIDE over redis-py (line 139)
-
----
-
 ## Batching Is the Top Optimization
 
 Batching amortizes the PyO3 FFI overhead across all commands - one crossing per batch instead of one per command. Batched workloads are competitive with redis-py.
@@ -134,19 +123,3 @@ config = GlideClientConfiguration(
 )
 ```
 
----
-
-## When to Choose GLIDE over redis-py
-
-GLIDE has ~15-20% lower throughput for sequential single-command operations due to FFI overhead. This gap disappears with batching.
-
-Choose GLIDE when:
-- Running Valkey Cluster (automatic topology, failover, slot routing)
-- Needing built-in OpenTelemetry without wrapping every call
-- Wanting automatic PubSub resubscription on reconnect
-- Operating across multiple languages with consistent behavior
-
-Stick with native clients when:
-- Maximum raw sequential throughput is critical
-- Simple standalone deployment with no cluster
-- Minimal binary dependencies needed

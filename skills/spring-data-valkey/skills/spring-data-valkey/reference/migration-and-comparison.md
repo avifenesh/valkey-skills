@@ -2,15 +2,6 @@
 
 Use when migrating from Spring Data Redis, comparing GLIDE vs Lettuce vs Jedis drivers, or deciding between Spring Data Valkey and the direct GLIDE API.
 
-## Contents
-
-- Migrating from Spring Data Redis (line 12)
-- Driver Comparison Test Suite (line 29)
-- When to Use Spring Data Valkey vs Direct GLIDE API (line 42)
-- Hybrid Approach (line 64)
-
----
-
 ## Migrating from Spring Data Redis
 
 Spring Data Valkey provides a complete migration path from Spring Data Redis. The official migration guide is at https://github.com/valkey-io/spring-data-valkey/blob/main/MIGRATION.md.

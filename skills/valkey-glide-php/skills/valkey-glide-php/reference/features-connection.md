@@ -2,16 +2,6 @@
 
 Use when creating a GLIDE client in PHP, choosing between standalone and cluster mode, configuring authentication, TLS, timeouts, reconnection backoff, read strategy, or the PHPRedis-compatible aliases.
 
-## Contents
-
-- Client Classes (line 15)
-- Standalone Connection (line 24)
-- Cluster Connection (line 73)
-- Authentication (line 93)
-- ReadFrom Strategy (line 114)
-- Reconnect Strategy (line 124)
-- PHPRedis Compatibility Aliases (line 139)
-
 ## Client Classes
 
 | Class | Mode | Description |
