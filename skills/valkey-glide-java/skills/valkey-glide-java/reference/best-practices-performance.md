@@ -2,17 +2,6 @@
 
 Use when optimizing GLIDE Java throughput and latency, tuning inflight limits, or choosing batching strategies.
 
-## Contents
-
-- Batching Is the Top Optimization (line 16)
-- CompletableFuture Best Practices (line 57)
-- Inflight Request Limit (line 80)
-- Connection Model (line 98)
-- Resource Management (line 111)
-- When to Choose GLIDE over Jedis / Lettuce (line 123)
-
----
-
 ## Batching Is the Top Optimization
 
 Batching amortizes the JNI FFI overhead across all commands - one crossing per batch instead of one per command. Batched workloads are competitive with Jedis and Lettuce.
@@ -118,19 +107,3 @@ try (GlideClient client = GlideClient.createClient(config).get()) {
 }
 ```
 
----
-
-## When to Choose GLIDE over Jedis / Lettuce
-
-GLIDE has ~15-20% lower throughput for sequential single-command operations due to JNI overhead. This gap disappears with batching.
-
-Choose GLIDE when:
-- Running Valkey Cluster (automatic topology, failover, slot routing)
-- Needing built-in OpenTelemetry without wrapping every call
-- Wanting automatic PubSub resubscription on reconnect
-- Operating across multiple languages with consistent behavior
-
-Stick with native clients when:
-- Maximum raw sequential throughput is critical
-- Simple standalone deployment with no cluster
-- Deep existing operational expertise with Jedis/Lettuce

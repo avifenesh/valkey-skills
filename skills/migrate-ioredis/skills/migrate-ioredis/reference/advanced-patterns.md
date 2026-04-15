@@ -2,16 +2,6 @@
 
 Use when migrating ioredis Lua scripting, pipelines, transactions, Pub/Sub, or handling event and TypeScript differences.
 
-## Contents
-
-- Lua Scripting (line 12)
-- Pipelines and Transactions (line 37)
-- Pub/Sub (line 66)
-- Event Handling (line 130)
-- TypeScript Support (line 143)
-
----
-
 ## Lua Scripting
 
 **ioredis:**

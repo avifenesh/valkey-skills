@@ -2,16 +2,6 @@
 
 Use when implementing error handling, retry logic, or batch error semantics in the GLIDE Python client.
 
-## Contents
-
-- Error Types (line 15)
-- Basic Error Handling (line 42)
-- Batch Error Handling (line 69)
-- Reconnection Behavior (line 125)
-- Failover and Timeout (line 149)
-
----
-
 ## Error Types
 
 GLIDE defines its own `TimeoutError` and `ConnectionError` classes that shadow Python built-ins when imported directly. Always import with explicit aliases:

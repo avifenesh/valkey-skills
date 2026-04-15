@@ -2,16 +2,6 @@
 
 Use when optimizing GLIDE Node.js throughput and latency, tuning inflight limits, or choosing batching strategies.
 
-## Contents
-
-- Batching Is the Top Optimization (line 15)
-- Inflight Request Limit (line 56)
-- Connection Model (line 74)
-- TCP Tuning (line 87)
-- When to Choose GLIDE over ioredis / node-redis (line 100)
-
----
-
 ## Batching Is the Top Optimization
 
 Batching amortizes the napi-rs FFI overhead across all commands - one crossing per batch instead of one per command. Batched workloads are competitive with native Node.js clients (ioredis, node-redis).
@@ -95,19 +85,3 @@ const client = await GlideClient.createClient({
 });
 ```
 
----
-
-## When to Choose GLIDE over ioredis / node-redis
-
-GLIDE has ~15-20% lower throughput for sequential single-command operations due to FFI overhead. This gap disappears with batching.
-
-Choose GLIDE when:
-- Running Valkey Cluster (automatic topology, failover, slot routing)
-- Needing built-in OpenTelemetry without wrapping every call
-- Wanting automatic PubSub resubscription on reconnect
-- Reliability matters more than squeezing last 15% of sequential throughput
-
-Stick with native clients when:
-- Maximum raw sequential throughput is critical
-- Simple standalone deployment with no cluster
-- Minimal binary dependencies needed

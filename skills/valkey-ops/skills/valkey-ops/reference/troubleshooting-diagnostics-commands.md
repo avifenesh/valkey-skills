@@ -2,14 +2,6 @@
 
 Use when looking up Valkey diagnostic commands, investigating real incident patterns, or running a quick health check script.
 
-## Contents
-
-- Diagnostic Commands Reference (line 13)
-- Real Incident Patterns (line 86)
-- Quick Health Check Script (line 163)
-
----
-
 ## Diagnostic Commands Reference
 
 ### Server State

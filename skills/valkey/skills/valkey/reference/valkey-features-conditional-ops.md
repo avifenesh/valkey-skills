@@ -2,15 +2,6 @@
 
 Use when implementing compare-and-swap patterns, safe distributed lock release, or any scenario where you need to conditionally update or delete a key based on its current value.
 
-## Contents
-
-- SET IFEQ - Conditional Update (Valkey 8.1+) (line 15)
-- DELIFEQ - Conditional Delete (Valkey 9.0+) (line 79)
-- Important Notes (line 134)
-- Migration from Lua Scripts (line 156)
-
----
-
 ## SET IFEQ - Conditional Update (Valkey 8.1+)
 
 Atomically update a key's value only if the current value matches an expected value. Eliminates the GET-compare-SET round-trip previously requiring Lua scripts.

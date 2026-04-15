@@ -1,6 +1,6 @@
 # valkey-skills
 
-> Domain-specific AI skills for the Valkey ecosystem - application development, server internals, operations, GLIDE client (7 languages), module contributor skills, and message queues
+> Domain-specific AI skills for the Valkey ecosystem - application development, server internals, operations, GLIDE client (7 languages), and module contributor skills
 
 ## Skills
 
@@ -39,13 +39,11 @@
 | `skills/migrate-stackexchange/` | migrate-stackexchange | StackExchange.Redis to GLIDE C# migration | 3 |
 | `skills/spring-data-valkey/` | spring-data-valkey | Spring Boot + Spring Data Valkey integration | 3 |
 
-### Glide-MQ (3 skills)
+### Glide-MQ (sourced externally)
 
-| Directory | Skill | Purpose |
-|-----------|-------|---------|
-| `skills/glide-mq/` | glide-mq | Greenfield queue development - queues, workers, producers, scheduling, workflows |
-| `skills/glide-mq-migrate-bullmq/` | glide-mq-migrate-bullmq | Migrate from BullMQ - connection, API mapping, breaking changes |
-| `skills/glide-mq-migrate-bee/` | glide-mq-migrate-bee | Migrate from Bee-Queue - chained builder to options, API mapping |
+The three glide-mq skills (glide-mq, glide-mq-migrate-bullmq, glide-mq-migrate-bee) are no longer distributed from this repo. They are maintained upstream at https://github.com/avifenesh/glide-mq and vendored into the `agent-sh/glidemq` plugin - install from there.
+
+For local development in this workspace, `skills/glide-mq*/skills/<name>/` are symlinked to `../../glidemq/skills/<name>/` (gitignored). They are not part of the marketplace.
 
 ## Architecture
 
@@ -54,7 +52,7 @@ Each skill is a self-contained installable plugin under `skills/<name>/`:
 - `skills/<name>/SKILL.md` - concise router (<250 lines) with trigger phrases and reference tables
 - `skills/<name>/reference/` - deep RAG library of focused docs (each under 300 lines)
 
-Per-language GLIDE skills (Python, Java, Node.js, Go have 9 files; C#, PHP, Ruby have 4 files) are fully language-specific - each contains its own complete API reference, patterns, and examples with no shared reference files. Migration skills each have 2 reference files (api-mapping and advanced-patterns). Glide-MQ skills are self-contained single-file SKILL.md documents.
+Per-language GLIDE skills (Python, Java, Node.js, Go have 9 files; C#, PHP, Ruby have 4 files) are fully language-specific - each contains its own complete API reference, patterns, and examples with no shared reference files. Migration skills each have 2 reference files (api-mapping and advanced-patterns).
 
 The AI loads SKILL.md into context, scans the tables, and reads only the specific reference file needed. No context bloat.
 
@@ -93,7 +91,6 @@ Skills were written and verified against these versions. Update when new release
 | valkey-json | GA | (reference only) |
 | valkey-bloom | GA | valkey-bloom-dev |
 | Valkey GLIDE (source) | 2.3.1 | glide-dev |
-| glide-mq | 0.15.1 | glide-mq, migrate-bullmq, migrate-bee |
 | Spring Data Valkey | 1.0 | spring-data-valkey |
 
 Last full review: 2026-04-11

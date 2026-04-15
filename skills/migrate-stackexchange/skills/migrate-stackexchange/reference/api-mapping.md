@@ -2,18 +2,6 @@
 
 Use when migrating specific StackExchange.Redis commands to their GLIDE equivalents, looking up type differences, or converting data type operations.
 
-## Contents
-
-- String Operations (line 12)
-- Hash Operations (line 30)
-- List Operations (line 49)
-- Set Operations (line 66)
-- Sorted Set Operations (line 81)
-- Delete and Exists (line 96)
-- Cluster Mode (line 111)
-
----
-
 ## String Operations
 
 **StackExchange.Redis:**

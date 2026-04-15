@@ -83,7 +83,7 @@ Applications using these operations see immediate speedups:
 
 ## What Requires Configuration
 
-Some improvements need operator-side configuration. Coordinate with ops or see the valkey-ops skill.
+Some improvements need operator-side configuration.
 
 ### I/O threading
 

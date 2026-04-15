@@ -2,14 +2,6 @@
 
 Use when working with Valkey in cluster mode and you want to understand the new capabilities in 9.0 - numbered databases and atomic slot migration.
 
-## Contents
-
-- Numbered Databases in Cluster Mode (Valkey 9.0+) (line 14)
-- Atomic Slot Migration (Valkey 9.0+) (line 66)
-- Configuration (line 99)
-
----
-
 ## Numbered Databases in Cluster Mode (Valkey 9.0+)
 
 ### Background

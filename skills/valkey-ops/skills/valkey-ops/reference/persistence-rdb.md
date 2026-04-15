@@ -4,17 +4,6 @@ Use when configuring point-in-time snapshots, tuning BGSAVE behavior, or underst
 
 Source: `src/config.c`, `src/rdb.c` (Valkey source). Cross-ref: valkey-dev `reference/persistence/rdb.md` for binary format internals.
 
-## Contents
-
-- When to Use RDB (line 19)
-- Trade-offs (line 26)
-- Configuration Reference (line 35)
-- Operational Procedures (line 93)
-- Production Recommendations (line 163)
-- RDB File Format Overview (line 173)
-
----
-
 ## When to Use RDB
 
 - You need fast restarts from a compact binary file
@@ -177,5 +166,3 @@ For operational purposes, the key facts about the binary format:
 - Ends with CRC64 checksum (8 bytes, little-endian)
 - Contains database selectors, key-value pairs, and metadata
 - Fully portable across architectures
-
-For full binary format details, see valkey-dev `reference/persistence/rdb.md`.

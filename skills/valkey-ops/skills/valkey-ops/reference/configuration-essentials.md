@@ -6,19 +6,6 @@ Use when setting up a new Valkey instance or auditing an existing config. All de
 
 Valkey reads configuration from `valkey.conf`. Most parameters can be changed at runtime via `CONFIG SET` and queried via `CONFIG GET`. To persist runtime changes: `CONFIG REWRITE`.
 
-## Contents
-
-- Network (line 23)
-- Memory (line 38)
-- Persistence - RDB (line 52)
-- Persistence - AOF (line 67)
-- I/O Threads (line 83)
-- Logging (line 93)
-- Command Log (Slow Log) (line 105)
-- Replication (line 118)
-- Cluster (line 138)
-- General (line 152)
-
 ## Network
 
 | Parameter | Default | Description |

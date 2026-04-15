@@ -2,17 +2,6 @@
 
 Use when optimizing GLIDE Go throughput and latency, tuning inflight limits, or choosing batching strategies.
 
-## Contents
-
-- Batching Is the Top Optimization (line 16)
-- Goroutine Concurrency (line 69)
-- Inflight Request Limit (line 92)
-- Connection Model (line 103)
-- Resource Cleanup (line 116)
-- When to Choose GLIDE over go-redis (line 132)
-
----
-
 ## Batching Is the Top Optimization
 
 Batching amortizes the CGO FFI overhead across all commands - one crossing per batch instead of one per command. Batched workloads are competitive with go-redis.
@@ -127,19 +116,3 @@ defer client.Close()
 
 `Close()` is safe to call multiple times. It drains pending requests with `ClosingError`.
 
----
-
-## When to Choose GLIDE over go-redis
-
-GLIDE has ~15-20% lower throughput for sequential single-command operations due to CGO overhead. This gap disappears with batching.
-
-Choose GLIDE when:
-- Running Valkey Cluster (automatic topology, failover, slot routing)
-- Needing built-in OpenTelemetry without wrapping every call
-- Wanting automatic PubSub resubscription on reconnect
-- Operating across multiple languages with consistent behavior
-
-Stick with go-redis when:
-- Maximum raw sequential throughput is critical
-- Simple standalone deployment with no cluster
-- Want pure-Go with no CGO dependency

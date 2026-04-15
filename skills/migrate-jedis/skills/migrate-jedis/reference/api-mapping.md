@@ -2,19 +2,6 @@
 
 Use when migrating specific Jedis commands to their GLIDE equivalents, looking up return type differences, or converting data type operations.
 
-## Contents
-
-- String Operations (line 12)
-- Hash Operations (line 37)
-- List Operations (line 58)
-- Set Operations (line 77)
-- Sorted Set Operations (line 94)
-- Delete and Exists (line 113)
-- Cluster Mode (line 128)
-- Error Handling (line 157)
-
----
-
 ## String Operations
 
 **Jedis:**

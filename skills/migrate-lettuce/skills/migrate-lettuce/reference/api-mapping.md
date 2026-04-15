@@ -2,18 +2,6 @@
 
 Use when migrating specific Lettuce commands to their GLIDE equivalents, looking up return type differences, or converting data type operations.
 
-## Contents
-
-- String Operations (line 12)
-- Hash Operations (line 38)
-- List Operations (line 57)
-- Set Operations (line 74)
-- Sorted Set Operations (line 91)
-- Delete and Exists (line 110)
-- Cluster Mode (line 125)
-
----
-
 ## String Operations
 
 **Lettuce (async):**

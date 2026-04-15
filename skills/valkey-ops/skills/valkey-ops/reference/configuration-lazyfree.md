@@ -2,17 +2,6 @@
 
 Use when tuning background deletion behavior, reducing latency spikes from large key eviction/expiry, or understanding the difference between DEL and UNLINK.
 
-## Contents
-
-- What It Is (line 19)
-- Configuration (line 32)
-- UNLINK vs DEL (line 74)
-- FLUSHDB / FLUSHALL with ASYNC (line 92)
-- Impact on Latency and Memory (line 108)
-- Recommended Settings (line 141)
-
----
-
 ## What It Is
 
 Lazy free (also called asynchronous free) offloads memory reclamation to

@@ -2,14 +2,6 @@
 
 Use when migrating go-redis transactions, pipelines, Pub/Sub, or checking Go API maturity status.
 
-## Contents
-
-- Transactions and Pipelines (line 12)
-- Pub/Sub (line 44)
-- Go API Maturity Timeline (line 108)
-
----
-
 ## Transactions and Pipelines
 
 **go-redis:**

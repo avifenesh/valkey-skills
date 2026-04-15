@@ -2,18 +2,6 @@
 
 Use when configuring ValkeyTemplate, StringValkeyTemplate, Spring Cache abstraction, Actuator health indicators, or Spring Data repositories with Valkey.
 
-## Contents
-
-- Connection Factory (line 12)
-- ValkeyTemplate (line 18)
-- StringValkeyTemplate (line 43)
-- Spring Cache Abstraction (line 63)
-- Cache TTL Configuration (line 96)
-- Spring Boot Actuator Health Indicators (line 107)
-- Spring Data Repositories (line 132)
-
----
-
 ## Connection Factory
 
 Spring Data Valkey auto-configures a `ValkeyConnectionFactory` based on the classpath driver. For GLIDE, this wraps `GlideClient` or `GlideClusterClient` depending on whether cluster nodes are configured.

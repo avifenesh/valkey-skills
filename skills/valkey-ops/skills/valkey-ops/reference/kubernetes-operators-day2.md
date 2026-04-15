@@ -2,14 +2,6 @@
 
 Use when deploying Valkey via the SAP Kubernetes operator, performing day-2 operator operations (scaling, upgrades), or choosing between the available operators.
 
-## Contents
-
-- SAP Valkey Operator (line 14)
-- Operator Day-2 Operations (line 80)
-- Choosing Between Operators (line 120)
-
----
-
 ## SAP Valkey Operator
 
 The SAP operator wraps the Bitnami Helm chart, adding operator lifecycle management.

@@ -2,18 +2,6 @@
 
 Use when migrating specific ioredis commands to their GLIDE equivalents, looking up argument format changes, or converting data type operations.
 
-## Contents
-
-- String Operations (line 12)
-- Hash Operations (line 32)
-- List Operations (line 51)
-- Set Operations (line 66)
-- Sorted Set Operations (line 81)
-- Delete and Exists (line 104)
-- Cluster Mode (line 117)
-
----
-
 ## String Operations
 
 **ioredis:**

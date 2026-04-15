@@ -5,3 +5,9 @@
 skills-lock.json
 node_modules/
 bench/v3/tasks/5-bloom-feature/workspace/valkey-bloom/
+
+# glide-mq skills are local dev symlinks into ../glidemq (vendored upstream).
+# The skill payload must not be committed here; install via the agent-sh/glidemq plugin.
+skills/glide-mq/skills/
+skills/glide-mq-migrate-bullmq/skills/
+skills/glide-mq-migrate-bee/skills/

@@ -104,12 +104,6 @@ No drop-in compatibility layer exists for Go. Migration approach:
 | Command-by-command API mapping (strings, hashes, lists, sets, sorted sets, delete, exists, cluster) | [api-mapping](reference/api-mapping.md) |
 | Transactions, pipelines, Pub/Sub, Go API maturity timeline | [advanced-patterns](reference/advanced-patterns.md) |
 
-## See Also
-
-- **valkey-glide-go** skill - full GLIDE Go API details
-- Batching (see valkey-glide skill) - pipeline and transaction patterns
-- PubSub (see valkey-glide skill) - subscription patterns and dynamic PubSub
-
 ## Gotchas
 
 1. **`Result[T]` instead of `redis.Nil`.** Check `IsNil()` before calling `Value()`.

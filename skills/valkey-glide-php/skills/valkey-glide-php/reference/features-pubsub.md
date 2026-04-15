@@ -4,17 +4,6 @@ Use when implementing real-time message broadcasting in PHP - event distribution
 
 GLIDE PHP supports PubSub with blocking subscribe, callback-based message delivery, and automatic reconnection with resubscription. The API is synchronous, matching PHP's execution model.
 
-## Contents
-
-- Subscription Modes (line 18)
-- Subscribe and Receive (line 27)
-- Publishing (line 48)
-- Pattern Subscriptions (line 65)
-- PubSub Introspection (line 81)
-- Message Callback Structure (line 107)
-- Multi-Process Pattern (line 118)
-- Important Notes (line 149)
-
 ## Subscription Modes
 
 | Mode | Subscribe | Unsubscribe | Cluster Only |

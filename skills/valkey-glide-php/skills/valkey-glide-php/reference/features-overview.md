@@ -1,35 +1,10 @@
 # PHP Client Overview
 
-Use when evaluating GLIDE PHP capabilities, understanding differences from PHPRedis, or checking available commands and limitations.
-
-## Contents
-
-- Status (line 19)
-- Key Differences from Other GLIDE Clients (line 23)
-- Requirements (line 34)
-- Platform Support (line 39)
-- Installation (line 49)
-- Available Command Groups (line 68)
-- Features (line 89)
-- Error Handling (line 107)
-- Architecture Notes (line 126)
-- Limitations (line 133)
-- Repository (line 141)
+Use when checking GLIDE PHP capabilities, available commands, and limitations.
 
 ## Status
 
-**GA** - version 1.0.0 released. Production-ready.
-
-## Key Differences from Other GLIDE Clients
-
-| Aspect | PHP Client | Python/Java/Node.js Clients |
-|--------|-----------|----------------------------|
-| Async model | Synchronous (blocking) | Async (asyncio, CompletableFuture, Promise) |
-| Extension type | Native C extension | Bindings (ctypes, JNI, N-API) |
-| PHPRedis compat | Class name aliases | N/A |
-| Installation | PIE / PECL / Composer | pip / Maven / npm |
-| Repository | Separate (`valkey-glide-php`) | Monorepo (`valkey-glide`) |
-| Platform | Linux, macOS only | Linux, macOS (+ Windows for some) |
+**GA** - version 1.0.0 released. Production-ready. Synchronous (blocking) API, native C extension, PHPRedis-compatible class name aliases.
 
 ## Requirements
 

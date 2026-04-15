@@ -2,17 +2,6 @@
 
 Use when working with location data and you need to search within arbitrary polygon boundaries, not just circles or rectangles. Available in Valkey 9.0+.
 
-## Contents
-
-- Background (line 17)
-- GEOSEARCH BYPOLYGON (line 25)
-- Use Cases (line 73)
-- Comparison with Existing Search Modes (line 119)
-- Storing Coordinates (line 131)
-- Performance Notes (line 146)
-
----
-
 ## Background
 
 Geospatial operations have been available since version 3.2. `GEOADD` stores coordinates, `GEOSEARCH` retrieves members within a radius (`BYRADIUS`) or bounding box (`BYBOX`).

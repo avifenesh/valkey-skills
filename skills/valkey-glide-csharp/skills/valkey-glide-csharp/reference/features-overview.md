@@ -1,34 +1,10 @@
 # C# Client Overview
 
-Use when evaluating GLIDE C# capabilities, understanding differences from other GLIDE clients or StackExchange.Redis, or checking available commands and limitations.
-
-## Contents
-
-- Status (line 18)
-- Key Differences from Other GLIDE Clients (line 22)
-- Requirements (line 33)
-- Platform Support (line 38)
-- Two Connection Styles (line 49)
-- Available Command Groups (line 67)
-- Features (line 86)
-- Error Handling (line 103)
-- Limitations (Preview) (line 124)
-- Repository (line 131)
+Use when checking GLIDE C# capabilities, available commands, and limitations.
 
 ## Status
 
-**Preview** - the C# wrapper is functional but API may change before GA. Many features are implemented; some advanced features may still be in progress.
-
-## Key Differences from Other GLIDE Clients
-
-| Aspect | C# Client | Python/Java/Node.js Clients |
-|--------|-----------|----------------------------|
-| Status | Preview | GA |
-| Async model | `Task<T>` with async/await | Varies (asyncio, CompletableFuture, Promise) |
-| StackExchange.Redis compat | `ConnectionMultiplexer` facade | N/A |
-| Method naming | `StringSetAsync`, `StringGetAsync` (PascalCase) | `set`, `get` (language-idiomatic) |
-| Repository | Separate (`valkey-glide-csharp`) | Monorepo (`valkey-glide`) |
-| Platform | Windows, Linux, macOS | Linux, macOS (Windows varies) |
+**Preview** - the C# wrapper is functional but API may change before GA. PascalCase method names (`StringSetAsync`, `StringGetAsync`), `Task<T>`/async-await, optional `ConnectionMultiplexer` facade for StackExchange.Redis compatibility.
 
 ## Requirements
 

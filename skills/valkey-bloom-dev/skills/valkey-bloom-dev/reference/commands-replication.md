@@ -4,21 +4,6 @@ Use when understanding how bloom objects replicate to replicas, why creation use
 
 Source: `src/bloom/command_handler.rs` (replicate_and_notify_events, ReplicateArgs), `src/wrapper/mod.rs` (must_obey_client)
 
-## Contents
-
-- Overview (line 23)
-- Three Replication Cases (line 29)
-- Reserve Replication (line 42)
-- Add-Only Replication (line 71)
-- No-Op Case (line 83)
-- ReplicateArgs Structure (line 93)
-- must_obey_client (line 110)
-- Size Limit Bypass on Replicas (line 133)
-- Keyspace Notifications (line 151)
-- Replication in Each Command (line 173)
-
----
-
 ## Overview
 
 The valkey-bloom module uses deterministic replication rather than verbatim replication for object creation. When a primary creates a bloom object, it must ensure the replica creates an identical object - same capacity, fp_rate, tightening_ratio, expansion, and critically the same hash seed. Without the seed, the replica's bloom filter would produce different hash results and diverge.

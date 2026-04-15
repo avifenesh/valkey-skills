@@ -2,18 +2,6 @@
 
 Use when migrating specific redis-py commands to their GLIDE equivalents, looking up return type differences, or converting data type operations.
 
-## Contents
-
-- String Operations (line 12)
-- Hash Operations (line 33)
-- List Operations (line 52)
-- Set Operations (line 69)
-- Sorted Set Operations (line 86)
-- Delete and Exists (line 99)
-- Cluster Mode (line 114)
-
----
-
 ## String Operations
 
 **redis-py:**

@@ -4,19 +4,6 @@ Use when you need to send multiple commands in a single round-trip for throughpu
 
 GLIDE uses a unified `Batch` / `ClusterBatch` class hierarchy with an `is_atomic` flag. Setting `is_atomic=True` creates a transaction (MULTI/EXEC); `is_atomic=False` creates a pipeline.
 
-## Contents
-
-- Core Concepts (line 20)
-- Standalone Batching (line 27)
-- Cluster Batching (line 54)
-- Batch Options (line 69)
-- Routing Behavior (Cluster) (line 94)
-- Error Handling (line 100)
-- Retry Strategy (Cluster Only) (line 120)
-- WATCH with Transactions (line 137)
-- Building Batches with All Command Types (line 152)
-- Custom Commands in Batches (line 169)
-
 ## Core Concepts
 
 | Mode | Flag | Protocol | Slot Constraint |

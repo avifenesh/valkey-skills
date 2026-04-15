@@ -4,20 +4,6 @@ Use when understanding explicit bloom creation, complex argument parsing in BF.I
 
 Source: `src/bloom/command_handler.rs`
 
-## Contents
-
-- BF.RESERVE (line 22)
-- BF.INSERT (line 44)
-- BF.INSERT Argument Parsing (line 52)
-- Replication-Only Arguments (line 74)
-- VALIDATESCALETO Validation (line 90)
-- NOCREATE Behavior (line 106)
-- BF.INSERT Object Creation vs Existing (line 121)
-- BF.LOAD (line 129)
-- Error Summary (line 151)
-
----
-
 ## BF.RESERVE
 
 `bloom_filter_reserve` creates a bloom object with explicit parameters. Syntax: `BF.RESERVE key fp_rate capacity [EXPANSION exp | NONSCALING]`.

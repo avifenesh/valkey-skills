@@ -2,15 +2,6 @@
 
 Use when you need Lua scripting, cluster SCAN, command routing, OpenTelemetry observability, logging, or custom commands in the Python GLIDE client.
 
-## Contents
-
-- Lua Scripting (line 14)
-- Cluster SCAN (line 62)
-- Routing and Custom Commands (Cluster) (line 114)
-- OpenTelemetry (line 130)
-- Logging (line 165)
-- Error Types (line 189)
-
 ## Lua Scripting
 
 The `Script` class manages script loading and invocation. Scripts are loaded once via SCRIPT LOAD and invoked via EVALSHA automatically.

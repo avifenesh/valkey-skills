@@ -2,14 +2,6 @@
 
 Use when counting unique elements with HyperLogLog, packing compact counters with BITFIELD, or deduplicating events and requests.
 
-## Contents
-
-- HyperLogLog for Approximate Unique Counting (line 13)
-- BITFIELD-Based Packed Counters (line 74)
-- Deduplication (line 129)
-
----
-
 ## HyperLogLog for Approximate Unique Counting
 
 HyperLogLog counts unique elements with 0.81% standard error using 12 KB of memory - whether counting 100 or 100 million unique elements.

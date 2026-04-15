@@ -1,36 +1,10 @@
 # Ruby Client Overview
 
-Use when evaluating GLIDE Ruby capabilities, understanding differences from redis-rb, or checking available commands and limitations.
-
-## Contents
-
-- Status (line 20)
-- Key Differences from Other GLIDE Clients (line 24)
-- Requirements (line 35)
-- Installation (line 44)
-- Available Command Groups (line 56)
-- Features (line 83)
-- OpenTelemetry (line 101)
-- Client Statistics (line 117)
-- Error Types (line 128)
-- redis-rb Drop-In Replacement (line 143)
-- Limitations (line 147)
-- Repository (line 153)
+Use when checking GLIDE Ruby capabilities, available commands, and limitations.
 
 ## Status
 
-**GA** - valkey-rb 1.0.0 published on RubyGems. Production-ready.
-
-## Key Differences from Other GLIDE Clients
-
-| Aspect | Ruby Client | Python/Java/Node.js Clients |
-|--------|-----------|----------------------------|
-| Async model | Synchronous (blocking) | Async (asyncio, CompletableFuture, Promise) |
-| FFI mechanism | Ruby FFI gem | ctypes, JNI, N-API |
-| redis-rb compat | Drop-in replacement API | N/A |
-| Installation | `gem install valkey-rb` | pip / Maven / npm |
-| Repository | Separate (`valkey-glide-ruby`) | Monorepo (`valkey-glide`) |
-| Client class | Single `Valkey` class | Separate standalone/cluster classes |
+**GA** - valkey-rb 1.0.0 published on RubyGems. Production-ready. Synchronous (blocking) API via Ruby FFI gem, redis-rb drop-in replacement, single `Valkey` class for both standalone and cluster.
 
 ## Requirements
 
