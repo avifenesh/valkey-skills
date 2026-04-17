@@ -39,17 +39,9 @@
 | `skills/migrate-stackexchange/` | migrate-stackexchange | StackExchange.Redis to GLIDE C# migration | 3 |
 | `skills/spring-data-valkey/` | spring-data-valkey | Spring Boot + Spring Data Valkey integration | 3 |
 
-### Glide-MQ (vendored from upstream)
+### Glide-MQ (3 skills, vendored from upstream)
 
-| Directory | Skill | Content | Files |
-|-----------|-------|---------|-------|
-| `skills/glide-mq/` | glide-mq | Queue setup, producer/consumer, scheduling, workflows, batch, streaming | 1 + 10 refs |
-| `skills/glide-mq-migrate-bullmq/` | glide-mq-migrate-bullmq | BullMQ → glide-mq migration | 1 + 2 refs |
-| `skills/glide-mq-migrate-bee/` | glide-mq-migrate-bee | Bee-Queue → glide-mq migration | 1 + 2 refs |
-
-Source of truth lives upstream at [avifenesh/glide-mq](https://github.com/avifenesh/glide-mq); the SKILL.md + `references/*` for each plugin are vendored under `skills/<plugin>/skills/<plugin>/` by `scripts/sync-glide-mq-upstream.sh`. The pin (commit SHA, date, upstream package version) is recorded in `UPSTREAM-GLIDE-MQ.md`.
-
-`.github/workflows/sync-glide-mq.yml` runs weekly, invokes the sync script, and opens a PR when upstream content has drifted. `.github/workflows/version-watch.yml` separately tracks npm version bumps and opens an issue.
+`skills/glide-mq/`, `skills/glide-mq-migrate-bullmq/`, `skills/glide-mq-migrate-bee/`. SKILL.md + `references/*` vendored from [avifenesh/glide-mq](https://github.com/avifenesh/glide-mq) by `scripts/sync-glide-mq-upstream.sh`; pin in `UPSTREAM-GLIDE-MQ.md`. `.github/workflows/sync-glide-mq.yml` runs weekly and opens a PR on drift; `version-watch.yml` tracks version bumps separately.
 
 ## Architecture
 

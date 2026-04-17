@@ -1,6 +1,14 @@
 # agnix configuration for valkey-skills
 # Skills-only plugin with nested reference directories
 
+# glide-mq* skill content is vendored from upstream avifenesh/glide-mq.
+# Lint violations there must be fixed upstream (see scripts/sync-glide-mq-upstream.sh).
+exclude = [
+    "skills/glide-mq/skills/**",
+    "skills/glide-mq-migrate-bullmq/skills/**",
+    "skills/glide-mq-migrate-bee/skills/**",
+]
+
 [rules]
 # Suppress rules that conflict with our architecture:
 # - AS-013: We use nested reference paths (reference/commands/strings.md) by design
