@@ -43,7 +43,7 @@ argument-hint: "[feature, pattern, or scenario]"
 | Topic | Reference |
 |-------|-----------|
 | SET IFEQ (8.1+), DELIFEQ (9.0+) - atomic compare-and-swap, safe lock release without Lua | [conditional-ops](reference/valkey-features-conditional-ops.md) |
-| HSETEX, HGETEX, HGETDEL, HEXPIRE, HPERSIST (9.0+) - per-field TTL on hashes | [hash-field-ttl](reference/valkey-features-hash-field-ttl.md) |
+| HSETEX, HGETEX, HEXPIRE, HPERSIST (9.0+) - per-field TTL on hashes | [hash-field-ttl](reference/valkey-features-hash-field-ttl.md) |
 | COMMANDLOG GET/LEN/RESET (8.1+) - unified slow/large-request/large-reply logging, replaces SLOWLOG | [commandlog](reference/valkey-features-commandlog.md) |
 | EXPIRETIME, PEXPIRETIME, PERSIST - absolute expiration timestamps, TTL inspection and removal | [expiretime](reference/valkey-features-expiretime.md) |
 | GEOSEARCH BYPOLYGON (9.0+) - arbitrary polygon region matching | [geospatial](reference/valkey-features-geospatial.md) |
@@ -89,7 +89,7 @@ argument-hint: "[feature, pattern, or scenario]"
 | Pipelining, connection pooling, I/O threading, performance anti-patterns | [performance-throughput](reference/best-practices-performance-throughput.md) |
 | RDB, AOF, hybrid persistence, latency impact, durability decisions | [persistence](reference/best-practices-persistence.md) |
 | Hash tags, cross-slot errors, CROSSSLOT fixes | [cluster-hash-tags](reference/best-practices-cluster-hash-tags.md) |
-| MOVED/ASK redirects, replica reads, pipelining in cluster, CLUSTERSCAN | [cluster-operations](reference/best-practices-cluster-operations.md) |
+| MOVED/ASK redirects, replica reads, pipelining in cluster | [cluster-operations](reference/best-practices-cluster-operations.md) |
 | Sentinel, failover, retries, WAIT/WAITAOF, replication lag, Sentinel vs Cluster decision | [high-availability](reference/best-practices-high-availability.md) |
 
 

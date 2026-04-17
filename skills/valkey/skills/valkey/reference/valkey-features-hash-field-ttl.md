@@ -49,8 +49,7 @@ Condition flags (`NX | XX | GT | LT`) are **per-field** and mutually exclusive:
 
 | Command | Syntax |
 |---------|--------|
-| `HSETEX` (9.0) | `HSETEX key [FNX \| FXX] [EX s \| PX ms \| EXAT t \| PXAT t \| KEEPTTL] FIELDS n field value [field value ...]` |
-| `HSETEX` (9.1+) | adds `[NX \| XX]` at the key level (create/update gate on the hash itself) |
+| `HSETEX` | `HSETEX key [FNX \| FXX] [EX s \| PX ms \| EXAT t \| PXAT t \| KEEPTTL] FIELDS n field value [field value ...]` |
 | `HGETEX` | `HGETEX key [EX s \| PX ms \| EXAT t \| PXAT t \| PERSIST] FIELDS n field [field ...]` |
 
 `FNX` = set only if **none** of the named fields already exist; `FXX` = set only if **all** of the named fields already exist. Applies to the whole operation — if the condition fails, **nothing** is set (HSETEX is atomic all-or-nothing).

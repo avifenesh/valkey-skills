@@ -82,7 +82,7 @@ During the migration window there are **no per-key ASK redirects**. There is a b
 
 ### How to invoke it
 
-This is **not** triggered automatically by `valkey-cli --cluster reshard` in 9.0.x (valkey-cli's reshard in 9.0 still uses the traditional per-key path). You have to call the commands directly. Support in valkey-cli lands in 9.1+.
+This is **not** triggered automatically by `valkey-cli --cluster reshard` in 9.0 (valkey-cli's reshard still uses the traditional per-key path). You have to call the commands directly.
 
 ```
 # Migrate slots 0-4095 from this node to target node <node-id>
@@ -108,7 +108,6 @@ Returns an array of maps, one per active or recently-finished migration. Useful 
 - `source_node`, `target_node` - 40-char node IDs
 - `state` - which phase of the state machine the job is in (snapshotting, streaming, paused, failover, cleaning up, finished, cancelled, failed)
 - `last_update_time` - detect stalled jobs
-- `remaining_repl_size` (9.1+) - bytes still to ship
 
 ### Cancelling
 

@@ -148,8 +148,6 @@ Libraries persist across restarts (they are included in RDB/AOF). EVALSHA cache 
 
 Library versioning convention: embed version in the name (`mylib_v2`) or use `FUNCTION LOAD REPLACE` to overwrite atomically.
 
-**9.1 note**: the Lua scripting engine is shipped as a Valkey module rather than built-in. EVAL/FCALL behavior is unchanged from a caller's perspective; operators see a new scripting-engines INFO section and can inspect the engine via `FUNCTION LIST WITHCODE`.
-
 ---
 
 ## Error Handling in Lua

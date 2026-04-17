@@ -99,7 +99,7 @@ Eliminates the two-command pipeline (HMGET + HEXPIRE). Each field's TTL is indep
 
 3. **HLEN doesn't filter expired fields.** HLEN returns the physical count and will include fields whose TTL has passed but haven't been swept yet. `HGETALL`, `HKEYS`, `HVALS`, `HSCAN` **do** filter expired fields. For an accurate live-field count, iterate with HKEYS and take its length. A field that HGETALL doesn't return may still contribute to HLEN until the next sweep.
 
-4. **HSETEX creates the hash key if it's missing.** A "refresh the CSRF token" write to a logged-out session will silently re-create the session key with just the CSRF field. Gate refresh writes on `EXISTS <session_key>` first when the hash lifecycle matters. (9.1+ adds `[NX|XX]` on HSETEX at the key level; in 9.0 you need the explicit `EXISTS` gate.)
+4. **HSETEX creates the hash key if it's missing.** A "refresh the CSRF token" write to a logged-out session will silently re-create the session key with just the CSRF field. Gate refresh writes on `EXISTS <session_key>` first when the hash lifecycle matters.
 
 5. **Expired-but-not-swept fields briefly visible.** Between logical expiry and the next lazy/active sweep, HLEN and some edge cases may see the field. If you need strict "is this field alive right now," use `HTTL` - its reply codes already distinguish live / no-TTL / missing.
 

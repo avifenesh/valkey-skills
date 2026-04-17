@@ -33,4 +33,4 @@ This approach works and is well understood, but expiry is all-or-nothing on the 
 
 For granular control - expire individual fields (tokens, temporary claims) independently of the session itself - use per-field TTL commands.
 
-See `patterns-sessions-field-expiry.md` for `HSETEX`, `HGETEX`, `HGETDEL`, `HEXPIRE`, and complete patterns.
+See `patterns-sessions-field-expiry.md` for `HSETEX`, `HGETEX`, `HEXPIRE`, and complete patterns.

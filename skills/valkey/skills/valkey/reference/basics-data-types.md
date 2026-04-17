@@ -16,8 +16,6 @@ Standard Redis commands (SET, GET, HSET, ZADD, etc.) are assumed known. This fil
 
 `HGETEX key [EX seconds|PX ms|EXAT unix|PXAT unix-ms|PERSIST] FIELDS count field [field ...]` - get fields and optionally set/refresh/remove their TTL atomically.
 
-`HGETDEL key FIELDS count field [field ...]` (Valkey 9.1+) - get fields and delete them atomically.
-
 `HEXPIRE key seconds [NX|XX|GT|LT] FIELDS count field [field ...]` - set per-field TTL (seconds).
 `HPEXPIRE key ms [NX|XX|GT|LT] FIELDS count field [field ...]` - set per-field TTL (milliseconds).
 `HEXPIREAT key unix-seconds [NX|XX|GT|LT] FIELDS count field [field ...]` - absolute expiry (seconds).
