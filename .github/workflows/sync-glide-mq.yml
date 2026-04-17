@@ -25,14 +25,19 @@ jobs:
       - name: Sync from upstream avifenesh/glide-mq
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pass the workflow-dispatch input through an env var, not direct
+          # interpolation into the run block, to prevent shell injection.
+          INPUT_REF: ${{ github.event.inputs.ref }}
         run: |
-          ref="${{ github.event.inputs.ref }}"
-          scripts/sync-glide-mq-upstream.sh "${ref:-main}"
+          scripts/sync-glide-mq-upstream.sh "${INPUT_REF:-main}"
 
       - name: Detect drift
         id: drift
         run: |
-          if git diff --quiet; then
+          # `git diff` only covers tracked files - miss a brand-new upstream
+          # reference file. `git status --porcelain` catches adds + deletes +
+          # modifications together.
+          if [ -z "$(git status --porcelain)" ]; then
             echo "has_drift=false" >> "$GITHUB_OUTPUT"
             echo "No drift detected."
           else

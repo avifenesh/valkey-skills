@@ -32,13 +32,17 @@ fi
 echo "[INFO] Resolving ref '$REF' on $UPSTREAM_OWNER/$UPSTREAM_REPO..."
 SHA=$(gh api "repos/$UPSTREAM_OWNER/$UPSTREAM_REPO/commits/$REF" --jq .sha)
 DATE=$(gh api "repos/$UPSTREAM_OWNER/$UPSTREAM_REPO/commits/$REF" --jq .commit.author.date)
-VERSION=$(gh api "repos/$UPSTREAM_OWNER/$UPSTREAM_REPO/contents/package.json?ref=$SHA" --jq .content \
-  | base64 -d | jq -r '.version // empty')
 
 if [ -z "$SHA" ]; then
   echo "[ERROR] Could not resolve ref '$REF'" >&2
   exit 1
 fi
+
+# `jq @base64d` instead of `base64 -d` for portability (GNU base64 uses -d,
+# BSD/macOS uses -D). gsub("\n"; "") strips the wrapping newlines the
+# GitHub API adds to base64-encoded content blobs.
+VERSION=$(gh api "repos/$UPSTREAM_OWNER/$UPSTREAM_REPO/contents/package.json?ref=$SHA" \
+  --jq '.content | gsub("\n"; "") | @base64d | fromjson | .version // empty')
 
 echo "[INFO] Syncing $UPSTREAM_OWNER/$UPSTREAM_REPO @ $SHA (${DATE}, v${VERSION:-?})"
 
@@ -47,8 +51,33 @@ fetch_file() {
   local upstream_path="$1"
   local local_path="$2"
   mkdir -p "$(dirname "$local_path")"
-  gh api "repos/$UPSTREAM_OWNER/$UPSTREAM_REPO/contents/${upstream_path}?ref=$SHA" --jq .content \
-    | base64 -d > "$local_path"
+  gh api "repos/$UPSTREAM_OWNER/$UPSTREAM_REPO/contents/${upstream_path}?ref=$SHA" \
+    --jq '.content | gsub("\n"; "") | @base64d' > "$local_path"
+}
+
+# Helper: list files in an upstream directory. Returns:
+#   - Newline-separated filenames if the directory exists.
+#   - Empty string and exit 0 if upstream returns 404 (directory removed upstream).
+#   - Exits non-zero for any other API error so the sync fails loudly instead of
+#     silently deleting local content.
+list_ref_files() {
+  local upstream_path="$1"
+  local stderr
+  stderr=$(mktemp)
+  local body
+  if ! body=$(gh api "repos/$UPSTREAM_OWNER/$UPSTREAM_REPO/contents/${upstream_path}?ref=$SHA" \
+                  --jq '.[] | select(.type=="file") | .name' 2>"$stderr"); then
+    if grep -qE '(HTTP 404|404 Not Found)' "$stderr"; then
+      rm -- "$stderr"
+      return 0  # upstream removed the dir - signal with empty output
+    fi
+    cat "$stderr" >&2
+    rm -- "$stderr"
+    echo "[ERROR] Failed to list ${upstream_path} on $UPSTREAM_OWNER/$UPSTREAM_REPO" >&2
+    return 1
+  fi
+  rm -- "$stderr"
+  printf '%s\n' "$body"
 }
 
 for p in "${PLUGINS[@]}"; do
@@ -58,9 +87,8 @@ for p in "${PLUGINS[@]}"; do
   # SKILL.md
   fetch_file "skills/$p/SKILL.md" "$dest_dir/SKILL.md"
 
-  # references/ (newline-separated list of files)
-  ref_files=$(gh api "repos/$UPSTREAM_OWNER/$UPSTREAM_REPO/contents/skills/$p/references?ref=$SHA" \
-    --jq '.[] | select(.type=="file") | .name' 2>/dev/null || true)
+  # references/ (fail loudly on non-404; empty on 404)
+  ref_files=$(list_ref_files "skills/$p/references")
 
   if [ -n "$ref_files" ]; then
     mkdir -p "$dest_dir/references"
