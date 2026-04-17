@@ -21,16 +21,32 @@ When `requirepass` is set, it becomes the password on `default`. Prefer named AC
 
 ## ACL - Sentinel user
 
-Sentinel needs `multi`, `exec`, `subscribe`, `publish`, `replicaof` (alias of `slaveof`), `ping`, `info`, `role`, `config|rewrite`, `client|setname`, `client|kill`, `script|kill`. Explicit per-command grant is tighter than `@admin`/`@dangerous`/`@slow` categories:
+Cross-checked against `src/sentinel.c` on 9.0.3 (what Sentinel actually sends to data nodes):
+
+| Command | Why |
+|---------|-----|
+| `ping` | Liveness probe |
+| `info` | Discovery + replica topology |
+| `subscribe` | `__sentinel__:hello` channel |
+| `publish` | `__sentinel__:hello` broadcast |
+| `multi` / `exec` | Failover coordination block |
+| `replicaof` (alias `slaveof`) | Classical failover (demote/promote) |
+| `config|rewrite` | Persist config change after failover (only REWRITE, not GET/SET) |
+| `client|setname` | Connection identification |
+| `client|kill` | Classical failover - disconnect writers after primary swap |
+| `client|pause` | **9.0+ coordinated failover** - `CLIENT PAUSE <ms> WRITE` in the MULTI block |
+| `failover` | **9.0+ coordinated failover** - `FAILOVER TO <host> <port> TIMEOUT <ms>` on the old primary |
+| `script|kill` | Unblock a stuck Lua script during reset |
 
 ```
 ACL SETUSER sentinel on >pw allchannels \
     +multi +exec +subscribe +publish +replicaof \
-    +ping +info +role +config|rewrite \
-    +client|setname +client|kill +script|kill
+    +ping +info +config|rewrite \
+    +client|setname +client|kill +client|pause \
+    +failover +script|kill
 ```
 
-`FAILOVER` and `CLUSTER FAILOVER` use standard `@admin`/`@dangerous`/`@slow` - no special permission beyond what any admin command needs.
+Drop `+client|pause` and `+failover` if you're staying on classical Sentinel failover only. `ROLE` is NOT sent by Sentinel - don't grant `+role`.
 
 ## ACL - persistence
 
