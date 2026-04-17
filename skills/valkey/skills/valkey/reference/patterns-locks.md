@@ -2,17 +2,6 @@
 
 Use when implementing mutual exclusion across distributed services, preventing duplicate processing, or coordinating access to shared resources.
 
-## Contents
-
-- Simple Lock (Single Instance) (line 17)
-- Lock Extension (Renewal) (line 107)
-- Redlock (Distributed Multi-Instance) (line 158)
-- Fencing Tokens (line 230)
-- Lock Anti-Patterns (line 251)
-- Retry Strategy (line 264)
-
----
-
 ## Simple Lock (Single Instance)
 
 The fundamental building block: a key that represents ownership of a resource.
@@ -114,6 +103,8 @@ SET lock:resource <my_random_value> IFEQ <my_random_value> PX 30000
 # IFEQ = only if key exists AND current value matches
 ```
 
+**Handling the reply**: IFEQ aborts (returns `nil`) in two cases - value mismatch (someone else holds the lock) **or** the key is missing (your lock already expired). IFEQ never creates a missing key. Either way, `nil` means "you no longer own this lock" - stop the protected work and bail out. A worker that ignores a `nil` renewal will keep operating on a resource a competing client now owns.
+
 **Pre-8.1 (Lua script)**:
 ```lua
 if server.call('GET', KEYS[1]) == ARGV[1] then
@@ -193,9 +184,11 @@ This is why Redlock uses N independent primaries instead of replicated instances
 
 ### When NOT to Use Redlock
 
-- A single Valkey instance with Sentinel failover is sufficient for most use cases
-- The lock protects an idempotent operation (duplicate execution is harmless)
-- Performance matters more than strict mutual exclusion
+- The lock protects an idempotent operation (duplicate execution is harmless - a single instance is fine)
+- Best-effort exclusion is acceptable (rate-limiting, deduplicating "mostly unique" work) - a single primary is enough
+- Performance matters more than strict mutual exclusion - Redlock's majority contact adds round-trips
+
+Note: Sentinel failover on a single replicated deployment does **not** give you Redlock-grade safety. Replication is asynchronous, so the failure mode in "Why Replication Alone Is Unsafe" above applies. If you need true mutual exclusion across a primary crash, you need Redlock (or a CP coordination system like ZooKeeper/etcd).
 
 ### Crash Recovery Considerations
 
@@ -206,11 +199,19 @@ This is why Redlock uses N independent primaries instead of replicated instances
 
 ### Retry Strategy
 
-On failure, retry with a random delay to desynchronize competing clients. Use multiplexing to contact all N instances simultaneously rather than sequentially.
+On failure, retry with a random delay to desynchronize competing clients. The canonical algorithm contacts instances **sequentially** with a small per-instance timeout, so one slow node can't stall the whole acquisition (the timeout trips and you move on). Some libraries parallelize the fan-out; this is an implementation trade-off - parallel is faster but harder to reason about when partial failures interact with the elapsed-time check in step 3.
+
+### Unlocking
+
+To release, issue `DELIFEQ lock:resource <your_random_value>` on every instance you contacted (including ones whose acquire reply you're unsure about - network glitches can leave "maybe acquired" state).
+
+**A `0` reply from any instance is expected, not an error.** It means either the lock already expired there, or a different owner now holds it - from this client's perspective that instance is released. Continue through the remaining instances without retrying the `0` one.
 
 ### Lock Extension
 
-For long-running operations, extend the lock by sending a Lua script to all instances that extends the TTL if the key exists with the correct random value. Only consider the lock extended if a majority succeeded within the validity time. Limit reacquisition attempts to preserve liveness.
+For long-running operations, extend the lock by sending `SET key value IFEQ value PX new_ttl` (8.1+) to all instances - same semantics as the classic Lua extend-if-owner script, one round-trip. Consider the lock extended only if a majority succeeded within the remaining validity time. Limit reacquisition attempts to preserve liveness.
+
+Pre-8.1: send the extend-if-owner Lua script (`if server.call('GET', K) == V then return server.call('PEXPIRE', K, T) else return 0 end`).
 
 ### Implementation Libraries
 
@@ -232,14 +233,26 @@ Locks can fail silently: a client holds a lock, pauses (GC, network delay), the 
 
 A fencing token prevents this: each lock acquisition increments a monotonic counter, and the protected resource rejects operations with a token older than the last seen.
 
-```
-# Acquire lock and get fencing token
-SET lock:resource <random_value> NX PX 30000
-token = INCR lock:resource:fencing_token
+The acquire + INCR must be **atomic** - otherwise you can acquire the lock but fail the INCR (partition, timeout), or burn a token without getting the lock, and the downstream will see out-of-order or missing tokens.
 
-# When writing to the protected resource, pass the token
-# The resource server verifies: token >= last_seen_token
+**Atomic acquire + token, single round-trip (Lua)**:
+
+```lua
+-- KEYS[1] = lock key, KEYS[2] = token counter key
+-- ARGV[1] = random value, ARGV[2] = TTL ms
+if server.call('SET', KEYS[1], ARGV[1], 'NX', 'PX', ARGV[2]) then
+    return server.call('INCR', KEYS[2])
+else
+    return nil  -- did not acquire; do not bump token
+end
 ```
+
+Usage (result is the fencing token, or `nil` if the lock was already held):
+```
+EVAL "..." 2 lock:resource lock:resource:fencing_token <random_value> 30000
+```
+
+When writing to the protected resource, pass the token. The resource server verifies `token >= last_seen_token` before applying the operation.
 
 Fencing requires the downstream resource (database, API) to support token validation. Not all systems can do this.
 

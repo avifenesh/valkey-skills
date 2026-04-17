@@ -86,11 +86,13 @@ MGET user:1:name user:2:name
 - `EVAL` / `FCALL` with multiple KEYS
 - `COPY`
 
-### Commands That Work Across Slots
+### Commands That Work Across Slots (via Client-Side Fan-Out)
 
-- Any single-key command (`GET`, `SET`, `HGET`, `ZADD`, etc.)
-- `DEL` and `UNLINK` with multiple keys (executed per-slot internally by most clients)
-- `SCAN` / `CLUSTERSCAN` (iterates the whole keyspace or specific nodes)
+The server always rejects a multi-key command whose keys span slots - the slot check in `clusterSlotByCommand` (`src/cluster.c`) is generic across commands. What lets these commands "work" across slots in practice is the **client**: cluster-aware clients split the call by slot and issue one per-slot request.
+
+- Any single-key command (`GET`, `SET`, `HGET`, `ZADD`, etc.) - no fan-out needed.
+- `DEL` / `UNLINK` with multiple keys - cluster clients (valkey-glide, Redisson, cluster-mode ioredis, etc.) group keys by slot and issue a DEL per slot.
+- `SCAN` - per-node iteration. Cluster-aware clients loop over every primary to cover the whole keyspace.
 
 ### Fixing Cross-Slot Issues
 

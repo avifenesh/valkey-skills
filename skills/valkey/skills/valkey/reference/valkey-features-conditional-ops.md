@@ -16,7 +16,18 @@ SET key new_value IFEQ expected_value [EX seconds | PX milliseconds | EXAT unix-
 
 - If the current value of `key` equals `expected_value`, the value is updated to `new_value` and the command returns `OK`
 - If the current value does NOT match, the command returns `nil` and no change is made
+- **If the key does not exist, the command returns `nil` and no change is made - IFEQ never creates a new key.** A CAS retry loop that only treats `nil` as "someone beat me" must also handle the "key was deleted" case (e.g. check `EXISTS` after, or create with a separate `SET ... NX` if missing).
 - The comparison and update are atomic - no race condition window
+
+### Return values with `GET`
+
+The `GET` flag returns the old value **before** IFEQ is evaluated. So the reply is:
+
+- Key exists + IFEQ matches → old value returned, new value stored
+- Key exists + IFEQ mismatches → old value returned, key unchanged
+- Key doesn't exist → `nil` returned, key not created
+
+The caller cannot distinguish "matched and set" from "mismatched and not set" from the GET-reply alone; use the non-GET form if you need to know the outcome.
 
 ### Examples
 
@@ -26,7 +37,8 @@ SET mykey "initial"
 SET mykey "updated" IFEQ "initial"     # Returns OK (match, value updated)
 SET mykey "again" IFEQ "initial"       # Returns nil (no match - value is "updated")
 
-# With GET flag - returns old value regardless of match outcome
+# With GET flag - returns old value regardless of IFEQ outcome;
+# returns nil if the key did not exist (and IFEQ aborts the set in that case).
 SET mykey "new_value" IFEQ "updated" GET    # Returns "updated", sets to "new_value"
 
 # With TTL
@@ -63,6 +75,8 @@ else return nil end" 1 mykey old_value new_value
 # Valkey 8.1+ (native command)
 SET mykey new_value IFEQ old_value
 ```
+
+> Both `server.call` and `redis.call` are valid inside Valkey Lua scripts (Valkey registers both globals). Existing Redis scripts using `redis.call` run unchanged.
 
 ---
 
@@ -140,6 +154,18 @@ DELIFEQ lock:resource <random_value>    # Instance 3
 DELIFEQ lock:resource <random_value>    # Instance 4
 DELIFEQ lock:resource <random_value>    # Instance 5
 ```
+
+A `0` reply from any of these is **not a failure**. It means either the lock already expired on that node or a different owner now holds it - in Redlock semantics, that's still a successful release from this client's perspective. Continue issuing DELIFEQ on the remaining instances; do not retry the 0-reply instance.
+
+---
+
+## Replication
+
+Both IFEQ-SET and DELIFEQ are **rewritten to plain `SET` and `DEL`** on the replication stream and AOF. Replicas and AOF readers see only the concrete write or delete - the conditional is evaluated once on the primary and the result is propagated unconditionally. This means:
+
+- Replicas stay deterministic even across reconnects; they don't re-run the comparison.
+- An operator tailing the AOF for auditing will not see `DELIFEQ` or `SET ... IFEQ` - they'll see `DEL` / `SET`.
+- `MONITOR` on the primary shows the original command; `MONITOR` on a replica shows the rewritten one.
 
 ---
 

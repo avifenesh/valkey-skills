@@ -93,13 +93,15 @@ Eliminates the two-command pipeline (HMGET + HEXPIRE). Each field's TTL is indep
 
 ### Gotchas for Per-Field TTL in Sessions
 
-1. **HSET strips field TTL**: Plain HSET on a field with TTL removes the expiration. Always use HSETEX with KEEPTTL when updating volatile fields.
-2. **Field-level EXPIRE is not key-level EXPIRE**: HEXPIRE sets TTL on fields, not on the key itself. Set a key-level EXPIRE as a safety net so the entire session is cleaned up eventually.
-3. **Expired fields are cleaned up by periodic job**: Not instantly. Between logical expiry and physical deletion, HLEN may count expired fields.
+1. **HSET strips field TTL.** Plain HSET on a field with TTL removes the expiration. Use `HSETEX ... KEEPTTL FIELDS n field value` when updating a volatile field's value while preserving its existing TTL.
 
-### Memory Overhead
+2. **Field-level expiration is not key-level expiration.** HEXPIRE sets TTL on fields, not on the key itself. Set a key-level `EXPIRE` as a safety net so the entire session is cleaned up eventually - if every field is persistent and the key has no TTL, the session lives forever.
 
-16-29 bytes per expiring field. No measurable performance regression. Negligible compared to splitting across multiple keys (~70-80 bytes metadata per key).
+3. **HLEN doesn't filter expired fields.** HLEN returns the physical count and will include fields whose TTL has passed but haven't been swept yet. `HGETALL`, `HKEYS`, `HVALS`, `HSCAN` **do** filter expired fields. For an accurate live-field count, iterate with HKEYS and take its length. A field that HGETALL doesn't return may still contribute to HLEN until the next sweep.
+
+4. **HSETEX creates the hash key if it's missing.** A "refresh the CSRF token" write to a logged-out session will silently re-create the session key with just the CSRF field. Gate refresh writes on `EXISTS <session_key>` first when the hash lifecycle matters. (9.1+ adds `[NX|XX]` on HSETEX at the key level; in 9.0 you need the explicit `EXISTS` gate.)
+
+5. **Expired-but-not-swept fields briefly visible.** Between logical expiry and the next lazy/active sweep, HLEN and some edge cases may see the field. If you need strict "is this field alive right now," use `HTTL` - its reply codes already distinguish live / no-TTL / missing.
 
 ---
 
@@ -160,10 +162,10 @@ async def enforce_session_limit(user_id: int, max_sessions: int = 5):
 
 ## Production Tips
 
-- **Generate cryptographically random session IDs** - use 128+ bits of randomness
-- **Never expose internal session structure** in API responses
-- **Use `HMGET` instead of `HGETALL`** when you only need specific fields
-- **Pipeline session read + TTL refresh** to save a round-trip
-- **Set key-level TTL even with per-field expiration** as a safety net - the key TTL is the absolute upper bound
+- **Generate cryptographically random session IDs** - use 128+ bits of randomness.
+- **Never expose internal session structure** in API responses.
+- **For pure reads**, use `HGET` (one field) or `HMGET` (several) - neither touches the field's TTL.
+- **For read-and-refresh in one call**, use `HGETEX key EX <seconds> FIELDS n <fields...>`. Replaces the old HMGET + HEXPIRE pipeline; atomic and one round-trip.
+- **Set a key-level TTL even with per-field expiration** as a safety net - the key TTL is the absolute upper bound. If every field is persistent and the key has no TTL, the session never ends.
 
 ---

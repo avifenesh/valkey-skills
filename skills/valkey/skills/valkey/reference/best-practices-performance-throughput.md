@@ -4,10 +4,10 @@ Use when optimizing Valkey throughput with pipelining, connection pooling, I/O t
 
 ## Contents
 
-- Pipeline Batching (line 13)
-- Connection Pooling (line 107)
-- I/O Threading (User Perspective) (line 157)
-- Quick Reference: Performance Anti-Patterns (line 186)
+- Pipeline Batching
+- Connection Pooling
+- I/O Threading (User Perspective)
+- Quick Reference: Performance Anti-Patterns
 
 ---
 
@@ -170,7 +170,7 @@ Valkey 8.0+ parallelizes network read/write via I/O multithreading while keeping
 
 - High request rates from many concurrent clients
 - Large request/response payloads (more network I/O per command)
-- TLS connections (Valkey 8.1+ offloads TLS to I/O threads - 300% faster connection acceptance)
+- TLS connections (Valkey 8.1+ offloads TLS handshakes to I/O threads, so a burst of new TLS connections no longer monopolizes the main thread)
 
 **When I/O threading does not help**:
 

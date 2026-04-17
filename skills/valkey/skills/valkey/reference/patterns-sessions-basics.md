@@ -20,7 +20,11 @@ EXPIRE session:abc123 1800
 # 1. HGETALL old key
 # 2. HSET new key + EXPIRE
 # 3. UNLINK old key
-# Pipeline steps 2-3 for atomicity
+# Use MULTI/EXEC or a Lua script for atomicity on steps 2-3 - pipelining
+# alone does not prevent another client from seeing the intermediate state
+# (both keys present, or neither, depending on ordering). In cluster mode,
+# co-locate old and new keys on the same slot via a hash tag,
+# e.g. session:{user:1000}:abc123 and session:{user:1000}:xyz789.
 ```
 
 This approach works and is well understood, but expiry is all-or-nothing on the whole key.

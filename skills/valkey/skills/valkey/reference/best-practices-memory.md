@@ -4,14 +4,14 @@ Use when reducing Valkey memory footprint, choosing data structures for space ef
 
 ## Contents
 
-- Memory-Efficient Data Structure Choices (line 19)
-- Hash-Based Storage (line 55)
-- String Encoding Rules (line 116)
-- Bit Operations for Boolean Flags (line 130)
-- TTL Strategies (line 146)
-- Eviction Policies (User Perspective) (line 191)
-- Avoiding Large Values (line 220)
-- Quick Reference: Memory Anti-Patterns (line 242)
+- Memory-Efficient Data Structure Choices
+- Hash-Based Storage
+- String Encoding Rules
+- Bit Operations for Boolean Flags
+- TTL Strategies
+- Eviction Policies (User Perspective)
+- Avoiding Large Values
+- Quick Reference: Memory Anti-Patterns
 
 ---
 
@@ -119,10 +119,10 @@ Strings have implicit encoding rules (not configurable):
 | Condition | Encoding | Memory |
 |-----------|----------|--------|
 | Integer value fitting a `long` | `int` | 8 bytes |
-| String <= 52 bytes | `embstr` | Single allocation (object + data together) |
-| String > 52 bytes | `raw` | Two allocations (pointer + data separately) |
+| String <= 44 bytes | `embstr` | Single allocation (object + data together) |
+| String > 44 bytes | `raw` | Two allocations (pointer + data separately) |
 
-Keep string values under 52 bytes when possible to use `embstr` encoding, which avoids an extra allocation and pointer dereference.
+Keep string values within 44 bytes when possible to use `embstr` encoding (`OBJ_ENCODING_EMBSTR_SIZE_LIMIT` in `src/object.c`), which avoids an extra allocation and pointer dereference.
 
 ---
 
@@ -183,7 +183,7 @@ HEXPIRE user:1000 300 FIELDS 1 csrf_token
 HTTL user:1000 FIELDS 1 csrf_token
 ```
 
-**Memory overhead**: 16-29 bytes per expiring field. No measurable performance regression on standard hash operations.
+**Memory overhead**: per-field TTL adds per-field metadata (the server tracks field expiry state via an ebuckets structure alongside the hash). For memory-sensitive workloads with many volatile fields, benchmark `MEMORY USAGE` against an equivalent TTL-less hash to measure the delta on your data shape.
 
 ---
 

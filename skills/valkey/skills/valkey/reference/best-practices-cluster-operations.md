@@ -4,11 +4,11 @@ Use when handling MOVED/ASK redirects, reading from replicas, pipelining in clus
 
 ## Contents
 
-- MOVED and ASK Redirects (line 13)
-- Read-From-Replica Strategies (line 53)
-- Pipelining in Cluster Mode (line 127)
-- SCAN in Cluster Mode (line 159)
-- Quick Reference: Cluster Pitfalls (line 223)
+- MOVED and ASK Redirects
+- Read-From-Replica Strategies
+- Pipelining in Cluster Mode
+- SCAN in Cluster Mode
+- Quick Reference: Cluster Pitfalls
 
 ---
 
@@ -38,7 +38,7 @@ GET user:2000
 
 Meaning: Slot 8901 is being migrated to 10.0.0.3:6379. The client should send `ASKING` followed by the command to the target node - but only for this one request. Future requests still go to the original node until migration completes.
 
-**Valkey 9.0+ note**: Atomic slot migration eliminates ASK redirects. Slots move atomically, so clients only see MOVED redirects after the migration completes.
+**Valkey 9.0+ note**: Atomic slot migration (`CLUSTER MIGRATESLOTS`, 9.0+) moves slots atomically from the client's perspective - no ASK window for that migration. Legacy `CLUSTER SETSLOT MIGRATING/IMPORTING` still uses ASK during manual resharding; which mechanism you see depends on which tooling the operator ran.
 
 ### What Your Client Does
 
@@ -164,21 +164,9 @@ Pipeline depth per-node is what matters. A 100-command pipeline across 3 nodes s
 
 `SCAN` iterates keys on a single node. In a cluster, scan each primary node individually to cover the full keyspace.
 
-### CLUSTERSCAN (Valkey 9.1+)
+### Per-Node SCAN
 
-Valkey provides `CLUSTERSCAN` which handles cluster-wide iteration:
-
-```
-CLUSTERSCAN 0 MATCH user:* COUNT 100
-# Returns: [next_cursor, [key1, key2, ...]]
-# Cursor encodes both node and position - just keep calling until cursor is 0
-```
-
-`CLUSTERSCAN` abstracts per-node iteration. Use when your client supports it.
-
-### Per-Node SCAN (Fallback)
-
-If your client does not support CLUSTERSCAN, iterate each primary node individually:
+Iterate each primary node individually to cover the full cluster keyspace:
 
 **Node.js (ioredis)**:
 ```javascript
@@ -229,7 +217,7 @@ async def cluster_scan(client, pattern: str):
 | Multi-key command without hash tags | CROSSSLOT error | Add `{tag}` prefix to related keys |
 | All data under one hash tag | One node overloaded | Distribute hash tags across entities |
 | Reading stale data from replica | Inconsistent results after write | Use primary reads or WAIT |
-| SCAN missing keys | Partial results | Use CLUSTERSCAN or per-node iteration |
+| SCAN missing keys | Partial results | Iterate every primary node |
 | Large Lua script touching many keys | Slow, blocks node | Limit script to keys in one slot |
 | Pub/Sub in cluster | Messages not received | Use sharded pub/sub (SSUBSCRIBE/SPUBLISH) |
 

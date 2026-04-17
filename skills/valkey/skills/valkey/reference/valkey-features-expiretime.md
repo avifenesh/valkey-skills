@@ -4,13 +4,16 @@ Use when inspecting key expiration, coordinating TTLs across services, or auditi
 
 ## Commands
 
-| Command | Returns |
-|---------|---------|
-| `TTL key` | Remaining seconds (-1 = no TTL, -2 = missing) |
-| `PTTL key` | Remaining milliseconds |
-| `EXPIRETIME key` | Absolute Unix timestamp (seconds) at expiry |
-| `PEXPIRETIME key` | Absolute Unix timestamp (milliseconds) at expiry |
-| `PERSIST key` | Remove TTL; returns 1 if removed, 0 if none |
+| Command | Success reply | `-1` | `-2` |
+|---------|---------------|------|------|
+| `TTL key` | Remaining seconds (integer) | Key exists, no TTL | Key missing |
+| `PTTL key` | Remaining milliseconds | Key exists, no TTL | Key missing |
+| `EXPIRETIME key` | Absolute Unix timestamp in seconds | Key exists, no TTL | Key missing |
+| `PEXPIRETIME key` | Absolute Unix timestamp in milliseconds | Key exists, no TTL | Key missing |
+
+| Command | Reply |
+|---------|-------|
+| `PERSIST key` | `1` if a TTL was removed; `0` **either** when the key has no TTL **or** when the key does not exist. Use `EXISTS` separately if you need to distinguish those. |
 
 `EXPIRETIME`/`PEXPIRETIME` were added in Redis 7.0 and are available in all Valkey versions. Use the absolute form when passing expiration to another service - relative TTL decays in transit.
 

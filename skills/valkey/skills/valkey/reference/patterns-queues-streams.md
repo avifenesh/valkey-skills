@@ -4,9 +4,9 @@ Use when implementing robust task queues with consumer groups, message acknowled
 
 ## Contents
 
-- Stream-Based Queue (XADD/XREADGROUP) (line 13)
-- Comparison Table (line 187)
-- Priority Queue (line 229)
+- Stream-Based Queue (XADD/XREADGROUP)
+- Comparison Table
+- Priority Queue
 
 ---
 
@@ -240,8 +240,9 @@ ZADD queue:priority 10 '{"type":"low","task":"cleanup"}'
 ZPOPMIN queue:priority
 # Returns: ['{"type":"critical",...}', "1"]
 
-# Blocking variant
+# Blocking variant (accepts multiple keys; returns [key, member, score])
 BZPOPMIN queue:priority 30
+# Returns: ["queue:priority", '{"type":"critical",...}', "1"]
 ```
 
 ---

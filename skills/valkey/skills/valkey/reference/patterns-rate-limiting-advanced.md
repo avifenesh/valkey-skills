@@ -63,10 +63,9 @@ async function tokenBucketCheck(userId, maxTokens, refillRate) {
 
 | Strength | Weakness |
 |----------|----------|
-| Allows controlled bursts | More complex implementation |
-| Smooth rate limiting | Requires Lua script for atomicity |
+| Allows controlled bursts | Requires a Lua script for atomicity |
+| Smooth rate limiting | Script blocks the main thread during execution |
 | Configurable burst capacity and sustained rate | Two fields per user key |
-| Industry standard (used by AWS, Google, Stripe) | Script blocks server during run |
 
 ---
 
@@ -80,35 +79,40 @@ One hash per user. Each field represents an endpoint/action with a request count
 
 ### Implementation
 
+Branching pattern: try to create the counter with a TTL; if it already exists, increment.
+
 ```
-# First request to /api/orders - create field with 60-second TTL
+# Attempt to create the field with value=1 and a 60s TTL.
+# FNX = "set only if the field does not already exist".
+# Reply: 1 if created (this request was the first in the window),
+#        0 if the field was already there.
 HSETEX rate:user:42 FNX EX 60 FIELDS 1 /api/orders 1
 
-# Subsequent requests - increment the counter
-HINCRBY rate:user:42 /api/orders 1
+# If the HSETEX above returned 0 (field exists):
+#   HINCRBY returns the new count directly - no follow-up HGET needed.
+#   HINCRBY preserves the field's existing TTL, so the window keeps ticking down.
+count = HINCRBY rate:user:42 /api/orders 1
 
-# Check if limit exceeded
-count = HGET rate:user:42 /api/orders
 if count > limit: reject request
 
-# Check TTL remaining on the field
+# Optional: check remaining TTL (useful for X-RateLimit-Reset)
 HTTL rate:user:42 FIELDS 1 /api/orders
 ```
+
+**Post-increment rejection**: the increment has already persisted by the time you reject. A client hammering the endpoint while over the limit still bumps the counter higher for the rest of the window. That's fine for access-control use cases (still rejected) but fragile if the counter is also used for billing or SLA metrics - use the token-bucket pattern above if you need check-before-consume.
+
+**HINCRBY replicates as HSETEX when the hash has volatile fields.** Replicas and AOF see `HSETEX ... PXAT ... FIELDS 1 <field> <new_value>`, not `HINCRBY`. Operators grepping AOF for the increment won't find it under that name.
 
 ### Trade-offs
 
 | Strength | Weakness |
 |----------|----------|
 | All rate limits for a user in one key | Requires Valkey 9.0+ |
-| Fields auto-expire independently | HINCRBY does not set a TTL - must set TTL on first request |
-| Low memory - no sorted sets or Lua scripts | Same boundary problem as fixed window |
-| Easy per-endpoint inspection with HGETALL | HSET strips field TTLs - use HSETEX with KEEPTTL for updates |
+| Fields auto-expire independently | Fixed-window boundary problem (2x burst at boundary) |
+| Low memory - no sorted sets or Lua scripts | Two-command protocol: HSETEX FNX then HINCRBY |
+| HINCRBY preserves field TTL - counts tick toward the existing expiry | `HSET` strips field TTLs - use `HSETEX ... KEEPTTL` for in-place value updates |
 
-**Tip**: Combine with HGETEX to read the count and refresh the TTL in one atomic command for sliding-window-like behavior:
-
-```
-HGETEX rate:user:42 EX 60 FIELDS 1 /api/orders
-```
+**Sliding-window variant**: if you want the TTL to restart on every hit (so a steady stream of requests never expires the counter), replace `HINCRBY` with `HGETEX EX 60 ... ; HINCRBY ...` or use a script. Note this is **not** a true sliding window - it's an access-refreshed fixed window, which can let a steady 1-req/sec stream hold the counter open indefinitely.
 
 ---
 

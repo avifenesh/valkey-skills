@@ -4,11 +4,11 @@ Use when connecting to Valkey through Sentinel, handling failovers in applicatio
 
 ## Contents
 
-- Connecting via Sentinel (line 16)
-- What Happens During Failover (line 76)
-- Retry Strategies for Connection Drops (line 110)
-- Read-After-Write Consistency (line 195)
-- Architecture Decision: Sentinel vs Cluster (line 263)
+- Connecting via Sentinel
+- What Happens During Failover
+- Retry Strategies for Connection Drops
+- Read-After-Write Consistency
+- Architecture Decision: Sentinel vs Cluster
 
 ---
 

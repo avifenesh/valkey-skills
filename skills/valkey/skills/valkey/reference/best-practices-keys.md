@@ -4,12 +4,12 @@ Use when designing key schemas, diagnosing hot key or big key problems, planning
 
 ## Contents
 
-- Key Naming Conventions (line 17)
-- Avoiding Hot Keys (line 65)
-- Avoiding Big Keys (line 113)
-- Key Expiration Strategies (line 168)
-- Key Analysis Commands (line 205)
-- Quick Reference: Key Anti-Patterns (line 242)
+- Key Naming Conventions
+- Avoiding Hot Keys
+- Avoiding Big Keys
+- Key Expiration Strategies
+- Key Analysis Commands
+- Quick Reference: Key Anti-Patterns
 
 ---
 

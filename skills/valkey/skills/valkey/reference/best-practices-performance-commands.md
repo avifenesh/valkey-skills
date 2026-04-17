@@ -12,7 +12,7 @@ Still prefer explicit `UNLINK` in code:
 - communicates intent
 - remains non-blocking if someone sets `lazyfree-lazy-user-del no`
 
-Other lazyfree defaults changed in Valkey 8.0: `lazyfree-lazy-eviction`, `lazyfree-lazy-expire`, and `lazyfree-lazy-server-del` also default to `yes`.
+Other lazyfree defaults changed in Valkey 8.0: `lazyfree-lazy-eviction`, `lazyfree-lazy-expire`, `lazyfree-lazy-server-del`, and `lazyfree-lazy-user-flush` also default to `yes` (the whole lazyfree family flipped in one commit).
 
 ## SCAN vs KEYS
 

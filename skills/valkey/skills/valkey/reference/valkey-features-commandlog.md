@@ -67,6 +67,19 @@ CONFIG SET commandlog-large-request-max-len 256
 CONFIG SET commandlog-large-reply-max-len 256
 ```
 
+Set a threshold to `-1` to **disable** that log type (e.g. `CONFIG SET commandlog-reply-larger-than -1`). `0` logs every command of that type - rarely what you want.
+
+### Legacy config aliases
+
+Two pre-8.1 Redis config names still work as aliases:
+
+| Legacy name | Aliased to |
+|-------------|------------|
+| `slowlog-log-slower-than` | `commandlog-execution-slower-than` |
+| `slowlog-max-len` | `commandlog-slow-execution-max-len` |
+
+An existing valkey.conf using the old names continues to work - no rename needed. The two large-request/large-reply configs have no legacy alias (they are new in 8.1).
+
 ## Use Cases
 
 **Find latency-causing commands:**
@@ -91,10 +104,14 @@ COMMANDLOG GET 10 large-request
 
 | Legacy (pre-8.1) | Valkey 8.1+ |
 |-------------------|-------------|
-| `SLOWLOG GET 10` | `COMMANDLOG GET 10 slow` |
+| `SLOWLOG GET [count]` | `COMMANDLOG GET <count> slow` |
 | `SLOWLOG LEN` | `COMMANDLOG LEN slow` |
 | `SLOWLOG RESET` | `COMMANDLOG RESET slow` |
-| No equivalent | `COMMANDLOG GET 10 large-request` |
-| No equivalent | `COMMANDLOG GET 10 large-reply` |
+| No equivalent | `COMMANDLOG GET <count> large-request` |
+| No equivalent | `COMMANDLOG GET <count> large-reply` |
 
-SLOWLOG still works in Valkey 8.1+ for backward compatibility but returns the same data as `COMMANDLOG GET ... slow`.
+`SLOWLOG` still works in Valkey 8.1+ and returns from the same underlying log as `COMMANDLOG GET ... slow`. Note that `SLOWLOG GET`'s count is optional (defaults to 10) whereas `COMMANDLOG GET` requires an explicit count.
+
+## Cluster mode
+
+`COMMANDLOG GET` / `LEN` / `RESET` are tagged `REQUEST_POLICY: ALL_NODES` - a cluster-aware client (`valkey-cli -c`, smart SDK) will dispatch the command to every shard and aggregate. For cluster-wide diagnosis, run once with a smart client rather than connecting to each node manually. `LEN` also carries `RESPONSE_POLICY: AGG_SUM` so the aggregated total is the sum across nodes.

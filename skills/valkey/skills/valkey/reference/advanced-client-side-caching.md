@@ -4,16 +4,14 @@ Use when implementing server-assisted client-side caching, choosing between trac
 
 ## Contents
 
-- Protocol Basics: RESP3 vs RESP2 (line 13)
-- Tracking Modes (line 46)
-- Tracking Table Limits (line 84)
-- Implementation with GLIDE (line 100)
-- Implementation with redis-py and ioredis (line 117)
-- Cache Consistency Guarantees (line 158)
-- Memory Impact (line 175)
-- Connection Management (line 187)
-- Best Practices (line 205)
-- Valkey Version Notes (line 228)
+- Protocol Basics: RESP3 vs RESP2
+- Tracking Modes
+- Tracking Table Limits
+- Implementation with redis-py and ioredis
+- Cache Consistency Guarantees
+- Memory and Connection Management
+- Best Practices
+- Valkey Version Notes
 
 ---
 
@@ -105,36 +103,17 @@ CONFIG SET tracking-table-max-keys 1000000
 
 **When the table is full**, Valkey evicts random entries and sends invalidations to affected clients even though the keys have not changed. This causes unnecessary cache misses - not errors.
 
-Detect saturation:
+Detect saturation with `INFO stats`:
 
 ```
-127.0.0.1:6379> INFO stats
-tracking_table_entries:1000000    # at the limit - spurious invalidations are occurring
+tracking_total_keys:1000000       # distinct keys tracked; hits tracking-table-max-keys limit
+tracking_total_items:4300000      # per-(key, client) entries (items >= keys)
+tracking_total_prefixes:0         # active BCAST prefix subscriptions
 ```
+
+`tracking_total_keys` is the value that bounds against `tracking-table-max-keys`. When it reaches the limit, the server evicts a random key and sends a spurious invalidation for it.
 
 **Sizing rule of thumb**: `clients * average_tracked_keys_per_client`. For 100 clients tracking 5,000 keys each, that is 500,000 entries - well under the default. For 1,000 clients at the same rate, you need 5,000,000 - increase the config or switch to BCAST mode.
-
----
-
-## Implementation with GLIDE
-
-GLIDE (Valkey's official multi-language client) has built-in client-side caching via `CacheConfig`. It handles the tracking protocol, push message parsing, connection management, and local cache eviction automatically.
-
-```python
-# Python example
-from glide import GlideClient, GlideClientConfiguration, CacheConfig
-
-config = GlideClientConfiguration(
-    addresses=[...],
-    client_cache_config=CacheConfig(max_size=1000)
-)
-client = await GlideClient.create(config)
-
-# Reads are transparently cached; invalidations handled internally
-value = await client.get("user:1000:profile")
-```
-
-GLIDE abstracts RESP3 vs RESP2 differences and manages the dedicated invalidation connection when needed. The `max_size` parameter bounds local memory. See the per-language GLIDE skills (valkey-glide-python, valkey-glide-java, valkey-glide-nodejs) for language-specific API details and Java/Node.js examples.
 
 ---
 
@@ -207,11 +186,11 @@ async def on_reconnect():
 
 **Server memory (BCAST mode)**: minimal - only prefix subscriptions per client, not per-key entries.
 
-**Client memory**: entirely application-managed. Set a size cap with LRU eviction to avoid unbounded growth. GLIDE's `CacheConfig.max_size` does this automatically.
+**Client memory**: entirely application-managed. Set a size cap with LRU eviction to avoid unbounded growth.
 
 **Invalidation connection lifecycle**: the RESP2 Pub/Sub connection must stay alive continuously. If it drops, invalidations stop arriving and the local cache silently goes stale. Use `CLIENT NO-EVICT ON` on it if the server is under memory pressure. Never reuse it for data commands.
 
-**Connection pools**: standard interchangeable pools do not work with default tracking mode - tracking state is per-connection. Options: dedicate one long-lived connection per application instance, switch to BCAST mode, or use GLIDE (which manages this automatically).
+**Connection pools**: standard interchangeable pools do not work with default tracking mode - tracking state is per-connection. Options: dedicate one long-lived connection per application instance, or switch to BCAST mode (where invalidation is per-prefix and connection identity is less coupled).
 
 ---
 
@@ -249,6 +228,6 @@ Valkey 8.0 through 9.0 make no changes to CLIENT TRACKING semantics, protocol, o
 
 The `__redis__:invalidate` channel name is preserved - Valkey does not rename it.
 
-GLIDE built-in caching (CacheConfig) was introduced in GLIDE 2.x. Client libraries built for Redis work without changes - the tracking protocol is unchanged.
+Client libraries built for Redis work with Valkey without changes - the tracking protocol is unchanged.
 
 ---

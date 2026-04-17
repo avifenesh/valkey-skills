@@ -4,7 +4,7 @@ Use when counting unique elements with HyperLogLog, packing compact counters wit
 
 ## HyperLogLog for Approximate Unique Counting
 
-HyperLogLog counts unique elements with 0.81% standard error using 12 KB of memory - whether counting 100 or 100 million unique elements.
+HyperLogLog counts unique elements with 0.81% standard error using up to 12 KB of memory at full cardinality. Small counts use a sparse encoding and take much less - a fresh HLL with ~100 unique elements is dozens of bytes, not 12 KB. It auto-promotes to dense once the sparse encoding runs out of space.
 
 ### When to Use
 
@@ -23,10 +23,15 @@ PFADD visitors:2026-03-29 "user:100"    # duplicate, ignored
 PFCOUNT visitors:2026-03-29
 # (integer) 3
 
-# Merge multiple days for weekly count
+# Merge multiple days for weekly count (creates a new HLL key)
 PFMERGE visitors:week:13 visitors:2026-03-29 visitors:2026-03-28 visitors:2026-03-27
 PFCOUNT visitors:week:13
+
+# Or: on-the-fly merge without creating a destination key
+PFCOUNT visitors:2026-03-29 visitors:2026-03-28 visitors:2026-03-27
 ```
+
+**Read-routing note.** `PFCOUNT` is `READONLY` at the command level but `RW` at the key-spec level - it may mutate the HLL (caching cardinality in the header) and propagate to replicas. Treat it as write-path for cluster read-routing decisions and ACLs that forbid writes.
 
 ### Node.js
 
@@ -116,6 +121,10 @@ BITFIELD key OVERFLOW SAT INCRBY u8 #0 1
 BITFIELD key OVERFLOW FAIL INCRBY u8 #0 1
 ```
 
+### Type-width limits
+
+Signed integers go up to `i64`. **Unsigned integers max out at `u63`, not `u64`** - `BITFIELD key INCRBY u64 #0 1` errors with *"Invalid bitfield type. Note that u64 is not supported but i64 is."* RESP can't reliably represent unsigned integers above `INT64_MAX`, so for 64-bit counters use `i64` or stay at `u63` max.
+
 ---
 
 ## Deduplication
@@ -131,7 +140,7 @@ SET dedup:event:evt-abc123 1 NX EX 86400
 # nil -> duplicate, skip it
 ```
 
-### SISMEMBER for Set-Based Deduplication
+### SMISMEMBER for Set-Based Deduplication
 
 When you need to check many items against a known set:
 
@@ -148,7 +157,12 @@ When exact deduplication uses too much memory (millions of event IDs), Bloom fil
 Requires the valkey-bloom module.
 
 ```
-# Create filter: 0.01% false positive rate, 1M expected elements
+# Bounded memory: filter rejects new adds past capacity (BF.ADD returns 0 or errors).
+BF.RESERVE dedup:events 0.0001 1000000 NONSCALING
+
+# Default (scaling): filter grows by adding sub-filters past capacity.
+# The 0.0001 error rate only applies to the first sub-filter -
+# effective FPR compounds across sub-filters, and memory is unbounded.
 BF.RESERVE dedup:events 0.0001 1000000
 
 # Add and check
@@ -161,6 +175,8 @@ BF.EXISTS dedup:events "evt-abc123"
 BF.EXISTS dedup:events "evt-never-seen"
 # (integer) 0 -> definitely does not exist
 ```
+
+Full syntax: `BF.RESERVE key error_rate capacity [EXPANSION n] [NONSCALING]`. Pick `NONSCALING` when the stated error rate must hold for the life of the filter; use default scaling (optionally with `EXPANSION`) when capacity uncertainty matters more than FPR stability.
 
 Bloom filters never have false negatives. `BF.EXISTS` returning 0 means the element was definitely never added. Returning 1 means it was probably added (configurable false positive rate).
 

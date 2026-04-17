@@ -12,10 +12,9 @@ Three standard patterns exist, all using generic Redis/Valkey commands:
 
 All three are standard Redis patterns. A model already trained on Redis knows the implementation.
 
-## Valkey-Specific Approaches
+## Beyond Window-Based
 
-For production rate limiting with Valkey, see `patterns-rate-limiting-advanced.md`, which covers:
+For production rate limiting on Valkey, see `patterns-rate-limiting-advanced.md`, which covers:
 
-- Script-free atomic check-and-increment using `SET IFEQ`
-- Token bucket and leaky bucket implementations
-- Distributed rate limiting across cluster nodes with `CLUSTERSCAN`
+- **Token bucket** (Lua script) - bursts up to a cap, sustained refill rate
+- **Per-endpoint rate limits in one hash** using Valkey 9.0+ hash-field TTL - separate windows for each API route under a single user key
