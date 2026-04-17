@@ -153,7 +153,6 @@ All three COMMANDLOG types share a unified `COMMANDLOG GET/LEN/RESET` command fa
 | `cluster-migration-barrier` | `1` | |
 | `cluster-allow-replica-migration` | `yes` | |
 | `cluster-slot-stats-enabled` | `no` | Valkey-only. Enables per-slot CPU + network accounting for `CLUSTER SLOT-STATS`. |
-| `cluster-config-save-behavior` | `sync` | Valkey-only. Controls `nodes.conf` save timing. |
 | `availability-zone` | `""` | Valkey-only. Gossiped; surfaced in `CLUSTER SHARDS`/`SLOTS`. |
 
 ## Lazy-free (all five defaults flipped in Valkey)

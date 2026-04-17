@@ -165,13 +165,17 @@ done
 
 **9.0+**: atomic slot migration bypasses the problem. Entire slots transfer as a forked RDB stream instead of key-by-key. See `cluster.md` for the ASM flow.
 
-### Ranked failover elections (8.1+)
+### Ranked failover elections
 
-Replicas ranked by replication offset; most up-to-date tries first, others delay proportionally. Multi-primary failure (lost rack) doesn't collide on simultaneous elections - shards converge in rank order. Logged as `IO threads: vote rank X`.
+Two ranks add delay to the election start time:
+- **Replica rank** (`clusterGetReplicaRank`, intra-shard): most up-to-date replica has rank 0, others rank higher; delay is `rank * (FIXED_DELAY * 2)`. Ties on offset break by lexicographically smaller node ID.
+- **Failed primary rank** (`clusterGetFailedPrimaryRank`, inter-shard): when multiple primaries fail at once, shards stagger their elections by `failed_primary_rank * delay` (≈ 500 ms per rank). Keeps vote-request storms from colliding.
 
-### Reconnection throttling (9.0+)
+Logged on the electing replica as: `Start of election delayed for X milliseconds (rank #Y, primary rank #Z, offset W)`.
 
-Pre-9.0, a node reconnected to a lost peer every 100 ms until the peer came back - flapping links produced reconnect storms. 9.0 throttles within `cluster-node-timeout`. If logs are quieter than pre-9.0 under the same flap, that's expected.
+### Reconnection interval
+
+Outbound cluster-bus reconnect attempts are throttled by `cluster_node_timeout / 2 / NODE_CONNECTION_RETRIES_PER_TIMEOUT`, so a flapping peer doesn't produce a reconnect storm. This isn't new in 9.0 - just worth knowing when reading cluster-bus logs.
 
 ### Post-incident hygiene
 

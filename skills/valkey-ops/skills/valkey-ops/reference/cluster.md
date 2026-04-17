@@ -26,7 +26,6 @@ Minimum viable: 3 primaries (1 shard each). Production: 6 nodes (3P+3R). Both cl
 | `cluster-port` | `0` (auto) | Bus port = client port + 10000. |
 | `cluster-manual-failover-timeout` | `5000` ms | Valkey-only - Redis hardcodes this. |
 | `cluster-slot-stats-enabled` | `no` | Enables per-slot CPU + network accounting. |
-| `cluster-config-save-behavior` | `sync` | Controls `nodes.conf` save timing. |
 | `availability-zone` | `""` | Gossiped; surfaced in `CLUSTER SHARDS`/`SLOTS`. |
 
 ## CLUSTER FAILOVER modes
@@ -42,8 +41,8 @@ Minimum viable: 3 primaries (1 shard each). Production: 6 nodes (3P+3R). Both cl
 ## Valkey cluster improvements (9.x)
 
 - **Atomic slot migration** (`CLUSTER MIGRATESLOTS`) - fork-based bulk transfer, replaces key-by-key `MIGRATE`/`ASK`. See below.
-- **Serialized failover election** - shards ranked by lexicographic shard ID; higher-rank shards elect first. Prevents vote collisions when several primaries fail at once.
-- **Reconnection throttling** - nodes no longer storm TCP reconnects to downed peers every 100 ms. Backoff is tied to `cluster-node-timeout`.
+- **Rank-based election delay** - two ranks stagger elections: replica rank (intra-shard, by replication offset via `clusterGetReplicaRank`) and failed-primary rank (inter-shard, via `clusterGetFailedPrimaryRank`). The most up-to-date replica within each shard tries first; across shards, multiple simultaneous failures are serialized by failed-primary rank to prevent vote-request collisions. Logged as `Start of election delayed for X milliseconds (rank #Y, primary rank #Z, offset W)`.
+- **Reconnection interval** - outbound cluster-bus connection attempts are throttled by `cluster_node_timeout / 2 / NODE_CONNECTION_RETRIES_PER_TIMEOUT`, so a flapping peer doesn't produce a reconnect storm.
 - **Lightweight pub/sub cluster-bus headers** - internal publish messages drop the 2 KB full slot bitmap in favor of a ~30-byte header (`clusterCreatePublishMsgBlock(..., is_light=1, ...)`).
 
 ## Observability
