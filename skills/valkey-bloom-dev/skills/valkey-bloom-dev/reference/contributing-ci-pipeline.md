@@ -1,164 +1,103 @@
-# CI Pipeline
+# CI pipeline
 
-Use when debugging CI failures, understanding the CI matrix, adding new CI jobs, or working with the release workflow.
+Use when debugging CI failures, extending the matrix, or understanding the release-trigger workflow.
 
-Source: `.github/workflows/ci.yml`, `.github/workflows/trigger-bloom-release.yml`
+Source: `.github/workflows/ci.yml`, `.github/workflows/trigger-bloom-release.yml`.
 
-## CI Overview
+## Jobs
 
-The CI pipeline runs on every push and pull request. It has three jobs:
+Triggered on push and PR. `fail-fast: false` on all.
 
-| Job | Runner | Matrix | Purpose |
-|-----|--------|--------|---------|
-| `build-ubuntu-latest` | ubuntu-latest | unstable, 8.0, 8.1 | Full pipeline: lint, build, unit tests, integration tests |
-| `build-macos-latest` | macos-latest | none | Lint, build, unit tests only (no integration tests) |
-| `asan-build` | ubuntu-latest | unstable, 8.0, 8.1 | Full pipeline with AddressSanitizer and LeakSanitizer |
+| Job | Runner | Matrix | Coverage |
+|-----|--------|--------|----------|
+| `build-ubuntu-latest` | ubuntu-latest | unstable, 8.0, 8.1 | lint + build + unit + integration |
+| `build-macos-latest` | macos-latest | none | lint + build + unit (no integration - no server binary built on macOS) |
+| `asan-build` | ubuntu-latest | unstable, 8.0, 8.1 | full pipeline with AddressSanitizer + LeakSanitizer scan |
 
-All jobs use `fail-fast: false` so one matrix entry failing does not cancel others.
+Global env: `CARGO_TERM_COLOR`, `VALKEY_REPO_URL`, `TEST_FRAMEWORK_REPO`, `TEST_FRAMEWORK_DIR`.
 
-Global environment variables set on all jobs: `CARGO_TERM_COLOR=always`, `VALKEY_REPO_URL`, `TEST_FRAMEWORK_REPO`, `TEST_FRAMEWORK_DIR`.
+## Ubuntu pipeline (outline)
 
-## build-ubuntu-latest Job
+1. `actions/checkout@v4`.
+2. Export `SERVER_VERSION=<matrix>` into `$GITHUB_ENV`.
+3. `cargo fmt --check` + `cargo clippy --profile release --all-targets` (no `-D clippy::all`, unlike build.sh).
+4. `cargo build --all --all-targets --release` - adds `--features valkey_8_0` when `SERVER_VERSION=8.0`. No `RUSTFLAGS` (unlike build.sh).
+5. `cargo test --features enable-system-alloc`.
+6. Clone + build `valkey-io/valkey` at the target version; binary into `tests/build/binaries/<version>/`.
+7. Clone `valkey-io/valkey-test-framework`, copy `src/` into `tests/build/valkeytestframework/`.
+8. `actions/setup-python@v3` (3.8), `pip install -r requirements.txt`.
+9. Export `MODULE_PATH=$(realpath target/release/libvalkey_bloom.so)`.
+10. `python -m pytest --cache-clear -v tests/`.
 
-This is the primary CI job. It runs the complete pipeline for each server version in the matrix.
+## macOS pipeline
 
-**Steps in order**:
+Checkout + format/lint + release build + `cargo test --features enable-system-alloc`. No integration tests, no matrix.
 
-1. **Checkout** - `actions/checkout@v4`
+## ASAN pipeline - differences
 
-2. **Set SERVER_VERSION** - writes `SERVER_VERSION=<matrix.server_version>` to `$GITHUB_ENV` so integration tests use the correct server binary.
-
-3. **Format and lint checks** (note: no `-D clippy::all` unlike build.sh):
-   ```bash
-   cargo fmt --check
-   cargo clippy --profile release --all-targets
-   ```
-
-4. **Release build** - conditional on server version (no `RUSTFLAGS` unlike build.sh):
-   ```bash
-   # For 8.0:
-   cargo build --all --all-targets --release --features valkey_8_0
-   # For unstable and 8.1:
-   cargo build --all --all-targets --release
-   ```
-
-5. **Unit tests**:
-   ```bash
-   cargo test --features enable-system-alloc
-   ```
-
-6. **Build valkey-server** - clones `valkey-io/valkey` at the target version, builds with `make -j`, copies the binary to `tests/build/binaries/<version>/valkey-server`
-
-7. **Set up test framework** - clones `valkey-io/valkey-test-framework`, copies `src/` contents to `tests/build/valkeytestframework/`
-
-8. **Python setup** - Python 3.8 via `actions/setup-python@v3`, upgrades pip, installs `requirements.txt`
-
-9. **Set MODULE_PATH** - sets the environment variable via `realpath target/release/libvalkey_bloom.so` into `$GITHUB_ENV`
-
-10. **Integration tests**:
-    ```bash
-    python -m pytest --cache-clear -v "tests/"
-    ```
-
-## build-macos-latest Job
-
-A lighter job that validates compilation and unit tests on macOS. No server version matrix - runs once.
-
-**Steps**:
-
-1. Checkout
-2. Format and lint checks (`cargo fmt --check`, `cargo clippy --profile release --all-targets`)
-3. Release build (`cargo build --all --all-targets --release`)
-4. Unit tests (`cargo test --features enable-system-alloc`)
-
-Integration tests are skipped because the CI does not build a macOS valkey-server binary.
-
-## asan-build Job
-
-Runs the full pipeline with AddressSanitizer enabled on the Valkey server binary. Uses the same matrix as the Ubuntu job (unstable, 8.0, 8.1).
-
-**Key differences from the standard Ubuntu job**:
-
-The Valkey server is built with sanitizer flags (note `SERVER_CFLAGS` and `BUILD_TLS` are CI-only - build.sh uses just `SANITIZER=address`):
+Server built with sanitizer + TLS module:
 
 ```bash
 make distclean
 make -j SANITIZER=address SERVER_CFLAGS='-Werror' BUILD_TLS=module
 ```
 
-Integration tests run with `--capture=sys`, pipe output through `tee`, and filter out ASAN-incompatible tests:
+(`SERVER_CFLAGS='-Werror'` and `BUILD_TLS=module` are CI-only; `build.sh` uses bare `SANITIZER=address`.)
+
+Integration run:
 
 ```bash
 python -m pytest --capture=sys --cache-clear -v "tests/" \
     -m "not skip_for_asan" 2>&1 | tee test_output.tmp
 ```
 
-The `-m "not skip_for_asan"` filter excludes tests marked with `@pytest.mark.skip_for_asan`. Currently, the `TestBloomDefrag` class in `test_bloom_defrag.py` is the only test excluded because `activedefrag` cannot be enabled on ASAN server builds.
+The module itself builds as a standard release binary - ASAN instruments the server process only. Because module allocations go through ValkeyAlloc (instrumented), leaks in module code still show up.
 
-After tests complete, the output is scanned for LeakSanitizer reports (see next section).
+### LeakSanitizer detection
 
-The bloom module itself is built as a standard release binary without ASAN instrumentation. ASAN coverage applies to the Valkey server process. Memory leaks in the module are detected because the module's allocations (via ValkeyAlloc) flow through the server's instrumented allocator.
-
-## LeakSanitizer Detection
-
-After the ASAN integration tests finish, the CI scans `test_output.tmp` for memory leak reports:
+After pytest, scans `test_output.tmp`:
 
 ```bash
 if grep -q "LeakSanitizer: detected memory leaks" test_output.tmp; then
-    LEAKING_TESTS=$(grep -B 2 "LeakSanitizer: detected memory leaks" test_output.tmp | \
-                    grep -v "LeakSanitizer" | grep ".*\.py::")
-    LEAK_COUNT=$(echo "$LEAKING_TESTS" | wc -l)
+    LEAKING_TESTS=$(grep -B 2 "LeakSanitizer: detected memory leaks" test_output.tmp \
+                    | grep -v "LeakSanitizer" | grep ".*\.py::")
     echo "$LEAKING_TESTS" | while read -r line; do
         echo "::error::Test with leak: $line"
     done
     rm test_output.tmp
     exit 1
 fi
-rm test_output.tmp
 ```
 
-If any leaks are detected, the job fails with GitHub Actions error annotations listing the specific test names and a count. The `build.sh` script contains equivalent logic for local ASAN builds.
+Emits GitHub Actions `::error::` annotations listing offending tests. `build.sh` has equivalent local logic.
 
-To skip a test in ASAN builds, mark it at the class or method level:
+Skip incompatible tests at class or method level:
 
 ```python
-@pytest.mark.skip_for_asan(reason="Explanation of why this test is ASAN-incompatible")
-class TestSomething(ValkeyBloomTestCaseBase):
-    pass
+@pytest.mark.skip_for_asan(reason="activedefrag not available on ASAN server")
+class TestBloomDefrag(ValkeyBloomTestCaseBase):
+    ...
 ```
 
-## Release Trigger Workflow
+## Release trigger (`trigger-bloom-release.yml`)
 
-The `trigger-bloom-release.yml` workflow runs when a GitHub release is published or via manual `workflow_dispatch`.
+Triggers: `release: types: [published]` (auto) or `workflow_dispatch` with `version` input (manual).
 
-**Trigger conditions**:
+Flow:
 
-- `release: types: [published]` - automatic on new release
-- `workflow_dispatch` with `version` input (required) - manual trigger
+1. Resolve version from `github.event.release.tag_name` or `inputs.version`.
+2. `peter-evans/repository-dispatch@v3` sends to `valkey-io/valkey-bundle`:
+   ```yaml
+   event-type: bloom-release
+   client-payload: { "version": "<tag>", "component": "bloom" }
+   ```
 
-**What it does**:
+Uses `secrets.EXTENSION_PAT` for cross-repo dispatch. The bundle repo's listener updates its bloom component reference.
 
-1. Determines the version from the release tag (`github.event.release.tag_name`) or the manual input (`inputs.version`)
-2. Sends a `repository-dispatch` event to `valkey-io/valkey-bundle` with:
-   - `event-type: bloom-release`
-   - `client-payload: { "version": "<tag>", "component": "bloom" }`
+## Debug tips
 
-This triggers the downstream valkey-bundle repository to update its bloom component reference.
-
-The workflow uses a `secrets.EXTENSION_PAT` token for cross-repository dispatch via the `peter-evans/repository-dispatch@v3` action.
-
-## Debugging CI Failures
-
-**Lint failures** - Run locally with build.sh (stricter than CI due to `-D clippy::all`):
-```bash
-cargo fmt --check
-cargo clippy --profile release --all-targets -- -D clippy::all
-```
-
-**Build failures for 8.0** - ensure the `valkey_8_0` feature flag is used. The `must_obey_client` wrapper in `src/wrapper/mod.rs` has conditional compilation (`#[cfg(feature = "valkey_8_0")]` vs `#[cfg(not(feature = "valkey_8_0"))]`).
-
-**Integration test failures** - check which server version and seed mode failed. Every test runs twice (random-seed and fixed-seed) via `conftest.py`. A failure in only one mode usually indicates a seed-dependent bug.
-
-**ASAN leak reports** - the leak is in the Valkey server process. Check if the leak originates from module code (bloom allocations) or server internals. Module allocations use ValkeyAlloc, so leaks show up under `zmalloc` in the stack trace.
-
-**Flaky FP-rate tests** - correctness tests use a margin above the configured FP rate. If a test fails intermittently, the margin may need adjustment for the specific capacity/expansion combination. See `reference/architecture/bloom-object.md` for FP tightening details.
+- **Lint failures** - run locally with `build.sh` (stricter `-D clippy::all`).
+- **8.0 build** - ensure `valkey_8_0` feature. `must_obey_client` in `src/wrapper/mod.rs` branches on `#[cfg(feature = "valkey_8_0")]`.
+- **Integration failure in one seed mode only** - likely a seed-dependent bug. Every test runs both random-seed and fixed-seed via `conftest.py`.
+- **ASAN leaks** - allocations flow through ValkeyAlloc, so module leaks trace through `zmalloc`.
+- **Flaky FP rate tests** - correctness margin may be too tight for that capacity/expansion combo.

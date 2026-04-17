@@ -1,80 +1,38 @@
-# Deterministic Replication Strategy
+# Deterministic replication
 
-Use when understanding how bloom objects replicate to replicas, why creation uses BF.INSERT with SEED/TIGHTENING, how size limits are bypassed on replicas, or how keyspace notifications fire.
+Use when reasoning about how primary sends bloom state to replicas, SEED/TIGHTENING as replication-internal args, size limit bypass, or keyspace notifications.
 
-Source: `src/bloom/command_handler.rs` (replicate_and_notify_events, ReplicateArgs), `src/wrapper/mod.rs` (must_obey_client)
+Source: `src/bloom/command_handler.rs` (`replicate_and_notify_events`, `ReplicateArgs`), `src/wrapper/mod.rs` (`must_obey_client`).
 
-## Overview
+## Why not verbatim
 
-The valkey-bloom module uses deterministic replication rather than verbatim replication for object creation. When a primary creates a bloom object, it must ensure the replica creates an identical object - same capacity, fp_rate, tightening_ratio, expansion, and critically the same hash seed. Without the seed, the replica's bloom filter would produce different hash results and diverge.
+Verbatim BF.ADD would diverge on replicas - each would pick its own random seed. Primary must ship the exact seed plus capacity / fp_rate / tightening_ratio / expansion so the replica's bloom is bit-for-bit identical in hash behavior.
 
-All mutative commands call `replicate_and_notify_events` after their operation completes. This function handles both replication to replicas and keyspace event notifications.
+Every mutative command calls `replicate_and_notify_events(add_operation, reserve_operation, ...)` after its work. That function dispatches replication and keyspace events.
 
-## Three Replication Cases
+## Three cases
 
-The `replicate_and_notify_events` function receives two boolean flags:
+| `reserve_operation` | `add_operation` | Action |
+|:-:|:-:|---|
+| true | * | synthetic `BF.INSERT` with full object properties (see below) |
+| false | true | `ctx.replicate_verbatim()` - replays the original command |
+| false | false | no-op (pure duplicate add, or empty INSERT on existing key) |
 
-- `add_operation: bool` - true when at least one item was successfully added
-- `reserve_operation: bool` - true when a new bloom object was created
-
-These flags produce three distinct replication behaviors:
-
-1. **Reserve (creation)**: `reserve_operation == true` - replicates as a synthetic `BF.INSERT`
-2. **Add-only (no creation)**: `reserve_operation == false && add_operation == true` - replicates verbatim
-3. **No-op**: both false - no replication at all
-
-## Reserve Replication
-
-When `reserve_operation` is true, the function constructs a synthetic `BF.INSERT` command with every property needed to recreate the bloom object identically:
+## Synthetic BF.INSERT form
 
 ```
-BF.INSERT <key> CAPACITY <cap> ERROR <fp> TIGHTENING <ratio> SEED <32bytes>
-    [EXPANSION <exp> | NONSCALING] [ITEMS <item1> <item2> ...]
+BF.INSERT <key> CAPACITY <cap> ERROR <fp> TIGHTENING <ratio> SEED <32 bytes>
+          [EXPANSION <exp> | NONSCALING] [ITEMS <item> ...]
 ```
 
-The construction in code:
+- `expansion == 0` appends `NONSCALING`, else `EXPANSION <value>`.
+- `ITEMS` present only if items were supplied (BF.RESERVE replication omits the entire ITEMS clause).
 
-```rust
-let mut cmd = vec![
-    key_name,
-    &capacity_str, &capacity_val,    // CAPACITY <cap>
-    &fp_rate_str, &fp_rate_val,      // ERROR <fp>
-    &tightening_str, &tightening_val, // TIGHTENING <ratio>
-    &seed_str, &seed_val,            // SEED <32bytes>
-];
-```
+Why BF.INSERT: it's the only command that accepts CAPACITY + ERROR + TIGHTENING + SEED + EXPANSION + NONSCALING + ITEMS. BF.RESERVE can't carry SEED / TIGHTENING. Funneling all creation through BF.INSERT unifies the replication path.
 
-**Expansion handling**: If `expansion == 0` (non-scaling), appends `NONSCALING`. Otherwise appends `EXPANSION <value>`.
+Called via `ctx.replicate("BF.INSERT", cmd.as_slice())` - also goes to AOF when AOF and replication are both enabled. (Note: AOF **rewrite** uses the different BF.LOAD path, see `architecture-persistence.md`.)
 
-**Items**: If items were provided (BF.ADD or BF.INSERT with items), appends `ITEMS` followed by the item arguments. For BF.RESERVE, items is empty and the ITEMS keyword is omitted entirely.
-
-**Why BF.INSERT**: BF.INSERT is the only command that accepts all of CAPACITY, ERROR, TIGHTENING, SEED, EXPANSION, NONSCALING, and ITEMS. BF.RESERVE cannot carry SEED or TIGHTENING. By funneling all creation through BF.INSERT, the replication path is unified.
-
-The call to `ctx.replicate("BF.INSERT", cmd.as_slice())` sends this synthetic command to replicas and the AOF.
-
-## Add-Only Replication
-
-When `reserve_operation` is false and `add_operation` is true, the command is replicated verbatim:
-
-```rust
-} else if add_operation {
-    ctx.replicate_verbatim();
-}
-```
-
-This covers cases where items are added to an existing bloom object. Since the object already exists on the replica (created by a prior reserve replication), the original command (BF.ADD, BF.MADD, or BF.INSERT) can be replayed as-is.
-
-## No-Op Case
-
-When both flags are false, no replication occurs. This happens when:
-
-- BF.ADD/BF.MADD adds an item that already exists (duplicate) - `add_succeeded` stays false
-- BF.INSERT with no items on an existing key
-- BF.INSERT where all items were duplicates on an existing key
-
-No replication is needed because nothing changed.
-
-## ReplicateArgs Structure
+## `ReplicateArgs`
 
 ```rust
 struct ReplicateArgs<'a> {
@@ -87,81 +45,58 @@ struct ReplicateArgs<'a> {
 }
 ```
 
-Populated from the **bloom object's actual properties**, not the command arguments. The distinction matters because BF.ADD and BF.MADD do not accept these parameters as arguments - they read them from the created bloom object. For BF.INSERT on an existing object, the object's original properties are used, not the command's override arguments.
+Populated from the **actual bloom object**, not the command's input args. Matters because:
 
-The `items` field is a slice of the original input arguments starting at the item index position, so the exact user-supplied items are forwarded to replicas.
+- BF.ADD / BF.MADD accept no property args - properties are read from the newly created (or existing) bloom.
+- BF.INSERT on an existing object ignores its own CAPACITY/ERROR/... overrides for replication and uses the object's creation-time values.
 
-## must_obey_client
+## `must_obey_client`
 
-The `must_obey_client` function in `src/wrapper/mod.rs` determines whether the current command is arriving from a primary or AOF replay and should not be rejected:
+In `src/wrapper/mod.rs`, detects whether the current command came from primary-to-replica replication or AOF replay. Two impls gated by feature flag:
 
-**Valkey 8.1+** (default, no feature flag):
+| Build | Impl |
+|-------|------|
+| default (Valkey 8.1+) | `ValkeyModule_MustObeyClient` via `valkey_module::raw` - returns 1 when command is from primary / AOF client |
+| `--features valkey_8_0` | `ctx.get_flags().contains(ContextFlags::REPLICATED)` - best-effort fallback using `GetContextFlags` (less precise) |
 
-```rust
-let ctx_raw = ctx.get_raw() as *mut valkey_module::ValkeyModuleCtx;
-let status = unsafe { valkey_module::raw::ValkeyModule_MustObeyClient.unwrap()(ctx_raw) };
-```
+Compile-time - no runtime toggle.
 
-Uses the `ValkeyModule_MustObeyClient` API from the `valkey_module::raw` bindings. Returns 1 when the command comes from the primary or AOF client. Panics on unexpected return values.
+## Size limit bypass on replicas
 
-**Valkey 8.0** (feature `valkey_8_0`):
-
-```rust
-ctx.get_flags().contains(valkey_module::ContextFlags::REPLICATED)
-```
-
-Falls back to checking `ContextFlags::REPLICATED` via the `GetContextFlags` API. A best-effort approximation since the flag-based approach is less precise than the dedicated API.
-
-The feature flag is compile-time: `cargo build --features valkey_8_0`. Without the flag, the 8.1+ path is used.
-
-## Size Limit Bypass on Replicas
-
-Every mutative command handler checks:
+Every mutative handler:
 
 ```rust
 let validate_size_limit = !must_obey_client(ctx);
 ```
 
-When `must_obey_client` returns true (replica receiving from primary, or AOF replay), `validate_size_limit` is false. This means:
+When true (replica / AOF replay), passed as `false` to:
 
-- `BloomObject::new_reserved` skips `validate_size_before_create`
-- `BloomObject::add_item` skips `validate_size_before_scaling`
-- `BloomObject::decode_object` (BF.LOAD path) skips memory size validation
+- `BloomObject::new_reserved` - skips `validate_size_before_create`.
+- `BloomObject::add_item` - skips `validate_size_before_scaling`.
+- `BloomObject::decode_object` (BF.LOAD) - skips total-size check.
 
-Replicas never reject operations that the primary accepted. If the primary's `bloom-memory-usage-limit` allowed a bloom object, the replica must accept it even if the replica has a different (lower) memory limit configured.
+Replicas never reject what the primary accepted. A lower `bloom-memory-usage-limit` on a replica is irrelevant to replication.
 
-The size limit is enforced only on user-initiated commands on the primary node.
-
-## Keyspace Notifications
-
-Two events are published after replication, defined as constants in `utils.rs`:
+## Keyspace notifications
 
 ```rust
-pub const ADD_EVENT: &str = "bloom.add";
+pub const ADD_EVENT:     &str = "bloom.add";
 pub const RESERVE_EVENT: &str = "bloom.reserve";
 ```
 
-Notification logic in `replicate_and_notify_events`:
+Fired in `replicate_and_notify_events`:
 
-```rust
-if add_operation {
-    ctx.notify_keyspace_event(NotifyEvent::GENERIC, "bloom.add", key_name);
-}
-if reserve_operation {
-    ctx.notify_keyspace_event(NotifyEvent::GENERIC, "bloom.reserve", key_name);
-}
-```
+- `add_operation` true -> `notify_keyspace_event(GENERIC, "bloom.add", key)`.
+- `reserve_operation` true -> `notify_keyspace_event(GENERIC, "bloom.reserve", key)`.
 
-Both events can fire in the same call - when BF.ADD or BF.INSERT creates a new object and adds items, both `bloom.reserve` and `bloom.add` are emitted. The events use `NotifyEvent::GENERIC` category. Keyspace notifications fire independently of the replication path - both checks run regardless of which replication branch was taken.
+Both can fire in the same call (BF.ADD / BF.INSERT that creates and adds). Independent of the replication branch taken.
 
-## Replication in Each Command
+## Per-command replication summary
 
-| Command | Creation | Add-Only | Notes |
+| Command | Creation | Add-only | Notes |
 |---------|----------|----------|-------|
-| BF.ADD | BF.INSERT with full props + items | Verbatim | Auto-creates if key missing |
-| BF.MADD | BF.INSERT with full props + items | Verbatim | Auto-creates if key missing |
-| BF.RESERVE | BF.INSERT with full props, no items | Never | Creation-only, no items to add |
-| BF.INSERT | BF.INSERT with full props + items | Verbatim | Explicit creation or add |
-| BF.LOAD | BF.INSERT with full props | Never | AOF rewrite path, creation-only |
-
-All creation paths use the same `replicate_and_notify_events` function. The replicated BF.INSERT always includes SEED and TIGHTENING, ensuring the replica's bloom object is bit-for-bit identical in hash behavior.
+| BF.ADD | synthetic BF.INSERT + items | verbatim | auto-create on missing key |
+| BF.MADD | synthetic BF.INSERT + items | verbatim | auto-create on missing key |
+| BF.RESERVE | synthetic BF.INSERT (no items) | never | creation-only |
+| BF.INSERT | synthetic BF.INSERT + items | verbatim | explicit flow |
+| BF.LOAD | synthetic BF.INSERT + data-as-item | never | AOF-rewrite-fed command; replica rebuilds via BF.INSERT, not BF.LOAD |

@@ -1,133 +1,80 @@
-# Module Configuration Options
+# Module configs
 
-Use when understanding bloom module config defaults, ranges, types, the custom string-to-f64 config handler, or the module_args_as_configuration pattern.
+Use when reasoning about bloom-* config defaults, ranges, the string-as-f64 pattern, or `module_args_as_configuration`.
 
-Source: `src/configs.rs`, `src/lib.rs` (valkey_module! configurations block)
+Source: `src/configs.rs`, `src/lib.rs` (`valkey_module!` configurations block).
 
-## Configuration Table
+## Config table
 
-| Config | Type | Default | Min | Max | Purpose |
-|--------|------|---------|-----|-----|---------|
-| `bloom-capacity` | i64 | 100 | 1 | i64::MAX | Default items per sub-filter |
-| `bloom-expansion` | i64 | 2 | 0 | u32::MAX | Scale factor (0 = non-scaling) |
-| `bloom-fp-rate` | string | "0.01" | (0 | 1) | Default false positive rate |
-| `bloom-tightening-ratio` | string | "0.5" | (0 | 1) | FP decay per scale-out |
-| `bloom-memory-usage-limit` | i64 | 128MB | 0 | i64::MAX | Max bytes per bloom object |
-| `bloom-use-random-seed` | bool | true | - | - | Random vs fixed seed mode |
-| `bloom-defrag-enabled` | bool | true | - | - | Enable defragmentation |
+| Config | Type | Default | Range | Purpose |
+|--------|------|---------|-------|---------|
+| `bloom-capacity` | i64 | 100 | `1..=i64::MAX` | Default initial capacity (auto-created blooms) |
+| `bloom-expansion` | i64 | 2 | `0..=u32::MAX` | Scale factor; 0 = non-scaling |
+| `bloom-fp-rate` | string | `"0.01"` | exclusive `(0, 1)` | Default FP rate |
+| `bloom-tightening-ratio` | string | `"0.5"` | exclusive `(0, 1)` | FP decay per scale-out |
+| `bloom-memory-usage-limit` | i64 | `128 * 1024 * 1024` | `0..=i64::MAX` | Max bytes per bloom object |
+| `bloom-use-random-seed` | bool | true | - | Random vs `FIXED_SEED` |
+| `bloom-defrag-enabled` | bool | true | - | Enable incremental defrag |
 
-All configs use `ConfigurationFlags::DEFAULT` and have no custom validation callback except for the two string configs (fp-rate and tightening-ratio).
+All use `ConfigurationFlags::DEFAULT`. Only the string configs have a custom validator (`on_string_config_set`). Runtime-settable via `CONFIG SET bf.<name> <value>`.
 
-## Integer Configs
+## Integer / bool configs - storage
 
-**bloom-capacity** - Default initial capacity for auto-created bloom objects. Used by BF.ADD, BF.MADD, and BF.INSERT when creating a new bloom without explicit CAPACITY. Range: 1 to i64::MAX (effectively unlimited). Stored in `BLOOM_CAPACITY: AtomicI64`. Defined as `BLOOM_CAPACITY_DEFAULT = 100`.
-
-**bloom-expansion** - Default expansion factor for scaling. When a sub-filter fills, the next one gets `capacity * expansion` items. Set to 0 for non-scaling behavior. Registration range is 0 to `BLOOM_EXPANSION_MAX as i64` (u32::MAX cast to i64 in the macro). Stored in `BLOOM_EXPANSION: AtomicI64`. Defined as `BLOOM_EXPANSION_DEFAULT = 2`.
-
-The config registration uses `0` as the min (allowing non-scaling), while the command-level `EXPANSION` argument enforces `BLOOM_EXPANSION_MIN` (1) as the floor. The value 0 is only reachable via the config or the `NONSCALING` keyword.
-
-**bloom-memory-usage-limit** - Per-object memory cap in bytes. Default is `128 * 1024 * 1024` (128MB). The `validate_size` function rejects objects whose `memory_usage()` exceeds this value. Write operations that would exceed the limit return `ERR operation exceeds bloom object memory limit`. Stored in `BLOOM_MEMORY_LIMIT_PER_OBJECT: AtomicI64`. Range: 0 to i64::MAX. Setting to 0 effectively blocks all bloom object creation since any object will have size > 0.
-
-## String Configs
-
-**bloom-fp-rate** - Target false positive rate for new bloom objects. Stored as a ValkeyString (`BLOOM_FP_RATE: ValkeyGILGuard<ValkeyString>`) for the config system, with a parallel `BLOOM_FP_RATE_F64: Mutex<f64>` for runtime use. Default: `"0.01"` (1% false positive rate). Range: exclusive (0, 1) - must be strictly greater than `BLOOM_FP_RATE_MIN` (0.0) and strictly less than `BLOOM_FP_RATE_MAX` (1.0).
-
-**bloom-tightening-ratio** - Controls how the FP rate decreases per scale-out. Each new sub-filter uses `fp_rate * tightening_ratio^N` where N is the filter index. Default: `"0.5"`. Range: exclusive (0, 1) using `BLOOM_TIGHTENING_RATIO_MIN` (0.0) and `BLOOM_TIGHTENING_RATIO_MAX` (1.0). Stored as `BLOOM_TIGHTENING_RATIO: ValkeyGILGuard<ValkeyString>` with parallel `BLOOM_TIGHTENING_F64: Mutex<f64>`.
-
-Both string configs exist because the Valkey module configuration system does not natively support f64 types. The string representation is the external interface; the `Mutex<f64>` is the internal working value.
-
-## Boolean Configs
-
-**bloom-use-random-seed** - When true (default), each new bloom object gets a unique random 32-byte seed. When false, all objects use `FIXED_SEED`. Stored in `BLOOM_USE_RANDOM_SEED: AtomicBool`. `AtomicBool::default()` initializes to false, but the config system applies the default value `true` on module load.
-
-**bloom-defrag-enabled** - Enables cursor-based incremental defragmentation. Default true. Stored in `BLOOM_DEFRAG: AtomicBool` initialized to `AtomicBool::new(BLOOM_DEFRAG_DEFAULT)` (true).
-
-## Custom String Config Handler
-
-The `on_string_config_set` function handles validation for both `bloom-fp-rate` and `bloom-tightening-ratio`:
+`AtomicI64` / `AtomicBool` with `Ordering::Relaxed` reads throughout:
 
 ```rust
-pub fn on_string_config_set(
-    config_ctx: &ConfigurationContext,
-    name: &str,
-    val: &'static ValkeyGILGuard<ValkeyString>,
-) -> Result<(), ValkeyError> {
-    let v = val.get(config_ctx);
-    let value_str = v.to_string_lossy();
-    let value = match value_str.parse::<f64>() {
-        Ok(v) => v,
-        Err(_) => return Err(ValkeyError::Str("Invalid floating-point value")),
-    };
-    match name {
-        "bloom-fp-rate" => { /* validate range, update BLOOM_FP_RATE_F64 */ }
-        "bloom-tightening-ratio" => { /* validate range, update BLOOM_TIGHTENING_F64 */ }
-        _ => Err(ValkeyError::Str("Unknown configuration parameter")),
-    }
-}
+pub static ref BLOOM_CAPACITY:        AtomicI64  = AtomicI64::new(BLOOM_CAPACITY_DEFAULT);
+pub static ref BLOOM_EXPANSION:       AtomicI64  = AtomicI64::new(BLOOM_EXPANSION_DEFAULT);
+pub static ref BLOOM_MEMORY_LIMIT_PER_OBJECT: AtomicI64 = ...;
+pub static ref BLOOM_USE_RANDOM_SEED: AtomicBool = AtomicBool::default();  // overridden at load to true
+pub static ref BLOOM_DEFRAG:          AtomicBool = AtomicBool::new(BLOOM_DEFRAG_DEFAULT);
 ```
 
-The handler performs three steps:
+Note: `bloom-expansion` register-range allows 0 (non-scaling), while command-level `EXPANSION` arg floor is `BLOOM_EXPANSION_MIN` (1). Zero is reachable only via config or `NONSCALING` keyword.
 
-1. **Extract string value**: Gets the ValkeyString from the GIL guard, converts via `to_string_lossy()`
-2. **Parse to f64**: Returns `"Invalid floating-point value"` on failure
-3. **Validate range**: For `bloom-fp-rate`, out-of-range returns `ERR (0 < error rate range < 1)`. For `bloom-tightening-ratio`, out-of-range returns `ERR (0 < tightening ratio range < 1)`. On success, updates the corresponding `Mutex<f64>` static.
+`bloom-memory-usage-limit = 0` blocks all bloom creation (any object has size > 0).
 
-This callback is registered in the `valkey_module!` macro via `Some(Box::new(configs::on_string_config_set))` as the last parameter of each string config entry.
+## String-as-f64 configs
 
-## Config Storage Pattern
+Valkey module config system has no native f64 type. Both `bloom-fp-rate` and `bloom-tightening-ratio` use:
 
-The module uses two storage mechanisms from `lazy_static!`:
-
-**AtomicI64 / AtomicBool** for integer and boolean configs:
+- **External storage**: `ValkeyGILGuard<ValkeyString>` - what CONFIG SET/GET sees.
+- **Internal cache**: `Mutex<f64>` - what command handlers read to avoid repeated string parsing.
 
 ```rust
-pub static ref BLOOM_CAPACITY: AtomicI64 = AtomicI64::new(BLOOM_CAPACITY_DEFAULT);
-pub static ref BLOOM_USE_RANDOM_SEED: AtomicBool = AtomicBool::default();
+pub static ref BLOOM_FP_RATE:       ValkeyGILGuard<ValkeyString> = ValkeyGILGuard::new(...);
+pub static ref BLOOM_FP_RATE_F64:   Mutex<f64>                   = Mutex::new(0.01);
+pub static ref BLOOM_TIGHTENING_RATIO: ValkeyGILGuard<ValkeyString> = ...;
+pub static ref BLOOM_TIGHTENING_F64:   Mutex<f64>                   = Mutex::new(0.5);
 ```
 
-These are read with `Ordering::Relaxed` throughout the codebase. The valkey-module SDK handles the CONFIG SET/GET plumbing automatically.
+`on_string_config_set(ctx, name, val)`:
 
-**ValkeyGILGuard + Mutex** for float-as-string configs:
+1. `to_string_lossy()`, `parse::<f64>()`. Parse error -> `"Invalid floating-point value"`.
+2. Range check:
+   - `bloom-fp-rate` out of range -> `ERR (0 < error rate range < 1)`.
+   - `bloom-tightening-ratio` out of range -> `ERR (0 < tightening ratio range < 1)`.
+3. Update the corresponding `Mutex<f64>`.
+
+Registered via `Some(Box::new(configs::on_string_config_set))` as the last parameter of each string config entry in `valkey_module!`.
+
+## `module_args_as_configuration`
 
 ```rust
-pub static ref BLOOM_FP_RATE: ValkeyGILGuard<ValkeyString> =
-    ValkeyGILGuard::new(ValkeyString::create(None, BLOOM_FP_RATE_DEFAULT));
-pub static ref BLOOM_FP_RATE_F64: Mutex<f64> = Mutex::new(0.01);
+configurations: [ ..., module_args_as_configuration: true ]
 ```
 
-The `ValkeyGILGuard<ValkeyString>` is the config system's storage. The `Mutex<f64>` is kept in sync by `on_string_config_set` and used by command handlers to avoid repeated string parsing.
-
-## module_args_as_configuration
-
-The `valkey_module!` macro includes:
-
-```rust
-configurations: [
-    // ...
-    module_args_as_configuration: true,
-]
-```
-
-Tells the valkey-module SDK to interpret module load arguments as configuration parameters. For example:
+Makes module load arguments flow through the config system:
 
 ```
 valkey-server --loadmodule ./libvalkey_bloom.so bloom-capacity 1000 bloom-fp-rate 0.001
 ```
 
-The arguments are automatically mapped to the registered configs, eliminating the need for custom `_args` parsing in the `initialize` function. The init function signature accepts `_args: &[ValkeyString]` but does not use them.
+No custom `_args` parsing needed in `initialize` - `_args: &[ValkeyString]` is unused.
 
-## Fixed Seed Constant
+## Other module constants (in `src/configs.rs`)
 
-```rust
-pub const FIXED_SEED: [u8; 32] = [
-    89, 15, 245, 34, 234, 120, 17, 218, 167, 20, 216, 9, 59, 62, 123, 217,
-    29, 137, 138, 115, 62, 152, 136, 135, 48, 127, 151, 205, 40, 7, 51, 131,
-];
-```
-
-Used when `bloom-use-random-seed` is false. Also used as the comparison baseline in BF.INSERT's SEED parsing to determine `is_seed_random`.
-
-## Other Constants
-
-- `BLOOM_NUM_FILTERS_PER_OBJECT_LIMIT_MAX: i32 = i32::MAX` - hard cap on sub-filter count per bloom object, checked in `add_item` and `decode_object`
-- `BLOOM_MIN_SUPPORTED_VERSION: &[i64; 3] = &[8, 0, 0]` - minimum Valkey server version, checked in `initialize`
+- `FIXED_SEED: [u8; 32]` - used when `bloom-use-random-seed=false`, also the `is_seed_random` comparison baseline for BF.INSERT SEED parsing.
+- `BLOOM_NUM_FILTERS_PER_OBJECT_LIMIT_MAX: i32 = i32::MAX` - hard cap, checked in `add_item` and `decode_object`.
+- `BLOOM_MIN_SUPPORTED_VERSION: &[i64; 3] = &[8, 0, 0]` - checked in `initialize`; below returns `Status::Err`.
+- Range constants: `BLOOM_EXPANSION_MAX` (u32::MAX), `BLOOM_FP_RATE_MIN`/`MAX` (0.0 / 1.0), `BLOOM_TIGHTENING_RATIO_MIN`/`MAX` (0.0 / 1.0).
