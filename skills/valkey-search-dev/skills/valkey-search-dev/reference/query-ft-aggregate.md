@@ -1,29 +1,10 @@
-# FT.AGGREGATE Pipeline
+# FT.AGGREGATE pipeline
 
-Use when working on the FT.AGGREGATE command, aggregation stages, the expression engine, reducers, or the Record/RecordSet data model.
+Use when reasoning about FT.AGGREGATE stages, reducers, the expression engine, or the Record / RecordSet data model.
 
-Source: `src/commands/ft_aggregate.cc`, `src/commands/ft_aggregate_parser.cc`, `src/commands/ft_aggregate_parser.h`, `src/commands/ft_aggregate_exec.cc`, `src/commands/ft_aggregate_exec.h`, `src/expr/expr.h`, `src/expr/value.h`
+Source: `src/commands/ft_aggregate{,_parser,_exec}.{h,cc}`, `src/expr/expr.h`, `src/expr/value.h`.
 
-## Contents
-
-- Command Overview (line 25)
-- Command Handler (line 41)
-- AggregateParameters Class (line 55)
-- Pipeline Stages (line 78)
-- GROUPBY + REDUCE Stage (line 98)
-- Reducers (line 118)
-- APPLY Stage (line 143)
-- SORTBY Stage (line 163)
-- LIMIT Stage (line 180)
-- FILTER Stage (line 194)
-- LOAD Clause (line 213)
-- Expression Engine (line 231)
-- Record and RecordSet Types (line 241)
-- Response Generation (line 263)
-
-## Command Overview
-
-`FT.AGGREGATE` runs a pipeline of transformation stages on search results. Syntax:
+## Syntax
 
 ```
 FT.AGGREGATE index query
@@ -37,98 +18,72 @@ FT.AGGREGATE index query
   [VERBATIM] [SLOP n] [INORDER] [ADDSCORES]
 ```
 
-## Command Handler
-
-Entry point: `FTAggregateCmd()` in `ft_aggregate.cc`:
+## Handler
 
 ```cpp
-absl::Status FTAggregateCmd(ValkeyModuleCtx* ctx, ValkeyModuleString** argv, int argc) {
+absl::Status FTAggregateCmd(ctx, argv, argc) {
   return QueryCommand::Execute(ctx, argv, argc,
-    unique_ptr<QueryCommand>(
-        new aggregate::AggregateParameters(ValkeyModule_GetSelectedDb(ctx))));
+      std::make_unique<aggregate::AggregateParameters>(ValkeyModule_GetSelectedDb(ctx)));
 }
 ```
 
-Like FT.SEARCH, it goes through `QueryCommand::Execute()` for index lookup, query string extraction, parameter parsing, client blocking, and async dispatch.
+Same `QueryCommand::Execute` path as FT.SEARCH.
 
-## AggregateParameters Class
+## `AggregateParameters`
 
-`AggregateParameters` (in `ft_aggregate_parser.h`) extends both `QueryCommand` and `expr::Expression::CompileContext`:
+Extends both `QueryCommand` and `expr::Expression::CompileContext`:
 
 ```cpp
-struct AggregateParameters : public expr::Expression::CompileContext,
-                             public QueryCommand {
+struct AggregateParameters : public expr::Expression::CompileContext, public QueryCommand {
   bool loadall_{false};
-  vector<string> loads_;
+  std::vector<std::string> loads_;
   bool load_key{false};
   bool addscores_{false};
-  vector<unique_ptr<Stage>> stages_;
-  // Record schema tracking:
-  flat_hash_map<string, size_t> record_indexes_by_identifier_;
-  flat_hash_map<string, size_t> record_indexes_by_alias_;
-  vector<AttributeRecordInfo> record_info_by_index_;
+  std::vector<std::unique_ptr<Stage>> stages_;
+  absl::flat_hash_map<std::string, size_t> record_indexes_by_identifier_;
+  absl::flat_hash_map<std::string, size_t> record_indexes_by_alias_;
+  std::vector<AttributeRecordInfo>         record_info_by_index_;
 };
 ```
 
-Key design: `AggregateParameters` acts as the `CompileContext` for the expression compiler, providing `MakeReference()` to resolve field names to record indexes and `GetParam()` for `$param` substitution. This means field references in APPLY, FILTER, SORTBY, and REDUCE expressions are compiled against the evolving record schema.
+Dual role: `AggregateParameters` is the `CompileContext` for the expression compiler - provides `MakeReference()` (`@field` -> record index) and `GetParam()` (`$param`). Expression compilation in APPLY / FILTER / SORTBY / REDUCE is against the evolving record schema.
 
-`AddRecordAttribute()` assigns a new index to each unique (identifier, alias) pair. The `__key` pseudo-field (index 0) and score field (index 1) are always registered first.
+`AddRecordAttribute()` assigns an index per unique `(identifier, alias)`. Pseudo-fields `__key` (index 0) and score (index 1) always registered first.
 
-## Pipeline Stages
-
-Stages are parsed in command order and stored in `stages_`. Each stage implements the `Stage` interface:
+## Stages
 
 ```cpp
 class Stage {
   virtual absl::Status Execute(RecordSet& records) const = 0;
-  virtual optional<query::SerializationRange> GetSerializationRange() const = 0;
+  virtual std::optional<query::SerializationRange> GetSerializationRange() const = 0;
 };
 ```
 
-`GetSerializationRange()` returns the range of input records needed. The first LIMIT stage's range determines how many search results are fetched. Stages returning `SerializationRange::All()` (GROUPBY, APPLY, FILTER, SORTBY) require the full search result set.
+`GetSerializationRange()` determines how many search results are fetched. First LIMIT stage's range drives it. GROUPBY / APPLY / FILTER / SORTBY return `SerializationRange::All()` - full set required.
 
-Execution order in `SendReplyInner()`:
-1. Process search results into `RecordSet` via `CreateRecordsFromNeighbors()`
-2. Execute each stage sequentially via `ExecuteAggregationStages()`
-3. Generate response via `GenerateResponse()`
+Execution in `SendReplyInner()`:
 
-Cancellation is checked between stages via the cancellation token.
+1. `CreateRecordsFromNeighbors()` -> `RecordSet`.
+2. `ExecuteAggregationStages()` runs each sequentially.
+3. `GenerateResponse()` serializes.
 
-## GROUPBY + REDUCE Stage
+Cancellation token checked between stages.
 
-The GROUPBY stage (class `GroupBy`) groups records by one or more fields and applies reducer functions to each group.
+## GROUPBY + REDUCE
 
-Parsing (`ConstructGroupByParser()`):
-1. Parse field count, then `@field` references (must start with `@`)
-2. Parse zero or more `REDUCE func nargs arg... [AS name]` clauses
-3. Each REDUCE references a function from the static `reducerTable`
-4. Arguments are compiled as expressions via `Expression::Compile()`
+Parse (`ConstructGroupByParser`): field count + `@field` refs (must start with `@`), then zero or more `REDUCE func nargs arg... [AS name]`. Each REDUCE references a function from `GroupBy::reducerTable`. Args compiled via `Expression::Compile()`.
 
-Execution (`GroupBy::Execute()`):
-1. Build a `flat_hash_map<GroupKey, vector<ReducerInstance>>` mapping group keys to reducer state
-2. For each input record, compute the `GroupKey` from group field values
-3. For new keys, instantiate fresh `ReducerInstance` objects
-4. Call `ProcessRecord(args)` on each reducer with evaluated argument values
-5. After all input records are consumed, create one output record per group
-6. Output record fields are set from the group key values and `GetResult()` from each reducer
+Execution (`GroupBy::Execute`):
 
-`GroupKey` is an `InlinedVector<expr::Value, 4>` with hash and equality support, enabling use as a `flat_hash_map` key.
+1. `flat_hash_map<GroupKey, vector<ReducerInstance>>`.
+2. Per input: compute `GroupKey` from group field values.
+3. New key -> instantiate `ReducerInstance`s.
+4. Per reducer: `ProcessRecord(args)` with evaluated arg values.
+5. After input: one output record per group - fields from group-key values + each reducer's `GetResult()`.
 
-## Reducers
+`GroupKey` = `InlinedVector<expr::Value, 4>` with hash/equality (hash-map key).
 
-Available reducers (registered in `GroupBy::reducerTable`):
-
-| Reducer | Args | Description |
-|---------|------|-------------|
-| `COUNT` | 0 | Count records in each group |
-| `SUM` | 1 | Sum of numeric values |
-| `MIN` | 1 | Minimum value |
-| `MAX` | 1 | Maximum value |
-| `AVG` | 1 | Average of numeric values |
-| `STDDEV` | 1 | Sample standard deviation (using N-1 formula) |
-| `COUNT_DISTINCT` | 1 | Count of unique values (using `flat_hash_set<Value>`) |
-
-Each reducer is a subclass of `ReducerInstance`:
+### Reducers
 
 ```cpp
 struct ReducerInstance {
@@ -137,141 +92,112 @@ struct ReducerInstance {
 };
 ```
 
-Nil values are skipped by all reducers except COUNT. Numeric reducers (`SUM`, `AVG`, `STDDEV`) call `AsDouble()` and skip non-numeric values. `COUNT_DISTINCT` uses `Value` hash/equality for deduplication.
+| Reducer | Args | Notes |
+|---------|------|-------|
+| `COUNT` | 0 | counts records |
+| `SUM` | 1 | numeric |
+| `MIN` / `MAX` | 1 | |
+| `AVG` | 1 | numeric |
+| `STDDEV` | 1 | sample (N-1) |
+| `COUNT_DISTINCT` | 1 | `flat_hash_set<Value>` |
 
-## APPLY Stage
+Nil skipped by all except COUNT. Numeric reducers call `AsDouble()` and skip non-numeric.
 
-The APPLY stage (class `Apply`) computes a new field from an expression:
+## APPLY
 
-```
-APPLY "expr" AS name
-```
-
-Parsing: the expression string is compiled via `Expression::Compile()`, and the output field is resolved via `MakeReference(name, true)` (creating a new record slot if needed).
-
-Execution: for each record, evaluate the expression and set the output field:
-
-```cpp
-for (auto& r : records) {
-  SetField(*r, *name_, expr_->Evaluate(ctx, *r));
-}
-```
-
-APPLY processes all records (returns `SerializationRange::All()`). It can reference any previously defined field - from LOAD, from earlier APPLY stages, or from GROUPBY outputs.
-
-## SORTBY Stage
-
-The SORTBY stage (class `SortBy`) sorts records by one or more expressions with direction:
-
-```
-SORTBY nargs @field1 ASC @field2 DESC [MAX n]
-```
-
-Parsing: each field is compiled as an expression. Direction defaults to ASC. The optional MAX clause limits the output (default 10).
-
-Execution uses two strategies based on record count vs MAX:
-
-- **When records > MAX** - uses a `std::priority_queue<Record*>` (heap-based top-N) to avoid full sort. This is O(N * log(MAX)) instead of O(N * log(N))
-- **When records <= MAX** - uses `std::stable_sort` on the full set
-
-The sort comparator (`SortFunctor`) evaluates each sort key expression on both records and uses `expr::Compare()` for ordering. `Ordering::kEQUAL` and `kUNORDERED` continue to the next sort key; `kLESS`/`kGREATER` return based on the direction.
-
-## LIMIT Stage
-
-The LIMIT stage (class `Limit`) applies offset and count:
-
-```
-LIMIT offset count
-```
-
-Execution:
-1. Pop `offset` records from the front
-2. Pop excess records from the back until `size <= count`
-
-LIMIT is the only stage that can reduce the search result fetch count - its `GetSerializationRange()` returns `{offset, offset + limit}`, which is used during command parsing to set the search parameters so the search engine only fetches the needed range.
-
-## FILTER Stage
-
-The FILTER stage (class `Filter`) removes records that don't match an expression:
-
-```
-FILTER "expr"
-```
-
-Execution: evaluate the expression for each record. Keep only records where the result `IsTrue()`:
+`APPLY "expr" AS name`. Expr compiled via `Expression::Compile()`; output via `MakeReference(name, /*create=*/true)`.
 
 ```cpp
-auto result = expr_->Evaluate(ctx, *r);
-if (result.IsTrue()) {
-  filtered.push_back(std::move(r));
-}
+for (auto& r : records) SetField(*r, *name_, expr_->Evaluate(ctx, *r));
 ```
 
-FILTER requires all input records (`SerializationRange::All()`).
+Processes all records. Can reference anything defined earlier - LOAD, earlier APPLY, GROUPBY outputs.
 
-## LOAD Clause
+## SORTBY
 
-LOAD is not a pipeline stage - it's parsed before stages and controls which document fields are fetched during the search phase.
+`SORTBY nargs @f1 ASC @f2 DESC [MAX n]`. Each field compiled as expression, ASC default. MAX default 10.
 
+Two strategies:
+
+- `records > MAX`: `std::priority_queue<Record*>` - O(N log MAX) top-N.
+- `records <= MAX`: `std::stable_sort`.
+
+`SortFunctor` evaluates each sort key on both records via `expr::Compare()`. `kEQUAL` / `kUNORDERED` continue to next key; `kLESS` / `kGREATER` return per direction.
+
+## LIMIT
+
+`LIMIT offset count`. Pop `offset` from front, pop from back until `size <= count`.
+
+**Only stage that can reduce fetch count** - `GetSerializationRange()` returns `{offset, offset + limit}`, read during command parsing to constrain the search range.
+
+## FILTER
+
+`FILTER "expr"`. Evaluate per record, keep where `IsTrue()`:
+
+```cpp
+if (expr_->Evaluate(ctx, *r).IsTrue()) filtered.push_back(std::move(r));
 ```
-LOAD count @field1 @field2 ...  # Load specific fields
-LOAD *                          # Load all fields
-```
 
-Processing in `ManipulateReturnsClause()`:
-1. If `LOAD *` (`loadall_`), return all document attributes
-2. Otherwise, for each load field, look up its index schema and add to `return_attributes`
-3. The special `__key` field sets `load_key = true` (makes the document key available in records)
-4. Score field references are skipped (always available)
-5. If no content fields are requested, set `no_content = true`
+Requires all input records (`SerializationRange::All()`).
 
-Each LOAD field also calls `AddRecordAttribute()` to register it in the record schema so expressions can reference it.
+## LOAD (not a stage)
 
-## Expression Engine
+Parsed before stages, controls which document fields are fetched during search.
 
-The expression engine (`src/expr/expr.h`, `src/expr/value.h`) provides compilation and evaluation of expressions used in APPLY, FILTER, SORTBY, and REDUCE arguments.
+- `LOAD *` -> all attributes (`loadall_ = true`).
+- `LOAD count @f1 @f2 ...` -> lookup per field in schema, push to `return_attributes`.
+- `__key` field -> `load_key = true`.
+- Score field references skipped (always available).
+- No content fields requested -> `no_content = true`.
 
-`Expression::Compile(CompileContext&, string_view)` parses an expression string into an AST. `Evaluate(EvalContext&, Record&)` runs it against a record. `CompileContext` provides `MakeReference()` (resolve `@field` to a record index) and `GetParam()` (resolve `$param`). `AggregateParameters` implements `CompileContext`.
+Each LOAD field also calls `AddRecordAttribute()` so expressions can reference it.
 
-`expr::Value` is a variant: nil, double, or string. Supports `IsTrue()`/`IsNil()`, `AsDouble()`, `AsStringView()`, comparison via `Compare()` (returns `kLESS`/`kGREATER`/`kEQUAL`/`kUNORDERED`), and hash/equality for use in containers.
+## Expression engine
 
-During compilation, `@field` references become `Attribute` objects (in `ft_aggregate_parser.h`) storing a `record_index_` into `Record::fields_`. `GetValue()` indexes into the record's fields vector. The `create` flag in `MakeReference()` controls whether unknown fields create new record slots (outputs like APPLY AS) or must already exist (inputs like GROUPBY fields).
+`src/expr/expr.h`, `src/expr/value.h`.
 
-## Record and RecordSet Types
+- `Expression::Compile(CompileContext&, string_view)` - parse to AST.
+- `Evaluate(EvalContext&, Record&)` - run on a record.
+- `CompileContext` -> `MakeReference(name, create)` resolves `@field`; `GetParam(name)` resolves `$param`. `AggregateParameters` implements it.
 
-`Record` (in `ft_aggregate_exec.h`) extends `Expression::Record`:
+`expr::Value`: variant of nil / double / string. `IsTrue()`, `IsNil()`, `AsDouble()`, `AsStringView()`, `Compare()` -> `Ordering::{kLESS, kGREATER, kEQUAL, kUNORDERED}`. Hash/equality for containers.
+
+`@field` references compile to `Attribute` (in `ft_aggregate_parser.h`) with a `record_index_` into `Record::fields_`. `MakeReference(name, /*create=*/true)` creates a new slot (APPLY outputs); `false` requires it to exist (GROUPBY inputs).
+
+## Record / RecordSet
 
 ```cpp
 class Record : public expr::Expression::Record {
-  vector<expr::Value> fields_;               // Indexed by record schema
-  vector<pair<string, expr::Value>> extra_fields_;  // Unregistered fields
+  std::vector<expr::Value> fields_;                       // by record schema index
+  std::vector<std::pair<std::string, expr::Value>> extra_fields_;  // unregistered
 };
 ```
 
-Fields are positionally indexed - `fields_[i]` corresponds to the `AttributeRecordInfo` at index `i` in `AggregateParameters::record_info_by_index_`. Extra fields come from document attributes not in the record schema.
+`fields_[i]` aligns with `AggregateParameters::record_info_by_index_[i]`. `extra_fields_` holds document attributes outside the schema.
 
-`RecordSet` extends `deque<unique_ptr<Record>>` with custom `pop_front()`/`pop_back()` that return ownership. Stages consume and produce `RecordSet` in place.
+`RecordSet` extends `deque<unique_ptr<Record>>` with custom `pop_front()` / `pop_back()` returning ownership.
 
-`CreateRecordsFromNeighbors()` converts search `Neighbor` results into records:
-1. Set `__key` field if `load_key` is true
-2. Set score field for vector queries
-3. For each attribute content, look up by alias then identifier in the record index maps
-4. Numeric fields are converted to `Value(double)`, text/tag fields to `Value(string)`
-5. JSON values are unquoted. Records with unquotable JSON values are dropped
+`CreateRecordsFromNeighbors()`:
 
-## Response Generation
+1. Set `__key` if `load_key`.
+2. Set score for vector queries.
+3. Each attribute content: look up by alias, then identifier.
+4. Numeric -> `Value(double)`; text/tag -> `Value(string)`.
+5. JSON values unquoted; records with unquotable JSON are dropped.
 
-`GenerateResponse()` serializes the final `RecordSet`:
+## Response
+
+`GenerateResponse()` -> RESP array:
 
 ```
 1) record_count
-2) [field_name, field_value, field_name, field_value, ...]
+2) [name, value, name, value, ...]
 3) [...]
-...
 ```
 
-For each record, iterate both `fields_` and `extra_fields_`, calling `ReplyWithValue()` for each non-nil value. The function handles HASH vs JSON data types and dialect-specific formatting:
-- Dialect 2: values are returned as plain strings
-- Dialect 3/4: values are wrapped in brackets (`[value]`)
+Per record: iterate both `fields_` and `extra_fields_`, `ReplyWithValue()` on non-nil. Dialect-specific:
 
-Numeric values are formatted with `%.11g` precision. Nil values are skipped entirely (no field name or value emitted).
+- Dialect 2: plain strings.
+- Dialect 3/4: wrapped (`[value]`).
+
+Numeric formatting `%.11g`. Nil skipped (no name/value emitted).

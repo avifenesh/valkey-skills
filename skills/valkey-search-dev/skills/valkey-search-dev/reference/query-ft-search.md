@@ -1,215 +1,167 @@
-# FT.SEARCH Internals
+# FT.SEARCH internals
 
-Use when working on FT.SEARCH command handling, parameter parsing, query validation, response serialization, or the SearchCommand class.
+Use when reasoning about FT.SEARCH command handling, parameter parsing, validation, or response serialization.
 
-Source: `src/commands/ft_search.cc`, `src/commands/ft_search_parser.cc`, `src/commands/ft_search_parser.h`, `src/commands/commands.h`, `src/query/response_generator.h`
+Source: `src/commands/ft_search.cc`, `src/commands/ft_search_parser.{h,cc}`, `src/commands/commands.h`, `src/query/response_generator.h`.
 
-## Contents
-
-- Command Overview (line 23)
-- Command Handler (line 35)
-- QueryCommand Base Class (line 54)
-- SearchCommand Class (line 74)
-- Parameter Parsing (line 92)
-- Supported Parameters (line 103)
-- PARAMS Substitution (line 126)
-- Validation (line 137)
-- Response Generation (line 152)
-- Vector Query Responses (line 166)
-- Non-Vector Query Responses (line 182)
-- SORTBY Processing (line 205)
-
-## Command Overview
-
-`FT.SEARCH` is the primary query command. Syntax:
+## Syntax
 
 ```
-FT.SEARCH index query [RETURN count field [AS alias] ...]
-  [LIMIT offset count] [NOCONTENT] [SORTBY field [ASC|DESC]]
+FT.SEARCH index query
+  [RETURN count field [AS alias] ...] [LIMIT offset count] [NOCONTENT]
+  [SORTBY field [ASC|DESC]] [WITHSORTKEYS]
   [PARAMS nargs name value ...] [TIMEOUT ms] [DIALECT version]
   [CONSISTENT|INCONSISTENT] [LOCALONLY|ALLSHARDS|SOMESHARDS]
-  [VERBATIM] [SLOP n] [INORDER] [WITHSORTKEYS]
+  [VERBATIM] [SLOP n] [INORDER]
 ```
 
-## Command Handler
-
-Entry point: `FTSearchCmd()` in `ft_search.cc`:
+## Handler
 
 ```cpp
-absl::Status FTSearchCmd(ValkeyModuleCtx* ctx, ValkeyModuleString** argv, int argc) {
+absl::Status FTSearchCmd(ctx, argv, argc) {
   return QueryCommand::Execute(ctx, argv, argc,
-    unique_ptr<QueryCommand>(new SearchCommand(ValkeyModule_GetSelectedDb(ctx))));
+      std::make_unique<SearchCommand>(ValkeyModule_GetSelectedDb(ctx)));
 }
 ```
 
-`QueryCommand::Execute()` (in `commands.h`) is shared by FT.SEARCH and FT.AGGREGATE. It:
+`QueryCommand::Execute` (`commands.h`) is shared with FT.AGGREGATE:
 
-1. Parses argv[1] as the index name, looks up the `IndexSchema` via `SchemaManager`
-2. Extracts argv[2] as the query string
-3. Calls `cmd->ParseCommand(itr)` for command-specific parameter parsing
-4. Blocks the client via `ValkeyModule_BlockClient` with timeout/free callbacks
-5. Calls `SearchAsync()` to dispatch to the reader thread pool
+1. Parse `argv[1]` as index name, resolve `IndexSchema` via `SchemaManager`.
+2. `argv[2]` is the query string.
+3. `cmd->ParseCommand(iter)` - command-specific params.
+4. `ValkeyModule_BlockClient` with timeout/free callbacks.
+5. `SearchAsync` -> reader pool.
 
-## QueryCommand Base Class
-
-`QueryCommand` (in `commands.h`) extends `SearchParameters` with command lifecycle methods:
+## `QueryCommand` base (`commands.h`)
 
 ```cpp
 struct QueryCommand : public query::SearchParameters {
-  static absl::Status Execute(ValkeyModuleCtx*, ValkeyModuleString**, int,
-                               unique_ptr<QueryCommand>);
+  static absl::Status Execute(...);
   virtual absl::Status ParseCommand(vmsdk::ArgsIterator&) = 0;
   virtual void SendReply(ValkeyModuleCtx*, query::SearchResult&) = 0;
   virtual bool RequiresCompleteResults() const = 0;
-
   void QueryCompleteBackground(unique_ptr<SearchParameters>) override;
   void QueryCompleteMainThread(unique_ptr<SearchParameters>) override;
-  optional<vmsdk::BlockedClient> blocked_client;
+  std::optional<vmsdk::BlockedClient> blocked_client;
 };
 ```
 
-The completion callbacks unblock the client and invoke `SendReply()`. Background completion schedules the unblock directly; main-thread completion runs after content resolution. The `blocked_client` holds the `ValkeyModule_BlockClient` handle.
+Completions unblock the client and call `SendReply()`. Background completion schedules unblock directly; main-thread completion runs after content resolution.
 
-## SearchCommand Class
-
-`SearchCommand` (in `ft_search_parser.h`) extends `QueryCommand`:
+## `SearchCommand`
 
 ```cpp
 struct SearchCommand : public QueryCommand {
   absl::Status ParseCommand(vmsdk::ArgsIterator&) override;
-  void SendReply(ValkeyModuleCtx*, query::SearchResult&) override;
+  void SendReply(...) override;
   absl::Status PostParseQueryString() override;
   bool RequiresCompleteResults() const override { return sortby.has_value(); }
-
-  optional<query::SortByParameter> sortby;
+  std::optional<query::SortByParameter> sortby;
   bool with_sort_keys{false};
 };
 ```
 
-`RequiresCompleteResults()` returns true only when SORTBY is present. Without sorting, results can be trimmed early in the background thread via LIMIT-based optimization.
+`RequiresCompleteResults() = true` only when SORTBY - disables background trimming.
 
-## Parameter Parsing
+## Parse flow
 
-`SearchCommand::ParseCommand()` uses a `KeyValueParser<SearchCommand>` - a table-driven parser from vmsdk. The parser is created once (static) by `CreateSearchParser()` and handles all keyword parameters.
+`ParseCommand()` uses a static `KeyValueParser<SearchCommand>` (`CreateSearchParser()`). Sequence:
 
-Parse sequence:
-1. `SearchParser.Parse(*this, itr)` - table-driven keyword parsing
-2. Check no unparsed arguments remain
-3. `PreParseQueryString()` - extract vector KNN clause from query string, parse filter expression via `FilterParser`
-4. `PostParseQueryString()` - validate SORTBY field exists in schema
-5. `VerifyQueryString()` - validate KNN K, EF_RUNTIME, timeout, dialect, unused params
+1. `SearchParser.Parse(*this, iter)` - table-driven keyword parsing.
+2. Check no unparsed arguments remain.
+3. `PreParseQueryString()` - extract KNN clause from query, parse filter via `FilterParser`.
+4. `PostParseQueryString()` - validate SORTBY field exists in schema.
+5. `VerifyQueryString()` - KNN K / EF_RUNTIME / timeout / dialect / unused params.
 
-## Supported Parameters
+## Parameters
 
-| Parameter | Field | Parser | Description |
-|-----------|-------|--------|-------------|
-| `LIMIT` | `limit.first_index`, `limit.number` | Custom | Pagination offset and count (default: 0, 10) |
-| `NOCONTENT` | `no_content` | Flag | Return only document IDs, skip content |
-| `RETURN` | `return_attributes` | Custom | Select specific fields to return. Count 0 = NOCONTENT. Supports `AS alias` |
-| `SORTBY` | `sortby` | Custom | Sort by field with optional ASC/DESC (default ASC) |
-| `WITHSORTKEYS` | `with_sort_keys` | Flag | Include sort key values in response (prefixed with `#`) |
-| `PARAMS` | `parse_vars.params` | Custom | Named parameter map for `$param` substitution. Count must be even |
-| `TIMEOUT` | `timeout_ms` | Value | Query timeout in milliseconds (max 60000) |
-| `DIALECT` | `dialect` | Value | Protocol dialect (supported: 2, 3, 4) |
-| `VERBATIM` | `verbatim` | Flag | Disable stemming in text search |
-| `SLOP` | `slop` | Value | Proximity window for multi-term text queries |
-| `INORDER` | `inorder` | Flag | Require terms to appear in order |
-| `LOCALONLY` | `local_only` | Flag | Search only the local node |
-| `ALLSHARDS` | `enable_partial_results=false` | Negative flag | Require results from all shards |
-| `SOMESHARDS` | `enable_partial_results=true` | Flag | Accept partial results if some shards fail |
-| `CONSISTENT` | `enable_consistency=true` | Flag | Prefer consistent reads |
-| `INCONSISTENT` | `enable_consistency=false` | Negative flag | Allow stale reads |
+| Keyword | Field | Notes |
+|---------|-------|-------|
+| `LIMIT` | `limit.first_index`, `limit.number` | default 0, 10 |
+| `NOCONTENT` | `no_content` | IDs only |
+| `RETURN` | `return_attributes` | count 0 = NOCONTENT; `AS alias` supported |
+| `SORTBY` | `sortby` | field [ASC\|DESC], ASC default |
+| `WITHSORTKEYS` | `with_sort_keys` | include sort key value (`#<value>`) |
+| `PARAMS` | `parse_vars.params` | even-count key/value pairs |
+| `TIMEOUT` | `timeout_ms` | max 60000 |
+| `DIALECT` | `dialect` | 2, 3, or 4 |
+| `VERBATIM` | `verbatim` | disable stemming |
+| `SLOP` | `slop` | proximity window |
+| `INORDER` | `inorder` | require term order |
+| `LOCALONLY` | `local_only` | local node only |
+| `ALLSHARDS` | `enable_partial_results = false` | |
+| `SOMESHARDS` | `enable_partial_results = true` | |
+| `CONSISTENT` | `enable_consistency = true` | |
+| `INCONSISTENT` | `enable_consistency = false` | |
 
-Config-driven defaults: `enable_partial_results` defaults from `prefer-partial-results`, `enable_consistency` defaults from `prefer-consistent-results`.
+Defaults come from config: `enable_partial_results` from `prefer-partial-results`, `enable_consistency` from `prefer-consistent-results`.
 
-## PARAMS Substitution
+## PARAMS substitution
 
-The PARAMS clause provides named parameters for `$param` references in the query string and KNN clause. Parameters are stored in `parse_vars.params` as `{name -> (ref_count, value)}` pairs.
+Stored as `{name -> (ref_count, value)}`. `SubstituteParam()` (`search.cc`): `$`-prefixed strings look up in the map, bump `ref_count`. `VerifyQueryString()` enforces all params referenced at least once.
 
-Substitution happens in `SubstituteParam()` (in `search.cc`): if a string starts with `$`, the rest is looked up in the params map and the ref_count is incremented. During validation, `VerifyQueryString()` checks that all parameters were used at least once - unused parameters produce a `NotFoundError`.
+Typical:
 
-Common use: passing the vector blob as `$BLOB`:
 ```
 FT.SEARCH idx "*=>[KNN 10 @vec $BLOB]" PARAMS 2 BLOB "\x12\xa9..."
 ```
 
-## Validation
-
-`VerifyQueryString()` (shared between FT.SEARCH and FT.AGGREGATE) enforces:
+## `VerifyQueryString`
 
 | Check | Constraint |
 |-------|-----------|
-| KNN K | 1 to `max-vector-knn` (default 10000, max 100000) |
-| EF_RUNTIME | 1 to `max-ef-runtime` config value |
-| Timeout | 0 to 60000 ms |
-| Dialect | 2, 3, or 4 |
-| Unused params | All PARAMS entries must be referenced at least once |
-| Vector query | Must have a non-empty query string |
+| KNN K | 1 .. `max-vector-knn` (default 10000, max 100000) |
+| EF_RUNTIME | 1 .. `max-ef-runtime` |
+| Timeout | 0 .. 60000 |
+| Dialect | 2, 3, 4 |
+| Unused PARAMS | all referenced at least once |
+| Vector query | non-empty query string |
 
-`SearchCommand::PostParseQueryString()` additionally validates that the SORTBY field exists as a known attribute in the index schema.
+`PostParseQueryString()` additionally checks SORTBY field is a known schema attribute.
 
-## Response Generation
+## `SendReply`
 
-`SearchCommand::SendReply()` runs on the main thread after search completes. The flow:
+Main thread, post-search:
 
-1. Increment `query_successful_requests_cnt`
-2. **Early reply check** via `HandleEarlyReplyScenarios()`:
-   - `ShouldReturnNoResults()` true -> reply with just the total count
-   - `no_content` true -> `SendReplyNoContent()` (IDs only)
-3. `ProcessNeighborsForQuery()` - fetch document content, filter invalid neighbors
-4. `ApplySorting()` - if SORTBY present, sort neighbors by attribute value
-5. Serialize based on query type: `SerializeNeighbors()` (vector) or `SerializeNonVectorNeighbors()` (non-vector)
+1. Bump `query_successful_requests_cnt`.
+2. `HandleEarlyReplyScenarios()`: `ShouldReturnNoResults()` -> just total count; `no_content` -> `SendReplyNoContent()` (IDs only).
+3. `ProcessNeighborsForQuery()` - fetch content, drop invalid neighbors.
+4. `ApplySorting()` if SORTBY present.
+5. Serialize - `SerializeNeighbors()` (vector) or `SerializeNonVectorNeighbors()` (non-vector).
 
-Errors during processing increment `query_failed_requests_cnt` and reply with an error.
+Errors bump `query_failed_requests_cnt` + error reply.
 
-## Vector Query Responses
+## Response shape
 
-Response format for vector queries (array):
+### Vector
+
 ```
-1) total_count (capped at K)
+1) total (capped at K)
 2) key_1
-3) [field_name, field_value, ..., score_as, score_value]
-4) key_2
-5) [...]
+3) [field_name, field_value, ..., score_alias, score_value]
 ...
 ```
 
-When RETURN is specified, only requested fields are included. The score field (named by the `AS` clause in the KNN expression, e.g., `AS score`) is formatted as `%.12g`.
+RETURN filters returned fields. Score (from `AS` in KNN clause) formatted `%.12g`. Empty RETURN = all stored attributes + score. Explicit RETURN = only listed fields; score included only if its alias is in RETURN.
 
-When RETURN is empty (default), all stored attributes are returned plus the score. When RETURN lists specific fields, only those fields appear, and the score is included only if its alias is in the RETURN list.
+### Non-vector
 
-## Non-Vector Query Responses
-
-Response format for non-vector queries (array):
 ```
-1) total_count
+1) total
 2) key_1
 3) [field_name, field_value, ...]
-4) key_2
-5) [...]
 ...
 ```
 
-When `WITHSORTKEYS` is set, each result gets an extra element - the sort key value prefixed with `#`:
-```
-1) total_count
-2) key_1
-3) "#sort_value"
-4) [field_name, field_value, ...]
-...
-```
+WITHSORTKEYS adds a `#<value>` element before each content block. `GetSortKeyValue()` extracts the sort field from `attribute_contents`.
 
-`GetSortKeyValue()` extracts the sort field value from `attribute_contents`.
+## SORTBY (`ApplySorting`)
 
-## SORTBY Processing
+1. Check sort field is a declared numeric attribute.
+2. Numeric: sort parsed doubles via `expr::Value`.
+3. Else string: `expr::Compare`.
+4. `partial_sort` when subset needed (offset + count < total), else `stable_sort`.
 
-`ApplySorting()` in `ft_search.cc` sorts the neighbors vector after content resolution:
+ASC/DESC respected. Missing-field docs pushed to end. `expr::Compare` returns `Ordering::{kLESS, kGREATER, kEQUAL, kUNORDERED}`.
 
-1. Checks if the sort field is a declared numeric attribute in the schema
-2. For numeric fields, sorts by parsed double value using `expr::Value` comparison
-3. For non-numeric fields, sorts by string value using `expr::Compare`
-4. Uses `partial_sort` when only a subset is needed (LIMIT offset + count < total), otherwise `stable_sort`
-
-The sort respects ASC/DESC order from the SORTBY clause. Documents missing the sort field are pushed to the end. The `expr::Compare` function returns `Ordering::kLESS`, `kGREATER`, `kEQUAL`, or `kUNORDERED`.
-
-SORTBY requires `RequiresCompleteResults() = true`, which disables background trimming - the full result set must be available for sorting.
+SORTBY forces `RequiresCompleteResults() = true` - full set required before sort.

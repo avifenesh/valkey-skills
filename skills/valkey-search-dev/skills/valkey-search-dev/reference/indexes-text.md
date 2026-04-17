@@ -1,273 +1,196 @@
-# Full-Text Search Index
+# Full-text search index
 
-Use when working on full-text search, the prefix/suffix Rax tree, postings lists, stemming, proximity/phrase matching, the tokenization pipeline, or fuzzy matching.
+Use when reasoning about full-text search, prefix/suffix Rax trees, postings, stemming, proximity/phrase matching, tokenization, or fuzzy matching.
 
-Source: `src/indexes/text.h`, `src/indexes/text.cc`, `src/indexes/text/` directory
+Source: `src/indexes/text.{h,cc}`, `src/indexes/text/` directory.
 
-## Contents
+## Two-level architecture
 
-- [Architecture Overview](#architecture-overview)
-- [TextIndexSchema and Per-Field Text](#textindexschema-and-per-field-text)
-- [Rax Prefix Tree](#rax-prefix-tree)
-- [Optional Suffix Tree](#optional-suffix-tree)
-- [Stem Tree](#stem-tree)
-- [Postings Lists with Position Maps](#postings-lists-with-position-maps)
-- [Proximity and Phrase Matching](#proximity-and-phrase-matching)
-- [Lexer Pipeline](#lexer-pipeline)
-- [Fuzzy Matching](#fuzzy-matching)
-- [Record Lifecycle](#record-lifecycle)
-- [Concurrency Model](#concurrency-model)
+- **`TextIndexSchema`** (`text_index.h`) - schema-level shared state, one per `FT.CREATE`. Owns Rax trees (prefix, suffix, stem), lexer, per-key text indexes, staging areas.
+- **`Text`** (`text.h`) - per-field index. Field-specific settings (`weight`, `no_stem`, `with_suffix_trie`) plus `text_field_number_` (bit position in field masks). Delegates indexing to the shared schema.
 
-## Architecture Overview
+Separation exists because full-text is inherently cross-field - a single Rax tree indexes words from all text fields; field masks distinguish which fields contain each word.
 
-Full-text search has a two-level architecture:
-
-1. **TextIndexSchema** (`text_index.h`) - schema-level shared state. One per `FT.CREATE` index. Owns the main Rax trees (prefix, suffix, stem), the lexer, per-key text indexes, and staging areas for in-progress mutations.
-
-2. **Text** (`text.h`) - per-field index. One per TEXT attribute in the schema. Holds field-specific settings (`weight`, `no_stem`, `with_suffix_trie`) and a `text_field_number_` used as a bit position in field masks. Delegates indexing to the shared `TextIndexSchema`.
-
-This separation exists because full-text search is inherently cross-field - a single Rax tree indexes words from all text fields, with field masks distinguishing which fields contain each word.
-
-## TextIndexSchema and Per-Field Text
+## `TextIndexSchema`
 
 ```cpp
 class TextIndexSchema {
-  std::shared_ptr<TextIndex> text_index_;    // main prefix + optional suffix tree
-  Rax stem_tree_;                            // stem root -> parent words
-  Lexer lexer_;                              // stateless tokenizer
-  TextIndexMetadata metadata_;               // FT.INFO counters + memory pools
-  absl::node_hash_map<Key, TextIndex> per_key_text_indexes_;  // per-key reverse index
-  absl::node_hash_map<Key, TokenPositions> in_progress_key_updates_;  // staging
+  std::shared_ptr<TextIndex> text_index_;             // prefix + optional suffix
+  Rax stem_tree_;                                     // stem -> parent words
+  Lexer lexer_;
+  TextIndexMetadata metadata_;                        // FT.INFO counters + pools
+  absl::node_hash_map<Key, TextIndex>       per_key_text_indexes_;
+  absl::node_hash_map<Key, TokenPositions>  in_progress_key_updates_;
   absl::node_hash_map<Key, InProgressStemMap> in_progress_stem_mappings_;
-  RaxTargetMutexPool rax_target_mutex_pool_; // per-word bucket locks
-  uint8_t num_text_fields_ = 0;             // max 64 fields (field mask is uint64_t)
-  bool with_offsets_;                        // store position offsets for phrase queries
-  uint32_t min_stem_size_;                   // minimum word length for stemming
-  uint64_t stem_text_field_mask_ = 0;        // bitmask of fields with stemming enabled
+  RaxTargetMutexPool rax_target_mutex_pool_;          // per-word bucket locks
+  uint8_t  num_text_fields_ = 0;                      // MAX 64 (field mask is uint64_t)
+  bool     with_offsets_;                             // store position offsets (phrase queries)
+  uint32_t min_stem_size_;
+  uint64_t stem_text_field_mask_ = 0;
 };
 ```
 
-Each Text attribute registers itself via `AllocateTextFieldNumber()`, receiving a unique bit position. If the field has `with_suffix_trie_` enabled, it calls `TextIndexSchema::EnableSuffix()` which recreates the shared `TextIndex` with suffix support.
+`AllocateTextFieldNumber()` - each `Text` attribute registers for a unique bit position. `EnableSuffix()` recreates the shared `TextIndex` with a suffix tree if any field has `WITHSUFFIXTRIE`.
 
-The `FieldMask` struct (`posting.h`) is a 16-byte struct (enforced by `static_assert`) that stores field presence as a 64-bit bitmask:
+`FieldMask` (`posting.h`) is a 16-byte struct (enforced by `static_assert`):
 
 ```cpp
 struct FieldMask {
   uint64_t mask_{0};
-  uint8_t num_fields_{0};
+  uint8_t  num_fields_{0};
   void SetField(size_t field_index);
   uint64_t GetMask() const;
 };
 ```
 
-`FieldMaskPredicate` is a `uint64_t` type alias used for field-level filtering during queries.
+`FieldMaskPredicate` is a `uint64_t` alias used for field-level filtering.
 
-Per-field configuration (stored in `Text` class):
-- `weight_` - relevance weight for scoring (default 1.0)
-- `no_stem_` - disables stemming for this field
-- `with_suffix_trie_` - enables suffix/contains queries for this field
+Per-field config (on `Text`): `weight_` (default 1.0), `no_stem_`, `with_suffix_trie_`. `tracked_keys_` / `untracked_keys_` (`InternedStringSet`) mainly drive `FT.INFO` metrics.
 
-The `Text` class also maintains `tracked_keys_` and `untracked_keys_` (`InternedStringSet`) for per-field tracking - currently used mainly for `FT.INFO` metrics.
-
-## Rax Prefix Tree
-
-The primary data structure maps words to `Postings` objects. The `Rax` wrapper (`rax_wrapper.h`) encapsulates the C `rax` library from Valkey's core, providing C++ iterator APIs.
+## Rax prefix tree
 
 ```cpp
 class TextIndex {
-  Rax prefix_tree_;                          // word -> Postings (always present)
-  std::unique_ptr<Rax> suffix_tree_;         // reversed_word -> Postings (optional)
+  Rax prefix_tree_;                       // word -> Postings (always present)
+  std::unique_ptr<Rax> suffix_tree_;      // reversed_word -> Postings (optional)
 };
 ```
 
-The prefix tree is a memory-efficient radix tree with path compression. Key APIs:
+`Rax` wrapper (`rax_wrapper.h`) encapsulates Valkey core's C `rax` library with C++ iterator APIs. Memory-efficient radix tree with path compression. `InvasivePtr<Postings>` for reference-counted targets.
 
-- `GetWordIterator(prefix)` - iterates all words with the given prefix in lexical order, returning `Postings` targets. Used for prefix search (`hello*`) and exact term lookup.
-- `MutateTarget(word, fn, op)` - applies a mutation function to a word's target, with optional `item_count_op` for subtree count tracking
-- `GetSubtreeItemCount(prefix)` - O(prefix_length) count of entries under a prefix, used for query planning (only tracked when `track_subtree_item_counts_` is enabled - happens when the schema has a HNSW field)
+Key APIs:
 
-Words are stored lowercase. The Rax wraps the same `rax` C structure used in Valkey's core but with a C++ ownership model using `InvasivePtr<Postings>` for reference-counted targets.
+- `GetWordIterator(prefix)` - all words with prefix, lexical order, yields `Postings`. Used for prefix search (`hello*`) and exact term lookup.
+- `MutateTarget(word, fn, op)` - applies mutation; optional `item_count_op` updates subtree counts.
+- `GetSubtreeItemCount(prefix)` - O(prefix length) count under a prefix (query planning). Only tracked when `track_subtree_item_counts_` is enabled - happens when the schema has a HNSW field.
 
-The `RadixTree<Target>` template (`radix_tree.h`) is an alternative pure-C++ implementation available but the production code uses the Rax wrapper for its memory efficiency.
+Words stored lowercase. `RadixTree<Target>` (`radix_tree.h`) is a pure-C++ alternative available, but production uses Rax for memory.
 
-## Optional Suffix Tree
+## Suffix tree
 
-When any TEXT field has `WITHSUFFIXTRIE` enabled, `EnableSuffix()` recreates the `TextIndex` with a second Rax tree that stores reversed words:
-
-```cpp
-TextIndex::TextIndex(bool suffix)
-    : prefix_tree_(FreePostingsCallback),
-      suffix_tree_(suffix ? std::make_unique<Rax>(FreePostingsCallback)
-                          : nullptr) {}
-```
-
-Both trees point to the same `Postings` objects - `TextIndex::MutateTarget()` updates both atomically:
+`TextIndex::TextIndex(bool suffix)`: both trees reference the same `Postings` objects. `MutateTarget()` updates both atomically:
 
 ```cpp
-void TextIndex::MutateTarget(absl::string_view word,
-                             const InvasivePtr<Postings>& target,
-                             const std::optional<std::string>& reverse_word,
-                             item_count_op op) {
+void TextIndex::MutateTarget(word, target, reverse_word, op) {
   auto target_set_fn = CreateTargetSetFn(target);
   prefix_tree_.MutateTarget(word, target_set_fn, op);
-  if (suffix_tree_ && reverse_word.has_value()) {
-    suffix_tree_->MutateTarget(*reverse_word, target_set_fn, op);
-  }
+  if (suffix_tree_ && reverse_word) suffix_tree_->MutateTarget(*reverse_word, target_set_fn, op);
 }
 ```
 
-Suffix search (`SuffixPredicate::BuildTextIterator`) reverses the query string and does a prefix search on the suffix tree. For example, searching for `*tion` reverses to `noit` and prefix-matches in the suffix tree.
+`SuffixPredicate::BuildTextIterator` reverses the query string and prefix-searches the suffix tree. E.g., `*tion` reverses to `noit` and prefix-matches.
 
-## Stem Tree
+## Stem tree
 
-The stem tree maps stemmed forms to their original words, enabling stem-aware search:
+Rax: `stemmed_word -> StemParents (vector<string>)`. Example: `"happi" -> {"happy", "happiness", "happily"}`.
 
-```cpp
-// Rax stem_tree_: stemmed_word -> StemParents (vector<string>)
-// Example: "happi" -> {"happy", "happiness", "happily"}
-```
+**Indexing** (`CommitKeyData`): `in_progress_stem_mappings_` (populated by lexer's `UpdateStemMap()`) is committed under `stem_tree_mutex_`.
 
-During indexing (`CommitKeyData`), stem mappings collected in `in_progress_stem_mappings_` by the lexer's `UpdateStemMap()` are committed to the stem tree under `stem_tree_mutex_`.
-
-During search (`GetAllStemVariants`), a query term is stemmed and the stem tree is consulted:
+**Search** (`GetAllStemVariants`): stem the query term, look up in stem tree, expand to all parents.
 
 ```cpp
-std::string stemmed(search_term);
 lexer_.StemWordInPlace(stemmed, lexer_.GetStemmer(), min_stem_size_);
 auto stem_iter = stem_tree_.GetWordIterator(stemmed);
-// If exact match found, collect all parent words
-if (!stem_iter.Done() && stem_iter.GetWord() == stemmed) {
-  for (const auto& parent : *parents_ptr) {
-    words_to_search.push_back(parent);
-  }
-}
+if (!stem_iter.Done() && stem_iter.GetWord() == stemmed)
+    for (const auto& parent : *parents_ptr) words_to_search.push_back(parent);
 ```
 
-Queries for "happy" also match documents containing "happiness" or "happily", since they all share the stem "happi". Stem expansion uses `stem_text_field_mask_` to only expand stems for fields that have stemming enabled.
+Expansion gated by `stem_text_field_mask_` - only fields with stemming enabled get expanded.
 
-## Postings Lists with Position Maps
-
-`Postings` (`posting.h`) is the inverted index entry for a single word. It maps keys to their position/field information:
+## Postings
 
 ```cpp
 struct Postings {
   absl::btree_map<Key, FlatPositionMap*> key_to_positions_;
-  void InsertKey(const Key& key, FlatPositionMap* flat_map);
-  void RemoveKey(const Key& key, TextIndexMetadata* metadata);
+  void InsertKey(const Key&, FlatPositionMap*);
+  void RemoveKey(const Key&, TextIndexMetadata*);
   size_t GetKeyCount() const;
   KeyIterator GetKeyIterator() const;
 };
 ```
 
-Each `FlatPositionMap` (`flat_position_map.h`) stores a compact representation of positions and their field masks for a single key. Positions are stored when `with_offsets_` is true, enabling phrase and proximity queries.
+`FlatPositionMap` (`flat_position_map.h`) - compact positions + field masks per key. Positions stored when `with_offsets_ == true`.
 
-The `KeyIterator` provides ordered iteration over keys within a word's postings:
+`KeyIterator`:
 
 ```cpp
 struct Postings::KeyIterator {
-  bool IsValid() const;
-  void NextKey();
-  bool SkipForwardKey(const Key& key);  // seek for merge joins
-  const Key& GetKey() const;
-  bool ContainsFields(uint64_t field_mask) const;  // field-level filtering
-  PositionIterator GetPositionIterator() const;
+  bool IsValid(); void NextKey();
+  bool SkipForwardKey(const Key&);           // merge-join seek
+  const Key& GetKey();
+  bool ContainsFields(uint64_t field_mask);
+  PositionIterator GetPositionIterator();
 };
 ```
 
-`SkipForwardKey` enables efficient merge-join across multiple postings lists - critical for multi-term queries where the intersection of key sets must be found.
+`SkipForwardKey` drives multi-term merge-join. `PositionIterator` yields positions ascending with field masks for proximity.
 
-The `PositionIterator` (from `FlatPositionMap`) yields positions in ascending order with their field masks, enabling proximity checking.
-
-## Proximity and Phrase Matching
-
-`ProximityIterator` (`proximity.h`) coordinates multiple `TextIterator` instances to find documents where terms appear within a specified distance:
+## Proximity / phrase
 
 ```cpp
 class ProximityIterator : public TextIterator {
-  absl::InlinedVector<std::unique_ptr<TextIterator>,
-                      kProximityTermsInlineCapacity> iters_;
-  std::optional<uint32_t> slop_;   // max word distance between terms
-  bool in_order_;                  // require terms to appear in query order
-  bool skip_positional_checks_;    // AND without positional constraints
+  absl::InlinedVector<std::unique_ptr<TextIterator>, kProximityTermsInlineCapacity> iters_;
+  std::optional<uint32_t> slop_;
+  bool in_order_;
+  bool skip_positional_checks_;   // AND without positional constraints
 };
 ```
 
-The `TextIterator` interface (`text_iterator.h`) provides a two-level iteration contract: key-level (`NextKey`, `SeekForwardKey`, `DoneKeys`) and position-level (`NextPosition`, `SeekForwardPosition`, `DonePositions`, `CurrentFieldMask`).
+`TextIterator` (`text_iterator.h`) is a two-level contract: key (`NextKey`, `SeekForwardKey`, `DoneKeys`) and position (`NextPosition`, `SeekForwardPosition`, `DonePositions`, `CurrentFieldMask`).
 
-The algorithm:
-1. `FindCommonKey()` - advances all iterators to find a key present in all postings lists (merge-join using `SeekForwardKey`)
-2. For each common key, check positional constraints:
-   - Collect current positions from all iterators
-   - Sort by position
-   - Verify slop constraint: max(positions) - min(positions) - (num_terms - 1) <= slop
-   - If `in_order_` is set, verify positions are monotonically increasing
-3. `FindViolatingIterator()` returns a `ViolationInfo` struct identifying which iterator to advance and an optional seek target position
+Algorithm:
 
-Exact phrase matching is a special case with `slop=0` and `in_order=true`.
+1. `FindCommonKey()` - merge-join all iterators via `SeekForwardKey`.
+2. Per common key: collect positions, sort, verify `max - min - (num_terms - 1) <= slop`. If `in_order_`, verify monotonically increasing.
+3. `FindViolatingIterator()` returns which iterator to advance and an optional seek target.
 
-`skip_positional_checks_` is set for AND operations without positional constraints - in this case only key intersection is verified, not positions.
+Exact phrase = `slop=0, in_order=true`. `skip_positional_checks_` = AND without positional constraints (key intersection only).
 
-`ProximityIterator` can contain nested `ProximityIterator` instances - this occurs when a ProximityOR term appears inside a ProximityAND term. The `OrProximityIterator` (`orproximity.h`) handles the OR case.
+Nested `ProximityIterator`s supported (ProximityOR inside ProximityAND). `OrProximityIterator` (`orproximity.h`) handles OR.
 
-## Lexer Pipeline
-
-The `Lexer` (`lexer.h`) is a stateless tokenizer configured per schema:
+## Lexer
 
 ```cpp
 struct Lexer {
-  data_model::Language language_;          // for stemmer selection
-  std::bitset<256> punct_bitmap_;          // fast punctuation check
+  data_model::Language language_;
+  std::bitset<256> punct_bitmap_;
   absl::flat_hash_set<std::string> stop_words_set_;
 };
 ```
 
-Tokenization pipeline (`Tokenize()`):
+`Tokenize()` pipeline:
 
-1. **UTF-8 validation** - `IsValidUtf8()` rejects invalid input (returns `kInvalidArgument` -> `hash_indexing_failures`)
-2. **Split on punctuation** - characters in `punct_bitmap_` are treated as delimiters
-3. **Unicode normalization** - `NormalizeLowerCaseInPlace()` lowercases using ICU-aware normalization (`unicode_normalizer.h`)
-4. **Stop word removal** - tokens in `stop_words_set_` are filtered out (checked via `IsStopWord()`)
-5. **Stemming** - if enabled and word length >= `min_stem_size`, apply Snowball stemmer via `StemWordInPlace()`
+1. **UTF-8 validation** - `IsValidUtf8()` rejects invalid (bumps `hash_indexing_failures`).
+2. **Split on punctuation** - chars in `punct_bitmap_` are delimiters.
+3. **Unicode lowercase** - `NormalizeLowerCaseInPlace()` (ICU-aware, `unicode_normalizer.h`).
+4. **Stop words** - `IsStopWord()` filter.
+5. **Stem** - if enabled and `length >= min_stem_size`, `StemWordInPlace(word, stemmer, min_stem_size)` via Snowball (`libstemmer`).
 
-Stemming uses the `libstemmer` library (Snowball):
+`GetStemmer()` picks stemmer from schema's `language`. `UpdateStemMap()` records original-to-stem into `InProgressStemMap` for later stem tree commit. Stop words configurable per schema (language-defaulted).
 
-```cpp
-void Lexer::StemWordInPlace(std::string& word, sb_stemmer* stemmer,
-                            uint32_t min_stem_size) const;
-```
+## Fuzzy
 
-The stemmer is obtained via `GetStemmer()` based on the schema's `language` field. `UpdateStemMap()` records the original-to-stem mapping into an `InProgressStemMap` for later stem tree updates.
+`FuzzySearch` (`fuzzy.h`) - Damerau-Levenshtein over the Rax prefix tree: `Search(tree, pattern, max_distance, max_words)`. Recursive traversal with DP over 4 ops (deletion, insertion, substitution, transposition). Prunes branches where min DP row exceeds `max_distance`. Bounded by `max_words` (default `options::GetMaxTermExpansions()`). `FuzzyPredicate::BuildTextIterator` wraps results in a `TermIterator`.
 
-Stop words are configurable per schema. The default set depends on the language.
+## Record lifecycle
 
-## Fuzzy Matching
+- **Add**: `Text::AddRecord()` -> `TextIndexSchema::StageAttributeData()` tokenizes into `TokenPositions` (`token -> (PositionMap, suffix_eligible)`, `PositionMap = btree_map<Position, FieldMask>`). Each token at each position sets its field bit. Stages in `in_progress_key_updates_`.
+- **Commit** (`CommitKeyData`): after all attributes have staged. Per token: look up / create `Postings`, insert key with `FlatPositionMap`, update per-key text index, commit stem mappings. Per-word bucket locks (`RaxTargetMutexPool`); `text_index_mutex_` for structural changes.
+- **Modify**: `ModifyRecord()` - old data was already removed by `DeleteKeyData()`, so just stages new data.
+- **Delete** (`DeleteKeyData`): iterate all words the key was under, remove from each word's postings, clean empty postings, remove stem entries when last word with a given stem is gone.
 
-`FuzzySearch` (`fuzzy.h`) implements Damerau-Levenshtein distance matching on the Rax prefix tree via `Search(tree, pattern, max_distance, max_words)`. The algorithm uses recursive tree traversal with dynamic programming over four edit operations (deletion, insertion, substitution, transposition). Subtree pruning skips branches where the minimum DP row value exceeds `max_distance`. Each child branch saves and restores DP rows for independent evaluation. Results are bounded by `max_words` (from `options::GetMaxTermExpansions()`). `FuzzyPredicate::BuildTextIterator` wraps results in a `TermIterator`.
-
-## Record Lifecycle
-
-**Add**: `Text::AddRecord()` delegates to `TextIndexSchema::StageAttributeData()` which tokenizes the text and builds a `TokenPositions` map (`token -> (PositionMap, suffix_eligible)` where `PositionMap` is `absl::btree_map<Position, FieldMask>`). Each token at each position gets a field mask bit set for the current text field. This is staged in `in_progress_key_updates_`.
-
-**Commit (CommitKeyData)**: Called after all attributes have staged their data. For each token: look up or create a `Postings` object in the prefix tree, insert the key with its `FlatPositionMap`, update the per-key text index, and commit stem mappings. Uses per-word bucket locks (`RaxTargetMutexPool`) for fine-grained concurrency, with `text_index_mutex_` for tree structural changes.
-
-**Modify**: `Text::ModifyRecord()` - the old key value has already been removed via `TextIndexSchema::DeleteKeyData()`, so it simply stages new data via `StageAttributeData`.
-
-**Delete (DeleteKeyData)**: Iterates all words the key was indexed under, removes the key from each word's postings, cleans up empty postings from the tree, and removes stem tree entries when the last word with a given stem is removed.
-
-## Concurrency Model
-
-Multiple locking levels:
+## Concurrency
 
 | Lock | Type | Protects |
 |------|------|----------|
-| `text_index_mutex_` | absl::Mutex | Rax tree structural changes (node insert/delete) |
-| `rax_target_mutex_pool_` | `RaxTargetMutexPool` (pool of absl::Mutex) | Per-word postings mutations (bucket hashed) |
-| `stem_tree_mutex_` | absl::Mutex | Stem tree structural changes |
-| `per_key_text_indexes_mutex_` | std::mutex | Per-key text index map |
-| `in_progress_key_updates_mutex_` | std::mutex | Staging area for key updates |
-| `in_progress_stem_mappings_mutex_` | std::mutex | Staging area for stem mappings |
-| `index_mutex_` (Text class) | absl::Mutex | Per-field `tracked_keys_` / `untracked_keys_` |
+| `text_index_mutex_` | `absl::Mutex` | Rax structural changes |
+| `rax_target_mutex_pool_` | pool of `absl::Mutex` | per-word postings mutations (hashed bucket) |
+| `stem_tree_mutex_` | `absl::Mutex` | stem tree structural changes |
+| `per_key_text_indexes_mutex_` | `std::mutex` | per-key text index map |
+| `in_progress_key_updates_mutex_` | `std::mutex` | staging for key updates |
+| `in_progress_stem_mappings_mutex_` | `std::mutex` | staging for stem mappings |
+| `Text::index_mutex_` | `absl::Mutex` | per-field `tracked_keys_` / `untracked_keys_` |
 
-The design separates tree structure locks from target mutation locks. Reading the Rax tree during search takes `text_index_mutex_` as a reader lock, while target mutations only need the per-word bucket lock. This allows high concurrency for queries that touch different words.
+Structure locks are separate from target mutation locks. Search takes `text_index_mutex_` as reader; target mutations only need the per-word bucket lock. High concurrency across different words.
 
-`Text::EntriesFetcher` bridges to the `TextIterator` hierarchy - `Begin()` calls `predicate_->BuildTextIterator()` and wraps it in a `TextFetcher` adapter (`text_fetcher.h`). `TextIteratorFetcher` (in `text.h`) provides the same bridge for composed AND queries where a `TextIterator` is already built.
+`Text::EntriesFetcher::Begin()` calls `predicate_->BuildTextIterator()` and wraps in `TextFetcher` (`text_fetcher.h`). `TextIteratorFetcher` bridges composed AND queries where a `TextIterator` is already built.

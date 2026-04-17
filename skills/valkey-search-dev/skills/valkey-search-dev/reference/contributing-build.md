@@ -1,146 +1,102 @@
-# Build System
+# Build system
 
-Use when building valkey-search from source, configuring CMake, understanding dependencies, or troubleshooting build failures.
+Use when building valkey-search, configuring CMake, or troubleshooting build failures.
 
-Source: `CMakeLists.txt`, `build.sh`, `submodules/CMakeLists.txt`, `third_party/CMakeLists.txt`, `cmake/Modules/valkey_search.cmake`
+Source: `CMakeLists.txt`, `build.sh`, `submodules/CMakeLists.txt`, `third_party/CMakeLists.txt`, `cmake/Modules/valkey_search.cmake`.
 
-## Contents
+## Requirements
 
-- [Build Requirements](#build-requirements)
-- [CMake Structure](#cmake-structure)
-- [Dependencies](#dependencies)
-- [VMSDK Abstraction Layer](#vmsdk-abstraction-layer)
-- [build.sh](#buildsh)
-- [Sanitizer Builds](#sanitizer-builds)
-- [Platform Notes](#platform-notes)
-- [Troubleshooting](#troubleshooting)
+- C++20 (GCC 12+ or Clang 16+).
+- CMake 3.16+.
+- Ninja (default) or Make.
+- Linux or macOS only (top-level CMakeLists rejects non-UNIX).
+- `CMAKE_POSITION_INDEPENDENT_CODE ON` globally.
 
-## Build Requirements
-
-- C++20 (GCC 12+ or Clang 16+)
-- CMake 3.16+
-- Ninja (default) or Make
-- Linux or macOS only - the top-level CMakeLists.txt rejects non-UNIX platforms
-- Position-independent code enabled globally (`CMAKE_POSITION_INDEPENDENT_CODE ON`)
-
-## CMake Structure
-
-The top-level `CMakeLists.txt` orchestrates the build:
+## Layout
 
 ```
-CMakeLists.txt          # Project root - options, submodule init, subdirectories
-  submodules/           # gRPC, Protobuf, Abseil, GoogleTest, HighwayHash, Benchmark
-  third_party/          # hnswlib, ICU, SimSIMD, Snowball, hdrhistogram_c
-  vmsdk/                # Valkey Module SDK abstraction layer
-  src/                  # Module source (produces libsearch.so/.dylib)
-  testing/              # GoogleTest unit tests
+CMakeLists.txt        # root: options, submodule init, subdirs
+submodules/           # gRPC, Protobuf, Abseil, GoogleTest, HighwayHash, Benchmark
+third_party/          # hnswlib, ICU, SimSIMD, Snowball, hdrhistogram_c
+vmsdk/                # Valkey Module SDK C++ wrapper
+src/                  # module (libsearch.{so,dylib})
+testing/              # GoogleTest unit tests
 ```
 
-Key CMake options:
+CMake options:
 
 | Option | Default | Purpose |
 |--------|---------|---------|
-| `BUILD_UNIT_TESTS` | ON | Build GoogleTest unit test binaries |
-| `WITH_SUBMODULES_SYSTEM` | OFF | Use system-installed gRPC/Protobuf/Abseil instead of building from source |
-| `SAN_BUILD` | "" | Sanitizer: `address` or `thread` |
+| `BUILD_UNIT_TESTS` | ON | GoogleTest binaries |
+| `WITH_SUBMODULES_SYSTEM` | OFF | Use system gRPC/Protobuf/Abseil instead of building |
+| `SAN_BUILD` | "" | `address` or `thread` |
 
-The `cmake/Modules/valkey_search.cmake` module provides helper functions (`valkey_search_add_static_library`, `valkey_search_add_shared_library`) that apply consistent compile flags and link GoogleTest for `gtest_prod.h` support.
+`cmake/Modules/valkey_search.cmake` provides `valkey_search_add_static_library` / `_shared_library` helpers that apply consistent compile flags and link GoogleTest (for `gtest_prod.h`).
 
-## Dependencies
+## Submodules (built from source by default)
 
-### Submodules (built from source by default)
+| Dependency | Version | Use |
+|------------|---------|-----|
+| gRPC | v1.70.1 | coordinator RPC |
+| Protobuf | via gRPC | schema + RDB section |
+| Abseil | via gRPC | data structures, status, sync |
+| GoogleTest | main | unit tests |
+| HighwayHash | master | index fingerprints |
+| Google Benchmark | v1.8.3 | micro-benchmarks (disabled under SAN) |
 
-These are cloned and built during the CMake configure step via `submodules/CMakeLists.txt`:
+`--use-system-modules` skips building submodules. CI uses pre-built `.deb`s from `/opt/valkey-search-deps/`.
 
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| gRPC | v1.70.1 | Cluster coordinator inter-node RPC |
-| Protobuf | (via gRPC) | Index schema and RDB section serialization |
-| Abseil | (via gRPC) | Data structures, status, synchronization |
-| GoogleTest | main | Unit test framework |
-| HighwayHash | master | Fast hashing for index fingerprints |
-| Google Benchmark | v1.8.3 | Micro-benchmarks (disabled during sanitizer builds) |
+## Third-party (vendored)
 
-Use `--use-system-modules` to skip building these from source and use system-installed versions instead. CI uses pre-built `.deb` packages from `/opt/valkey-search-deps/` for speed.
+| Library | Dir | Use |
+|---------|-----|-----|
+| hnswlib | `third_party/hnswlib/` | HNSW ANN |
+| ICU | `third_party/icu/` | Unicode normalization |
+| SimSIMD | `third_party/simsimd/` | SIMD vector distance |
+| Snowball | `third_party/snowball/` | stemming |
+| hdrhistogram_c | `third_party/hdrhistogram_c/` | latency histograms |
 
-### Third-party (vendored in `third_party/`)
+ICU is built static with embedded data. `build_icu_if_needed()` in `build.sh` builds out-of-tree in `${BUILD_DIR}/icu/`, producing `libicudata.a`, `libicui18n.a`, `libicuuc.a` under `${BUILD_DIR}/icu/install/lib/`.
 
-Built via `third_party/CMakeLists.txt`, these are committed or vendored sources:
+## VMSDK layer (`vmsdk/`)
 
-| Library | Directory | Purpose |
-|---------|-----------|---------|
-| hnswlib | `third_party/hnswlib/` | HNSW approximate nearest neighbor index |
-| ICU | `third_party/icu/` | Unicode normalization and locale-aware text processing |
-| SimSIMD | `third_party/simsimd/` | SIMD-accelerated vector distance computations |
-| Snowball | `third_party/snowball/` | Stemming for full-text search |
-| hdrhistogram_c | `third_party/hdrhistogram_c/` | High dynamic range histogram for latency metrics |
-
-ICU is built as static libraries with embedded data. The `build_icu_if_needed()` function in `build.sh` runs an out-of-tree build in `${BUILD_DIR}/icu/`, producing `libicudata.a`, `libicui18n.a`, and `libicuuc.a` under `${BUILD_DIR}/icu/install/lib/`.
-
-## VMSDK Abstraction Layer
-
-The `vmsdk/` directory is an in-tree SDK that wraps the raw ValkeyModule C API into C++ abstractions:
+In-tree C++ wrapper over raw ValkeyModule C API. Compiled as static `vmsdklib`, linked into final `.so`. Ships `testing_infra/` with mocked contexts.
 
 | Header | Purpose |
 |--------|---------|
-| `managed_pointers.h` | RAII wrappers (`UniqueValkeyString`) for `ValkeyModuleString*` |
-| `blocked_client.h` | Blocked client management with category tracking |
-| `module_config.h` | Type-safe module configuration with builder pattern |
-| `module.h` | `VALKEY_MODULE()` macro, `Options` struct, command registration |
-| `thread_pool.h` | Thread pool for async search and utility tasks |
-| `cluster_map.h` | Cluster topology and fanout target computation |
-| `module_type.h` | Custom data type registration |
-| `memory_allocation.h` | Valkey-aware memory allocation wrappers |
-| `latency_sampler.h` | Latency measurement sampling |
-| `time_sliced_mrmw_mutex.h` | Multi-reader multi-writer mutex with time slicing |
+| `managed_pointers.h` | RAII (e.g. `UniqueValkeyString` for `ValkeyModuleString*`) |
+| `blocked_client.h` | blocked clients + category tracking |
+| `module_config.h` | type-safe configs (builder) |
+| `module.h` | `VALKEY_MODULE()`, `Options`, command registration |
+| `thread_pool.h` | async search + utility pools |
+| `cluster_map.h` | cluster topology + fanout targets |
+| `module_type.h` | custom data type registration |
+| `memory_allocation.h` | Valkey-aware allocation |
+| `latency_sampler.h` | latency sampling |
+| `time_sliced_mrmw_mutex.h` | MRMW mutex with time slicing |
 
-VMSDK is compiled as a static library (`vmsdklib`) and linked into the final shared library. It also ships a `testing_infra/` directory providing mocked ValkeyModule contexts for unit tests.
+## `build.sh`
 
-## build.sh
-
-The primary developer build script. It auto-detects when CMake reconfiguration is needed by comparing timestamps of `CMakeLists.txt` and `.cmake` files against the build output.
-
-### Common Commands
+Auto-detects CMake reconfigure (compares `CMakeLists.txt` + `.cmake` timestamps vs build output).
 
 ```bash
-# Default release build (auto-configures if needed)
-./build.sh
-
-# Force CMake reconfigure + debug build
+./build.sh                                # default release
 ./build.sh --configure --debug
-
-# Build with AddressSanitizer
-./build.sh --asan
-
-# Build with ThreadSanitizer
-./build.sh --tsan
-
-# Apply clang-format to all source files
-./build.sh --format
-
-# Run all unit tests after build
-./build.sh --run-tests
-
-# Run a specific test binary
-./build.sh --run-tests=vector_test
-
-# Run integration tests
+./build.sh --asan                         # AddressSanitizer
+./build.sh --tsan                         # ThreadSanitizer
+./build.sh --format                       # clang-format
+./build.sh --run-tests                    # all unit tests
+./build.sh --run-tests=vector_test        # one suite
 ./build.sh --run-integration-tests
-
-# Run integration tests matching a pattern
-./build.sh --run-integration-tests=oss
-
-# Limit parallel build jobs
+./build.sh --run-integration-tests=oss    # pattern
 ./build.sh --jobs=4
-
-# Clean build directory
 ./build.sh --clean
 ```
 
-### Build Directories
+Build dirs by config:
 
-| Configuration | Directory |
-|---------------|-----------|
+| Config | Dir |
+|--------|-----|
 | Release | `.build-release/` |
 | Debug | `.build-debug/` |
 | Release + ASan | `.build-release-asan/` |
@@ -148,69 +104,57 @@ The primary developer build script. It auto-detects when CMake reconfiguration i
 | Debug + ASan | `.build-debug-asan/` |
 | Debug + TSan | `.build-debug-tsan/` |
 
-### Output
+Output: `.build-release/libsearch.{so,dylib}`. Load with `valkey-server --loadmodule .build-release/libsearch.so`.
 
-The build produces a single shared library:
+### Flow
 
-- Linux: `.build-release/libsearch.so`
-- macOS: `.build-release/libsearch.dylib`
+1. `build_icu_if_needed()` (cached in `${BUILD_DIR}/icu/`).
+2. Auto-detect CMake reconfigure via timestamp comparison.
+3. `configure()` - `cmake` with generator + options.
+4. `build()` - Ninja or Make.
+5. Optionally tests.
 
-Load it with:
+### Env
 
-```bash
-valkey-server --loadmodule .build-release/libsearch.so
-```
+| Var | Use |
+|-----|-----|
+| `CMAKE_GENERATOR` | override generator (default `Ninja`) |
+| `CMAKE_EXTRA_ARGS` | extra cmake args |
+| `SAN_BUILD` | `address` / `thread` for downstream scripts |
 
-### Build Flow
+## Sanitizer builds
 
-1. `build_icu_if_needed()` - builds ICU static libraries in `${BUILD_DIR}/icu/` if not cached
-2. Auto-detect if CMake configure is required (timestamp comparison of `CMakeLists.txt` and `*.cmake` files)
-3. `configure()` - runs `cmake` with the selected generator and options
-4. `build()` - runs Ninja (or Make) to compile and link
-5. Optionally runs unit tests, integration tests, or both
+AddressSanitizer / ThreadSanitizer compile the entire dependency stack with sanitizer flags (submodules rebuilt with `-fsanitize=address` / `=thread` in `CXXFLAGS`, `CFLAGS`, `LDFLAGS`).
 
-### Environment Variables
+- ASan runtime: `ASAN_OPTIONS="detect_odr_violation=0"`.
+- Suppressions: `ci/asan.supp`, `ci/tsan.supp`.
+- Sanitizer tests continue past failures to collect all reports.
+- Google Benchmark disabled under SAN (instrumentation distorts timing).
 
-| Variable | Purpose |
-|----------|---------|
-| `CMAKE_GENERATOR` | Override build generator (default: `Ninja`) |
-| `CMAKE_EXTRA_ARGS` | Additional CMake arguments |
-| `SAN_BUILD` | Sanitizer type (`address` or `thread`) for downstream scripts |
-
-## Sanitizer Builds
-
-AddressSanitizer and ThreadSanitizer builds compile the entire dependency stack with sanitizer flags. Submodules are rebuilt with `-fsanitize=address` or `-fsanitize=thread` in `CXXFLAGS`, `CFLAGS`, and `LDFLAGS`.
-
-ASan builds set `ASAN_OPTIONS="detect_odr_violation=0"` at runtime. Suppression files are in `ci/asan.supp` and `ci/tsan.supp`.
-
-During sanitizer test runs, all unit tests continue running even after a failure (rather than stopping at the first failure) to collect the full set of sanitizer reports.
-
-Google Benchmark is disabled for sanitizer builds since instrumentation distorts timing results.
-
-## Platform Notes
+## Platform notes
 
 ### Linux
 
-- Default build uses Ninja. Falls back to Make if Ninja is unavailable.
-- On Debian-based systems, Ninja is invoked as `ninja`. On RedHat-based systems, it is `ninja-build`.
-- The linker uses `--version-script` from `vmsdk/versionscript.lds` to control exported symbols.
-- `--allow-multiple-definition` and `--start-group`/`--end-group` flags handle circular library dependencies.
+- Ninja default; Make fallback.
+- `ninja` (Debian) vs `ninja-build` (RedHat).
+- Linker uses `--version-script` from `vmsdk/versionscript.lds`.
+- `--allow-multiple-definition` + `--start-group`/`--end-group` handle circular library deps.
 
 ### macOS
 
-- Uses `clang` (Apple's default). Requires Xcode command line tools.
-- Suppresses `-Wno-defaulted-function-deleted` warnings from Apple Clang.
-- Works around a zlib `fdopen` detection issue in the gRPC submodule.
-- Module output is `.dylib` instead of `.so`.
-- No integration tests run on macOS in CI - build-only verification.
+- Apple `clang` + Xcode command line tools.
+- Suppresses `-Wno-defaulted-function-deleted` from Apple Clang.
+- Works around gRPC submodule zlib `fdopen` detection.
+- `.dylib` output.
+- No integration tests in CI on macOS (build-only verification).
 
 ## Troubleshooting
 
-| Problem | Cause | Solution |
-|---------|-------|----------|
-| CMake fails to find gRPC/Protobuf | Submodules not built | Run `./build.sh --configure` to trigger full configure |
-| ICU build fails | Missing source in `third_party/icu/` | ICU source is committed to the repo - check your checkout |
-| Ninja not found | Package name varies by distro | Install `ninja-build` (RedHat) or `ninja` (Debian/macOS) |
-| Link errors about multiple definitions | Missing `--start-group` | Ensure Linux build uses the CMake-generated link flags |
-| `GCC version too old` | GCC below 12 | Upgrade to GCC 12+ or use the dev container |
-| Benchmark disabled warning | SAN_BUILD is set | Expected - Google Benchmark is skipped for sanitizer builds |
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| CMake can't find gRPC/Protobuf | submodules not built | `./build.sh --configure` (full configure) |
+| ICU build fails | missing source in `third_party/icu/` | ICU source is committed - check checkout |
+| Ninja not found | package name varies | `ninja-build` (RH) / `ninja` (Debian/macOS) |
+| Multiple-definition link errors | missing `--start-group` | ensure Linux build uses generated link flags |
+| "GCC version too old" | GCC < 12 | upgrade or use dev container |
+| "Benchmark disabled" warning | `SAN_BUILD` set | expected - skipped for SAN builds |

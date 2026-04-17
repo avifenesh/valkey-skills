@@ -1,210 +1,152 @@
-# Search Execution Flow
+# Search execution
 
-Use when understanding how queries execute, the prefilter vs inline filtering decision, async dispatch, content resolution, or contention checking.
+Use when reasoning about how queries execute, prefilter vs inline filtering, async dispatch, content resolution, or contention checking.
 
-Source: `src/query/search.h`, `src/query/search.cc`, `src/query/planner.h`, `src/query/planner.cc`, `src/query/content_resolution.h`
+Source: `src/query/search.{h,cc}`, `src/query/planner.{h,cc}`, `src/query/content_resolution.h`.
 
-## Contents
+## Thread split
 
-- Execution Overview (line 24)
-- Entry Points (line 30)
-- Non-Vector Query Flow (line 47)
-- Vector Query Flow (line 59)
-- Prefilter vs Inline Decision (line 79)
-- Prefilter Path (line 100)
-- Inline Filter Path (line 113)
-- EvaluateFilterAsPrimary (line 124)
-- Async Dispatch and Threading (line 138)
-- Content Resolution on Main Thread (line 163)
-- ContentProcessing Modes (line 177)
-- Contention Checking (line 189)
-- Result Trimming and Serialization (line 200)
+Index data reads fine on background threads. **Document content fetch requires the main thread** (Valkey keyspace is single-threaded).
 
-## Execution Overview
+`SearchParameters` carries state through the pipeline: parsed filter, index schema, limit/offset, timeout, cancellation token, eventual `SearchResult`.
 
-Search execution starts on the main thread (command handler), dispatches to a reader thread pool for the actual search, and may return to the main thread for content resolution. Index data can be read on background threads, but fetching document content from Valkey's keyspace requires the main thread.
-
-The `SearchParameters` struct (in `search.h`) carries all state through the pipeline: parsed filter, index schema reference, limit/offset, timeout, cancellation token, and the eventual `SearchResult`.
-
-## Entry Points
-
-Two entry points in `search.h`:
+## Entry points
 
 ```cpp
-// Synchronous - runs search and populates parameters.search_result
-absl::Status Search(SearchParameters& parameters, SearchMode search_mode);
-
-// Async - schedules search on thread pool, calls QueryComplete* when done
-absl::Status SearchAsync(unique_ptr<SearchParameters> parameters,
-                         ThreadPool* thread_pool, SearchMode search_mode);
+absl::Status Search(SearchParameters&, SearchMode);
+absl::Status SearchAsync(unique_ptr<SearchParameters>, ThreadPool*, SearchMode);
 ```
 
-`SearchAsync` is the normal path for FT.SEARCH and FT.AGGREGATE commands. The `QueryCommand::Execute` method blocks the client, creates a cancellation token with timeout, and calls `SearchAsync`. `SearchMode` distinguishes `kLocal` (direct query) from `kRemote` (coordinator-dispatched shard query, which checks OOM).
+`SearchAsync` is normal for FT.SEARCH / FT.AGGREGATE. `QueryCommand::Execute` blocks the client, builds a cancel token with timeout, calls `SearchAsync`. `SearchMode`: `kLocal` (direct) vs `kRemote` (coordinator-dispatched shard query - checks OOM).
 
-Both paths call `DoSearch()` internally, which acquires a `ReaderMutexLock` on the index schema's time-sliced mutex. This lock allows concurrent reads but coordinates with write mutations.
+Both call `DoSearch()`, which takes `ReaderMutexLock` on the index's time-sliced mutex.
 
-## Non-Vector Query Flow
+## Non-vector flow (`SearchNonVectorQuery`)
 
-When `parameters.IsNonVectorQuery()` is true (no vector attribute alias), `DoSearch()` calls `SearchNonVectorQuery()`:
+1. `EvaluateFilterAsPrimary()` walks predicate tree, builds `EntriesFetcherBase` objects from each leaf's index.
+2. `IsUnsolvedQuery()` - true when AND combines numeric/tag OR when negation is present.
+3. **Simple path** (no prefilter needed): iterate fetchers directly, collect matching keys as `Neighbor`s (distance 0), dedupe if OR/tag/negation.
+4. **Complex path**: `EvaluatePrefilteredKeys()` iterates and evaluates the full predicate against each key via `PrefilterEvaluator`.
+5. `max-nonvector-search-results-fetched` (default 100000) caps collected keys; overflow bumps `nonvector_results_fetched_limited_count`.
 
-1. **Build entry fetchers** - `EvaluateFilterAsPrimary()` walks the predicate tree and creates `EntriesFetcherBase` objects from each leaf predicate's index (tag, numeric, or text)
-2. **Check if prefilter evaluation needed** - `IsUnsolvedQuery()` returns true when the query combines AND with numeric/tag predicates or uses negation
-3. **Simple path** (no prefilter needed) - iterate fetchers directly, collect matching keys into a `Neighbor` vector, deduplicate if needed (OR/tag/negation)
-4. **Complex path** (prefilter needed) - call `EvaluatePrefilteredKeys()` which iterates fetcher results and evaluates the full predicate tree against each key using `PrefilterEvaluator`
-5. **Fetch limit** - `max-nonvector-search-results-fetched` config (default 100000) caps how many keys are accumulated. When exceeded, iteration stops early and the `nonvector_results_fetched_limited_count` metric increments
+`MaybeAddIndexedContent()` populates attributes from index data where possible (tag values, numeric values, vector blobs) to skip main-thread fetches.
 
-Results are `Neighbor` structs with `distance = 0.0f` (no vector score). The `MaybeAddIndexedContent()` step attempts to populate attribute content from index data directly (tag values, numeric values, vector blobs) to avoid main-thread content fetches where possible.
+## Vector flow
 
-## Vector Query Flow
+1. Resolve vector attribute -> `indexes::VectorBase*` (`VectorHNSW<float>` or `VectorFlat<float>`).
+2. No filter (bare `*`) -> `PerformVectorSearch()` without filter.
+3. With filter -> `EvaluateFilterAsPrimary()` + consult planner for prefilter vs inline.
 
-When the query includes a vector attribute (KNN clause), `DoSearch()` follows this path:
+`PerformVectorSearch()` dispatches:
 
-1. **Look up vector index** - resolves `attribute_alias` to an `indexes::VectorBase*` (either `VectorHNSW<float>` or `VectorFlat<float>`)
-2. **No filter** - if `root_predicate` is null (bare `*` or no filter expression), call `PerformVectorSearch()` directly with no filter functor
-3. **With filter** - build entry fetchers via `EvaluateFilterAsPrimary()`, then consult the query planner
+- HNSW: `VectorHNSW::Search(query_vec, K, cancel, filter?, ef_runtime?)`.
+- FLAT: `VectorFlat::Search(query_vec, K, cancel, filter?)`.
 
-The planner decides between two strategies:
+Returns `StatusOr<vector<Neighbor>>`, distance-sorted.
 
-- **Prefilter** - reduce the candidate set first, then do exact nearest-neighbor on the reduced set
-- **Inline** - run the full vector search (HNSW graph walk or flat scan) with a filter callback that evaluates each candidate
+## Prefilter vs inline (`planner.cc::UsePreFiltering`)
 
-`PerformVectorSearch()` handles both HNSW and FLAT index types:
+- **FLAT**: always prefilter. Flat is O(N * log K); prefilter reduces to O(n * log K) where n << N - always a win.
+- **HNSW**: prefilter when `estimated_num_of_keys <= GetPrefilteringThresholdRatio() * vector_index->GetTrackedKeyCount()`.
 
-- **HNSW** - calls `VectorHNSW::Search()` with the query vector, K, cancellation token, optional inline filter, and optional `ef_runtime` override
-- **FLAT** - calls `VectorFlat::Search()` with query vector, K, cancellation token, optional inline filter
+Threshold is `prefiltering-threshold-ratio` config. Very selective filter -> prefilter avoids graph walk. Broad filter -> inline lets HNSW guide.
 
-Both return `StatusOr<vector<Neighbor>>` with neighbors sorted by distance.
+Metrics: `query_prefiltering_requests_cnt` vs `query_inline_filtering_requests_cnt`.
 
-## Prefilter vs Inline Decision
+## Prefilter path
 
-`UsePreFiltering()` in `planner.cc` makes the decision based on heuristics:
+1. `CalcBestMatchingPrefilteredKeys()` iterates entry fetchers.
+2. Per candidate: `PrefilterEvaluator` evaluates full predicate tree.
+3. Matching keys: `vector_index->AddPrefilteredKey()` - max-heap of K best `(key, distance)`.
+4. Heap -> `vector<Neighbor>` via `vector_index->CreateReply()`.
 
-```cpp
-bool UsePreFiltering(size_t estimated_num_of_keys,
-                     indexes::VectorBase* vector_index);
-```
+**Exact** nearest-neighbor on the filtered subset (no HNSW approximation). Expensive on large filtered sets - hence the planner threshold.
 
-**FLAT index** - always prefilter. Rationale: flat search is O(N * log(K)). With prefiltering the reduced space is O(n * log(K)) where n << N, so prefiltering is always beneficial.
+Dedup uses `flat_hash_set<const char*>` on interned pointers. `NeedsDeduplication()` = OR/tag/non-text-negation.
 
-**HNSW index** - prefilter when the estimated filtered key count is below a threshold ratio of the total index size:
+## Inline path
 
-```cpp
-estimated_num_of_keys <= GetPrefilteringThresholdRatio() * N
-```
+1. `PerformVectorSearch()` creates `InlineVectorFilter` functor.
+2. Functor implements `hnswlib::BaseFilterFunctor::operator()(labeltype id)`.
+3. Per candidate during HNSW walk: `vector_index->GetKeyDuringSearch(id)`, per-key text index lookup if needed, `PrefilterEvaluator::Evaluate`.
+4. Filter fails -> HNSW skips the candidate.
 
-Where `N = vector_index->GetTrackedKeyCount()` (actual vectors in the index, not capacity). The threshold ratio is configurable via `prefiltering-threshold-ratio`. When the filter is very selective (few candidates), prefiltering avoids traversing the HNSW graph. When the filter is broad, inline filtering lets the HNSW graph guide the search.
+`lock.SetMayProlong()` before inline search warns the time-sliced mutex (longer than usual; adjusts contention behavior).
 
-Metrics track which path was taken: `query_prefiltering_requests_cnt` vs `query_inline_filtering_requests_cnt`.
+## `EvaluateFilterAsPrimary`
 
-## Prefilter Path
+Builds the "primary" scan path.
 
-When prefiltering is chosen for vector queries:
+- **Composed AND** - try a combined `TextIterator` via `BuildTextIterator()`; success wraps in `TextIteratorFetcher`. Else recurse and pick child with smallest estimated size (smallest index = fastest scan).
+- **Composed OR** - recurse all children, concatenate fetcher queues. Size = sum.
+- **Tag / numeric leaf** - `index->Search(predicate, negate)`.
+- **Text leaf** - `indexes::Text::EntriesFetcher` with estimated size + field mask.
+- **Negate** - recurse with flipped flag. Special: text + negate -> `UniversalSetFetcher` over all schema keys (can't be efficient from postings).
 
-1. `CalcBestMatchingPrefilteredKeys()` iterates all entry fetchers
-2. For each candidate key from the fetchers, `PrefilterEvaluator` evaluates the full predicate tree
-3. Matching keys are scored against the query vector via `vector_index->AddPrefilteredKey()`, which maintains a max-heap of K best (key, distance) pairs
-4. The heap result is converted to `vector<Neighbor>` via `vector_index->CreateReply()`
-
-This path does exact nearest-neighbor search on the filtered subset - no HNSW approximation. For large filtered sets this can be expensive, which is why the planner only chooses it when the estimated set is small relative to the total.
-
-Deduplication during prefilter evaluation uses a `flat_hash_set<const char*>` of interned string pointers. The `NeedsDeduplication()` helper checks if OR, tag, or non-text negation operations are present.
-
-## Inline Filter Path
-
-When inline filtering is chosen:
-
-1. `PerformVectorSearch()` creates an `InlineVectorFilter` functor
-2. The functor implements `hnswlib::BaseFilterFunctor::operator()(labeltype id)`
-3. For each candidate during the HNSW graph walk, it resolves the key via `vector_index->GetKeyDuringSearch(id)`, looks up the per-key text index if needed, and creates a `PrefilterEvaluator` to evaluate the full predicate tree
-4. Candidates failing the filter are skipped by the HNSW algorithm
-
-The `lock.SetMayProlong()` call before inline search warns the time-sliced mutex that this operation may take longer than usual, adjusting contention behavior.
-
-## EvaluateFilterAsPrimary
-
-This function walks the predicate tree to build `EntriesFetcherBase` queues - the "primary" scan path that determines which keys to examine:
-
-**Composed AND** - first tries to build a combined `TextIterator` via `BuildTextIterator()`. If successful, wraps it in a `TextIteratorFetcher`. Otherwise, recursively evaluates each child and picks the one with the smallest estimated size (smallest index = fastest scan).
-
-**Composed OR** - recursively evaluates all children and concatenates their fetcher queues. Total estimated size is the sum of children.
-
-**Tag/Numeric leaf** - calls `index->Search(predicate, negate)` to get a fetcher from the inverted index.
-
-**Text leaf** - creates an `indexes::Text::EntriesFetcher` with estimated size and field mask.
-
-**Negate** - recurses with the `negate` flag flipped. Special case: text + negate queries use a `UniversalSetFetcher` that iterates all keys in the schema, since negated text cannot be efficiently fetched from postings lists.
-
-## Async Dispatch and Threading
-
-`SearchAsync` schedules work on the reader thread pool at high priority:
+## Async dispatch
 
 ```
-Main Thread                    Reader Thread Pool
-  |                                |
-  +-- SearchAsync() ------------> Schedule(lambda)
-  |   (blocks client)              |
-  |                                +-- Search()
-  |                                |   +-- DoSearch() [holds ReaderMutexLock]
-  |                                |   +-- MaybeAddIndexedContent()
-  |                                |
-  |                                +-- Check ContentProcessing
-  |                                |   kNoContent -> QueryCompleteBackground()
-  |                                |   kContentRequired -> RunByMain(ResolveContent)
-  |                                |
-  +-- ResolveContent() <---------- RunByMain callback
-  |   +-- ProcessNeighborsForReply()
-  |   +-- QueryCompleteMainThread()
-  |   +-- Unblock client
+Main                                  Reader pool
+ |                                     |
+ SearchAsync --------------------> Schedule(lambda)
+ |   (block client)                    |
+ |                                     DoSearch  [ReaderMutexLock]
+ |                                     MaybeAddIndexedContent
+ |                                     |
+ |                                     kNoContent    -> QueryCompleteBackground
+ |                                     kContentReq   -> RunByMain(ResolveContent)
+ |                                     |
+ ResolveContent <----------------------  (RunByMain)
+ |   ProcessNeighborsForReply
+ |   QueryCompleteMainThread
+ |   unblock client
 ```
 
-The `cancel::Token` is checked periodically during search to enforce the timeout. Cancellation is cooperative - long-running operations (HNSW walk, fetcher iteration) check the token.
+`cancel::Token` checked periodically; cancellation cooperative (HNSW walk, fetcher iteration poll the token).
 
-## Content Resolution on Main Thread
+## Content resolution (main thread)
 
-After background search completes, if content is needed (document attributes to return to the client), execution returns to the main thread via `ResolveContent()`:
+`ProcessNeighborsForReply()` (`response_generator.h`):
 
-`ProcessNeighborsForReply()` (in `response_generator.h`) fetches document content from Valkey's keyspace for each neighbor. This requires the main thread because Valkey key access is single-threaded. The function:
+1. For each neighbor, fetch Hash/JSON from keyspace.
+2. Populate `attribute_contents`.
+3. Drop neighbors whose keys no longer exist (deleted mid-search).
+4. Validate against in-flight mutations.
 
-1. Iterates neighbors
-2. For each neighbor, fetches the hash/JSON document from Valkey
-3. Populates `attribute_contents` on each `Neighbor` struct
-4. Removes neighbors whose keys no longer exist (deleted between search and content fetch)
-5. Validates against contention with in-flight mutations
+Neighbors already populated by `MaybeAddIndexedContent()` on the background thread are skipped.
 
-Neighbors that already have `attribute_contents` populated (from `MaybeAddIndexedContent()` on the background thread) are skipped.
+## `ContentProcessing` modes
 
-## ContentProcessing Modes
-
-`SearchParameters::GetContentProcessing()` determines what happens after the background search:
+`SearchParameters::GetContentProcessing()`:
 
 | Mode | When | Completion |
 |------|------|------------|
-| `kNoContent` | NOCONTENT flag, or all content sourced from indexes | `QueryCompleteBackground()` - stays on reader thread |
-| `kContentRequired` | Need keyspace access but no contention risk | `QueryCompleteMainThread()` via `RunByMain` |
-| `kContentionCheckRequired` | Need keyspace access and mutations may be in flight | `ResolveContent()` via `RunByMain` with sequence number checks |
+| `kNoContent` | NOCONTENT, or all content from indexes | `QueryCompleteBackground()` (stays on reader) |
+| `kContentRequired` | keyspace needed, no contention | `QueryCompleteMainThread()` via `RunByMain` |
+| `kContentionCheckRequired` | keyspace needed + mutations possibly in flight | `ResolveContent()` via `RunByMain` with seq checks |
 
-The `kContentAvailable` mode is reserved for future use where all needed content can be sourced directly from indexes without main-thread access.
+`kContentAvailable` reserved - all content sourced from indexes, no main-thread hop.
 
-## Contention Checking
+## Contention check
 
-Between the background search and main-thread content fetch, mutations may have modified or deleted documents. The contention checking mechanism uses sequence numbers:
+Sequence-number based:
 
-1. `PopulateIndexMutationSequenceNumbers()` records the current mutation sequence number for each neighbor's key during the search phase
-2. On the main thread, `ResolveContent()` checks if any key's sequence number has advanced
-3. If contention is detected, the content fetch may need to re-validate results
-4. `content_resolution_blocked_` tracks how many times a query was blocked during this process
+1. `PopulateIndexMutationSequenceNumbers()` records current seq per neighbor key during search.
+2. Main thread `ResolveContent()` checks for advances.
+3. Advanced -> re-validate content fetch.
+4. `content_resolution_blocked_` counts block events.
 
-The final response reflects a consistent snapshot - if a document was modified after the search but before content fetch, the system detects and handles it.
+Final response is a consistent snapshot - mid-path modifications are detected.
 
-## Result Trimming and Serialization
+## Result trimming
 
-`SearchResult` handles result trimming in the background thread when possible:
+`SearchResult` trims on the background thread when possible:
 
-- `TrimResults()` applies LIMIT offset/count with a configurable buffer multiplier (`search-result-buffer-multiplier`)
-- In standalone mode, trimming from the front (offset) happens immediately
-- In cluster mode, shard results keep the full set for the coordinator to merge; the coordinator trims after merging
-- `GetSerializationRange()` computes the final `[start_index, end_index)` range for response serialization
+- `TrimResults()` applies LIMIT offset/count with `search-result-buffer-multiplier`.
+- Standalone: trim-from-front (offset) immediately.
+- Cluster: shards keep full set for coordinator merge; coordinator trims after merge.
+- `GetSerializationRange()` -> final `[start, end)`.
 
-`ShouldReturnNoResults()` short-circuits when `limit.number == 0` or vector queries with `limit.first_index >= k`.
+`ShouldReturnNoResults()` short-circuits when `limit.number == 0` or vector with `limit.first_index >= k`.
 
-Default timeout is 50 seconds (`kTimeoutMS`), maximum 60 seconds (`kMaxTimeoutMs`). Default LIMIT is offset 0, count 10.
+Timeouts: default `kTimeoutMS = 50s`, max `kMaxTimeoutMs = 60s`. Default LIMIT: offset 0, count 10.

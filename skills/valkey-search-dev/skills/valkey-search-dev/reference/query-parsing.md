@@ -1,208 +1,158 @@
-# Filter Expression Parser
+# Filter expression parser
 
-Use when working on query string parsing, the predicate AST, filter expression syntax, or adding new predicate types.
+Use when reasoning about query parsing, the predicate AST, or adding new predicate types.
 
-Source: `src/commands/filter_parser.h`, `src/commands/filter_parser.cc`, `src/query/predicate.h`
+Source: `src/commands/filter_parser.{h,cc}`, `src/query/predicate.h`.
 
-## Contents
+## `FilterParser`
 
-- FilterParser Overview (line 22)
-- Parsing Entry Point (line 32)
-- Recursive Descent Structure (line 41)
-- Predicate Type Hierarchy (line 59)
-- TextPredicate Variants (line 89)
-- ComposedPredicate (N-ary Tree) (line 108)
-- NegatePredicate (line 131)
-- QueryOperations Bitmask (line 141)
-- Evaluator Interface (line 167)
-- Safety Limits (line 185)
-- TextParsingOptions (line 199)
-
-## FilterParser Overview
-
-`FilterParser` is a recursive descent parser that converts FT.SEARCH/FT.AGGREGATE query strings into a predicate AST. It lives in namespace `valkey_search` and takes an `IndexSchema` reference to validate field names and types at parse time.
-
-The parser produces a `FilterParseResults` struct containing:
-
-- `root_predicate` - the root of the predicate tree (`unique_ptr<query::Predicate>`)
-- `filter_identifiers` - set of schema identifier strings referenced by the filter
-- `query_operations` - bitmask describing which operation types appear in the query
-
-## Parsing Entry Point
+Recursive-descent parser in namespace `valkey_search`. Takes an `IndexSchema` reference for field-name/type validation at parse time.
 
 ```cpp
 FilterParser parser(index_schema, expression, text_options);
 absl::StatusOr<FilterParseResults> result = parser.Parse();
 ```
 
-`Parse()` is called from `SearchParameters::PreParseQueryString()` during command parsing. For vector queries, the query string before the `=>` delimiter is the filter expression; the KNN clause follows after it. For non-vector queries, the entire query string is the filter expression. A `*` expression matches all documents.
+Called from `SearchParameters::PreParseQueryString()`. For vector queries, the part **before** `=>` is the filter; the KNN clause follows. `*` matches all documents.
 
-## Recursive Descent Structure
+Result fields:
 
-The parser maintains position state (`pos_`) and walks the expression character by character. Key private methods:
+- `root_predicate` - `unique_ptr<query::Predicate>`.
+- `filter_identifiers` - schema identifiers referenced.
+- `query_operations` - bitmask (see below).
+
+## Recursive descent
+
+Tracks position `pos_`. Key private methods:
 
 | Method | Purpose |
 |--------|---------|
-| `ParseExpression(level)` | Top-level recursive entry, handles AND/OR/negate at a nesting level |
-| `ParseFieldName()` | Expects `@field:` syntax, returns the field alias |
-| `ParseNumericPredicate(alias)` | Parses `[start end]` range with inclusive `[` or exclusive `(` bounds |
-| `ParseTagPredicate(alias)` | Parses `{tag1\|tag2}` tag sets |
-| `ParseTextPredicate(field)` | Parses full-text search terms against a text field |
-| `ParseTextTokens(field)` | Parses sequences of text tokens (terms, prefix, suffix, fuzzy) |
-| `ParseQuotedTextToken(...)` | Handles `"exact phrase"` tokens |
-| `ParseUnquotedTextToken(...)` | Handles bare word tokens, prefix (`word*`), suffix (`*word`), infix (`*word*`), fuzzy (`%%word%%`) |
-| `WrapPredicate(...)` | Combines predicates with logical operators, building N-ary trees |
+| `ParseExpression(level)` | top-level, handles AND/OR/negate at a nesting level |
+| `ParseFieldName()` | `@field:` syntax, returns alias |
+| `ParseNumericPredicate(alias)` | `[start end]` (or `(` exclusive) ranges |
+| `ParseTagPredicate(alias)` | `{tag1\|tag2}` sets |
+| `ParseTextPredicate(field)` | full-text against a text field |
+| `ParseTextTokens(field)` | term, prefix, suffix, fuzzy sequences |
+| `ParseQuotedTextToken(...)` | `"exact phrase"` |
+| `ParseUnquotedTextToken(...)` | bare words, prefix `word*`, suffix `*word`, infix `*word*`, fuzzy `%%word%%` |
+| `WrapPredicate(...)` | combines predicates with logical ops, builds N-ary trees |
 
-Boolean operators: implicit AND (space between predicates), explicit `|` for OR, `-` prefix for negation. Parentheses `()` control grouping. The parser tracks `node_count_` against the configured maximum at each node creation.
+Operators: implicit AND (space), explicit `|` for OR, `-` prefix for negation. `()` groups. `node_count_` checked against the configured max at each node creation.
 
-## Predicate Type Hierarchy
-
-All predicates inherit from `query::Predicate` (namespace `valkey_search::query`):
+## Predicate hierarchy (`query::Predicate`)
 
 ```
 Predicate (abstract)
-  +-- NumericPredicate      kNumeric
-  +-- TagPredicate          kTag
-  +-- TextPredicate         kText (abstract)
-  |     +-- TermPredicate
-  |     +-- PrefixPredicate
-  |     +-- SuffixPredicate
-  |     +-- InfixPredicate
-  |     +-- FuzzyPredicate
-  +-- ComposedPredicate     kComposedAnd / kComposedOr
-  +-- NegatePredicate       kNegate
+  +-- NumericPredicate       kNumeric
+  +-- TagPredicate           kTag
+  +-- TextPredicate          kText (abstract)
+  |     +-- TermPredicate / PrefixPredicate / SuffixPredicate / InfixPredicate / FuzzyPredicate
+  +-- ComposedPredicate      kComposedAnd / kComposedOr
+  +-- NegatePredicate        kNegate
 ```
 
-The `PredicateType` enum distinguishes: `kTag`, `kNumeric`, `kComposedAnd`, `kComposedOr`, `kNegate`, `kText`, `kNone`.
+`PredicateType` enum: `kTag`, `kNumeric`, `kComposedAnd`, `kComposedOr`, `kNegate`, `kText`, `kNone`.
 
-Every predicate implements `Evaluate(Evaluator&)` for filter evaluation. The `Evaluator` abstract class dispatches to type-specific evaluation methods (`EvaluateText`, `EvaluateTags`, `EvaluateNumeric`).
+Every predicate implements `Evaluate(Evaluator&)`. The `Evaluator` dispatches to `EvaluateText` / `EvaluateTags` / `EvaluateNumeric`.
 
-### NumericPredicate
+## `NumericPredicate`
 
-Stores a range `[start, end]` with inclusive/exclusive flags. Holds a pointer to the `indexes::Numeric` index and the field identifier. Supports `+inf`/`-inf` bounds (mapped to `double::max()`/`double::lowest()` under clang with `-ffast-math`). The `Evaluate(const double* value)` overload allows direct value comparison without going through the Evaluator.
+Range `[start, end]` + inclusive/exclusive flags. Holds pointer to `indexes::Numeric` + field identifier. `+inf` / `-inf` -> `double::max()` / `double::lowest()` (under clang `-ffast-math`). `Evaluate(const double*)` overload for direct value comparison.
 
-### TagPredicate
+## `TagPredicate`
 
-Stores the raw tag string plus a parsed `flat_hash_set<string>` of individual tag values. Tag query syntax uses `|` as separator regardless of the index's configured separator. Holds a pointer to the `indexes::Tag` index. The `Evaluate(const flat_hash_set<string_view>*, bool case_sensitive)` overload supports direct tag-set matching.
+Raw tag string + parsed `flat_hash_set<string>`. Query separator is **always `|`** regardless of index separator. `Evaluate(const flat_hash_set<string_view>*, bool case_sensitive)` overload for direct set matching.
 
-## TextPredicate Variants
+## `TextPredicate` variants
 
-`TextPredicate` is abstract with five concrete subclasses. All share:
+Shared fields: `text_index_schema_`, `field_mask_` (uint64_t, up to 64 fields), `BuildTextIterator(...)`, `EstimateSize(is_vec_query)`.
 
-- `text_index_schema_` - shared pointer to the schema's text index configuration
-- `field_mask_` - a `uint64_t` bitmask selecting which text fields to search (up to 64 fields)
-- `BuildTextIterator(...)` - creates a `TextIterator` for postings-list traversal
-- `EstimateSize(is_vec_query)` - estimates result count for planner decisions
+| Subclass | Syntax | Notes |
+|----------|--------|-------|
+| `TermPredicate` | `word` or `"word"` | exact or stemmed; `exact_` flag controls stemming |
+| `PrefixPredicate` | `word*` | |
+| `SuffixPredicate` | `*word` | |
+| `InfixPredicate` | `*word*` | |
+| `FuzzyPredicate` | `%%word%%` | `distance_` = edit distance (1-3 `%` pairs = distance 1-3) |
 
-| Subclass | Query Syntax | Description |
-|----------|-------------|-------------|
-| `TermPredicate` | `word` or `"word"` | Exact or stemmed term match. `exact_` flag controls stemming |
-| `PrefixPredicate` | `word*` | Matches terms starting with the prefix |
-| `SuffixPredicate` | `*word` | Matches terms ending with the suffix |
-| `InfixPredicate` | `*word*` | Matches terms containing the substring |
-| `FuzzyPredicate` | `%%word%%` | Levenshtein edit-distance match. `distance_` stores the max edit distance (1-3 `%` pairs = distance 1-3) |
+`SetupTextFieldConfiguration()` sets the field mask. `@field:`-scoped = only that bit. Unscoped = all indexed text fields.
 
-The field mask is set up by `SetupTextFieldConfiguration()`. When a text predicate is scoped to a specific field via `@field:`, only that field's bit is set. Without a field scope, all indexed text fields are included in the mask.
+## `ComposedPredicate`
 
-## ComposedPredicate (N-ary Tree)
-
-`ComposedPredicate` is an N-ary logical operator node storing a vector of child predicates. The logical operator is encoded in the `PredicateType`: `kComposedAnd` or `kComposedOr`.
+N-ary (not binary):
 
 ```cpp
-ComposedPredicate(LogicalOperator logical_op,
-                  vector<unique_ptr<Predicate>> children,
-                  optional<uint32_t> slop = nullopt,
-                  bool inorder = false);
+ComposedPredicate(LogicalOperator op, vector<unique_ptr<Predicate>> children,
+                  optional<uint32_t> slop = nullopt, bool inorder = false);
 ```
 
-Key properties:
+`WrapPredicate()` flattens nested compositions of the same type - three ANDed terms become one `ComposedPredicate(kComposedAnd, [A, B, C])`, not nested binary.
 
-- `children_` - vector of child predicates (N-ary, not binary)
-- `slop_` - optional proximity window for SLOP queries
-- `inorder_` - whether terms must appear in order (INORDER queries)
-- `AddChild()` - appends a child predicate during tree construction
-- `ReleaseChildren()` - transfers ownership of children out
+`FlagNestedComposedPredicate()` sets `kContainsNestedComposed` on nested composed predicates (planner uses for optimization).
 
-During parsing, `WrapPredicate()` flattens nested compositions of the same type into a single N-ary node. For example, three ANDed terms become one `ComposedPredicate(kComposedAnd, [A, B, C])` rather than nested binary nodes.
+`slop_` / `inorder_` fields carry SLOP / INORDER settings for proximity evaluation.
 
-`FlagNestedComposedPredicate()` sets `kContainsNestedComposed` in `query_operations_` when a composed predicate is nested inside another, which the planner uses for optimization decisions.
+## `NegatePredicate`
 
-## NegatePredicate
+Single child, inverted result. Created by `-` prefix. Presence forces prefilter evaluation and possibly a universal-set fetcher.
 
-Wraps a single child predicate and inverts its evaluation result:
+## `QueryOperations` bitmask
 
-```cpp
-NegatePredicate(unique_ptr<Predicate> predicate);
-```
+`uint64_t` with bitwise ops. Set during parse, drives planner and execution.
 
-Created when the parser encounters the `-` prefix operator. The negation affects planner decisions - queries containing negation always require prefilter evaluation and may use a universal set fetcher.
+| Flag | Bit | Set when |
+|------|-----|----------|
+| `kNone` | 0 | empty |
+| `kContainsOr` | 1<<0 | `\|` present |
+| `kContainsAnd` | 1<<1 | AND present |
+| `kContainsNumeric` | 1<<2 | numeric field referenced |
+| `kContainsTag` | 1<<3 | tag field referenced |
+| `kContainsNegate` | 1<<4 | `-` present |
+| `kContainsText` | 1<<5 | text field referenced |
+| `kContainsProximity` | 1<<6 | SLOP/INORDER |
+| `kContainsNestedComposed` | 1<<7 | composed inside composed |
+| `kContainsTextTerm` | 1<<8 | exact/stemmed term |
+| `kContainsTextPrefix` | 1<<9 | prefix search |
+| `kContainsTextSuffix` | 1<<10 | suffix search |
+| `kContainsTextFuzzy` | 1<<11 | fuzzy search |
 
-## QueryOperations Bitmask
+Downstream (`search.cc`): `IsUnsolvedQuery()` (prefilter needed), `NeedsDeduplication()` (OR/tag/non-text-negation), `IncrementQueryOperationMetrics()`.
 
-`QueryOperations` is a `uint64_t` enum with bitwise operations. The parser sets flags as it encounters different predicate types. The bitmask drives planner and execution decisions.
-
-| Flag | Value | Set When |
-|------|-------|----------|
-| `kNone` | `0` | Default, empty query |
-| `kContainsOr` | `1 << 0` | Query has OR (`\|`) operators |
-| `kContainsAnd` | `1 << 1` | Query has AND (implicit or explicit) |
-| `kContainsNumeric` | `1 << 2` | Query references a numeric field |
-| `kContainsTag` | `1 << 3` | Query references a tag field |
-| `kContainsNegate` | `1 << 4` | Query uses negation (`-`) |
-| `kContainsText` | `1 << 5` | Query references a text field |
-| `kContainsProximity` | `1 << 6` | Query uses SLOP/INORDER proximity |
-| `kContainsNestedComposed` | `1 << 7` | Composed predicate nested inside another |
-| `kContainsTextTerm` | `1 << 8` | Contains an exact/stemmed term |
-| `kContainsTextPrefix` | `1 << 9` | Contains a prefix search |
-| `kContainsTextSuffix` | `1 << 10` | Contains a suffix search |
-| `kContainsTextFuzzy` | `1 << 11` | Contains a fuzzy search |
-
-Downstream usage in `search.cc`:
-
-- `IsUnsolvedQuery()` - checks if prefilter evaluation is needed (AND with numeric/tag, or negation)
-- `NeedsDeduplication()` - checks if OR, tag, or non-text negation requires dedup
-- `IncrementQueryOperationMetrics()` - records counters per operation type
-
-## Evaluator Interface
-
-The `Evaluator` abstract class (in `predicate.h`) provides the visitor pattern for predicate evaluation:
+## `Evaluator` interface (`predicate.h`)
 
 ```cpp
 class Evaluator {
-  virtual EvaluationResult EvaluateText(const TextPredicate&, bool require_positions) = 0;
-  virtual EvaluationResult EvaluateTags(const TagPredicate&) = 0;
+  virtual EvaluationResult EvaluateText   (const TextPredicate&, bool require_positions) = 0;
+  virtual EvaluationResult EvaluateTags   (const TagPredicate&) = 0;
   virtual EvaluationResult EvaluateNumeric(const NumericPredicate&) = 0;
   virtual const InternedStringPtr& GetTargetKey() const = 0;
   virtual bool IsPrefilterEvaluator() const { return false; }
 };
 ```
 
-`EvaluationResult` carries a `bool matches` and an optional `TextIterator` for position-aware text matching. The iterator is used by proximity/SLOP evaluation in `ComposedPredicate::EvaluateWithContext()`.
+`EvaluationResult`: `bool matches` + optional `TextIterator` for position-aware matching (used by proximity/SLOP in `ComposedPredicate::EvaluateWithContext`).
 
-The main implementation is `indexes::PrefilterEvaluator` (in `src/indexes/vector_base.h`), used during both inline and prefilter evaluation paths. It looks up values in the per-key indexes for tag and numeric fields, and uses the per-key `TextIndex` for text predicates.
+Main impl: `indexes::PrefilterEvaluator` in `src/indexes/vector_base.h` (inline and prefilter paths). Tag/numeric values via per-key indexes; text via per-key `TextIndex`.
 
-## Safety Limits
-
-The parser enforces configurable limits to prevent resource exhaustion from adversarial queries:
+## Safety limits
 
 | Config | Default | Max | Purpose |
 |--------|---------|-----|---------|
-| `query-string-depth` | 1000 | UINT_MAX | Maximum nesting depth of parentheses |
-| `query-string-terms-count` | 1000 | 10000 | Maximum number of predicate nodes in the tree |
-| `fuzzy-max-distance` | 3 | 50 | Maximum Levenshtein distance for `%%` fuzzy queries |
+| `query-string-depth` | 1000 | UINT_MAX | paren nesting depth |
+| `query-string-terms-count` | 1000 | 10 000 | predicate nodes total |
+| `fuzzy-max-distance` | 3 | 50 | max Levenshtein edit distance |
+| `max-vector-knn` | 10 000 | 100 000 | K parameter for vector queries |
 
-The `level` parameter in `ParseExpression(level)` is checked against `query-string-depth`. The `node_count_` member is incremented at each predicate creation and checked against `query-string-terms-count`. Both return `InvalidArgumentError` when exceeded.
+`ParseExpression(level)` checks `level` against `query-string-depth`. `node_count_` checked against `query-string-terms-count` at each creation. Violations -> `InvalidArgumentError`.
 
-For vector queries, `max-vector-knn` limits the K parameter (default 10000, max 100000).
-
-## TextParsingOptions
+## `TextParsingOptions`
 
 ```cpp
 struct TextParsingOptions {
-  bool verbatim = false;   // Skip stemming
-  bool inorder = false;    // Require term order (INORDER flag)
-  optional<uint32_t> slop; // Proximity window (SLOP flag)
+  bool verbatim = false;    // skip stemming
+  bool inorder = false;     // INORDER flag
+  std::optional<uint32_t> slop;  // SLOP flag
 };
 ```
 
-These options are set from the FT.SEARCH/FT.AGGREGATE command-level VERBATIM, INORDER, and SLOP parameters and passed to `FilterParser` at construction. They affect how `ComposedPredicate` nodes are created - when SLOP or INORDER is set, the top-level AND node carries those values for proximity evaluation.
+Set from command-level VERBATIM / INORDER / SLOP. Top-level AND node carries these for proximity evaluation.
