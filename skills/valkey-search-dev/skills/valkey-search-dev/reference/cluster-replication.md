@@ -1,38 +1,22 @@
-# RDB Serialization and Replication
+# RDB serialization and replication
 
-Use when working on RDB persistence, snapshot serialization, the protobuf-based RDB format, AOF replication of metadata, or the FT.INTERNAL_UPDATE command.
+Use when reasoning about RDB format, `SafeRDB`, chunked vector data, the module type registration, or `FT.INTERNAL_UPDATE`.
 
-Source: `src/rdb_serialization.h`, `src/rdb_serialization.cc`, `src/rdb_section.proto`, `src/commands/ft_internal_update.cc`, `src/coordinator/metadata_manager.cc`
+Source: `src/rdb_serialization.{h,cc}`, `src/rdb_section.proto`, `src/commands/ft_internal_update.cc`, `src/coordinator/metadata_manager.cc`.
 
-## Contents
+## Format
 
-- RDB Format Overview (line 21)
-- RDB Section Types (line 33)
-- Supplemental Content (line 62)
-- SafeRDB Wrapper (line 78)
-- Iterator Classes (line 101)
-- Chunk Streaming (line 124)
-- RDB Load Path (line 138)
-- RDB Save Path (line 170)
-- Module Type Registration (line 184)
-- FT.INTERNAL_UPDATE Command (line 201)
-- Staging During Replication Loads (line 225)
+Protobuf-based RDB aux section format.
 
-## RDB Format Overview
+1. **Header**: encoding version check + semantic version (unsigned) + section count (unsigned).
+2. **RDBSection sequence**: serialized protobuf string per section.
+3. **Supplemental content**: optional chunked binary data after each section.
 
-valkey-search uses a protobuf-based RDB aux section format. The format structure:
+Encoding version at load time is `kCurrentEncVer = 1`. Semantic version tracks the minimum module version needed to read. Newer-than-local -> version mismatch error.
 
-1. **Header**: encoding version check + semantic version (unsigned int) + section count (unsigned int)
-2. **RDBSection sequence**: each section is a serialized protobuf string
-3. **Supplemental content**: optional chunked binary data following each section
+Module type name is `"Vk-Search"` (9 chars, Valkey max).
 
-The encoding version is checked at load time (`kCurrentEncVer = 1`). The semantic version tracks the minimum module version needed to read the RDB. If the RDB was written by a newer module, loading fails with a version mismatch error.
-
-The module type name is `"Vk-Search"` (9 chars, matching Valkey's module type name length requirement).
-
-## RDB Section Types
-
-Defined in `rdb_section.proto`:
+## Section types (`rdb_section.proto`)
 
 ```protobuf
 enum RDBSectionType {
@@ -40,196 +24,174 @@ enum RDBSectionType {
   RDB_SECTION_INDEX_SCHEMA = 1;
   RDB_SECTION_GLOBAL_METADATA = 2;
 }
-```
 
-**RDB_SECTION_INDEX_SCHEMA** - Contains an `IndexSchema` protobuf with the full schema definition and attribute list. Each `FT.CREATE` index produces one section. Supplemental content carries the actual index data (index content, key-to-ID mappings, and optionally the mutation queue in V2 format).
-
-**RDB_SECTION_GLOBAL_METADATA** - Contains the `coordinator.GlobalMetadata` protobuf with the cluster-wide metadata tree. At most one section of this type exists per RDB.
-
-The `RDBSection` message wraps these:
-
-```protobuf
 message RDBSection {
   RDBSectionType type = 1;
   uint32 supplemental_count = 2;
   oneof contents {
-    IndexSchema index_schema_contents = 3;
-    coordinator.GlobalMetadata global_metadata_contents = 4;
+    IndexSchema                 index_schema_contents   = 3;
+    coordinator.GlobalMetadata  global_metadata_contents = 4;
   }
 }
 ```
 
-## Supplemental Content
+- **INDEX_SCHEMA** - one per FT.CREATE. Supplemental carries index data (contents, key-to-ID, optionally V2 mutation queue).
+- **GLOBAL_METADATA** - at most one, cluster-wide metadata tree.
 
-Supplemental content provides chunked binary data without requiring full in-memory serialization. Each section declares its `supplemental_count`. Three types exist:
+## Supplemental content
 
 ```protobuf
 enum SupplementalContentType {
-  SUPPLEMENTAL_CONTENT_INDEX_CONTENT = 1;
-  SUPPLEMENTAL_CONTENT_KEY_TO_ID_MAP = 2;
-  SUPPLEMENTAL_CONTENT_INDEX_EXTENSION = 3;
+  SUPPLEMENTAL_CONTENT_INDEX_CONTENT    = 1;
+  SUPPLEMENTAL_CONTENT_KEY_TO_ID_MAP    = 2;
+  SUPPLEMENTAL_CONTENT_INDEX_EXTENSION  = 3;
 }
 ```
 
-Each supplemental section starts with a `SupplementalContentHeader` identifying the type and associated attribute. The data follows as a sequence of `SupplementalContentChunk` messages. An empty chunk (no `binary_content` field) signals EOF for that supplemental section.
+Each supplemental begins with a `SupplementalContentHeader` (type + associated attribute), followed by `SupplementalContentChunk` messages. Empty chunk (no `binary_content`) = EOF for that supplemental.
 
-`MutationQueueHeader` (V2) carries a `backfilling` flag for the saved mutation queue state.
+`MutationQueueHeader` (V2) carries a `backfilling` flag for saved mutation state.
 
-## SafeRDB Wrapper
+## `SafeRDB`
 
-`SafeRDB` wraps `ValkeyModuleIO*` and converts raw Valkey I/O operations into `absl::StatusOr` results, forcing error handling at every call site:
+Wraps `ValkeyModuleIO*`, returns `absl::StatusOr` so every call-site must handle errors.
 
 ```cpp
 class SafeRDB {
- public:
   explicit SafeRDB(ValkeyModuleIO *rdb);
-  virtual absl::StatusOr<size_t> LoadSizeT();
-  virtual absl::StatusOr<unsigned int> LoadUnsigned();
-  virtual absl::StatusOr<int> LoadSigned();
-  virtual absl::StatusOr<double> LoadDouble();
+  virtual absl::StatusOr<size_t>                   LoadSizeT();
+  virtual absl::StatusOr<unsigned int>             LoadUnsigned();
+  virtual absl::StatusOr<int>                      LoadSigned();
+  virtual absl::StatusOr<double>                   LoadDouble();
   virtual absl::StatusOr<vmsdk::UniqueValkeyString> LoadString();
-  virtual absl::Status SaveSizeT(size_t val);
-  virtual absl::Status SaveUnsigned(unsigned int val);
-  virtual absl::Status SaveSigned(int val);
-  virtual absl::Status SaveDouble(double val);
-  virtual absl::Status SaveStringBuffer(absl::string_view buf);
+  virtual absl::Status SaveSizeT       (size_t);
+  virtual absl::Status SaveUnsigned    (unsigned int);
+  virtual absl::Status SaveSigned      (int);
+  virtual absl::Status SaveDouble      (double);
+  virtual absl::Status SaveStringBuffer(absl::string_view);
 };
 ```
 
-Each method calls the underlying `ValkeyModule_Load*` or `ValkeyModule_Save*` function, then checks `ValkeyModule_IsIOError`. On error, it returns `absl::InternalError` with a descriptive message. The virtual methods allow test mocking.
+Each method calls the raw `ValkeyModule_Load*` / `Save*`, checks `ValkeyModule_IsIOError`, returns `absl::InternalError` on fail. Virtual -> test mocking.
 
-## Iterator Classes
+## Iterators
 
-Three nested iterator classes enforce strict consumption of the RDB stream:
+Three nested iterators enforce strict stream consumption. All move-only (deleted copy). Destructors warn / debug-assert if not consumed.
 
-**RDBSectionIter** - Iterates over sections. After calling `Next()`, the caller must call `IterateSupplementalContent()` and fully consume the returned iterator before calling `Next()` again. Destructor asserts `remaining_ == 0`.
+- **`RDBSectionIter`** - iterates sections. After `Next()`, caller MUST call `IterateSupplementalContent()` and fully drain before the next `Next()`. Dtor asserts `remaining_ == 0`.
+- **`SupplementalContentIter`** - iterates supplementals for one section. After `Next()` (header), caller MUST drain via `IterateChunks()`. Dtor asserts.
+- **`SupplementalContentChunkIter`** - iterates chunks. Buffers one ahead so `HasNext()` is accurate. Empty chunk = EOF. Dtor warns.
 
-**SupplementalContentIter** - Iterates over supplemental content for one section. After `Next()` returns the header, the caller must call `IterateChunks()` and fully consume the chunk iterator. Destructor asserts `remaining_ == 0`.
-
-**SupplementalContentChunkIter** - Iterates over binary chunks. Buffers one chunk ahead so `HasNext()` is accurate. An empty chunk signals EOF. Destructor warns if not fully consumed.
-
-All iterators are move-only (deleted copy constructors). The destructors log warnings and fire debug assertions if the stream was not fully consumed - this catches programming errors where supplemental data is accidentally skipped.
-
-For unknown section types, `PerformRDBLoad` manually drains all supplemental content:
+Unknown section types - manually drain:
 
 ```cpp
-auto supp_it = it.IterateSupplementalContent();
-while (supp_it.HasNext()) {
-  auto _ = supp_it.Next();
-  auto chunk_it = supp_it.IterateChunks();
-  while (chunk_it.HasNext()) { auto _ = chunk_it.Next(); }
+auto supp = it.IterateSupplementalContent();
+while (supp.HasNext()) {
+  (void)supp.Next();
+  auto chunk = supp.IterateChunks();
+  while (chunk.HasNext()) (void)chunk.Next();
 }
 ```
 
-## Chunk Streaming
+## Chunk streams
 
-Two adapter classes bridge the RDB chunk format to the `hnswlib::InputStream`/`OutputStream` interfaces used by vector indexes:
+Bridge between RDB chunks and `hnswlib::InputStream` / `OutputStream` for vector index save/load.
 
-**RDBChunkInputStream** - Wraps `SupplementalContentChunkIter`. `LoadChunk()` returns each chunk's `binary_content` as a `unique_ptr<string>`. Provides convenience methods:
-- `LoadString()` - loads a chunk and returns its content as a string
-- `LoadObject<T>()` - loads a chunk and reinterprets it as a trivially-copyable type T, with size validation
-- `AtEnd()` - checks if all chunks have been consumed
+**`RDBChunkInputStream`** wraps `SupplementalContentChunkIter`:
 
-**RDBChunkOutputStream** - Wraps `SafeRDB*`. `SaveChunk()` serializes each chunk as a `SupplementalContentChunk` protobuf and writes it via `SaveStringBuffer`. Provides:
-- `SaveString()` - saves a string_view as a chunk
-- `SaveObject<T>()` - saves a trivially-copyable object as a chunk
-- `Close()` - writes an empty string (EOF marker); called automatically by destructor if not already closed
+- `LoadChunk()` -> `unique_ptr<string>` (binary_content).
+- `LoadString()` - chunk as string.
+- `LoadObject<T>()` - reinterpret as trivially-copyable T with size validation.
+- `AtEnd()` - all chunks consumed.
 
-## RDB Load Path
+**`RDBChunkOutputStream`** wraps `SafeRDB*`:
 
-`AuxLoadCallback` is the entry point, registered as `aux_load` in the module type. It wraps the `ValkeyModuleIO*` in a `SafeRDB` and calls `PerformRDBLoad`:
+- `SaveChunk()` - wraps in `SupplementalContentChunk` proto, `SaveStringBuffer`.
+- `SaveString()`, `SaveObject<T>()`.
+- `Close()` - empty-string EOF marker; auto-called by dtor if not explicit.
 
-1. Validate encoding version (`kCurrentEncVer = 1`)
-2. Load and validate semantic version (must not exceed current module version)
-3. Load section count
-4. Initialize restore progress tracking in `Metrics::GetStats()`:
-   - `rdb_restore_in_progress = true`
-   - `rdb_restore_total_indexes = section_count`
-   - `rdb_restore_completed_indexes = 0`
-5. Iterate sections via `RDBSectionIter`
-6. For each section, look up the registered callback in `kRegisteredRDBSectionCallbacks` by section type
-7. Call the load callback with the section protobuf and supplemental content iterator
-8. For unregistered types, log a warning and drain all supplemental data
-9. Set `rdb_restore_in_progress = false` on success
+## Load path (`AuxLoadCallback`)
 
-Callbacks are dispatched via a static map:
+Registered as `aux_load` on the module type.
 
-```cpp
-extern absl::flat_hash_map<data_model::RDBSectionType, RDBSectionCallbacks>
-    kRegisteredRDBSectionCallbacks;
-```
+1. Encoding version check (`kCurrentEncVer = 1`).
+2. Semantic version <= current module version.
+3. Load section count.
+4. Restore progress in `Metrics::GetStats()`: `rdb_restore_in_progress = true`, `_total_indexes = section_count`, `_completed_indexes = 0`.
+5. `RDBSectionIter` per section, dispatch via `kRegisteredRDBSectionCallbacks[type]`.
+6. Unknown type -> warn + drain.
+7. On success: `rdb_restore_in_progress = false`, bump `rdb_load_success_cnt`.
 
-`RegisterRDBCallback` populates this map (main-thread only). Each entry provides:
-- `load` - per-section load callback
-- `save` - single callback for all sections of this type
-- `section_count` - returns how many sections to write
-- `minimum_semantic_version` - returns the minimum version needed
+`kRegisteredRDBSectionCallbacks` is an `absl::flat_hash_map<RDBSectionType, RDBSectionCallbacks>`. `RegisterRDBCallback` (main-thread only) registers: `load`, `save`, `section_count`, `minimum_semantic_version`.
 
-On load success, `rdb_load_success_cnt` increments. On failure, `rdb_load_failure_cnt` increments and `VALKEYMODULE_ERR` is returned.
+Failure -> `rdb_load_failure_cnt++`, return `VALKEYMODULE_ERR`.
 
-## RDB Save Path
+## Save path (`AuxSaveCallback`)
 
-`AuxSaveCallback` is the entry point, registered as `aux_save2` with trigger `VALKEYMODULE_AUX_AFTER_RDB`. It calls `PerformRDBSave`:
+Registered as `aux_save2` with trigger `VALKEYMODULE_AUX_AFTER_RDB` (writes after base RDB data so aux load happens after keys are available).
 
-1. Aggregate section counts from all registered callbacks
-2. Compute the minimum semantic version across all types that have sections to save
-3. If total section count is 0, return immediately (nothing to write)
-4. Write the header: minimum version (unsigned) + section count (unsigned)
-5. Call each save callback in sequence for types with sections > 0
+1. Sum section counts from all registered callbacks.
+2. Minimum semantic version across types with sections > 0.
+3. Total 0 -> return immediately.
+4. Header: minimum version + section count.
+5. Call each save callback for types with sections > 0.
 
-The save triggers `AFTER_RDB` ensures data is written after the base RDB data, so aux load happens after keys are available.
+Metrics: `rdb_save_success_cnt` / `rdb_save_failure_cnt`.
 
-On success, `rdb_save_success_cnt` increments. On failure, `rdb_save_failure_cnt` increments.
+## Module type (dummy)
 
-## Module Type Registration
-
-`RegisterModuleType` creates a dummy data type (`"Vk-Search"`) solely to get aux callbacks. The `rdb_load`, `rdb_save`, `aof_rewrite`, and `free` callbacks all assert-fail if called - the module never creates instances of this type. Only `aux_load` and `aux_save2` are meaningful.
+`RegisterModuleType` creates `"Vk-Search"` solely to get aux callbacks. Module never creates instances:
 
 ```cpp
 static ValkeyModuleTypeMethods tm = {
-    .version = VALKEYMODULE_TYPE_METHOD_VERSION,
-    .rdb_load = [](ValkeyModuleIO*, int) -> void* { DCHECK(false); },
-    .rdb_save = [](ValkeyModuleIO*, void*) { DCHECK(false); },
-    .aof_rewrite = [](ValkeyModuleIO*, ValkeyModuleString*, void*) { DCHECK(false); },
-    .free = [](void*) { DCHECK(false); },
-    .aux_load = AuxLoadCallback,
+    .version           = VALKEYMODULE_TYPE_METHOD_VERSION,
+    .rdb_load          = [](...) -> void* { DCHECK(false); },
+    .rdb_save          = [](...)          { DCHECK(false); },
+    .aof_rewrite       = [](...)          { DCHECK(false); },
+    .free              = [](...)          { DCHECK(false); },
+    .aux_load          = AuxLoadCallback,
     .aux_save_triggers = VALKEYMODULE_AUX_AFTER_RDB,
-    .aux_save2 = AuxSaveCallback,
+    .aux_save2         = AuxSaveCallback,
 };
 ```
 
-## FT.INTERNAL_UPDATE Command
+## `FT.INTERNAL_UPDATE`
 
-`FT.INTERNAL_UPDATE` replicates metadata changes from primary to replicas. It is an internal command - not user-facing.
+Replicates metadata changes primary -> replicas. Internal, not user-facing.
 
-**Arguments**: `FT.INTERNAL_UPDATE <id> <serialized_entry> <serialized_header>`
-- `id` - the encoded metadata entry identifier
-- `serialized_entry` - protobuf-serialized `GlobalMetadataEntry`
-- `serialized_header` - protobuf-serialized `GlobalMetadataVersionHeader`
+**Syntax**: `FT.INTERNAL_UPDATE <id> <serialized_entry> <serialized_header>`
 
-**Processing flow** (`FTInternalUpdateCmd`):
-1. Parse `GlobalMetadataEntry` from argv[2]
-2. Parse `GlobalMetadataVersionHeader` from argv[3]
-3. If the node is a replica or is loading, call `CreateEntryOnReplica` to apply the metadata update
-4. Call `ValkeyModule_ReplicateVerbatim(ctx)` to propagate to downstream replicas
-5. Reply OK
+- `id` - encoded entry identifier.
+- `serialized_entry` - `GlobalMetadataEntry` proto.
+- `serialized_header` - `GlobalMetadataVersionHeader` proto.
 
-**Error handling**: `HandleInternalUpdateFailure` provides resilient error recovery:
-- Parse failures increment `ft_internal_update_parse_failures_cnt`
-- Process failures increment `ft_internal_update_process_failures_cnt`
-- During AOF loading, if `skip-corrupted-internal-update-entries` config is enabled, corrupted entries are skipped with a warning (incrementing `ft_internal_update_skipped_entries_cnt`)
-- If skip is disabled during AOF loading, the process aborts via `CHECK(false)`
+**Flow** (`FTInternalUpdateCmd`):
 
-**Replication path**: `MetadataManager::ReplicateFTInternalUpdate` is called by `CreateEntry` and `DeleteEntry` on the primary. It serializes the entry and header, then calls `ValkeyModule_Call` to invoke `FT.INTERNAL_UPDATE`, which triggers AOF recording. During reconciliation, `CallFTInternalUpdateForReconciliation` does the same for remotely-received updates.
+1. Parse both protos.
+2. Replica or loading -> `CreateEntryOnReplica` applies the update.
+3. `ValkeyModule_ReplicateVerbatim(ctx)` propagates to downstream replicas.
+4. Reply OK.
 
-## Staging During Replication Loads
+**Error handling** (`HandleInternalUpdateFailure`):
 
-When a replica receives an RDB from its primary, metadata must not be applied piecemeal:
+| Failure | Counter |
+|---------|---------|
+| Parse | `ft_internal_update_parse_failures_cnt` |
+| Process | `ft_internal_update_process_failures_cnt` |
+| AOF load + `skip-corrupted-internal-update-entries` enabled | `ft_internal_update_skipped_entries_cnt` + warn |
 
-1. `OnReplicationLoadStart` - sets `staging_metadata_due_to_repl_load_ = true`
-2. During load, `LoadMetadata` writes to `staged_metadata_` instead of the live `metadata_`
-3. `OnLoadingEnded` - clears `metadata_`, reconciles from `staged_metadata_` with `prefer_incoming = true` and `trigger_callbacks = false`
-4. Fingerprint and version are populated to each `IndexSchema` via `SchemaManager::PopulateFingerprintVersionFromMetadata`
-5. Staged metadata is cleared; `is_loading_` is reset
+AOF load + skip disabled -> `CHECK(false)` (abort).
 
-For non-replication loads (server restart from RDB), `LoadMetadata` merges directly into `metadata_` via `ReconcileMetadata` with `prefer_incoming = true`, allowing the existing state (if any) to be merged with the loaded data.
+**Replication path**: `MetadataManager::ReplicateFTInternalUpdate` called by `CreateEntry` / `DeleteEntry` on the primary - serializes entry+header, `ValkeyModule_Call("FT.INTERNAL_UPDATE", ...)` - triggers AOF recording. Reconciliation uses `CallFTInternalUpdateForReconciliation` for remotely-received updates.
+
+## Replication load staging
+
+Replica receiving RDB - metadata must not be applied piecemeal.
+
+1. `OnReplicationLoadStart` -> `staging_metadata_due_to_repl_load_ = true`.
+2. `LoadMetadata` writes to `staged_metadata_`.
+3. `OnLoadingEnded` - clear `metadata_`, reconcile from staged with `prefer_incoming=true, trigger_callbacks=false`.
+4. Fingerprint + version populated per `IndexSchema` via `SchemaManager::PopulateFingerprintVersionFromMetadata`.
+5. Clear staged; reset `is_loading_`.
+
+Non-replication (restart from RDB): `LoadMetadata` merges directly into `metadata_` via `ReconcileMetadata(prefer_incoming=true)` - existing state merges with loaded data.

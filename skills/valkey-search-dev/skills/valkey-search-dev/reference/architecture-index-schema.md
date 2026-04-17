@@ -1,173 +1,117 @@
-# IndexSchema Class
+# IndexSchema
 
-Use when understanding per-index state, attribute management, keyspace mutation processing, backfill, or the mutation sequence number system.
+Use when reasoning about per-index state, attribute management, keyspace mutation processing, backfill, or mutation sequence numbers.
 
-Source: `src/index_schema.h`, `src/index_schema.cc`
+Source: `src/index_schema.{h,cc}`.
 
-## Contents
+## Shape
 
-- [Class Overview](#class-overview)
-- [Creation and Initialization](#creation-and-initialization)
-- [Attribute Map](#attribute-map)
-- [Keyspace Notification Handling](#keyspace-notification-handling)
-- [Mutation Processing Pipeline](#mutation-processing-pipeline)
-- [Mutation Sequence Numbers](#mutation-sequence-numbers)
-- [Backfill Job](#backfill-job)
-- [TimeSlicedMRMWMutex Usage](#timeslicedmrmwmutex-usage)
-- [Statistics and Info](#statistics-and-info)
+One `IndexSchema` per `FT.CREATE`. Inherits from `KeyspaceEventSubscription` (receives key-change events) and `std::enable_shared_from_this` (safe `shared_ptr` / `weak_ptr` for background tasks).
 
-## Class Overview
+Key owned state:
 
-`IndexSchema` is the central per-index object in valkey-search. One instance exists for each `FT.CREATE` index. It inherits from `KeyspaceEventSubscription` (to receive keyspace notifications) and `std::enable_shared_from_this` (to safely pass `shared_ptr`/`weak_ptr` to background tasks).
+| Field | Type | Role |
+|-------|------|------|
+| `name_` | string | index name |
+| `db_num_` | uint32_t | database number |
+| `attributes_` | `flat_hash_map<string, Attribute>` | alias -> `Attribute` (holds `IndexBase`) |
+| `attribute_data_type_` | `unique_ptr<AttributeDataType>` | Hash or JSON source |
+| `backfill_job_` | `MainThreadAccessGuard<optional<BackfillJob>>` | active backfill state |
+| `time_sliced_mutex_` | `TimeSlicedMRMWMutex` | read/write phase coordination |
+| `mutations_thread_pool_` | `ThreadPool*` | borrowed writer pool |
+| `tracked_mutated_records_` | `InternedStringHashMap<DocumentMutation>` | pending mutations by interned key |
+| `text_index_schema_` | `shared_ptr<TextIndexSchema>` | shared text state (language, punctuation, stop words) |
+| `stats_` | `Stats` | per-index counters |
 
-```
-IndexSchema
-  |-- KeyspaceEventSubscription   (receives key change events)
-  |-- enable_shared_from_this     (safe async references)
-```
-
-Key state owned by each IndexSchema:
-
-| Field | Type | Purpose |
-|-------|------|---------|
-| `name_` | string | Index name from FT.CREATE |
-| `db_num_` | uint32_t | Valkey database number |
-| `attributes_` | flat_hash_map<string, Attribute> | Field name to Attribute (holds IndexBase) |
-| `attribute_data_type_` | `unique_ptr<AttributeDataType>` | Hash or JSON data source |
-| `backfill_job_` | `MainThreadAccessGuard<optional<BackfillJob>>` | Active backfill scan state |
-| `time_sliced_mutex_` | TimeSlicedMRMWMutex | Read/write phase coordination |
-| `mutations_thread_pool_` | ThreadPool* | Writer pool reference (not owned) |
-| `tracked_mutated_records_` | `InternedStringHashMap<DocumentMutation>` | Pending mutations keyed by interned string |
-| `text_index_schema_` | `shared_ptr<TextIndexSchema>` | Shared text index state (language, punctuation, stop words) |
-| `stats_` | Stats | Per-index counters |
-
-## Creation and Initialization
-
-The static factory `IndexSchema::Create()` builds a new IndexSchema from a protobuf definition:
+## `Create()`
 
 ```cpp
 static absl::StatusOr<std::shared_ptr<IndexSchema>> Create(
-    ValkeyModuleCtx *ctx,
-    const data_model::IndexSchema &index_schema_proto,
+    ValkeyModuleCtx *ctx, const data_model::IndexSchema &proto,
     vmsdk::ThreadPool *mutations_thread_pool,
     bool skip_attributes, bool reload);
 ```
 
-Steps in `Create()`:
+Steps:
 
-1. **Validate data type** - determines Hash or JSON. JSON requires the JSON module to be loaded.
-2. **Count text fields** - enforces a maximum of 64 text fields per index (`kMaxTextFieldsCount`). This limit exists because text field tracking uses 64-bit bitmasks.
-3. **Construct** - calls private constructor which initializes the `TimeSlicedMRMWMutex` with options (10ms read quota, 1ms write quota, 200us write grace period).
-4. **Init** - `Init()` registers with `KeyspaceEventManager` for keyspace notifications and creates the `BackfillJob`.
-5. **Add indexes** - iterates protobuf attributes, calls `IndexFactory()` to create concrete index objects (Tag, Numeric, Text, VectorHNSW, VectorFlat), then `AddIndex()` to register each.
-6. **SkipInitialScan** - if the protobuf has `skip_initial_scan` set and this is not a reload, the backfill is immediately marked as done.
+1. Validate data type (Hash or JSON - JSON needs the JSON module loaded).
+2. Enforce `kMaxTextFieldsCount = 64` text fields per index (text-field tracking uses 64-bit bitmasks).
+3. Construct - initializes `TimeSlicedMRMWMutex` with 10 ms read / 1 ms write quota, 1 ms / 200 us grace periods.
+4. `Init()` - register with `KeyspaceEventManager`, create `BackfillJob`.
+5. `IndexFactory()` + `AddIndex()` per proto attribute (Tag, Numeric, Text, VectorHNSW, VectorFlat).
+6. `skip_initial_scan` on the proto (and not a reload) marks backfill done immediately.
 
-The constructor extracts key prefixes from the protobuf. If none are specified, an empty prefix `""` is used (matches all keys). Duplicate prefixes that are prefixes of each other are deduplicated.
+Prefix handling: if the proto has no prefixes, `""` is used (matches all). Overlapping prefixes that contain each other are deduplicated. RDB reload restores `document_cnt` from saved stats.
 
-For reload (RDB load), the constructor restores `document_cnt` from the saved protobuf stats.
+## Attributes
 
-## Attribute Map
+`attributes_` keyed by alias (query-facing name). Each `Attribute` holds: `alias`, `identifier` (Hash field or JSON path), `index` (`shared_ptr<IndexBase>`), `position` (into `attributes_indexed_data_size_`).
 
-Each field in an index is represented by an `Attribute` object stored in `attributes_`:
+`AddIndex()` inserts the attribute, grows the size-tracking vector, updates `identifier_to_alias_`, refreshes text bitmasks.
 
-```cpp
-absl::flat_hash_map<std::string, Attribute> attributes_;
-```
+### Text field bitmasks
 
-The map is keyed by attribute alias (the name used in queries). Each Attribute holds:
+| Mask | Use |
+|------|-----|
+| `all_text_field_mask_` | unqualified text queries |
+| `suffix_text_field_mask_` | fields with suffix trie enabled |
+| `stem_text_field_mask_` | fields with stemming enabled |
 
-- **alias** - query-facing name
-- **identifier** - the actual Hash field name or JSON path
-- **index** - `shared_ptr<IndexBase>` to the concrete index (VectorHNSW, Tag, etc.)
-- **position** - index into `attributes_indexed_data_size_` for size tracking
+`GetAllTextIdentifiers(with_suffix)`, `GetAllTextFieldMask(with_suffix)`, `GetTextIdentifiersByFieldMask()` avoid iteration at query time.
 
-`AddIndex()` inserts an attribute, grows `attributes_indexed_data_size_`, maps identifier to alias in `identifier_to_alias_`, and updates text field bitmasks.
+## Keyspace notifications
 
-Text field tracking uses 64-bit bitmasks:
+`OnKeyspaceNotification(ctx, type, event, key)` flow:
 
-| Bitmask | Purpose |
-|---------|---------|
-| `all_text_field_mask_` | All text fields - used for unqualified text queries |
-| `suffix_text_field_mask_` | Fields with suffix trie enabled |
-| `stem_text_field_mask_` | Fields with stemming enabled |
+1. `IsInCurrentDB(ctx)` filter.
+2. `ProcessKeyspaceNotification(ctx, key, false)`.
+3. Open key with `NOEFFECTS | READ`.
+4. `GetAttributeDataType().IsProperType()` - Hash/JSON match.
+5. Per attribute: `VectorExternalizer::Instance().GetRecord()`. Missing record on untracked key -> skip.
+6. `NormalizeStringRecord()` for string-type records.
+7. Counters: `ingest_hash_keys` / `ingest_json_keys`.
+8. `ProcessMutation()`.
 
-`GetAllTextIdentifiers(with_suffix)` and `GetAllTextFieldMask(with_suffix)` return these precomputed sets for query-time field resolution without iteration. `GetTextIdentifiersByFieldMask()` converts a bitmask back to identifier strings.
+Deleted keys (null `key_obj`): all attributes get `DeletionType::kRecord`. The same `ProcessKeyspaceNotification()` is called from the backfill scan callback with `from_backfill=true`.
 
-## Keyspace Notification Handling
-
-`OnKeyspaceNotification()` is called by `KeyspaceEventManager` when a subscribed key changes:
-
-```cpp
-void OnKeyspaceNotification(ValkeyModuleCtx *ctx, int type,
-                            const char *event, ValkeyModuleString *key);
-```
-
-The flow:
-
-1. **DB check** - `IsInCurrentDB(ctx)` ensures the event is for this index's database.
-2. **Delegate** - calls `ProcessKeyspaceNotification(ctx, key, false)`.
-3. **Open key** - opens the key with `NOEFFECTS | READ` flags.
-4. **Type check** - `GetAttributeDataType().IsProperType()` verifies Hash vs JSON match.
-5. **Per-attribute extraction** - for each attribute, fetches the field value via `VectorExternalizer::Instance().GetRecord()`. If the record is missing and the key is not tracked, skips it.
-6. **Normalize** - string-type records go through `NormalizeStringRecord()`.
-7. **Metrics** - increments `ingest_hash_keys` or `ingest_json_keys`.
-8. **Process** - calls `ProcessMutation()` with the collected attribute data.
-
-For deleted keys (where `key_obj` is null), all attributes get `DeletionType::kRecord`.
-
-The same `ProcessKeyspaceNotification()` is called from the backfill scan callback with `from_backfill=true`.
-
-## Mutation Processing Pipeline
-
-Mutations flow through a multi-stage pipeline that separates main-thread bookkeeping from background index updates:
+## Mutation pipeline
 
 ### Main thread (`ProcessMutation`)
 
-1. **UpdateDbInfoKey** - updates `db_key_info_` map with attribute sizes, increments `schema_mutation_sequence_number_`, updates `document_cnt`.
-2. **Sync fallback** - if no writer thread pool, acquires `WriterMutexLock` on `time_sliced_mutex_` and calls `SyncProcessMutation()` directly.
-3. **Multi/exec batching** - if inside MULTI/EXEC, calls `EnqueueMultiMutation()` instead of immediate scheduling. The batch is flushed on the next FT.SEARCH via `ProcessMultiQueue()`.
-4. **Track** - `TrackMutatedRecord()` stores the mutation in `tracked_mutated_records_` (keyed by interned string). If the key already has a pending mutation, the new data merges into the existing entry.
-5. **Schedule** - `ScheduleMutation()` pushes a task to the writer thread pool. Backfill mutations use `Priority::kLow`, real-time mutations use `Priority::kHigh`.
-6. **Client blocking** - real user clients (not from backfill, not inside MULTI) get blocked until their mutation is visible. The `ShouldBlockClient()` function checks context flags.
+1. `UpdateDbInfoKey` - update `db_key_info_`, bump `schema_mutation_sequence_number_`, adjust `document_cnt`.
+2. If no writer pool: `WriterMutexLock(time_sliced_mutex_)` + `SyncProcessMutation()`.
+3. Inside MULTI/EXEC: `EnqueueMultiMutation()`; batch flushes on next FT.SEARCH via `ProcessMultiQueue()`.
+4. `TrackMutatedRecord()` into `tracked_mutated_records_` (interned-key); existing entries merge.
+5. `ScheduleMutation()` - writer pool task. Backfill = `Priority::kLow`; real-time = `Priority::kHigh`.
+6. Real user clients (not backfill, not inside MULTI) block via `ShouldBlockClient()` until mutation is visible.
 
 ### Writer thread (`ProcessSingleMutationAsync`)
 
-1. **Acquire write phase** - `WriterMutexLock lock(&time_sliced_mutex_)`.
-2. **Consume loop** - `ConsumeTrackedMutatedAttribute()` pops pending mutations for this key. Multiple mutations to the same key collapse.
-3. **SyncProcessMutation** - for each consumed mutation:
-   - Deletes existing text index data for the key via `TextIndexSchema::DeleteKeyData()`
-   - Calls `ProcessAttributeMutation()` per attribute
-   - If all attributes are deletes, removes from `index_key_info_`
-   - Commits text index data via `TextIndexSchema::CommitKeyData()`
-4. **ProcessAttributeMutation** - routes to `AddRecord`, `ModifyRecord`, or `RemoveRecord` on the concrete index, tracking success/failure/skip stats.
-5. **Stat update** - decrements `mutation_queue_size_`, samples queue delay.
+1. `WriterMutexLock(time_sliced_mutex_)`.
+2. `ConsumeTrackedMutatedAttribute()` - pop pending mutations for the key; multiple mutations to the same key collapse.
+3. Per consumed mutation in `SyncProcessMutation`:
+   - `TextIndexSchema::DeleteKeyData()`
+   - `ProcessAttributeMutation()` per attribute -> `AddRecord` / `ModifyRecord` / `RemoveRecord` on the concrete index (tracks success/failure/skip).
+   - All-delete case: drop from `index_key_info_`.
+   - `TextIndexSchema::CommitKeyData()`.
+4. Decrement `mutation_queue_size_`, sample queue delay.
 
-## Mutation Sequence Numbers
+## Mutation sequence numbers
 
-The mutation sequence number system provides consistency guarantees for queries that may race with in-flight mutations:
+`using MutationSequenceNumber = uint64_t;`
 
-```cpp
-using MutationSequenceNumber = uint64_t;
-```
-
-Two parallel maps track sequence numbers:
+Two parallel maps:
 
 | Map | Thread safety | Purpose |
 |-----|---------------|---------|
-| `db_key_info_` | Main thread only (`MainThreadAccessGuard`) | Assigned on main thread when mutation is received |
-| `index_key_info_` | `time_sliced_mutex_` (write phase) | Updated on writer thread after mutation completes |
+| `db_key_info_` | main thread only (`MainThreadAccessGuard`) | seq number assigned at notification |
+| `index_key_info_` | `time_sliced_mutex_` write phase | updated after the mutation completes |
 
-The flow:
+Query-side: `PerformKeyContentionCheck()` compares neighbor seq numbers against `db_key_info_`; mismatch means in-flight mutation - the query is enqueued to retry after the mutation completes.
 
-1. Main thread receives a mutation, increments `schema_mutation_sequence_number_`, stores in `db_key_info_[key].mutation_sequence_number_`.
-2. Writer thread processes the mutation, updates `index_key_info_[key].mutation_sequence_number_`.
-3. Queries call `PerformKeyContentionCheck()` to compare sequence numbers of neighbor results against `db_key_info_`. If they differ, the query result may be stale due to an in-flight mutation - the query is enqueued to retry after that mutation completes.
+`PopulateIndexMutationSequenceNumbers()` reads `index_key_info_` under the read phase (`ABSL_SHARED_LOCKS_REQUIRED(time_sliced_mutex_)`).
 
-`PopulateIndexMutationSequenceNumbers()` reads from `index_key_info_` during the read phase of the time-sliced mutex. It requires `ABSL_SHARED_LOCKS_REQUIRED(time_sliced_mutex_)`.
-
-## Backfill Job
-
-When an index is created, it must scan existing keys to populate the index. The `BackfillJob` struct manages this:
+## Backfill
 
 ```cpp
 struct BackfillJob {
@@ -182,50 +126,40 @@ struct BackfillJob {
 };
 ```
 
-`PerformBackfill()` is called from `SchemaManager::OnServerCronCallback()` on every cron tick:
+`PerformBackfill()` runs on every `SchemaManager::OnServerCronCallback`:
 
-1. **Check completion** - returns 0 if no backfill job or scan is done.
-2. **OOM check** - pauses if `VALKEYMODULE_CTX_FLAGS_OOM` is set.
-3. **DB size tracking** - monotonically increases `db_size` for accurate progress reporting.
-4. **Scan loop** - calls `ValkeyModule_Scan()` with `BackfillScanCallback` up to `batch_size` keys.
-5. **Callback** - for each scanned key, checks prefix match, then calls `ProcessKeyspaceNotification(ctx, keyname, true)`.
-6. **Completion** - when `ValkeyModule_Scan` returns 0, calls `MarkScanAsDone()` and logs duration.
+1. No-op if `IsScanDone()`.
+2. Pause if `VALKEYMODULE_CTX_FLAGS_OOM` is set.
+3. Track `db_size` monotonically for progress reporting.
+4. `ValkeyModule_Scan(BackfillScanCallback, batch_size)`.
+5. Callback: prefix check, then `ProcessKeyspaceNotification(ctx, keyname, /*from_backfill=*/true)`.
+6. Scan returns 0 -> `MarkScanAsDone()` + log duration.
 
-Progress is reported via `GetBackfillPercent()` which computes `(scanned - in_queue) / db_size`. The `backfill-batch-size` config controls keys processed per cron tick (default 10240).
+Reported progress: `GetBackfillPercent() = (scanned - in_queue) / db_size`. `backfill-batch-size` controls per-tick count (default 10240). `IsBackfillInProgress()` = scan active OR `backfill_inqueue_tasks > 0`.
 
-`IsBackfillInProgress()` returns true when the scan cursor is active OR there are still queued backfill tasks (`backfill_inqueue_tasks > 0`).
+## `TimeSlicedMRMWMutex` timing
 
-## TimeSlicedMRMWMutex Usage
-
-Each IndexSchema owns a `vmsdk::TimeSlicedMRMWMutex` (`time_sliced_mutex_`) that coordinates concurrent reads (queries) and writes (mutations) to the index data:
-
-- **Read phase** - query threads acquire shared read access via `ReaderMutexLock`. Multiple queries execute concurrently during the read phase. Access to `index_key_info_` and index data structures is safe.
-- **Write phase** - writer threads acquire shared write access via `WriterMutexLock`. Multiple mutations execute concurrently during the write phase (on different keys). The `mutated_records_mutex_` provides exclusion between writers accessing the same key's tracked records.
-
-The mutex time-slices between phases with configurable quotas:
+Time-slices between read and write phases. Asymmetric quotas prioritize query latency over mutation throughput (10:1 read vs write).
 
 | Parameter | Value | Effect |
 |-----------|-------|--------|
-| `read_quota_duration` | 10ms | Maximum read phase duration when writes are waiting |
-| `read_switch_grace_period` | 1ms | Inactivity before switching from read to write |
-| `write_quota_duration` | 1ms | Maximum write phase duration when reads are waiting |
-| `write_switch_grace_period` | 200us | Inactivity before switching from write to read |
+| `read_quota_duration` | 10 ms | max read phase when writers are waiting |
+| `read_switch_grace_period` | 1 ms | read inactivity before switching to write |
+| `write_quota_duration` | 1 ms | max write phase when readers are waiting |
+| `write_switch_grace_period` | 200 us | write inactivity before switching to read |
 
-This asymmetry (10:1 read vs write quota) prioritizes query latency over mutation throughput.
+Queries take `ReaderMutexLock`. Writers take `WriterMutexLock`. Multiple concurrent readers or multiple concurrent writers (on different keys) are allowed; `mutated_records_mutex_` arbitrates writers on the same key.
 
-## Statistics and Info
+## `Stats`
 
-The `Stats` struct tracks per-index metrics with atomic counters:
+Atomic counters feeding `FT.INFO` and coordinator fanout via `GetInfoIndexPartitionData()`.
 
 | Counter | Type | Meaning |
 |---------|------|---------|
-| `subscription_add` | ResultCnt | Records added (success/failure/skipped) |
-| `subscription_modify` | ResultCnt | Records modified |
-| `subscription_remove` | ResultCnt | Records removed |
-| `document_cnt` | atomic<uint32_t> | Current indexed document count |
-| `backfill_inqueue_tasks` | atomic<uint32_t> | Backfill tasks waiting in writer pool |
-| `mutation_queue_size_` | uint64_t (mutex-guarded) | Mutations pending processing |
-| `mutations_queue_delay_` | Duration (mutex-guarded) | Sampled queue wait time |
+| `subscription_add` / `_modify` / `_remove` | `ResultCnt` | success / failure / skip |
+| `document_cnt` | `atomic<uint32_t>` | indexed documents |
+| `backfill_inqueue_tasks` | `atomic<uint32_t>` | pending backfill tasks |
+| `mutation_queue_size_` | `uint64_t` (mutex) | pending mutations |
+| `mutations_queue_delay_` | `Duration` (mutex) | sampled queue wait |
 
-`RespondWithInfo()` formats these for `FT.INFO` responses. `GetInfoIndexPartitionData()` aggregates stats into the `InfoIndexPartitionData` struct for coordinator fanout, including `num_docs`, `num_records`, `backfill_complete_percent`, `mutation_queue_size`, and `state`.
-</uint32_t></uint32_t>
+`InfoIndexPartitionData` fields: `num_docs`, `num_records`, `backfill_complete_percent`, `mutation_queue_size`, `state`.

@@ -1,289 +1,154 @@
-# Thread Model
+# Thread model
 
-Use when understanding the concurrency architecture, TimeSlicedMRMWMutex behavior, fork suspension, writer resumption, or main thread vs background thread responsibilities.
+Use when reasoning about concurrency, `TimeSlicedMRMWMutex`, fork suspension, writer resumption, or main-thread vs background-thread split.
 
-Source: `src/valkey_search.cc`, `src/server_events.cc`, `src/index_schema.cc`, `vmsdk/src/time_sliced_mrmw_mutex.h`
+Source: `src/valkey_search.cc`, `src/server_events.cc`, `src/index_schema.cc`, `vmsdk/src/time_sliced_mrmw_mutex.h`.
 
-## Contents
+## Thread contexts
 
-- [Thread Architecture](#thread-architecture)
-- [Main Thread Responsibilities](#main-thread-responsibilities)
-- [Reader Thread Pool](#reader-thread-pool)
-- [Writer Thread Pool](#writer-thread-pool)
-- [Utility Thread Pool](#utility-thread-pool)
-- [gRPC Coordinator Thread](#grpc-coordinator-thread)
-- [TimeSlicedMRMWMutex](#timeslicedmrmwmutex)
-- [Fork Handling](#fork-handling)
-- [Writer Suspension and Resumption](#writer-suspension-and-resumption)
-- [Server Cron Maintenance](#server-cron-maintenance)
-- [Thread Safety Annotations](#thread-safety-annotations)
+| Thread(s) | Default size | Workload |
+|-----------|--------------|----------|
+| Main (Valkey event loop) | 1 | Command parsing, keyspace notifications, cron, backfill scan, RDB load/save, MULTI/EXEC queue |
+| Reader pool | CPU cores | FT.SEARCH / FT.AGGREGATE - `TimeSlicedMRMWMutex` read phase |
+| Writer pool | CPU cores | Index mutations (add/modify/remove) - write phase |
+| Utility pool | 1 | Search-result cleanup, low-priority work |
+| gRPC server | optional | Cluster mode only - `coordinator::Server` for cross-node RPCs |
 
-## Thread Architecture
+Pools created in `ValkeySearch::Startup()` via `vmsdk::ThreadPool(name_prefix, size, wait_time_samples)`. Wait-time sample queue default 100, controlled by `thread-pool-wait-time-samples`.
 
-valkey-search operates across four thread contexts:
+## Main-thread-only state
 
-```
-Main Thread (Valkey event loop)
-  |-- Receives commands (FT.CREATE, FT.SEARCH, etc.)
-  |-- Handles keyspace notifications
-  |-- Runs server cron callbacks
-  |-- Manages backfill scan
-  |
-Reader Thread Pool (N threads, default = CPU cores)
-  |-- Executes query operations (FT.SEARCH, FT.AGGREGATE)
-  |-- Acquires TimeSlicedMRMWMutex in read phase
-  |
-Writer Thread Pool (N threads, default = CPU cores)
-  |-- Processes index mutations (add/modify/remove records)
-  |-- Acquires TimeSlicedMRMWMutex in write phase
-  |
-Utility Thread Pool (1 thread by default)
-  |-- Search result cleanup
-  |-- Low-priority background tasks
-  |
-gRPC Server Thread (optional, cluster mode only)
-  |-- coordinator::Server for cross-node communication
-  |-- Handles SearchIndexPartition and GetGlobalMetadata RPCs
-```
+`vmsdk::MainThreadAccessGuard<T>` wraps data with debug assertions. Key guarded fields:
 
-All pools are created during `ValkeySearch::Startup()`:
-
-```cpp
-reader_thread_pool_ = make_unique<vmsdk::ThreadPool>(
-    "read-worker-", options::GetReaderThreadCount().GetValue(),
-    options::GetThreadPoolWaitTimeSamples().GetValue());
-writer_thread_pool_ = make_unique<vmsdk::ThreadPool>(
-    "write-worker-", options::GetWriterThreadCount().GetValue(),
-    options::GetThreadPoolWaitTimeSamples().GetValue());
-utility_thread_pool_ = make_unique<vmsdk::ThreadPool>(
-    "utility-worker-", options::GetUtilityThreadCount().GetValue(),
-    options::GetThreadPoolWaitTimeSamples().GetValue());
-```
-
-Each pool receives a third argument - the wait-time sample queue size (default 100, configurable via `thread-pool-wait-time-samples`) for tracking task queue latency.
-
-## Main Thread Responsibilities
-
-The main thread (Valkey's event loop) handles all operations that require single-threaded access to Valkey's keyspace: command parsing, keyspace notifications, backfill scanning (`ValkeyModule_Scan`), `UpdateDbInfoKey` writes, FlushDB/SwapDB events, RDB save/load, and MULTI/EXEC queue processing.
-
-`vmsdk::MainThreadAccessGuard<T>` wraps data that must only be accessed on the main thread, with debug assertions in non-release builds. Key guarded fields:
-
-- `IndexSchema::db_key_info_` - database-side key mutation tracking
-- `IndexSchema::backfill_job_` - backfill scan cursor and progress
+- `IndexSchema::db_key_info_` - DB-side key mutation tracking
+- `IndexSchema::backfill_job_` - scan cursor + progress
 - `IndexSchema::multi_mutations_keys_` - pending MULTI/EXEC mutations
 - `SchemaManager::staged_db_to_index_schemas_` - replication staging
 
-## Reader Thread Pool
+## Reader pool
 
-Reader threads execute query operations dispatched from FT.SEARCH and FT.AGGREGATE. Each query:
+Flow: main parses, blocks client, dispatches to reader worker. Worker acquires `ReaderMutexLock(time_sliced_mutex_)` (read phase). Multiple readers concurrent. Results merged on main, client unblocked.
 
-1. Is parsed on the main thread.
-2. If the reader pool has threads, the client is blocked and the query is dispatched to a reader worker.
-3. The reader acquires the `TimeSlicedMRMWMutex` in **read phase**.
-4. Multiple readers execute concurrently during the read phase.
-5. Results are merged and the blocked client is unblocked on the main thread.
+`SupportParallelQueries()` false if reader pool has 0 threads -> queries run synchronously on main.
 
-The reader pool supports priority scheduling and wait-time sampling. `SupportParallelQueries()` returns false if the reader pool has zero threads, in which case queries execute synchronously on the main thread.
+INFO fields: `query_queue_size` (pending queries), `used_read_cpu`.
 
-`query_queue_size` (visible in `FT.INFO`) tracks how many queries are waiting in the reader pool's queue. `used_read_cpu` reports the average CPU utilization of reader threads.
+## Writer pool
 
-## Writer Thread Pool
+Flow: main gets notification, tracks mutation in `tracked_mutated_records_`, schedules task. Worker acquires `WriterMutexLock(time_sliced_mutex_)` (write phase). Multiple writers concurrent on different keys; `mutated_records_mutex_` arbitrates same-key writers.
 
-Writer threads process index mutations (adds, modifies, deletes) dispatched from keyspace notifications and backfill:
-
-1. Main thread receives a keyspace notification.
-2. Mutation data is extracted and tracked in `tracked_mutated_records_`.
-3. A task is scheduled on the writer pool.
-4. The writer acquires the `TimeSlicedMRMWMutex` in **write phase**.
-5. Multiple writers execute concurrently on different keys.
-6. Exclusion between writers on the same key is provided by `mutated_records_mutex_`.
-
-Priority levels control mutation ordering:
+Priorities:
 
 | Priority | Source | Effect |
 |----------|--------|--------|
-| `kHigh` | Real-time keyspace events | Processed before backfill |
-| `kLow` | Backfill scan | Yields to real-time mutations |
+| `kHigh` | real-time keyspace events | processed before backfill |
+| `kLow` | backfill scan | yields to real-time |
 
-The `high-priority-weight` config (default 100, range 0-100) controls the scheduling ratio between high and low priority tasks. At 100, backfill tasks only execute when no real-time mutations are queued.
+`high-priority-weight` (default 100, range 0-100) sets scheduling ratio. 100 = backfill only runs when real-time queue empty.
 
-The writer pool is the one suspended during fork operations (see Fork Handling below). `writer_queue_size` and `used_write_cpu` are reported in INFO.
+Writer pool is **suspended across fork** (see below). INFO: `writer_queue_size`, `used_write_cpu`.
 
-## Utility Thread Pool
-
-The utility pool handles low-priority tasks that should not compete with queries or mutations:
+## Utility pool
 
 ```cpp
 void ScheduleUtilityTask(absl::AnyInvocable<void()> task) {
-    if (utility_thread_pool_) {
-        utility_thread_pool_->Schedule(std::move(task),
-                                       vmsdk::ThreadPool::Priority::kLow);
-    } else {
-        task();
-    }
+    if (utility_thread_pool_) utility_thread_pool_->Schedule(std::move(task), Priority::kLow);
+    else                      task();  // sync fallback
 }
 ```
 
-Primary use: `ScheduleSearchResultCleanup()` offloads destruction of large search result objects. This prevents query latency spikes from deallocation. Controlled by the `search-result-background-cleanup` config (default false).
+Main use: `ScheduleSearchResultCleanup()` - offload destruction of large result sets to avoid query-path latency spikes. Gated by `search-result-background-cleanup` (default false).
 
-If the utility pool is unavailable, tasks execute synchronously in the caller's context.
+## gRPC coordinator (cluster mode)
 
-## gRPC Coordinator Thread
-
-In cluster mode (`use-coordinator=true` and cluster enabled), a gRPC server is started:
+`use-coordinator=true` + cluster enabled:
 
 ```cpp
-coordinator_ = coordinator::ServerImpl::Create(
-    ctx, reader_thread_pool_.get(), coordinator_port);
+coordinator_ = coordinator::ServerImpl::Create(ctx, reader_thread_pool_.get(), coordinator_port);
 ```
 
-The coordinator listens on `valkey_port + 20294` and handles:
+Port = `valkey_port + 20294`. RPCs: `GetGlobalMetadata`, `SearchIndexPartition`. CPU tracked via `vmsdk::ThreadGroupCPUMonitor` -> `coordinator_threads_cpu_time_sec`. Suspended during fork via `coordinator::GRPCSuspender`.
 
-- **GetGlobalMetadata** - returns cluster-wide index metadata for consistency
-- **SearchIndexPartition** - executes a query on the local node's partition and returns results for fanout
+## `TimeSlicedMRMWMutex`
 
-CPU usage of coordinator threads is tracked via `vmsdk::ThreadGroupCPUMonitor` and reported in the `coordinator_threads_cpu_time_sec` INFO field.
+Per-`IndexSchema`. Either multiple concurrent readers OR multiple concurrent writers, never both.
 
-The gRPC server is suspended during fork operations alongside the thread pools via `coordinator::GRPCSuspender`.
-
-## TimeSlicedMRMWMutex
-
-The core concurrency primitive is `vmsdk::TimeSlicedMRMWMutex`, which allows either multiple concurrent readers OR multiple concurrent writers, but never both simultaneously. Each `IndexSchema` owns one instance.
-
-### Modes
-
-```
-[Read Phase]  <-- queries execute here (multiple concurrent readers)
-     |
-     v  (switch when write quota exceeded or read inactivity)
-[Write Phase] <-- mutations execute here (multiple concurrent writers)
-     |
-     v  (switch when read quota exceeded or write inactivity)
-[Read Phase]  ...
-```
-
-### Time quotas
+Quotas (10:1 read:write - prioritize query latency):
 
 | Parameter | Value | Meaning |
 |-----------|-------|---------|
-| `read_quota_duration` | 10ms | Max read phase when writers are waiting |
-| `read_switch_grace_period` | 1ms | Read inactivity before switching to write |
-| `write_quota_duration` | 1ms | Max write phase when readers are waiting |
-| `write_switch_grace_period` | 200us | Write inactivity before switching to read |
+| `read_quota_duration` | 10 ms | max read phase when writers are waiting |
+| `read_switch_grace_period` | 1 ms | read inactivity before switching to write |
+| `write_quota_duration` | 1 ms | max write phase when readers are waiting |
+| `write_switch_grace_period` | 200 us | write inactivity before switching to read |
 
-The 10:1 ratio (read 10ms vs write 1ms) prioritizes query latency. Writes get short bursts to process mutations, then yield back to readers.
-
-### Lock acquisition
+Lock construction:
 
 ```cpp
-// Query thread
 vmsdk::ReaderMutexLock lock(&time_sliced_mutex_, may_prolong, ignore_quota);
-
-// Writer thread
 vmsdk::WriterMutexLock lock(&time_sliced_mutex_, may_prolong, ignore_quota);
 ```
 
-- `may_prolong` - indicates the holder may need to extend the phase (prevents premature switch).
-- `ignore_time_quota` - used for critical operations that cannot be interrupted (e.g., MULTI/EXEC batch flush uses `ignore_quota=true`).
+- `may_prolong` - holder may need to extend phase (prevents premature switch).
+- `ignore_time_quota` - critical sections (MULTI/EXEC batch flush uses `ignore_quota=true`).
 
-### Global statistics
+INFO (`time_slice_mutex` section): `read_periods`, `read_time_microseconds`, `write_periods`, `write_time_microseconds`, plus `Metrics` counters `time_slice_queries` / `_upserts` / `_deletes`.
 
-The mutex tracks cumulative statistics via `TimeSlicedMRMWStats`:
+## Fork handling
 
-| Stat | Meaning |
-|------|---------|
-| `read_periods` | Number of read phase activations |
-| `read_time_microseconds` | Total time in read phases |
-| `write_periods` | Number of write phase activations |
-| `write_time_microseconds` | Total time in write phases |
+`pthread_atfork(AtForkPrepare, AfterForkParent, nullptr)` registered in `server_events.cc`.
 
-These appear under the `time_slice_mutex` INFO section alongside `time_slice_queries`, `time_slice_upserts`, and `time_slice_deletes` counters from `Metrics`.
-
-## Fork Handling
-
-Fork events (RDB save, replication) are critical because only the main thread survives in the child process. Background threads are terminated, potentially leaving data structures in inconsistent states.
-
-### AtForkPrepare (pre-fork)
-
-Registered via `pthread_atfork(AtForkPrepare, AfterForkParent, nullptr)` in `server_events.cc`:
+### `AtForkPrepare` (pre-fork)
 
 1. Increment `worker_thread_pool_suspend_cnt`.
-2. Suspend all three thread pools: writer, reader, utility.
-3. Suspend the gRPC server via `GRPCSuspender`.
+2. Suspend writer + reader + utility pools via `SuspendWorkers()` - blocks until in-progress tasks complete.
+3. Suspend gRPC server via `GRPCSuspender`.
 
-`SuspendWorkers()` blocks until all in-progress tasks complete, then prevents new tasks from starting. This guarantees no thread is mutating index data when the fork happens.
+Guarantees no thread is mid-mutation when the fork happens.
 
-### AfterForkParent (post-fork, parent)
+### `AfterForkParent`
 
-After the fork returns in the parent process:
+1. Resume **reader** + **utility** pools immediately - queries can continue.
+2. Start `writer_thread_pool_suspend_watch_` timer.
+3. Resume gRPC server.
 
-1. Resume the **reader** thread pool immediately - queries can resume.
-2. Resume the **utility** thread pool immediately.
-3. Start the writer suspension timer (`writer_thread_pool_suspend_watch_`).
-4. Resume the gRPC server via `GRPCSuspender`.
+Writer pool intentionally NOT resumed. Writer threads dirty pages -> copy-on-write -> memory pressure while the child (RDB save / replication) is alive. Vector mutations modify large contiguous regions - especially expensive under COW.
 
-The writer pool is NOT immediately resumed. This is intentional - writer threads cause page faults that lead to copy-on-write overhead, increasing memory pressure while the child process is still running.
+## Writer resume policy
 
-### Why writers stay suspended
+`max-worker-suspension-secs` (default 60):
 
-When a child process (RDB save or replication) is alive, any writes to shared pages trigger copy-on-write. Vector index mutations are particularly expensive because they modify large contiguous memory regions. Keeping writers suspended reduces dirty pages and OOM risk.
+**`> 0`**: writers resume at the earlier of:
 
-## Writer Suspension and Resumption
+- Fork child dies - `OnForkChildCallback(SUBEVENT_FORK_CHILD_DIED)` -> `ResumeWriterThreadPool(ctx, /*is_expired=*/false)`.
+- Timeout - `OnServerCronCallback` checks `writer_thread_pool_suspend_watch_`; exceeded -> `ResumeWriterThreadPool(ctx, true)` + bump `writer_suspension_expired_cnt`.
 
-The writer thread pool resumes based on the `max-worker-suspension-secs` config (default: 60 seconds):
+**`<= 0`**: resume on any fork child event (born or died). Doesn't check subevent - protects against config changes mid-fork leaving workers stuck.
 
-### max-worker-suspension-secs > 0 (default behavior)
+`ResumeWriterThreadPool()` calls `writer_thread_pool_->ResumeWorkers()` and clears `writer_thread_pool_suspend_watch_`.
 
-Writers resume on whichever comes first:
+Metrics: `worker_pool_suspend_cnt`, `writer_resumed_cnt`, `reader_resumed_cnt`, `writer_suspension_expired_cnt`.
 
-1. **Fork child dies** - `OnForkChildCallback` with `SUBEVENT_FORK_CHILD_DIED` triggers `ResumeWriterThreadPool(ctx, false)`.
-2. **Timeout** - `OnServerCronCallback` checks `writer_thread_pool_suspend_watch_` duration. If it exceeds the config value, calls `ResumeWriterThreadPool(ctx, true)` and increments `writer_suspension_expired_cnt`.
+## Server cron
 
-### max-worker-suspension-secs <= 0
+`ValkeySearch::OnServerCronCallback()` each tick (default 10 Hz):
 
-Writers resume on any fork child event (born or died). The code does not check the subevent type - in case the config was modified mid-fork, it resumes on both events to avoid stuck workers.
+1. `JoinTerminatedWorkers()` on all three pools.
+2. Check writer suspension timeout and resume if needed.
+3. Cluster mode + coordinator: `GetOrRefreshClusterMap()` when stale / inconsistent.
 
-### ResumeWriterThreadPool
+`SchemaManager::OnServerCronCallback()` drives backfill across all indexes per tick. `MetadataManager::OnServerCronCallback()` runs cluster metadata maintenance.
 
-```cpp
-void ResumeWriterThreadPool(ValkeyModuleCtx *ctx, bool is_expired) {
-    writer_thread_pool_->ResumeWorkers();
-    // ... logging and metrics ...
-    writer_thread_pool_suspend_watch_ = std::nullopt;
-}
-```
-
-Clears the suspension watch so cron stops checking. Metrics tracked:
-
-| Metric | Meaning |
-|--------|---------|
-| `worker_pool_suspend_cnt` | Total fork-triggered suspensions |
-| `writer_resumed_cnt` | Total writer pool resumptions |
-| `reader_resumed_cnt` | Total reader pool resumptions |
-| `writer_suspension_expired_cnt` | Resumptions due to timeout (not child death) |
-
-## Server Cron Maintenance
-
-`ValkeySearch::OnServerCronCallback()` runs on every server cron tick (10 times per second by default):
-
-1. **Join terminated workers** - calls `JoinTerminatedWorkers()` on all three pools to clean up threads that exited but were not joined.
-2. **Writer suspension timeout** - checks if the writer pool has been suspended too long and resumes if needed.
-3. **Cluster map refresh** - in cluster mode with coordinator, calls `GetOrRefreshClusterMap()` if the map is stale or inconsistent.
-
-`SchemaManager::OnServerCronCallback()` also runs on each tick and drives backfill processing across all indexes. Additionally, if `MetadataManager` is initialized, its `OnServerCronCallback` runs for cluster metadata maintenance.
-
-## Thread Safety Annotations
-
-The codebase uses Clang's thread safety analysis annotations extensively:
+## Thread-safety annotations (Clang)
 
 | Annotation | Meaning |
 |------------|---------|
-| `ABSL_GUARDED_BY(mutex)` | Field protected by the named mutex |
-| `ABSL_LOCKS_EXCLUDED(mutex)` | Function must not hold the named mutex |
-| `ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex)` | Function requires exclusive lock |
-| `ABSL_SHARED_LOCKS_REQUIRED(mutex)` | Function requires shared lock |
-| `ABSL_LOCKABLE` | Class can be used as a lock |
-| `ABSL_SHARED_LOCK_FUNCTION()` | Function acquires shared lock |
-| `ABSL_UNLOCK_FUNCTION()` | Function releases a lock |
+| `ABSL_GUARDED_BY(m)` | field protected by mutex `m` |
+| `ABSL_LOCKS_EXCLUDED(m)` | function must NOT hold `m` |
+| `ABSL_EXCLUSIVE_LOCKS_REQUIRED(m)` | function requires exclusive lock |
+| `ABSL_SHARED_LOCKS_REQUIRED(m)` | function requires shared lock |
+| `ABSL_LOCKABLE` | type usable as lock |
+| `ABSL_SHARED_LOCK_FUNCTION()` | function acquires shared lock |
+| `ABSL_UNLOCK_FUNCTION()` | function releases lock |
 
-These annotations enable compile-time verification of lock discipline. When modifying concurrent code, ensure annotations are updated to match the actual locking protocol.
+Compile-time lock-discipline verification. Keep annotations in sync when modifying concurrent code.

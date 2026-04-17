@@ -1,237 +1,171 @@
-# Module Overview
+# Module overview
 
-Use when understanding module loading, the ValkeySearch singleton, thread pools, VMSDK abstraction, or the overall startup sequence.
+Use when reasoning about module loading, the `ValkeySearch` singleton, thread pools, VMSDK abstraction, or startup sequence.
 
-Source: `src/module_loader.cc`, `src/valkey_search.h`, `src/valkey_search.cc`, `src/version.h`, `vmsdk/src/module.h`
+Source: `src/module_loader.cc`, `src/valkey_search.{h,cc}`, `src/version.h`, `vmsdk/src/module.h`.
 
-## Contents
-
-- [Module Identity](#module-identity)
-- [VALKEY_MODULE Macro and Loading](#valkey_module-macro-and-loading)
-- [ValkeySearch Singleton](#valkeysearch-singleton)
-- [OnLoad Sequence](#onload-sequence)
-- [Thread Pools](#thread-pools)
-- [VMSDK Abstraction Layer](#vmsdk-abstraction-layer)
-- [Registered Commands](#registered-commands)
-- [Configuration System](#configuration-system)
-- [INFO Sections](#info-sections)
-
-## Module Identity
-
-The module registers itself as `search` with version 1.2.0 and requires Valkey server 9.0.1 or later. These constants live in `src/version.h`:
+## Module identity
 
 ```cpp
-constexpr auto kModuleVersion = vmsdk::ValkeyVersion(1, 2, 0);
+// src/version.h
+constexpr auto kModuleVersion        = vmsdk::ValkeyVersion(1, 2, 0);
 constexpr auto kMinimumServerVersion = vmsdk::ValkeyVersion(9, 0, 1);
+#define MODULE_RELEASE_STAGE "rc2"   // "dev" on unstable, "rcN", then "ga"
 ```
 
-The release stage (`MODULE_RELEASE_STAGE`) tracks pre-release status - `"rc2"` during release candidates, `"ga"` for stable releases. Three metadata versions exist for forward/backward compatibility:
+Module registers as `"search"` with ACL category `@search`. Three RDB metadata versions:
 
 | Version | Release | Change |
 |---------|---------|--------|
-| kRelease10 (1.0.0) | 1.0 | Initial release |
-| kRelease11 (1.1.0) | 1.1 | Cluster mode with non-zero DB numbers |
-| kRelease12 (1.2.0) | 1.2 | Full-text search |
+| `kRelease10` | 1.0 | Initial |
+| `kRelease11` | 1.1 | Cluster mode with non-zero DB numbers |
+| `kRelease12` | 1.2 | Full-text search |
 
-## VALKEY_MODULE Macro and Loading
+## `VALKEY_MODULE` macro
 
-The `VALKEY_MODULE(options)` macro in `vmsdk/src/module.h` generates the C entry points `ValkeyModule_OnLoad` and `ValkeyModule_OnUnload`. It:
+Generates `ValkeyModule_OnLoad` / `ValkeyModule_OnUnload` C entry points in `vmsdk/src/module.h`. Flow:
 
-1. Calls `vmsdk::verifyLoadedOnlyOnce()` to prevent double-loading
-2. Calls `vmsdk::TrackCurrentAsMainThread()` to mark the calling thread
-3. Delegates to `vmsdk::module::OnLoad()` which handles `ValkeyModule_Init`, ACL category registration, and command registration
-4. Invokes the `on_load` callback if present
-5. Calls `vmsdk::module::OnLoadDone()` to finalize
+1. `vmsdk::verifyLoadedOnlyOnce()`
+2. `vmsdk::TrackCurrentAsMainThread()`
+3. `vmsdk::module::OnLoad()` - `ValkeyModule_Init`, ACL category, command registration
+4. User `on_load` callback
+5. `vmsdk::module::OnLoadDone()` - finalize
 
-In `src/module_loader.cc`, the options struct configures the module:
+`src/module_loader.cc` wires the options struct (name, version, commands, info, on_load, on_unload). The `on_load` initializes `KeyspaceEventManager` and `ValkeySearch` singletons and calls `ValkeySearch::Instance().OnLoad(...)`.
 
-```cpp
-vmsdk::module::Options options = {
-    .name = "search",
-    .acl_categories = ACLPermissionFormatter({kSearchCategory}),
-    .version = kModuleVersion,
-    .minimum_valkey_server_version = kMinimumServerVersion,
-    .info = valkey_search::ModuleInfo,
-    .commands = { /* 8 commands */ },
-    .on_load = [](ValkeyModuleCtx *ctx, ValkeyModuleString **argv,
-                  int argc, const vmsdk::module::Options &options) {
-        KeyspaceEventManager::InitInstance(...);
-        ValkeySearch::InitInstance(...);
-        return ValkeySearch::Instance().OnLoad(ctx, argv, argc);
-    },
-    .on_unload = [](ValkeyModuleCtx *ctx,
-                    const vmsdk::module::Options &options) {
-        ValkeySearch::Instance().OnUnload(ctx);
-    },
-};
-VALKEY_MODULE(options);
-```
+`ACLPermissionFormatter` strips the `@` prefix from category names for Valkey's module ACL registration.
 
-The `ACLPermissionFormatter` helper strips the `@` prefix from category names (e.g., `@search` becomes `search`) for Valkey's module ACL registration.
+## `ValkeySearch` singleton
 
-## ValkeySearch Singleton
+Stored via `absl::NoDestructor<std::unique_ptr<ValkeySearch>>` in `valkey_search.cc`. Holds:
 
-`ValkeySearch` is the central singleton holding module-wide state. It is stored via `absl::NoDestructor<std::unique_ptr<ValkeySearch>>` in `valkey_search.cc`:
+- Reader / writer / utility `vmsdk::ThreadPool` instances
+- Detached `ValkeyModuleCtx` (`ctx_`) for background ops, lifetime = module
+- Optional `coordinator::Server` + `coordinator::ClientPool` (cluster mode)
+- `ClusterMap` refreshed on server cron
+- `AtForkPrepare()` / `AfterForkParent()` for thread pool suspension
+- `Info()` delegates to `vmsdk::info_field::DoSections()`
+- `GetHNSWBlockSize()` / `SetHNSWBlockSize()` - HNSW vector block allocation
 
-```cpp
-static absl::NoDestructor<std::unique_ptr<ValkeySearch>> valkey_search_instance;
-ValkeySearch &ValkeySearch::Instance() { return **valkey_search_instance; }
-```
+## `OnLoad()` sequence
 
-Key responsibilities:
+1. `ValkeyModule_GetDetachedThreadSafeContext(ctx)` for `ctx_`.
+2. `RegisterModuleType(ctx)` - RDB aux load/save callbacks.
+3. `ModuleConfigManager::Instance().Init(ctx)` - register configs.
+4. `ValkeyModule_LoadConfigs(ctx)`.
+5. `LoadAndParseArgv()` - applies module args. Sanity: reader and writer thread counts must both be enabled or both disabled.
+6. `Startup(ctx)` - creates thread pools, `SchemaManager`, optional coordinator.
+7. Module options: `HANDLE_IO_ERRORS`, `HANDLE_REPL_ASYNC_LOAD`, `NO_IMPLICIT_SIGNAL_MODIFIED`.
+8. JSON module detection for JSON index support.
+9. `VectorExternalizer::Instance().Init(ctx_)`.
+10. `vmsdk::info_field::Validate(ctx)`.
 
-- **Thread pool ownership** - owns reader, writer, and utility `vmsdk::ThreadPool` instances
-- **Background context** - holds a detached `ValkeyModuleCtx` (`ctx_`) valid for the module lifetime
-- **Coordinator** - optionally owns a gRPC `coordinator::Server` and `coordinator::ClientPool` for cluster mode
-- **Cluster map** - maintains a thread-safe `ClusterMap` refreshed on server cron
-- **Fork handling** - implements `AtForkPrepare()` and `AfterForkParent()` for thread pool suspension
-- **INFO reporting** - `Info()` delegates to `vmsdk::info_field::DoSections()` which evaluates all registered info fields
-- **HNSW block size** - `GetHNSWBlockSize()` / `SetHNSWBlockSize()` manage vector block allocation via the config system
+`OnUnload()` frees `ctx_` and destroys the reader thread pool.
 
-## OnLoad Sequence
+## Thread pools
 
-`ValkeySearch::OnLoad()` executes on the main thread during module loading:
+Three `vmsdk::ThreadPool` instances, all created in `Startup()`:
 
-1. **Acquire background context** - `ValkeyModule_GetDetachedThreadSafeContext(ctx)` for lifetime-scoped operations
-2. **Register module type** - `RegisterModuleType(ctx)` for RDB aux load/save callbacks
-3. **Initialize configs** - `ModuleConfigManager::Instance().Init(ctx)` registers all module config parameters
-4. **Load configs** - `ValkeyModule_LoadConfigs(ctx)` loads values from the server config
-5. **Parse argv** - `LoadAndParseArgv()` applies command-line module arguments with a sanity check that reader and writer threads are both enabled or both disabled
-6. **Startup** - `Startup(ctx)` creates thread pools, SchemaManager, and optionally the coordinator
-7. **Set module options** - enables `HANDLE_IO_ERRORS`, `HANDLE_REPL_ASYNC_LOAD`, `NO_IMPLICIT_SIGNAL_MODIFIED`
-8. **JSON detection** - checks if the JSON module is loaded for JSON index support
-9. **Vector externalizer** - `VectorExternalizer::Instance().Init(ctx_)` initializes vector data externalization
-10. **Validate info fields** - `vmsdk::info_field::Validate(ctx)` ensures all registered info fields are valid
+| Pool | Name prefix | Default | Config | Purpose |
+|------|-------------|---------|--------|---------|
+| Reader | `read-worker-` | CPU cores | `reader-threads` | FT.SEARCH / FT.AGGREGATE |
+| Writer | `write-worker-` | CPU cores | `writer-threads` | Mutation processing (add/modify/remove) |
+| Utility | `utility-worker-` | 1 | `utility-threads` | Background cleanup, low-priority tasks |
 
-`OnUnload()` frees the background context and destroys the reader thread pool.
+CPU defaults via `vmsdk::GetPhysicalCPUCoresCount()`. Max 1024/pool. Runtime-resizable via config modify callbacks calling `pool->Resize()`.
 
-## Thread Pools
+- `SupportParallelQueries()` = reader pool has >=1 thread. Zero reader+writer threads = single-threaded mode (main thread executes everything).
+- `ScheduleUtilityTask()` - sync fallback if no utility pool.
+- `ScheduleSearchResultCleanup()` - gated by `search-result-background-cleanup` config.
 
-Three thread pools are created in `Startup()`, each backed by `vmsdk::ThreadPool`:
+## VMSDK layer (`vmsdk/`)
 
-| Pool | Name prefix | Default size | Purpose |
-|------|-------------|-------------|---------|
-| Reader | `read-worker-` | CPU core count | FT.SEARCH / FT.AGGREGATE query execution |
-| Writer | `write-worker-` | CPU core count | Index mutation processing (add/modify/remove records) |
-| Utility | `utility-worker-` | 1 | Low-priority background tasks (search result cleanup) |
-
-Default thread counts come from `vmsdk::GetPhysicalCPUCoresCount()`. All pools are resizable at runtime via module config:
-
-```
-CONFIG SET search.reader-threads 8
-CONFIG SET search.writer-threads 8
-CONFIG SET search.utility-threads 2
-```
-
-Maximum is 1024 threads per pool. The modify callbacks call `pool->Resize(new_value)` to adjust live.
-
-### Parallel query support
-
-`SupportParallelQueries()` returns true when the reader pool has at least one thread. When both reader and writer thread counts are zero, the module operates in single-threaded mode - all mutations and queries execute synchronously on the main thread.
-
-### Utility task scheduling
-
-`ScheduleUtilityTask()` dispatches low-priority work to the utility pool. If no pool exists, the task executes synchronously. `ScheduleSearchResultCleanup()` optionally routes cleanup through the utility pool based on the `search-result-background-cleanup` config.
-
-## VMSDK Abstraction Layer
-
-The `vmsdk/` directory provides a C++ framework over the raw ValkeyModule C API:
+C++ framework over raw `ValkeyModule_*` C API. Never call `ValkeyModule_*` directly.
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| Module bootstrap | `vmsdk/src/module.h` | VALKEY_MODULE macro, command/ACL registration |
-| Thread pool | `vmsdk/src/thread_pool.h` | Worker management, suspend/resume, priority scheduling |
-| Config | `vmsdk/src/module_config.h` | Type-safe config registration (Number, Boolean, Enum, String) |
-| Managed pointers | `vmsdk/src/managed_pointers.h` | RAII wrappers for ValkeyModule objects |
-| Command parser | `vmsdk/src/command_parser.h` | Argument iteration helpers |
+| Module bootstrap | `vmsdk/src/module.h` | `VALKEY_MODULE` macro, command/ACL registration |
+| Thread pool | `vmsdk/src/thread_pool.h` | Workers, suspend/resume, priority |
+| Config | `vmsdk/src/module_config.h` | Type-safe Number/Boolean/Enum/String configs |
+| Managed pointers | `vmsdk/src/managed_pointers.h` | RAII for ValkeyModule objects |
+| Command parser | `vmsdk/src/command_parser.h` | Arg iteration |
 | Blocked client | `vmsdk/src/blocked_client.h` | Async client blocking for mutation visibility |
 | Info fields | `vmsdk/src/info.h` | Declarative INFO section registration |
-| Time-sliced mutex | `vmsdk/src/time_sliced_mrmw_mutex.h` | Multi-reader/multi-writer concurrency primitive |
-| Cluster map | `vmsdk/src/cluster_map.h` | Slot-to-node mapping for cluster mode |
-| CPU monitor | `vmsdk/src/thread_group_cpu_monitor.h` | Per-thread-group CPU usage tracking |
-| Logging | `vmsdk/src/log.h` | VMSDK_LOG macros with rate limiting |
-| Utilities | `vmsdk/src/utils.h` | String conversion, version types, main thread tracking |
+| Time-sliced mutex | `vmsdk/src/time_sliced_mrmw_mutex.h` | Multi-reader / multi-writer primitive |
+| Cluster map | `vmsdk/src/cluster_map.h` | Slot -> node mapping |
+| CPU monitor | `vmsdk/src/thread_group_cpu_monitor.h` | Per-group CPU tracking |
+| Logging | `vmsdk/src/log.h` | `VMSDK_LOG` with rate limiting |
 
-The `vmsdk::CreateCommand<Func>` template wraps command handler functions so they return `absl::Status` instead of raw integers, with automatic error reply formatting.
+`vmsdk::CreateCommand<Func>` wraps handlers to return `absl::Status` instead of C int, with auto error-reply formatting.
 
-## Registered Commands
+## Registered commands
 
-Eight commands are registered in `module_loader.cc`, all under the `@search` ACL category:
+Eight commands, all under `@search` ACL category (`FT.INTERNAL_UPDATE` is internal; `FT._LIST` / `FT._DEBUG` are admin-only):
 
-| Command | Handler | Flags | ACL Categories |
-|---------|---------|-------|----------------|
-| `FT.CREATE` | `FTCreateCmd` | write, fast, deny-oom | @search, @write, @fast |
-| `FT.DROPINDEX` | `FTDropIndexCmd` | write, fast | @search, @write, @fast |
-| `FT.INFO` | `FTInfoCmd` | readonly, fast | @search, @read, @fast |
-| `FT._LIST` | `FTListCmd` | readonly, admin | @search, @read, @slow, @admin |
-| `FT.SEARCH` | `FTSearchCmd` | readonly, deny-oom | @search, @read, @slow |
-| `FT.AGGREGATE` | `FTAggregateCmd` | readonly, deny-oom | @search, @read, @slow |
-| `FT._DEBUG` | `FTDebugCmd` | readonly, admin | @search, @read, @slow, @admin |
-| `FT.INTERNAL_UPDATE` | `FTInternalUpdateCmd` | write, admin, fast | @admin, @search, @write, @fast |
+| Command | Flags | ACL |
+|---------|-------|-----|
+| `FT.CREATE` | write, fast, deny-oom | @search, @write, @fast |
+| `FT.DROPINDEX` | write, fast | @search, @write, @fast |
+| `FT.INFO` | readonly, fast | @search, @read, @fast |
+| `FT._LIST` | readonly, admin | @search, @read, @slow, @admin |
+| `FT.SEARCH` | readonly, deny-oom | @search, @read, @slow |
+| `FT.AGGREGATE` | readonly, deny-oom | @search, @read, @slow |
+| `FT._DEBUG` | readonly, admin | @search, @read, @slow, @admin |
+| `FT.INTERNAL_UPDATE` | write, admin, fast | @admin, @search, @write, @fast |
 
-`FT.INTERNAL_UPDATE` is the cluster-internal replication command - not meant for user invocation. Commands prefixed with `_` (e.g., `FT._LIST`, `FT._DEBUG`) are internal/admin utilities.
+## Configs (`src/valkey_search_options.cc`)
 
-## Configuration System
+Registered via the `vmsdk::config` builder pattern. Access via `CONFIG GET search.<param>` / `CONFIG SET search.<param> <value>`.
 
-Module configuration parameters are registered in `src/valkey_search_options.cc` using the `vmsdk::config` builder pattern. Key parameters:
-
-| Config | Type | Default | Range | Description |
-|--------|------|---------|-------|-------------|
-| `reader-threads` | Number | CPU cores | 1-1024 | Reader thread pool size |
-| `writer-threads` | Number | CPU cores | 1-1024 | Writer thread pool size |
-| `utility-threads` | Number | 1 | 1-1024 | Utility thread pool size |
-| `max-worker-suspension-secs` | Number | 60 | 0-3600 | Max writer suspension during fork |
-| `hnsw-block-size` | Number | 10240 | 0-UINT_MAX | HNSW vector block allocation size |
-| `query-string-bytes` | Number | 10240 | 1-UINT_MAX | Max query string length |
-| `max-indexes` | Number | 1000 | 1-10000000 | Maximum number of indexes |
-| `backfill-batch-size` | Number | 10240 | 1-INT32_MAX | Keys per backfill cron tick |
-| `use-coordinator` | Boolean | false | - | Enable cluster coordinator (hidden, startup-only) |
-| `log-level` | Enum | notice | warning-debug | Module log verbosity |
-| `skip-rdb-load` | Boolean | false | - | Skip loading vector index data from RDB |
-| `hnsw-allow-replace-deleted` | Boolean | false | - | HNSW replace-deleted optimization (dev) |
-| `search-result-background-cleanup` | Boolean | false | - | Offload result cleanup to utility pool |
-| `high-priority-weight` | Number | 100 | 0-100 | Thread pool high-priority task weight |
-| `enable-partial-results` | Boolean | true | - | Default SOMESHARDS in cluster fanout |
-| `enable-consistent-results` | Boolean | false | - | Default CONSISTENT query behavior |
-| `max-term-expansions` | Number | 200 | 1-100000 | Max word expansions for prefix/suffix/fuzzy |
-| `tag-min-prefix-length` | Number | 2 | 0-UINT_MAX | Min chars before trailing `*` in TAG wildcards |
-| `prefiltering-threshold-ratio` | String | "0.001" | 0.0-1.0 | Hybrid query pre-filter vs inline threshold (dev) |
+| Config | Type | Default | Range | Purpose |
+|--------|------|---------|-------|---------|
+| `reader-threads` | Number | CPU cores | 1-1024 | FT.SEARCH / FT.AGGREGATE worker pool |
+| `writer-threads` | Number | CPU cores | 1-1024 | mutation-processing worker pool |
+| `utility-threads` | Number | 1 | 1-1024 | low-priority background pool (cleanup) |
+| `max-worker-suspension-secs` | Number | 60 | 0-3600 | timeout before writer pool resumes post-fork |
+| `hnsw-block-size` | Number | 10240 | 0-UINT_MAX | HNSW capacity growth step |
+| `query-string-bytes` | Number | 10240 | 1-UINT_MAX | max query string length |
+| `max-indexes` | Number | 1000 | 1-10000000 | total indexes across all DBs |
+| `backfill-batch-size` | Number | 10240 | 1-INT32_MAX | keys per cron tick (global) |
+| `use-coordinator` | Boolean | false | startup-only, hidden | enable cluster gRPC coordinator |
+| `log-level` | Enum | notice | warning..debug | module log verbosity |
+| `skip-rdb-load` | Boolean | false | | skip vector index data during RDB load |
+| `search-result-background-cleanup` | Boolean | false | | offload result destruction to utility pool |
+| `high-priority-weight` | Number | 100 | 0-100 | scheduling weight for high vs low priority (100 = backfill only when idle) |
+| `enable-partial-results` | Boolean | true | | default SOMESHARDS in cluster fanout |
+| `enable-consistent-results` | Boolean | false | | default CONSISTENT query behavior |
+| `max-term-expansions` | Number | 200 | 1-100000 | max word expansions for prefix/suffix/fuzzy |
+| `tag-min-prefix-length` | Number | 2 | 0-UINT_MAX | min chars before trailing `*` in TAG wildcards |
+| `prefiltering-threshold-ratio` | String | "0.001" | 0.0-1.0 (dev) | planner threshold: prefilter when filtered/total is below this |
 | `max-nonvector-search-results-fetched` | Number | 100000 | 0-UINT32_MAX | OOM guard for non-vector result sets |
 
-Access configs at runtime: `CONFIG GET search.<param>` / `CONFIG SET search.<param> <value>`.
+Verify every entry against `src/valkey_search_options.cc` for the target version; a config may have been added, removed, or had its default changed. Hidden configs (`HIDDEN_CONFIG`) don't appear in `CONFIG GET *` / module-discovery output - `use-coordinator` above is hidden and startup-only.
 
-Config types use the builder pattern with optional callbacks:
+Builder callbacks:
 
-```cpp
-// Validation callback - runs before the value is accepted
-.WithValidationCallback(ValidateHNSWBlockSize)
+- `.WithValidationCallback(fn)` - runs before value accepted.
+- `.WithModifyCallback(fn)` - runs after value applied (used to resize thread pools).
+- `.Dev()` - only available when log level is debug.
+- Hidden configs (like `use-coordinator`) - set at startup via module args, not via `CONFIG SET`.
 
-// Modify callback - runs after the value is applied
-.WithModifyCallback([](auto new_value) {
-    UpdateThreadPoolCount(pool, new_value);
-})
-```
+## INFO sections
 
-Hidden configs (like `use-coordinator`) can only be set at startup via module arguments, not via CONFIG SET. Configs marked `.Dev()` are only available when the log level is set to debug.
+Declarative `vmsdk::info_field` builders. Appear under `MODULE INFO search`.
 
-## INFO Sections
-
-The module registers declarative INFO fields using `vmsdk::info_field` builders. These appear under `MODULE INFO search`:
-
-| Section | Key fields | Visibility |
-|---------|-----------|------------|
+| Section | Fields | Visibility |
+|---------|--------|------------|
 | `memory` | `used_memory_human`, `used_memory_bytes`, `index_reclaimable_memory` | App |
-| `indexing` | `background_indexing_status` (IN_PROGRESS/NO_ACTIVITY) | App |
+| `indexing` | `background_indexing_status` (IN_PROGRESS / NO_ACTIVITY) | App |
 | `thread-pool` | `used_read_cpu`, `used_write_cpu`, `query_queue_size`, `writer_queue_size` | App |
-| `index_stats` | `number_of_indexes`, `total_indexed_documents`, attribute counts | App |
+| `index_stats` | `number_of_indexes`, `total_indexed_documents`, per-type counts | App |
 | `global_ingestion` | Per-type key/field counters, batch metrics | Dev |
-| `time_slice_mutex` | Read/write periods and time, query/upsert/delete counts | Dev |
-| `hnswlib` | Exception counts for add/remove/modify/search/create | App |
+| `time_slice_mutex` | Read/write periods, query/upsert/delete counts | Dev |
+| `hnswlib` | Exception counts per operation | App |
 | `rdb` | Load/save success/failure counts, restore progress | App/Dev |
 | `coordinator` | Internal update parse/call/process failure counts | Dev |
-| `latency` | HNSW/FLAT vector search latency samplers | App |
-| `string_interning` | Store size (unique strings count) | App |
+| `latency` | HNSW/FLAT search latency samplers | App |
+| `string_interning` | Store size | App |
 | `vector_externing` | Entry count, LRU stats, hash errors | App |
-| `query` | Success/failure counts, hybrid/prefilter/vector/text/nonvector breakdowns | App |
+| `query` | Success/failure, hybrid/prefilter/vector/text/nonvector breakdowns | App |
 
-`App` fields appear in standard INFO output; `Dev` fields appear only when `search.log-level` is set to debug or via `FT._DEBUG` commands. Fields marked `CrashSafe` can be emitted during crash reports (no locks, no allocations).
+`App` = standard INFO. `Dev` = log-level=debug or `FT._DEBUG`. Fields marked `CrashSafe` emit during crash reports (no locks, no allocations).

@@ -1,212 +1,181 @@
-# Metrics, FT.INFO, and FT._DEBUG
+# Metrics, FT.INFO, FT._DEBUG
 
-Use when working on observability, understanding the metrics system, implementing FT.INFO cluster fanout, using FT._DEBUG for diagnostics, or adding new metrics counters.
+Use when reasoning about observability, the `Metrics` singleton, FT.INFO fanout, or FT._DEBUG diagnostics.
 
-Source: `src/metrics.h`, `src/commands/ft_info.cc`, `src/commands/ft_info_parser.h`, `src/commands/ft_debug.cc`
+Source: `src/metrics.h`, `src/commands/ft_info.{cc,_parser.h}`, `src/commands/ft_debug.cc`.
 
-## Contents
+## `Metrics` singleton
 
-- Metrics Singleton (line 19)
-- Counter Categories (line 29)
-- Latency Samplers (line 87)
-- RDB Restore Progress (line 107)
-- FT.INFO Command (line 119)
-- FT.INFO Scopes and Fanout (line 138)
-- InfoIndexPartition Response (line 154)
-- FT._DEBUG Command (line 180)
-- FT._DEBUG Subcommands (line 184)
-
-## Metrics Singleton
-
-`Metrics` is a singleton class with a nested `Stats` struct holding all counters and latency samplers. Access is via:
+Meyers pattern (`static Metrics instance` in `GetInstance()`). Nested `Stats` struct holds counters and samplers. Access:
 
 ```cpp
 Metrics::GetStats().some_counter++;
 ```
 
-The singleton uses the Meyers pattern (`static Metrics instance` in `GetInstance()`). The `Stats` struct is mutable, allowing modification through the const singleton reference. This is safe because individual counters use `std::atomic` for thread-safe access from background threads, while non-atomic counters are accessed only from the main thread.
+`Stats` is mutable on the const singleton reference. Per-counter thread safety: atomics for background-thread counters; non-atomic counters are main-thread-only.
 
-## Counter Categories
+## Counter groups
 
-### Query Counters (main thread unless noted)
-- `query_successful_requests_cnt` / `query_failed_requests_cnt` - total query outcomes
-- `query_result_record_dropped_cnt` - records dropped during query processing
+### Query (main thread unless noted)
+
+- `query_{successful,failed}_requests_cnt` - overall query outcomes
+- `query_result_record_dropped_cnt` - records dropped during processing
 - `query_hybrid_requests_cnt` - hybrid (vector + filter) queries
-- `query_nonvector_requests_cnt` (atomic) - pure non-vector queries
-- `query_vector_requests_cnt` (atomic) - pure vector queries
-- `query_text_requests_cnt` (atomic) - full-text queries
-- `query_inline_filtering_requests_cnt` (atomic) - inline filter path
-- `query_prefiltering_requests_cnt` (atomic) - prefilter path
+- `query_{nonvector,vector,text}_requests_cnt` (atomic) - per query-type
+- `query_{inline_filtering,prefiltering}_requests_cnt` (atomic) - planner path taken
 
-### Index Exception Counters (all atomic)
-HNSW: `hnsw_add_exceptions_cnt`, `hnsw_remove_exceptions_cnt`, `hnsw_modify_exceptions_cnt`, `hnsw_search_exceptions_cnt`, `hnsw_create_exceptions_cnt`
+### Index exceptions (atomic - caught hnswlib exceptions)
 
-FLAT: `flat_add_exceptions_cnt`, `flat_remove_exceptions_cnt`, `flat_modify_exceptions_cnt`, `flat_search_exceptions_cnt`, `flat_create_exceptions_cnt`
+- HNSW: `hnsw_{add,remove,modify,search,create}_exceptions_cnt`
+- FLAT: `flat_{add,remove,modify,search,create}_exceptions_cnt`
 
-### Thread Pool Counters (all atomic)
-- `worker_thread_pool_suspend_cnt` - total suspensions (fork protection)
-- `writer_worker_thread_pool_resumed_cnt` / `reader_worker_thread_pool_resumed_cnt`
-- `writer_worker_thread_pool_suspension_expired_cnt`
+### Thread pool (atomic)
 
-### RDB Counters (main thread)
-- `rdb_load_success_cnt` / `rdb_load_failure_cnt`
-- `rdb_save_success_cnt` / `rdb_save_failure_cnt`
+- `worker_thread_pool_suspend_cnt` - total fork-triggered suspensions
+- `{writer,reader}_worker_thread_pool_resumed_cnt` - total resumes after suspension
+- `writer_worker_thread_pool_suspension_expired_cnt` - writer resumes due to `max-worker-suspension-secs` timeout (vs child-died signal)
 
-### Coordinator Counters (all atomic)
-Server-side: `coordinator_server_get_global_metadata_success_cnt` / `_failure_cnt`, `coordinator_server_search_index_partition_success_cnt` / `_failure_cnt`
+### RDB (main thread)
 
-Client-side: `coordinator_client_get_global_metadata_success_cnt` / `_failure_cnt`, `coordinator_client_search_index_partition_success_cnt` / `_failure_cnt`
+`rdb_{load,save}_{success,failure}_cnt` - aux-load and aux-save outcomes.
 
-Bandwidth: `coordinator_bytes_out`, `coordinator_bytes_in`
+### Coordinator (atomic)
 
-### FT.INTERNAL_UPDATE Counters (all atomic)
-- `ft_internal_update_parse_failures_cnt` - protobuf deserialization failures
-- `ft_internal_update_process_failures_cnt` - CreateEntryOnReplica failures
-- `ft_internal_update_call_failures_cnt` - ValkeyModule_Call failures
-- `process_internal_update_callback_failures_cnt` - callback invocation failures
-- `ft_internal_update_skipped_entries_cnt` - corrupted entries skipped during AOF load
+- `coordinator_server_{get_global_metadata,search_index_partition}_{success,failure}_cnt` - server-side RPC outcomes
+- `coordinator_client_{get_global_metadata,search_index_partition}_{success,failure}_cnt` - client-side RPC outcomes
+- `coordinator_bytes_{out,in}` - request/response bytes across all RPCs
 
-### Ingestion Counters (all atomic)
-- `ingest_hash_keys` / `backfill_hash_keys` - HASH key ingestion
-- `ingest_json_keys` / `backfill_json_keys` - JSON key ingestion
-- `ingest_field_vector` / `ingest_field_numeric` / `ingest_field_tag` / `ingest_field_text` - per-field-type counts
-- `ingest_last_batch_size` / `ingest_total_batches` / `ingest_total_failures`
+### FT.INTERNAL_UPDATE (atomic)
 
-### Time Slice Mutex Counters (all atomic)
-- `time_slice_read_periods` / `time_slice_read_time` (microseconds)
-- `time_slice_queries`
-- `time_slice_write_periods` / `time_slice_write_time` (microseconds)
-- `time_slice_upserts` / `time_slice_deletes`
+- `ft_internal_update_parse_failures_cnt` - proto deserialization failed
+- `ft_internal_update_process_failures_cnt` - `CreateEntryOnReplica` failed
+- `ft_internal_update_call_failures_cnt` - `ValkeyModule_Call` failed
+- `process_internal_update_callback_failures_cnt` - registered callback failed
+- `ft_internal_update_skipped_entries_cnt` - corrupted entries skipped during AOF load (gated by `skip-corrupted-internal-update-entries`)
 
-### Miscellaneous (all atomic)
-- `info_fanout_retry_cnt` / `info_fanout_fail_cnt`
-- `pause_handle_cluster_message_round_cnt`
-- `text_query_blocked_cnt` / `text_query_retry_cnt`
-- `reclaimable_memory` (main thread)
+### Ingestion (atomic)
 
-## Latency Samplers
+- `{ingest,backfill}_{hash,json}_keys` - key ingestion counts by source and data type
+- `ingest_field_{vector,numeric,tag,text}` - per-field-type counts
+- `ingest_last_batch_size`, `ingest_total_batches`, `ingest_total_failures` - batch-level metrics
 
-Latency samplers use `vmsdk::LatencySampler` with HdrHistogram-style recording (1 nanosecond to 1 second range, precision 2 - correlating to ~40KiB memory and ~1% error).
+### Time-slice mutex (atomic)
 
-Samplers are submitted via `SAMPLE_EVERY_N(100)` which creates a `StopWatch` that records every 100th call. Each sampler tracks percentiles internally.
+- `time_slice_{read,write}_periods` - number of phase activations
+- `time_slice_{read,write}_time` (us) - total time in each phase
+- `time_slice_queries`, `time_slice_upserts`, `time_slice_deletes` - operation counts per phase
 
-Index search latency:
+### Misc (atomic)
+
+- `info_fanout_{retry,fail}_cnt` - cluster FT.INFO fanout outcomes
+- `pause_handle_cluster_message_round_cnt` - cluster-bus message pauses (test hook)
+- `text_query_{blocked,retry}_cnt` - text-query contention events
+- `reclaimable_memory` (main thread) - memory recoverable by GC
+
+## Latency samplers
+
+`vmsdk::LatencySampler` (`vmsdk/src/latency_sampler.h`) - wraps `hdr_histogram` with range 1 ns to 1 s, `LATENCY_PRECISION = 2` (two significant figures, ~1% relative error). **Lazily allocated** - no memory until the first sample is submitted. Submit via `SAMPLE_EVERY_N(100)` - a thread-local counter yields a `StopWatch` once per N calls (zero-indexed), destructor records on destruction. Success / failure tracked separately.
+
 - `hnsw_vector_index_search_latency`
 - `flat_vector_index_search_latency`
+- Coordinator client: `{get_global_metadata,search_index_partition}_{success,failure}_latency` (4 samplers)
+- Coordinator server: `{get_global_metadata,search_index_partition}_{success,failure}_latency` (4 samplers)
 
-Coordinator client latency (4 samplers):
-- `coordinator_client_get_global_metadata_success_latency` / `_failure_latency`
-- `coordinator_client_search_index_partition_success_latency` / `_failure_latency`
+## RDB restore progress (atomic)
 
-Coordinator server latency (4 samplers):
-- `coordinator_server_get_global_metadata_success_latency` / `_failure_latency`
-- `coordinator_server_search_index_partition_success_latency` / `_failure_latency`
+- `rdb_restore_in_progress` (bool)
+- `rdb_restore_total_indexes`, `rdb_restore_completed_indexes`
+- `rdb_restore_current_index_keys_total`, `_loaded`
+- `rdb_restore_backpressure_wait_cycles`
 
-Success and failure latencies are tracked separately to distinguish healthy request times from error-path times.
+Set at `PerformRDBLoad` start, cleared on completion.
 
-## RDB Restore Progress
+## FT.INFO
 
-Atomic progress counters enable monitoring of RDB load progress:
-
-- `rdb_restore_in_progress` (atomic bool) - true during `PerformRDBLoad`
-- `rdb_restore_total_indexes` - total section count from RDB header
-- `rdb_restore_completed_indexes` - incremented per completed section
-- `rdb_restore_current_index_keys_total` / `rdb_restore_current_index_keys_loaded` - per-index key progress
-- `rdb_restore_backpressure_wait_cycles` - backpressure events during restore
-
-These counters are set at the start of `PerformRDBLoad` and cleared when loading completes. They allow external monitoring tools (and FT.INFO) to report restore progress.
-
-## FT.INFO Command
-
-`FTInfoCmd` in `ft_info.cc` parses the command via `InfoCommand::ParseCommand` and executes via `InfoCommand::Execute`.
-
-The `InfoCommand` struct (`ft_info_parser.h`):
+`FTInfoCmd` -> `InfoCommand::ParseCommand` -> `InfoCommand::Execute`.
 
 ```cpp
 struct InfoCommand {
   std::shared_ptr<IndexSchema> index_schema;
   std::string index_schema_name;
   InfoScope scope{InfoScope::kLocal};
-  bool enable_partial_results;  // default from config
-  bool require_consistency;     // default from config
+  bool enable_partial_results;  // config default
+  bool require_consistency;     // config default
   uint32_t timeout_ms{0};
 };
 ```
 
-The command supports at minimum `FT.INFO <index_name>`. Additional options control scope, consistency, and timeouts.
+Minimum syntax: `FT.INFO <index>`.
 
-## FT.INFO Scopes and Fanout
+### Scopes
 
-Three scopes defined in `InfoScope`:
+- **`kLocal`** - local shard only.
+- **`kPrimary`** - fan out to all primaries.
+- **`kCluster`** - fan out to all cluster nodes.
 
-- **kLocal** - query only the local shard's IndexSchema
-- **kPrimary** - fan out to all primary nodes (cluster mode)
-- **kCluster** - fan out to all cluster nodes
+Cluster-mode fanout uses gRPC `InfoIndexPartition` RPCs. Fanout ops in `src/query/cluster_info_fanout_operation.h` + `src/query/primary_info_fanout_operation.h`.
 
-In cluster mode, `FT.INFO` fans out via gRPC `InfoIndexPartition` RPCs. The response aggregates data from all shards. Fanout operations are implemented in `src/query/cluster_info_fanout_operation.h` and `src/query/primary_info_fanout_operation.h`.
+### Timeouts
 
-Configurable timeouts:
-- `ft-info-timeout-ms` - overall FT.INFO timeout (default 5000ms, range 100-300000ms)
-- `ft-info-rpc-timeout-ms` - per-RPC timeout (default 2500ms, range 100-300000ms)
+| Config | Default | Range |
+|--------|---------|-------|
+| `ft-info-timeout-ms` | 5000 | 100-300000 |
+| `ft-info-rpc-timeout-ms` | 2500 | 100-300000 |
 
-Fanout error handling is tracked via `info_fanout_retry_cnt` and `info_fanout_fail_cnt` in Metrics.
+Errors -> `info_fanout_{retry,fail}_cnt`.
 
-## InfoIndexPartition Response
+## `InfoIndexPartitionResponse` (gRPC)
 
-The gRPC `InfoIndexPartitionResponse` carries per-shard data:
+| Field | Type | Meaning |
+|-------|------|---------|
+| `exists` | bool | index on this shard |
+| `index_name` | string | |
+| `db_num` | uint32 | |
+| `num_docs` | uint64 | document count |
+| `num_records` | uint64 | index records across attributes |
+| `hash_indexing_failures` | uint64 | keys that failed indexing |
+| `backfill_scanned_count` | uint64 | |
+| `backfill_db_size` | uint64 | |
+| `backfill_inqueue_tasks` | uint64 | |
+| `backfill_complete_percent` | float | |
+| `backfill_in_progress` | bool | |
+| `mutation_queue_size` | uint64 | |
+| `recent_mutations_queue_delay` | uint64 | |
+| `state` | string | |
+| `error` | string | |
+| `error_type` | `FanoutErrorType` | |
+| `attributes` | repeated `AttributeInfo` | identifier, alias, `user_indexed_memory`, `num_records` |
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `exists` | bool | Whether the index exists on this shard |
-| `index_name` | string | Index name |
-| `db_num` | uint32 | Database number |
-| `num_docs` | uint64 | Document count |
-| `num_records` | uint64 | Total index records across all attributes |
-| `hash_indexing_failures` | uint64 | Keys that failed indexing |
-| `backfill_scanned_count` | uint64 | Keys scanned during backfill |
-| `backfill_db_size` | uint64 | Total DB size for backfill |
-| `backfill_inqueue_tasks` | uint64 | Pending backfill tasks |
-| `backfill_complete_percent` | float | Backfill completion percentage |
-| `backfill_in_progress` | bool | Whether backfill is active |
-| `mutation_queue_size` | uint64 | Pending mutations |
-| `recent_mutations_queue_delay` | uint64 | Queue processing delay |
-| `state` | string | Index state |
-| `error` | string | Error description if any |
-| `error_type` | FanoutErrorType | Error classification |
-| `attributes` | repeated AttributeInfo | Per-attribute details |
+## FT._DEBUG
 
-Each `AttributeInfo` contains identifier, alias, `user_indexed_memory`, and `num_records`.
+Debug-only, gated by `vmsdk::config::IsDebugModeEnabled()`. Debug off -> replies "ERR unknown command" (appears non-existent). All args logged at WARNING.
 
-## FT._DEBUG Command
+| Subcommand | Notes |
+|------------|-------|
+| `SHOW_INFO` | dump info variable metadata |
+| `CONTROLLED_VARIABLE SET/GET/LIST` | test control variables |
+| `PAUSEPOINT SET/RESET/TEST/LIST` | thread pausing for tests |
+| `TEXTINFO <index> ...` | schema-level text index info |
+| `STRINGPOOLSTATS` | string interning pool stats |
+| `SHOW_METADATA` | `MetadataManager` table |
+| `SHOW_INDEXSCHEMAS` | IndexSchema tables |
+| `LIST_METRICS [APP\|DEV] [NAMES_ONLY]` | |
+| `LIST_CONFIGS [VERBOSE] [APP\|DEV\|HIDDEN]` | |
+| `HELP` | |
 
-`FTDebugCmd` is a debug-only command gated by `vmsdk::config::IsDebugModeEnabled()`. When debug mode is off, it replies with "ERR unknown command" to appear non-existent. All arguments are logged at WARNING level.
+### Pausepoints
 
-## FT._DEBUG Subcommands
+`vmsdk::debug::PausePoint("label")` at strategic locations. If SET, the calling thread blocks. Tests: TEST polls until threads are paused, RESET releases. **Never use on main thread or while holding locks.**
 
-| Subcommand | Syntax | Description |
-|------------|--------|-------------|
-| `SHOW_INFO` | `FT._DEBUG SHOW_INFO` | Dump info variable metadata |
-| `CONTROLLED_VARIABLE SET` | `FT._DEBUG CONTROLLED_VARIABLE SET <name> <value>` | Set a test control variable |
-| `CONTROLLED_VARIABLE GET` | `FT._DEBUG CONTROLLED_VARIABLE GET <name>` | Get a test control variable |
-| `CONTROLLED_VARIABLE LIST` | `FT._DEBUG CONTROLLED_VARIABLE LIST` | List all controlled variables |
-| `PAUSEPOINT SET` | `FT._DEBUG PAUSEPOINT SET <name>` | Enable a named pausepoint |
-| `PAUSEPOINT RESET` | `FT._DEBUG PAUSEPOINT RESET <name>` | Release threads paused at this point |
-| `PAUSEPOINT TEST` | `FT._DEBUG PAUSEPOINT TEST <name>` | Return count of threads waiting |
-| `PAUSEPOINT LIST` | `FT._DEBUG PAUSEPOINT LIST` | List all pausepoints |
-| `TEXTINFO` | `FT._DEBUG TEXTINFO <index> ...` | Schema-level text index info |
-| `STRINGPOOLSTATS` | `FT._DEBUG STRINGPOOLSTATS` | String interning pool statistics |
-| `SHOW_METADATA` | `FT._DEBUG SHOW_METADATA` | Dump MetadataManager table |
-| `SHOW_INDEXSCHEMAS` | `FT._DEBUG SHOW_INDEXSCHEMAS` | Dump IndexSchema tables |
-| `LIST_METRICS` | `FT._DEBUG LIST_METRICS [APP\|DEV] [NAMES_ONLY]` | List app or dev metrics |
-| `LIST_CONFIGS` | `FT._DEBUG LIST_CONFIGS [VERBOSE] [APP\|DEV\|HIDDEN]` | List config entries |
-| `HELP` | `FT._DEBUG HELP` | Show available subcommands |
+### Controlled variables
 
-**Pausepoints** are a testing mechanism. Background threads call `vmsdk::debug::PausePoint("label")` at strategic locations. If a pausepoint is SET, the calling thread blocks. Tests use TEST to poll until threads are paused, then RESET to release them. Pausepoints must not be used on the main thread or while holding locks.
+`CONTROLLED_BOOLEAN`, `CONTROLLED_SIZE_T` - debug-only, not replicated. Examples (coordinator): `ForceRemoteFailCount` (forces gRPC failures), `ForceIndexNotFoundError`, `PauseHandleClusterMessage`.
 
-**Controlled Variables** (`CONTROLLED_BOOLEAN`, `CONTROLLED_SIZE_T`) are debug-only config values used in test code. Examples in the coordinator: `ForceRemoteFailCount` forces gRPC failures, `ForceIndexNotFoundError` simulates missing indexes, `PauseHandleClusterMessage` delays cluster message processing. These are not replicated.
+### `STRINGPOOLSTATS`
 
-**STRINGPOOLSTATS** returns 4 arrays: inline string stats, out-of-line string stats, by-refcount histogram, and by-size histogram. Each bucket reports Count, Bytes, AvgSize, Allocated, AvgAllocated, and Utilization percentage. Results are also logged at NOTICE level.
+Four arrays: inline-string stats, out-of-line stats, by-refcount histogram, by-size histogram. Each bucket: Count, Bytes, AvgSize, Allocated, AvgAllocated, Utilization%. Also logged at NOTICE.
 
-**LIST_METRICS** distinguishes APP (user-facing) and DEV (internal) metrics. The optional NAMES_ONLY flag returns only metric names without values.
+### `LIST_METRICS` / `LIST_CONFIGS`
 
-**LIST_CONFIGS** supports VERBOSE mode (detailed metadata per config) and filtering by APP, DEV, or HIDDEN visibility categories.
+- LIST_METRICS: APP vs DEV. `NAMES_ONLY` for names without values.
+- LIST_CONFIGS: `VERBOSE` for detailed metadata, filters on APP / DEV / HIDDEN.
