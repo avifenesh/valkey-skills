@@ -12,11 +12,11 @@ Source: `.github/workflows/`, `.devcontainer/Dockerfile`, `ci/build_ubuntu.sh`.
 
 | Workflow | File | What | Timeout |
 |----------|------|------|---------|
-| Unit Tests | `unittests.yml` | GoogleTest binaries | default |
-| Unit Tests (ASan) | `unittests-asan.yml` | AddressSanitizer unit | default |
-| Unit Tests (TSan) | `unittests-tsan.yml` | ThreadSanitizer unit | default |
-| Integration Tests | `integration_tests.yml` | Python suite | 140 min |
-| Integration Tests (ASan) | `integration_tests-asan.yml` | | 140 min |
+| Unit Tests | `unittests.yml` | builds module, runs all GoogleTest binaries | default |
+| Unit Tests (ASan) | `unittests-asan.yml` | builds with AddressSanitizer, runs unit tests | default |
+| Unit Tests (TSan) | `unittests-tsan.yml` | builds with ThreadSanitizer, runs unit tests | default |
+| Integration Tests | `integration_tests.yml` | builds module, runs full Python integration suite | 140 min |
+| Integration Tests (ASan) | `integration_tests-asan.yml` | integration with AddressSanitizer | 140 min |
 
 ### On source file changes
 

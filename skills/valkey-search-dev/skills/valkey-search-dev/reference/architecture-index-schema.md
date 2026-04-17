@@ -122,7 +122,7 @@ struct BackfillJob {
     vmsdk::StopWatch stopwatch;
     bool paused_by_oom{false};
     bool IsScanDone() const { return scan_ctx.get() == nullptr; }
-    void MarkScanAsDone()   { scan_ctx.reset(); cursor.reset(); }
+    void MarkScanAsDone() { scan_ctx.reset(); cursor.reset(); }
 };
 ```
 
@@ -141,12 +141,12 @@ Reported progress: `GetBackfillPercent() = (scanned - in_queue) / db_size`. `bac
 
 Time-slices between read and write phases. Asymmetric quotas prioritize query latency over mutation throughput (10:1 read vs write).
 
-| Parameter | Value |
-|-----------|-------|
-| `read_quota_duration` | 10 ms |
-| `read_switch_grace_period` | 1 ms |
-| `write_quota_duration` | 1 ms |
-| `write_switch_grace_period` | 200 us |
+| Parameter | Value | Effect |
+|-----------|-------|--------|
+| `read_quota_duration` | 10 ms | max read phase when writers are waiting |
+| `read_switch_grace_period` | 1 ms | read inactivity before switching to write |
+| `write_quota_duration` | 1 ms | max write phase when readers are waiting |
+| `write_switch_grace_period` | 200 us | write inactivity before switching to read |
 
 Queries take `ReaderMutexLock`. Writers take `WriterMutexLock`. Multiple concurrent readers or multiple concurrent writers (on different keys) are allowed; `mutated_records_mutex_` arbitrates writers on the same key.
 

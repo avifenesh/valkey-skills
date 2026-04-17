@@ -18,46 +18,59 @@ Metrics::GetStats().some_counter++;
 
 ### Query (main thread unless noted)
 
-- `query_successful_requests_cnt`, `query_failed_requests_cnt`
-- `query_result_record_dropped_cnt`
-- `query_hybrid_requests_cnt`
-- `query_nonvector_requests_cnt`, `query_vector_requests_cnt`, `query_text_requests_cnt` (atomic)
-- `query_inline_filtering_requests_cnt`, `query_prefiltering_requests_cnt` (atomic)
+- `query_{successful,failed}_requests_cnt` - overall query outcomes
+- `query_result_record_dropped_cnt` - records dropped during processing
+- `query_hybrid_requests_cnt` - hybrid (vector + filter) queries
+- `query_{nonvector,vector,text}_requests_cnt` (atomic) - per query-type
+- `query_{inline_filtering,prefiltering}_requests_cnt` (atomic) - planner path taken
 
-### Index exceptions (atomic)
+### Index exceptions (atomic - caught hnswlib exceptions)
 
 - HNSW: `hnsw_{add,remove,modify,search,create}_exceptions_cnt`
 - FLAT: `flat_{add,remove,modify,search,create}_exceptions_cnt`
 
 ### Thread pool (atomic)
 
-`worker_thread_pool_suspend_cnt`, `writer_worker_thread_pool_resumed_cnt`, `reader_worker_thread_pool_resumed_cnt`, `writer_worker_thread_pool_suspension_expired_cnt`.
+- `worker_thread_pool_suspend_cnt` - total fork-triggered suspensions
+- `{writer,reader}_worker_thread_pool_resumed_cnt` - total resumes after suspension
+- `writer_worker_thread_pool_suspension_expired_cnt` - writer resumes due to `max-worker-suspension-secs` timeout (vs child-died signal)
 
 ### RDB (main thread)
 
-`rdb_{load,save}_{success,failure}_cnt`.
+`rdb_{load,save}_{success,failure}_cnt` - aux-load and aux-save outcomes.
 
 ### Coordinator (atomic)
 
-Server: `coordinator_server_{get_global_metadata,search_index_partition}_{success,failure}_cnt`.
-Client: `coordinator_client_{get_global_metadata,search_index_partition}_{success,failure}_cnt`.
-Bytes: `coordinator_bytes_{out,in}`.
+- `coordinator_server_{get_global_metadata,search_index_partition}_{success,failure}_cnt` - server-side RPC outcomes
+- `coordinator_client_{get_global_metadata,search_index_partition}_{success,failure}_cnt` - client-side RPC outcomes
+- `coordinator_bytes_{out,in}` - request/response bytes across all RPCs
 
 ### FT.INTERNAL_UPDATE (atomic)
 
-`ft_internal_update_{parse,process,call}_failures_cnt`, `process_internal_update_callback_failures_cnt`, `ft_internal_update_skipped_entries_cnt`.
+- `ft_internal_update_parse_failures_cnt` - proto deserialization failed
+- `ft_internal_update_process_failures_cnt` - `CreateEntryOnReplica` failed
+- `ft_internal_update_call_failures_cnt` - `ValkeyModule_Call` failed
+- `process_internal_update_callback_failures_cnt` - registered callback failed
+- `ft_internal_update_skipped_entries_cnt` - corrupted entries skipped during AOF load (gated by `skip-corrupted-internal-update-entries`)
 
 ### Ingestion (atomic)
 
-`ingest_hash_keys`, `backfill_hash_keys`, `ingest_json_keys`, `backfill_json_keys`, `ingest_field_{vector,numeric,tag,text}`, `ingest_last_batch_size`, `ingest_total_batches`, `ingest_total_failures`.
+- `{ingest,backfill}_{hash,json}_keys` - key ingestion counts by source and data type
+- `ingest_field_{vector,numeric,tag,text}` - per-field-type counts
+- `ingest_last_batch_size`, `ingest_total_batches`, `ingest_total_failures` - batch-level metrics
 
 ### Time-slice mutex (atomic)
 
-`time_slice_read_periods`, `time_slice_read_time` (us), `time_slice_queries`, `time_slice_write_periods`, `time_slice_write_time` (us), `time_slice_upserts`, `time_slice_deletes`.
+- `time_slice_{read,write}_periods` - number of phase activations
+- `time_slice_{read,write}_time` (us) - total time in each phase
+- `time_slice_queries`, `time_slice_upserts`, `time_slice_deletes` - operation counts per phase
 
 ### Misc (atomic)
 
-`info_fanout_{retry,fail}_cnt`, `pause_handle_cluster_message_round_cnt`, `text_query_{blocked,retry}_cnt`, `reclaimable_memory` (main thread).
+- `info_fanout_{retry,fail}_cnt` - cluster FT.INFO fanout outcomes
+- `pause_handle_cluster_message_round_cnt` - cluster-bus message pauses (test hook)
+- `text_query_{blocked,retry}_cnt` - text-query contention events
+- `reclaimable_memory` (main thread) - memory recoverable by GC
 
 ## Latency samplers
 

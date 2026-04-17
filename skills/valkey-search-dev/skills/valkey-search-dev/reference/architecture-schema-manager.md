@@ -41,10 +41,10 @@ vmsdk::MainThreadAccessGuard<...> staged_db_to_index_schemas_;
 vmsdk::MainThreadAccessGuard<bool> staging_indices_due_to_repl_load_;
 ```
 
-| Config | Default | Max |
-|--------|---------|-----|
-| `max-indexes` | 1000 | 10 000 000 |
-| `backfill-batch-size` | 10240 | INT32_MAX (global across all indexes) |
+| Config | Default | Max | Purpose |
+|--------|---------|-----|---------|
+| `max-indexes` | 1000 | 10 000 000 | total indexes across all databases |
+| `backfill-batch-size` | 10240 | INT32_MAX | keys scanned per cron tick (global budget) |
 
 ## `CreateIndexSchema` (FT.CREATE)
 

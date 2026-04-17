@@ -75,12 +75,12 @@ Per-`IndexSchema`. Either multiple concurrent readers OR multiple concurrent wri
 
 Quotas (10:1 read:write - prioritize query latency):
 
-| Parameter | Value |
-|-----------|-------|
-| `read_quota_duration` | 10 ms |
-| `read_switch_grace_period` | 1 ms |
-| `write_quota_duration` | 1 ms |
-| `write_switch_grace_period` | 200 us |
+| Parameter | Value | Meaning |
+|-----------|-------|---------|
+| `read_quota_duration` | 10 ms | max read phase when writers are waiting |
+| `read_switch_grace_period` | 1 ms | read inactivity before switching to write |
+| `write_quota_duration` | 1 ms | max write phase when readers are waiting |
+| `write_switch_grace_period` | 200 us | write inactivity before switching to read |
 
 Lock construction:
 

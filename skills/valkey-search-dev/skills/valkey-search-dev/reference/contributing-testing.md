@@ -59,12 +59,33 @@ In `integration/`. Load `libsearch.so` into a real Valkey process and exercise c
 
 ### Coverage
 
-- Core: `test_vss_basic`, `test_fulltext*`, `test_ft_create*`, `test_ft_dropindex*`, `test_postfilter`, `test_filter_expressions`, `test_non_vector`, `test_query_parser`.
-- Persistence / modules: `test_saverestore`, `test_endurance_save_restore`, `test_rdb_load_*`, `test_json_operations`, `test_cross_module_compat`.
-- Behaviour: `test_oom_handling`, `test_eviction`, `test_expired`, `test_copy`, `test_multi_lua`, `test_flushall`, `test_cancel`, `test_debug`, `test_aggregate_metrics`.
-- Cluster: `test_info*`, `test_multidb_search`, `test_dbnum`, `test_singleslot`, `test_versioning`.
-- Security: `test_valkey_search_acl`.
-- `compatibility/` subtree for cross-version.
+| File | Covers |
+|------|--------|
+| `test_vss_basic.py` | vector similarity search fundamentals |
+| `test_fulltext*.py` | full-text search, space performance, inflight blocking |
+| `test_ft_create*.py` | index creation and consistency |
+| `test_ft_dropindex*.py` | index deletion and consistency |
+| `test_postfilter.py` | post-filter expression evaluation |
+| `test_filter_expressions.py` | pre-filter predicates |
+| `test_non_vector.py` | non-vector field queries |
+| `test_query_parser.py` | query parsing edge cases |
+| `test_saverestore.py`, `test_endurance_save_restore.py` | RDB persistence round-trips |
+| `test_rdb_load_*.py` | RDB compatibility (v1.0, without module) |
+| `test_json_operations.py`, `test_cross_module_compat.py` | JSON module cross-compatibility |
+| `test_oom_handling.py` | out-of-memory behavior |
+| `test_eviction.py`, `test_expired.py` | key eviction and expiration |
+| `test_copy.py` | key copy behavior |
+| `test_multi_lua.py` | MULTI/EXEC and Lua interactions |
+| `test_flushall.py` | FLUSHALL behavior |
+| `test_cancel.py` | query cancellation |
+| `test_debug.py` | FT._DEBUG command |
+| `test_aggregate_metrics.py` | FT.AGGREGATE metrics |
+| `test_info*.py` | FT.INFO (cluster, primary, local) |
+| `test_multidb_search.py`, `test_dbnum.py` | multi-database |
+| `test_singleslot.py` | single-slot query behavior |
+| `test_versioning.py` | module versioning |
+| `test_valkey_search_acl.py` | ACL permission enforcement |
+| `compatibility/` | cross-version compatibility subtree |
 
 ### Running
 

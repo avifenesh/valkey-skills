@@ -117,28 +117,30 @@ Eight commands, all under `@search` ACL category (`FT.INTERNAL_UPDATE` is intern
 
 Registered via the `vmsdk::config` builder pattern. Access via `CONFIG GET search.<param>` / `CONFIG SET search.<param> <value>`.
 
-| Config | Type | Default | Range |
-|--------|------|---------|-------|
-| `reader-threads` | Number | CPU cores | 1-1024 |
-| `writer-threads` | Number | CPU cores | 1-1024 |
-| `utility-threads` | Number | 1 | 1-1024 |
-| `max-worker-suspension-secs` | Number | 60 | 0-3600 |
-| `hnsw-block-size` | Number | 10240 | 0-UINT_MAX |
-| `query-string-bytes` | Number | 10240 | 1-UINT_MAX |
-| `max-indexes` | Number | 1000 | 1-10000000 |
-| `backfill-batch-size` | Number | 10240 | 1-INT32_MAX |
-| `use-coordinator` | Boolean | false | startup-only, hidden |
-| `log-level` | Enum | notice | warning..debug |
-| `skip-rdb-load` | Boolean | false | |
-| `hnsw-allow-replace-deleted` | Boolean | false | dev |
-| `search-result-background-cleanup` | Boolean | false | |
-| `high-priority-weight` | Number | 100 | 0-100 |
-| `enable-partial-results` | Boolean | true | default SOMESHARDS |
-| `enable-consistent-results` | Boolean | false | default CONSISTENT |
-| `max-term-expansions` | Number | 200 | 1-100000 |
-| `tag-min-prefix-length` | Number | 2 | 0-UINT_MAX |
-| `prefiltering-threshold-ratio` | String | "0.001" | 0.0-1.0 (dev) |
-| `max-nonvector-search-results-fetched` | Number | 100000 | 0-UINT32_MAX |
+| Config | Type | Default | Range | Purpose |
+|--------|------|---------|-------|---------|
+| `reader-threads` | Number | CPU cores | 1-1024 | FT.SEARCH / FT.AGGREGATE worker pool |
+| `writer-threads` | Number | CPU cores | 1-1024 | mutation-processing worker pool |
+| `utility-threads` | Number | 1 | 1-1024 | low-priority background pool (cleanup) |
+| `max-worker-suspension-secs` | Number | 60 | 0-3600 | timeout before writer pool resumes post-fork |
+| `hnsw-block-size` | Number | 10240 | 0-UINT_MAX | HNSW capacity growth step |
+| `query-string-bytes` | Number | 10240 | 1-UINT_MAX | max query string length |
+| `max-indexes` | Number | 1000 | 1-10000000 | total indexes across all DBs |
+| `backfill-batch-size` | Number | 10240 | 1-INT32_MAX | keys per cron tick (global) |
+| `use-coordinator` | Boolean | false | startup-only, hidden | enable cluster gRPC coordinator |
+| `log-level` | Enum | notice | warning..debug | module log verbosity |
+| `skip-rdb-load` | Boolean | false | | skip vector index data during RDB load |
+| `hnsw-allow-replace-deleted` | Boolean | false | dev | reuse deleted HNSW slots before resize |
+| `search-result-background-cleanup` | Boolean | false | | offload result destruction to utility pool |
+| `high-priority-weight` | Number | 100 | 0-100 | scheduling weight for high vs low priority (100 = backfill only when idle) |
+| `enable-partial-results` | Boolean | true | | default SOMESHARDS in cluster fanout |
+| `enable-consistent-results` | Boolean | false | | default CONSISTENT query behavior |
+| `max-term-expansions` | Number | 200 | 1-100000 | max word expansions for prefix/suffix/fuzzy |
+| `tag-min-prefix-length` | Number | 2 | 0-UINT_MAX | min chars before trailing `*` in TAG wildcards |
+| `prefiltering-threshold-ratio` | String | "0.001" | 0.0-1.0 (dev) | planner threshold: prefilter when filtered/total is below this |
+| `max-nonvector-search-results-fetched` | Number | 100000 | 0-UINT32_MAX | OOM guard for non-vector result sets |
+
+Verify every entry against `src/valkey_search_options.cc` for the target version; a config may have been added, removed, or had its default changed. Hidden configs (`HIDDEN_CONFIG`) don't appear in `CONFIG GET *` / module-discovery output - `use-coordinator` above is hidden and startup-only.
 
 Builder callbacks:
 
