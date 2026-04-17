@@ -1,169 +1,56 @@
 ---
 name: valkey-ops
-description: "Use when deploying, configuring, monitoring, or troubleshooting self-hosted Valkey. Covers Sentinel, cluster, persistence, replication, security, Kubernetes, performance tuning. Not for app development (valkey) or server internals (valkey-dev)."
-version: 1.0.0
+description: "Use when deploying, configuring, monitoring, or troubleshooting self-hosted Valkey. Covers Sentinel, cluster, persistence, replication, security, Kubernetes, performance tuning. Only what diverges from Redis or is genuinely novel; Redis-baseline ops knowledge is assumed. Not for app development (valkey) or server internals (valkey-dev)."
+version: 2.0.0
 argument-hint: "[config, deploy, monitor, or troubleshoot topic]"
 ---
 
 # Valkey Operations Reference
 
-## Routing
+Organized by operational topic. Each file covers a coherent work area; Redis-baseline behavior is assumed and not repeated. All files target Valkey 9.0.3.
 
-- Install, build from source, package manager, Docker, Compose, systemd, bare metal, multi-instance -> Deployment
-- Config tuning, maxmemory, eviction, encoding thresholds, lazyfree, logging, CPU pinning, workload presets, pubsub buffers -> Configuration
-- High availability, Sentinel, failover detection, quorum, split-brain, min-replicas -> Sentinel
-- Cluster setup, hash slots, resharding, node add/remove, atomic migration, replica migration, consistency -> Cluster
-- Persistence, RDB, AOF, hybrid, fsync, BGSAVE, backup, restore, disaster recovery -> Persistence
-- Replication, primary-replica, REPLICAOF, backlog, diskless sync, dual-channel, replication lag -> Replication
-- ACL, TLS, certificates, mutual TLS, protected mode, rename-command, hardening, network security -> Security
-- Monitoring, INFO, metrics, Prometheus, Grafana, alerting, commandlog, slow log -> Monitoring
-- Performance, I/O threads, memory fragmentation, defragmentation, latency, durability, client-side caching, CLIENT TRACKING, benchmarking -> Performance
-- OOM, out of memory, crashes, slow commands, replication lag diagnosis, cluster partitions, network splits, diagnostics -> Troubleshooting
-- Version upgrades, compatibility, Redis to Valkey migration, rolling upgrade -> Upgrades
-- Kubernetes, Helm, operators, StatefulSet, PVC, probes, resource sizing, kernel tuning -> Kubernetes
-- Capacity planning, memory sizing, connection planning, cluster sizing -> Operations
-- Pre-launch check, production readiness, go-live checklist -> Production Checklist
+## Route by work area
 
+| Working on... | File | Grep-friendly topics inside |
+|---------------|------|-----------------------------|
+| Install, build flags, binaries, allocator, systemd, bare metal, Docker images (official vs Bitnami), Compose patterns | `reference/deployment.md` | `## Versions`, `## Build flags`, `## Bare metal`, `## Docker`, `## Docker Compose` |
+| `valkey.conf` audit/tuning, maxmemory, eviction, encoding thresholds, lazy-free, logging, COMMANDLOG, CPU pinning | `reference/configuration.md` | `## Network`, `## Memory and eviction`, `## Encoding thresholds`, `## Lazy-free`, `## COMMANDLOG`, `## Replication`, `## Cluster` |
+| Sentinel deployment, timing, cross-DC, NAT, coordinated failover (9.0+), split-brain prevention, `min-replicas-to-write` | `reference/sentinel.md` | `## Deployment config`, `## Timing knobs`, `## Cross-DC placement`, `## Coordinated failover (Valkey 9.0+)`, `## Write safety` |
+| Cluster setup, failover modes, atomic slot migration (`CLUSTER MIGRATESLOTS`, 9.0+), resharding, rolling restart, consistency | `reference/cluster.md` | `## Setup`, `## CLUSTER FAILOVER modes`, `## Atomic slot migration (9.0+)`, `## Rolling restart`, `## Consistency` |
+| RDB config, `VALKEY080` magic, AOF multi-part, hybrid, backup strategies, PITR, disaster recovery | `reference/persistence.md` | `## RDB - config`, `## RDB - magic and version`, `## AOF - multi-part architecture`, `## Disaster recovery` |
+| Primary/replica setup, backlog sizing, diskless, dual-channel (8.0+), NAT announce, data-loss patterns | `reference/replication.md` | `## Terminology`, `## Backlog sizing`, `## Dual-channel replication (8.0+)`, `## Incident patterns` |
+| ACL (alldbs, `%R~`/`%W~`, Sentinel user), TLS (mTLS, `tls-auth-clients-user`, `tls-auto-reload-interval`), hardening checklist | `reference/security.md` | `## ACL - Valkey-only pieces`, `## TLS - tls-auth-clients-user`, `## TLS - tls-auto-reload-interval`, `## Hardening checklist` |
+| INFO fields, Prometheus exporter, Grafana, alerting, COMMANDLOG command family | `reference/monitoring.md` | `## INFO sections`, `## Prometheus exporter`, `## COMMANDLOG (replaces SLOWLOG)`, `## Alerting` |
+| I/O threads sizing, memory divergence (hash-max-listpack 512), active defrag, 9.0 perf features, kernel knobs, client-side caching, benchmarking | `reference/performance.md` | `## I/O threads`, `## Memory - divergent encoding`, `## Active defragmentation`, `## Valkey 9.0 performance features`, `## Client-side caching` |
+| OOM, slow commands, replication lag diagnosis, cluster partitions, THP spikes, incident patterns, health-check script | `reference/troubleshooting.md` | `## Quick triage sequence`, `## OOM`, `## Cluster partitions`, `## Incident patterns`, `## Quick health-check script` |
+| Version compatibility, RDB range (12-79 foreign), Redis → Valkey migration (3 paths), rolling upgrade, coordinated failover for upgrades, 9.0 gotchas | `reference/upgrades.md` | `## RDB version compatibility`, `## Replication compatibility`, `## Redis → Valkey migration`, `## Rolling upgrades`, `## 9.0 production gotchas` |
+| Helm (official vs Bitnami), operators (official, Hyperspike, SAP), StatefulSet patterns, PVC sizing, gossip under NAT | `reference/kubernetes.md` | `## Helm charts`, `## Operators`, `## Raw StatefulSet`, `## Cluster gossip under NAT`, `## GKE Autopilot` |
+| Capacity planning, memory sizing, go-live checklist (system/config/security/monitoring/backup/HA/K8s), pre-upgrade audit | `reference/operations.md` | `## Sizing`, `## Persistence math to sanity-check`, `## Verify script`, `## Go-live checklist` |
 
-## Deployment
+## Critical rules
 
-| Topic | Reference |
-|-------|-----------|
-| Package managers, building from source, build flags | [install](reference/deployment-install.md) |
-| Docker images (official, Bitnami), cluster example | [docker-images](reference/deployment-docker-images.md) |
-| Compose patterns, volumes, networking, config injection | [docker-patterns](reference/deployment-docker-patterns.md) |
-| systemd service, kernel tuning, multi-instance | [bare-metal](reference/deployment-bare-metal.md) |
+1. **`maxmemory` must be set explicitly.** Default `0` (unlimited) lets the process grow until OOM killer fires.
+2. **Persistence on every primary.** Without it, a restart of an empty primary wipes replicas on full resync - classic cascading-data-loss incident.
+3. **Never 2 Sentinels.** Need ≥3 on independent failure domains. Two cannot achieve majority.
+4. **Valkey 9.0.0-9.0.1 had hash-field-TTL bugs** (memory leaks, crashes, data corruption). Use **9.0.3+** in production.
+5. **Memory limit on K8s must exceed `maxmemory` by fork COW headroom** (typically 2× on write-heavy). Otherwise BGSAVE OOMKills the pod.
+6. **`rdb-version-check strict` (default) rejects Redis CE 7.4+ RDB files** - the 12-79 range is reserved as "foreign". Migration from Redis CE requires `relaxed` mode (at your own risk) or a different path.
 
+## Common grep hazards
 
-## Configuration
+These names differ from Redis or are Valkey-specific - agents trained on Redis search for the wrong tokens:
 
-| Topic | Reference |
-|-------|-----------|
-| Essential parameters with verified defaults | [essentials](reference/configuration-essentials.md) |
-| Eviction policies, LRU/LFU tuning | [eviction](reference/configuration-eviction.md) |
-| Memory encoding thresholds per data type | [encoding](reference/configuration-encoding.md) |
-| Config presets by workload (cache, store, session, queue, rate limiter) | [workload-presets](reference/configuration-workload-presets.md) |
-| Lazy free config (UNLINK, async eviction/expiry) | [lazyfree](reference/configuration-lazyfree.md) |
-| Logging, OOM score, shutdown, CPU pinning, unix sockets, active expiration, protocol limits | [advanced](reference/configuration-advanced.md) |
-| Pub/Sub buffer limits, keyspace notifications, sharded pub/sub, subscriber memory | [pubsub](reference/configuration-pubsub.md) |
-
-
-## Sentinel (High Availability)
-
-| Topic | Reference |
-|-------|-----------|
-| How Sentinel works, failure detection, election | [architecture](reference/sentinel-architecture.md) |
-| Step-by-step deployment, config directives | [sentinel-deployment](reference/sentinel-sentinel-deployment.md) |
-| Tuning, cross-DC, Docker/NAT, coordinated failover, systemd | [sentinel-advanced](reference/sentinel-sentinel-advanced.md) |
-| Split-brain prevention, min-replicas settings | [split-brain](reference/sentinel-split-brain.md) |
-
-
-## Cluster
-
-| Topic | Reference |
-|-------|-----------|
-| Network requirements, config, cluster creation, hash slots | [setup](reference/cluster-setup.md) |
-| Resharding, adding/removing nodes, atomic migration (9.0) | [resharding](reference/cluster-resharding.md) |
-| Manual failover, health checks, replica migration, scaling, rolling restart runbook | [operations](reference/cluster-operations.md) |
-| Consistency guarantees, write safety, partition behavior | [consistency](reference/cluster-consistency.md) |
-
-
-## Persistence
-
-| Topic | Reference |
-|-------|-----------|
-| RDB configuration, save directives, BGSAVE | [rdb](reference/persistence-rdb.md) |
-| AOF configuration, fsync policies, hybrid mode | [aof](reference/persistence-aof.md) |
-| Automated backup scripts, off-site backup, retention | [backup-strategies](reference/persistence-backup-strategies.md) |
-| Disaster recovery, FLUSHALL recovery, verification | [disaster-recovery](reference/persistence-disaster-recovery.md) |
-
-
-## Replication
-
-| Topic | Reference |
-|-------|-----------|
-| Primary-replica setup, REPLICAOF, sync mechanisms | [setup](reference/replication-setup.md) |
-| Backlog sizing, diskless sync, dual-channel, Docker/NAT | [tuning](reference/replication-tuning.md) |
-| min-replicas safety, critical warnings, data loss prevention | [safety](reference/replication-safety.md) |
-
-
-## Security
-
-| Topic | Reference |
-|-------|-----------|
-| ACL users, roles, categories, practical examples | [acl](reference/security-acl.md) |
-| TLS setup, certificates, mutual TLS, replication encryption, cluster bus encryption | [tls](reference/security-tls.md) |
-| Defense in depth, protected mode, network hardening | [hardening](reference/security-hardening.md) |
-| Disabling dangerous commands via rename-command and ACL | [rename-commands](reference/security-rename-commands.md) |
-
-
-## Monitoring
-
-| Topic | Reference |
-|-------|-----------|
-| INFO sections, critical metrics, diagnostic commands | [metrics](reference/monitoring-metrics.md) |
-| Prometheus exporter setup, scrape configs | [prometheus](reference/monitoring-prometheus.md) |
-| Grafana dashboards, panel definitions, PromQL queries | [grafana](reference/monitoring-grafana.md) |
-| Alert rules YAML (complete rule set) | [alerting-rules](reference/monitoring-alerting-rules.md) |
-| Threshold tuning, recording rules, Alertmanager routing | [alerting-config](reference/monitoring-alerting-config.md) |
-| Commandlog (slow/large request/reply tracking) | [commandlog](reference/monitoring-commandlog.md) |
-
-
-## Performance
-
-| Topic | Reference |
-|-------|-----------|
-| I/O threads config, when to enable, thread count | [io-threads](reference/performance-io-threads.md) |
-| maxmemory, eviction, encoding, fragmentation | [memory](reference/performance-memory.md) |
-| Latency diagnosis workflow, LATENCY DOCTOR, watchdog | [latency](reference/performance-latency.md) |
-| Durability vs performance spectrum, TCP tuning, client connection tuning, kernel tuning, 9.0 features | [durability](reference/performance-durability.md) |
-| Active defragmentation config and monitoring | [defragmentation](reference/performance-defragmentation.md) |
-| Client-side caching (CLIENT TRACKING) | [client-caching](reference/performance-client-caching.md) |
-| valkey-benchmark, valkey-perf-benchmark, best practices | [benchmarking](reference/performance-benchmarking.md) |
-
-
-## Troubleshooting
-
-| Topic | Reference |
-|-------|-----------|
-| Out of memory: symptoms, diagnosis, resolution | [oom](reference/troubleshooting-oom.md) |
-| Replication lag: diagnosis, backlog, buffer tuning | [replication-lag](reference/troubleshooting-replication-lag.md) |
-| Slow commands: commandlog, common culprits, fixes | [slow-commands](reference/troubleshooting-slow-commands.md) |
-| Cluster partitions: network splits, recovery | [cluster-partitions](reference/troubleshooting-cluster-partitions.md) |
-| 7-phase runbook, fork latency, memory testing | [diagnostics-runbook](reference/troubleshooting-diagnostics-runbook.md) |
-| Diagnostic commands, incident patterns, health script | [diagnostics-commands](reference/troubleshooting-diagnostics-commands.md) |
-
-
-## Upgrades
-
-| Topic | Reference |
-|-------|-----------|
-| Version compatibility, RDB versions, feature matrix | [compatibility](reference/upgrades-compatibility.md) |
-| Redis to Valkey migration, 3 methods | [migration](reference/upgrades-migration.md) |
-| Rolling upgrades for Sentinel and Cluster | [rolling-upgrade](reference/upgrades-rolling-upgrade.md) |
-
-
-## Kubernetes
-
-| Topic | Reference |
-|-------|-----------|
-| Official and Bitnami Helm charts, key values | [helm](reference/kubernetes-helm.md) |
-| Official and Hyperspike operators, CRD examples | [operators-overview](reference/kubernetes-operators-overview.md) |
-| SAP operator, day-2 operations, choosing operators | [operators-day2](reference/kubernetes-operators-day2.md) |
-| StatefulSet PVCs, probes, resource sizing, PDB | [statefulset-config](reference/kubernetes-statefulset-config.md) |
-| Complete StatefulSet manifest, common gotchas | [statefulset-example](reference/kubernetes-statefulset-example.md) |
-| Kernel tuning, Docker/NAT, monitoring sidecars | [tuning-k8s](reference/kubernetes-tuning-k8s.md) |
-
-
-## Operations
-
-| Topic | Reference |
-|-------|-----------|
-| Memory sizing, connection planning, cluster sizing | [capacity-planning](reference/operations-capacity-planning.md) |
-
-
-## Production Checklist
-
-| Topic | Reference |
-|-------|-----------|
-| Pre-launch checklist: system, config, security, monitoring, backup, HA | [production-checklist](reference/production-checklist.md) |
+- `SLOWLOG` → **COMMANDLOG** family. Three types: `slow`, `large-request`, `large-reply`. `SLOWLOG GET/LEN/RESET` still works as alias for `slow` only. Configs: `commandlog-execution-slower-than`, `commandlog-request-larger-than`, `commandlog-reply-larger-than`, plus `*-max-len` for each.
+- `slaveof` / `slave-priority` / `masterauth` / `masteruser` → `replicaof` / `replica-priority` / `primaryauth` / `primaryuser`. Redis names still accepted.
+- `redis-server` / `redis-cli` / `/etc/redis/` / `/var/lib/redis/` / `redis` user → `valkey-*` / `/etc/valkey/` / `/var/lib/valkey/` / `valkey` user. `USE_REDIS_SYMLINKS=yes` (default) installs `redis-*` symlinks for legacy scripts.
+- `cluster-mf-timeout` → **not a real config**. Actual: `cluster-manual-failover-timeout` (default 5000 ms, Valkey-only - Redis hardcodes this).
+- `busy-script-time` / `lua-memory-limit` → **not real**. Actual: `busy-reply-threshold` (default 5000 ms, alias `lua-time-limit`). Lua has no separate memory limit (shares `maxmemory`).
+- **lazy-free defaults flipped** in Valkey (all five are `yes`; Redis defaults `no`): `lazyfree-lazy-eviction`, `lazyfree-lazy-expire`, `lazyfree-lazy-server-del`, `lazyfree-lazy-user-del`, `lazyfree-lazy-user-flush`. `DEL` behaves like `UNLINK` unless disabled.
+- `hash-max-listpack-entries` default is **512** on Valkey (128 on Redis 7.2) - 4× more hashes stay compact.
+- `cluster-allow-pubsubshard-when-down` defaults **`yes`** on Valkey (Redis-trained ops expect fail-closed) - shard pub/sub keeps working when the cluster is FAIL.
+- `+failover` ACL permission → **not real** (fabrication). FAILOVER and CLUSTER FAILOVER use standard `@admin`/`@dangerous`/`@slow` categories - no special gate beyond any admin command.
+- `alldbs` / per-DB ACL selectors → **9.1+/unstable only**, not 9.0.x. Don't prescribe on 9.0 deployments.
+- `io-threads-do-reads`, `events-per-io-thread`, `dynamic-hz`, `lua-replicate-commands`, `list-max-ziplist-*` → **deprecated** (silently accepted; in `deprecated_configs[]`). Ignition/Cooldown CPU-sample policy replaced the event-count heuristic.
+- RDB magic: files version ≥80 use `VALKEY` magic (`VALKEY080` for RDB 80). Files ≤11 use `REDIS`. Range 12-79 is the reserved "foreign" range - Valkey rejects under `rdb-version-check strict`.
+- `LOLWUT` output changed from "Redis ver." to "Valkey ver." in 9.0 - breaks scripts that parse LOLWUT for version detection. Use `INFO server` instead.
+- `extended-redis-compatibility yes` makes INFO/HELLO/LOLWUT report `redis_version: 7.2.4` - transition knob for clients that check server identity, not a permanent config.
