@@ -55,11 +55,11 @@ When cluster topology changes (slot migration, node failure):
 
 ## Key Design Decisions
 
-- `Weak<TokioRwLock<ClientWrapper>>` for the client reference - avoids circular refs and memory leaks
-- `OnceCell` for late initialization - the client is set after construction
+- `OnceCell<Weak<TokioRwLock<ClientWrapper>>>` for the client reference - weak avoids circular refs, `OnceCell::set` enforces one-shot late init (see comment in `pubsub/mod.rs`).
 - `Notify` primitives for efficient wake-up - no polling overhead
-- `PubSubCommandApplier` trait - abstracts command execution for testability (see `mock.rs`)
-- Separate `desired` vs `current` state prevents subscription drift
+- `PubSubCommandApplier` trait - defined in `client/mod.rs`, implemented for `ClientWrapper`. Abstracts how subscription commands get dispatched; used by the synchronizer to send SUBSCRIBE/UNSUBSCRIBE without knowing cluster vs standalone specifics.
+- Test mock: `MockPubSubSynchronizer` in `pubsub/mock.rs` mocks the whole `PubSubSynchronizer` trait (not `PubSubCommandApplier`) for unit testing higher layers without a real client.
+- Separate `desired` vs `current` state prevents subscription drift.
 
 ## Files
 
