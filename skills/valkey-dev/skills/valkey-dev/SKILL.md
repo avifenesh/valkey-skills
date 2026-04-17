@@ -29,7 +29,10 @@ Organized by what you're working on. Each file covers a coherent work area; Redi
 
 ```sh
 make -j$(nproc)                          # build
-./runtest --verbose --tags -slow         # integration tests
+./runtest --verbose --tags -slow         # core integration tests
+./runtest-cluster                        # legacy cluster tests
+./runtest-moduleapi                      # module API tests
+./runtest-sentinel                       # Sentinel tests
 make test-unit                           # C++ gtest unit tests
 make SANITIZER=address                   # ASan (force MALLOC=libc)
 ```
