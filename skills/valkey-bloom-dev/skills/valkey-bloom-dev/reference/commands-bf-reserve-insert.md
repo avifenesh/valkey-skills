@@ -1,157 +1,111 @@
-# BF.RESERVE, BF.INSERT, and BF.LOAD
+# BF.RESERVE, BF.INSERT, BF.LOAD
 
-Use when understanding explicit bloom creation, complex argument parsing in BF.INSERT, replication-only arguments (TIGHTENING, SEED), VALIDATESCALETO validation, or the BF.LOAD AOF rewrite path.
+Use when reasoning about explicit creation, BF.INSERT argument parsing, replication-only args (SEED / TIGHTENING), VALIDATESCALETO, or the AOF-only BF.LOAD.
 
-Source: `src/bloom/command_handler.rs`
+Source: `src/bloom/command_handler.rs`.
 
 ## BF.RESERVE
 
-`bloom_filter_reserve` creates a bloom object with explicit parameters. Syntax: `BF.RESERVE key fp_rate capacity [EXPANSION exp | NONSCALING]`.
+`BF.RESERVE key fp_rate capacity [EXPANSION exp | NONSCALING]`. Arity 4 to 6 (`!(4..=6).contains(&argc)`).
 
-**Arity**: 4 to 6 args. The function checks `!(4..=6).contains(&argc)`.
+Parsing order and errors:
 
-**Argument parsing order**:
+- **key** - index 1.
+- **fp_rate** - f64, strict `(0, 1)`. Unparseable: `ERR bad error rate`. Out of range: `ERR (0 < error rate range < 1)`.
+- **capacity** - i64, `1..=i64::MAX`. Unparseable or out of range: `ERR bad capacity`. Zero specifically: `ERR (capacity should be larger than 0)`.
+- **Trailing arg** (`argc > 4`):
+  - argc 5 + `NONSCALING` -> `expansion = 0`.
+  - argc 6 + `EXPANSION <u32>` -> range `1..=u32::MAX`. Invalid: `ERR bad expansion`.
+  - Anything else: `ERR ERROR`.
 
-1. **key** - filter name at index 1
-2. **fp_rate** - parsed as f64, must satisfy `0 < fp_rate < 1` (exclusive on both ends). Two separate error paths: out-of-range values get `ERR (0 < error rate range < 1)`, unparseable strings get `ERR bad error rate`.
-3. **capacity** - parsed as i64, must be in `BLOOM_CAPACITY_MIN..=BLOOM_CAPACITY_MAX` (1 to i64::MAX). Zero specifically returns `ERR (capacity should be larger than 0)`. Other invalid values return `ERR bad capacity`.
-4. **Optional trailing argument** (argc > 4):
-   - `NONSCALING` (argc must be 5) - sets expansion to 0
-   - `EXPANSION <value>` (argc must be 6) - parsed as u32, range `BLOOM_EXPANSION_MIN..=BLOOM_EXPANSION_MAX` (1 to u32::MAX). Invalid values return `ERR bad expansion`.
-   - Anything else returns `ERR ERROR`
+Key check: existing bloom -> `ERR item exists`. Non-bloom type -> `WrongType`. BF.RESERVE never overwrites.
 
-**Key existence check**: If the key already exists with a bloom object, returns `ERR item exists`. BF.RESERVE never overwrites. Returns `WrongType` if the key holds a non-bloom type.
-
-**Object creation**: Uses current config values for tightening ratio and seed mode. Calls `BloomObject::new_reserved` with size validation gated on `!must_obey_client(ctx)`. After storing, replicates with `reserve_operation: true` and no items.
-
-**Default expansion**: When neither EXPANSION nor NONSCALING is provided (argc == 4), uses `configs::BLOOM_EXPANSION` (default 2).
+Creation: current config provides `tightening_ratio` and seed mode. `new_reserved` with size validation gated by `!must_obey_client(ctx)`. Replicates with `reserve_operation: true`, items empty. Default expansion when argc==4 is `BLOOM_EXPANSION` (2).
 
 ## BF.INSERT
 
-`bloom_filter_insert` is the most complex command handler. Syntax: `BF.INSERT key [ERROR fp] [CAPACITY cap] [EXPANSION exp] [NOCREATE] [NONSCALING] [TIGHTENING ratio] [SEED bytes] [VALIDATESCALETO cap] ITEMS item [item ...]`.
+`BF.INSERT key [ERROR fp] [CAPACITY cap] [EXPANSION exp] [NOCREATE] [NONSCALING] [TIGHTENING ratio] [SEED bytes] [VALIDATESCALETO cap] ITEMS item [item ...]`
 
-**Minimum arity**: 2 args (`BF.INSERT key`). Unlike BF.RESERVE, BF.INSERT can be called without items - it can create an empty bloom object.
+Minimum arity 2 - can create an empty bloom.
 
-**Default values**: All optional parameters start with current module config defaults (fp_rate, tightening_ratio, capacity, expansion, seed mode). Explicit arguments override these.
+Defaults come from current module config; explicit args override.
 
-## BF.INSERT Argument Parsing
+### Keyword table (case-insensitive, parsed in a `while idx < argc` loop)
 
-Arguments are parsed in a `while idx < argc` loop with case-insensitive keyword matching (via `to_uppercase()`):
+| Keyword | Value | Parsing / errors |
+|---------|-------|------------------|
+| `ERROR` | f64 `(0, 1)` | `ERR (0 < error rate range < 1)` |
+| `TIGHTENING` | f64 `(0, 1)` | replication-internal. `ERR bad tightening ratio` / `ERR (0 < tightening ratio range < 1)` |
+| `CAPACITY` | i64 `1..=i64::MAX` | zero -> `ERR (capacity should be larger than 0)` |
+| `SEED` | exactly 32 bytes | replication-internal. `try_into()` failure -> `ERR invalid seed` |
+| `NOCREATE` | none | sets flag |
+| `NONSCALING` | none | `expansion = 0` |
+| `EXPANSION` | u32 `1..=u32::MAX` | |
+| `VALIDATESCALETO` | i64 `1..=i64::MAX` | zero -> `ERR (capacity should be larger than 0)` |
+| `ITEMS` | (sentinel) | advances idx, sets `items_provided = true`, breaks loop |
 
-| Keyword | Expects Value | Parsing |
-|---------|--------------|---------|
-| `ERROR` | Yes | f64, range `(0, 1)` exclusive |
-| `TIGHTENING` | Yes | f64, range `(0, 1)` exclusive; replication-internal |
-| `CAPACITY` | Yes | i64, range `1..=i64::MAX`; zero returns `ERR (capacity should be larger than 0)` |
-| `SEED` | Yes | Exactly 32 bytes (raw `[u8; 32]`); replication-internal |
-| `NOCREATE` | No | Sets `nocreate = true` |
-| `NONSCALING` | No | Sets `expansion = 0` |
-| `EXPANSION` | Yes | u32, range `1..=u32::MAX` |
-| `VALIDATESCALETO` | Yes | i64, range `1..=i64::MAX`; zero returns `ERR (capacity should be larger than 0)` |
-| `ITEMS` | Starts items | Increments idx, sets `items_provided = true`, breaks loop |
+Unknown keyword: `ERR unknown argument received`. Value-expecting keywords check `idx >= (argc - 1)` -> `WrongArity`. `ITEMS` with no items: `WrongArity`.
 
-**ITEMS sentinel**: The `ITEMS` keyword breaks out of the option parsing loop. All remaining arguments after `ITEMS` are treated as items to add. If `ITEMS` is provided but no items follow (`idx == argc && items_provided`), returns `WrongArity`.
+### Replication-internal args
 
-**Unknown arguments**: Any unrecognized keyword returns `ERR unknown argument received`.
+Source comment on `TIGHTENING`:
 
-**Value-expecting keywords**: Each checks `idx >= (argc - 1)` to ensure a value follows. Missing values return `WrongArity`.
+> This argument is only supported on replicated commands since primary nodes replicate bloom objects deterministically using every global bloom config/property.
 
-## Replication-Only Arguments
+Same applies to `SEED`. Both arrive only in the synthetic `BF.INSERT` the primary sends to replicas.
 
-**TIGHTENING** and **SEED** are documented in source comments as replication-internal:
+`SEED` parsing: raw bytes -> `[u8; 32]` via `try_into()`. `is_seed_random` is derived by comparing against `FIXED_SEED` - different -> random, equal -> fixed.
 
-```rust
-"TIGHTENING" => {
-    // Note: This argument is only supported on replicated commands since primary nodes
-    // replicate bloom objects deterministically using every global bloom config/property.
-```
+### VALIDATESCALETO check
 
-When the primary creates a bloom object (via BF.ADD, BF.RESERVE, or BF.INSERT), it replicates the creation as `BF.INSERT ... TIGHTENING <ratio> SEED <32bytes> ...`. This ensures replicas use the exact same tightening ratio and seed as the primary, regardless of the replica's local config values.
+Run post-parse, before creation. Not replicated.
 
-**SEED parsing**: The raw bytes from the ValkeyString are converted to `[u8; 32]` via `try_into()`. If the slice is not exactly 32 bytes, returns `ERR invalid seed`. The `is_seed_random` flag is derived by comparing against `FIXED_SEED` - if different, it is considered random.
+1. `expansion == 0` (NONSCALING also present) -> `ERR cannot use NONSCALING and VALIDATESCALETO options together`.
+2. Call `BloomObject::calculate_max_scaled_capacity(capacity, fp_rate, scale_to, tightening_ratio, expansion)`.
+3. Failures:
+   - FP degrades to zero: `ERR provided VALIDATESCALETO causes false positive to degrade to 0`.
+   - Memory limit: `ERR provided VALIDATESCALETO causes bloom object to exceed memory limit`.
 
-**TIGHTENING parsing**: Parsed as f64 with range `(0, 1)` exclusive. Out-of-range values return `ERR (0 < tightening ratio range < 1)`. Unparseable strings return `ERR bad tightening ratio`.
+### NOCREATE
 
-## VALIDATESCALETO Validation
+Key missing + `nocreate` -> `ERR not found`. Key existing + `nocreate` -> no effect, items added normally.
 
-`VALIDATESCALETO` is a user-facing argument that validates whether a bloom object can scale to a target capacity before creating it. It is a pre-creation check, not a runtime limit.
+### Existing vs new key
 
-After all arguments are parsed, if `validate_scale_to` is set:
+- **Existing** (`Some`): items added to existing bloom. Option args (CAPACITY, ERROR, etc.) **ignored**. Replication uses `reserve_operation: false`; verbatim only if at least one item was new. `ReplicateArgs` pulls from the **object's** properties, not the current command's overrides.
+- **New** (`None`, no NOCREATE): create with parsed params (or defaults). Size validation gated. `new_reserved` + `handle_bloom_add` with `multi: true` for items. `set_value`, replicate with `reserve_operation: true`.
 
-1. Check that `expansion != 0` - combining NONSCALING with VALIDATESCALETO returns `ERR cannot use NONSCALING and VALIDATESCALETO options together`.
+Response is always `ValkeyValue::Array` of integer add-results. Empty ITEMS on new key -> empty array.
 
-2. Call `BloomObject::calculate_max_scaled_capacity(capacity, fp_rate, scale_to, tightening_ratio, expansion)` which simulates filter scaling to determine if the target capacity is reachable.
+## BF.LOAD - internal, AOF-only
 
-3. Two failure modes from `calculate_max_scaled_capacity`:
-   - FP rate degrades to zero before reaching target: `ERR provided VALIDATESCALETO causes false positive to degrade to 0`
-   - Memory limit exceeded before reaching target: `ERR provided VALIDATESCALETO causes bloom object to exceed memory limit`
+`BF.LOAD key data`. Arity exactly 3. Flags: `write deny-oom` (note: no `fast`). ACL: `write bloom`.
 
-Not replicated - validated on the primary before object creation only.
+Key existence -> `BUSYKEY Target key name already exists.` (`utils::KEY_EXISTS`). Non-bloom type -> `WrongType`.
 
-## NOCREATE Behavior
+Data is the raw bytes from `BloomObject::encode_object`:
 
-When `nocreate = true` and the key does not exist, BF.INSERT returns `ERR not found` instead of creating a new bloom object. This is checked in the `None` branch of the key existence match:
+1. `decode_object(&data, validate_size_limit)` - byte 0 is version (must be 1), bincode-deserializes `bytes[1..]` into `(u32, f64, f64, bool, Vec<Box<BloomFilter>>)`.
+2. Validates expansion, fp_rate, tightening_ratio, filter count, total memory.
+3. Failure: `ERR bloom object decoding failed` or `ERR bloom object decoding failed. Unsupported version`.
 
-```rust
-None => {
-    if nocreate {
-        return Err(ValkeyError::Str(utils::NOT_FOUND));
-    }
-    // ... create new bloom
-}
-```
+Size validation gated by `!must_obey_client`. After decode, replicates with `reserve_operation: true` - **replica receives a synthetic BF.INSERT** with full properties + items (including the encoded data in items list). Replica ends up building the bloom via BF.INSERT, not replaying BF.LOAD.
 
-When the key exists, NOCREATE has no effect - items are added normally.
+## Error summary
 
-## BF.INSERT Object Creation vs Existing
-
-**Existing key** (`Some` branch): Items are added to the existing bloom. Option arguments like CAPACITY and ERROR are ignored for existing objects. Replication uses `reserve_operation: false` (verbatim replication only when at least one item was new). The bloom object's properties from creation time are used in `ReplicateArgs`, not the arguments from the current command.
-
-**New key** (`None` branch, no NOCREATE): Creates with the parsed parameters (or defaults). Size validation is gated by `!must_obey_client(ctx)`. After calling `BloomObject::new_reserved`, items are added via `handle_bloom_add` with `multi: true` (BF.INSERT always uses multi mode for items). After `set_value`, replicates with `reserve_operation: true`.
-
-The response is always a multi-result array since `handle_bloom_add` is called with `multi: true`, returning `ValkeyValue::Array` of integer results (1 for new, 0 for duplicate). When no ITEMS are provided and the key is new, the response is an empty array.
-
-## BF.LOAD
-
-`bloom_filter_load` is an internal command used by AOF rewrite, not intended for direct user invocation. Syntax: `BF.LOAD key data`.
-
-**Arity**: Exactly 3 args.
-
-**Command flags**: `write deny-oom` (no `fast` flag, unlike other write commands). ACL: `write bloom`.
-
-**Key check**: If the key already exists, returns `BUSYKEY Target key name already exists.` (the `utils::KEY_EXISTS` constant). Returns `WrongType` if the key holds a non-bloom type.
-
-**Deserialization path**: The data argument is the raw bytes from `BloomObject::encode_object`:
-
-1. Calls `BloomObject::decode_object(&hex, validate_size_limit)`
-2. `decode_object` reads byte 0 as the version (must be 1)
-3. Remaining bytes are bincode-deserialized into `(u32, f64, f64, bool, Vec<Box<BloomFilter>>)`
-4. Validates: expansion range (0 to u32::MAX), fp_rate range, tightening_ratio range, filter count (< i32::MAX), total memory size
-5. On failure: `ERR bloom object decoding failed` or `ERR bloom object decoding failed. Unsupported version`
-
-**Size validation**: Gated by `!must_obey_client(ctx)`, same as other write commands. Replicas skip size validation.
-
-**Replication**: After successful load, replicates with `reserve_operation: true`. The replicated form is a synthetic `BF.INSERT` with full bloom object properties (capacity, fp_rate, tightening_ratio, seed, expansion). The data argument is included in the replicated items list, so the replica creates the bloom structure via BF.INSERT rather than BF.LOAD.
-
-## Error Summary
-
-| Command | Error | Condition |
-|---------|-------|-----------|
-| BF.RESERVE | `ERR item exists` | Key already has a bloom object |
-| BF.RESERVE | `ERR bad error rate` | fp_rate not parseable as f64 |
-| BF.RESERVE | `ERR (0 < error rate range < 1)` | fp_rate out of range |
-| BF.RESERVE | `ERR bad capacity` | capacity not parseable |
-| BF.RESERVE | `ERR (capacity should be larger than 0)` | capacity == 0 |
-| BF.RESERVE | `ERR bad expansion` | expansion not parseable or out of range |
-| BF.RESERVE | `ERR ERROR` | Unknown trailing argument |
-| BF.INSERT | `ERR not found` | NOCREATE and key missing |
-| BF.INSERT | `ERR unknown argument received` | Unrecognized option keyword |
-| BF.INSERT | `ERR invalid seed` | SEED not exactly 32 bytes |
-| BF.INSERT | `ERR bad tightening ratio` | TIGHTENING not parseable as f64 |
-| BF.INSERT | `ERR (0 < tightening ratio range < 1)` | TIGHTENING out of range |
-| BF.INSERT | `ERR cannot use NONSCALING and VALIDATESCALETO options together` | Both specified |
-| BF.INSERT | `ERR provided VALIDATESCALETO causes false positive to degrade to 0` | Scale target unreachable (FP) |
-| BF.INSERT | `ERR provided VALIDATESCALETO causes bloom object to exceed memory limit` | Scale target unreachable (mem) |
-| BF.LOAD | `BUSYKEY Target key name already exists.` | Key already exists |
-| BF.LOAD | `ERR bloom object decoding failed` | Bincode deserialization failure |
-| BF.LOAD | `ERR bloom object decoding failed. Unsupported version` | Version byte != 1 |
+| Command | Error | When |
+|---------|-------|------|
+| BF.RESERVE | `ERR item exists` | key holds bloom |
+| BF.RESERVE | `ERR bad error rate` / `ERR (0 < error rate range < 1)` | fp_rate parse / range |
+| BF.RESERVE | `ERR bad capacity` / `ERR (capacity should be larger than 0)` | cap parse / zero |
+| BF.RESERVE | `ERR bad expansion` | expansion parse / range |
+| BF.RESERVE | `ERR ERROR` | unknown trailing arg |
+| BF.INSERT | `ERR not found` | NOCREATE + key missing |
+| BF.INSERT | `ERR unknown argument received` | unknown keyword |
+| BF.INSERT | `ERR invalid seed` | SEED not 32 bytes |
+| BF.INSERT | `ERR bad tightening ratio` / `ERR (0 < tightening ratio range < 1)` | TIGHTENING parse / range |
+| BF.INSERT | `ERR cannot use NONSCALING and VALIDATESCALETO options together` | both set |
+| BF.INSERT | `ERR provided VALIDATESCALETO causes false positive to degrade to 0` | scale sim FP zero |
+| BF.INSERT | `ERR provided VALIDATESCALETO causes bloom object to exceed memory limit` | scale sim memory |
+| BF.LOAD | `BUSYKEY Target key name already exists.` | key exists |
+| BF.LOAD | `ERR bloom object decoding failed` / `... Unsupported version` | bincode fail / version != 1 |
