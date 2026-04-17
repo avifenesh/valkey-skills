@@ -81,8 +81,9 @@ The `hash-max-listpack-entries 512` default is 4x Redis - more hashes stay compa
 |-----------|---------|-------|
 | `io-threads` | `1` | 1 = single-threaded. Range 1-256. DEBUG_CONFIG flag. |
 | `io-threads-do-reads` | deprecated | In `deprecated_configs[]`. Reads are always offloaded when `io-threads > 1`. |
-| `events-per-io-thread` | deprecated | In `deprecated_configs[]` - Ignition/Cooldown CPU-sample policy replaced the event-count heuristic. |
+| `events-per-io-thread` | `2` | `HIDDEN_CONFIG`. Not shown in `CONFIG GET *`. Still tunable via `CONFIG SET`. Events needed per active worker in `adjustIOThreadsByEventLoad`. |
 | `min-io-threads-avoid-copy-reply` | `7` | `HIDDEN_CONFIG`. Threshold for zero-copy response path. |
+| `prefetch-batch-max-size` | `16` | Pipeline memory prefetch batch size. Range 0-128. `0`/`1` disables. |
 | `dynamic-hz` | deprecated | Auto-scaling is always on. |
 
 ## Logging

@@ -44,8 +44,7 @@ Minimum viable: 3 primaries (1 shard each). Production: 6 nodes (3P+3R). Both cl
 - **Atomic slot migration** (`CLUSTER MIGRATESLOTS`) - fork-based bulk transfer, replaces key-by-key `MIGRATE`/`ASK`. See below.
 - **Serialized failover election** - shards ranked by lexicographic shard ID; higher-rank shards elect first. Prevents vote collisions when several primaries fail at once.
 - **Reconnection throttling** - nodes no longer storm TCP reconnects to downed peers every 100 ms. Backoff is tied to `cluster-node-timeout`.
-- **Lightweight pub/sub cluster-bus headers** - internal publish messages drop the 2 KB full slot bitmap in favor of a ~30-byte header.
-- **Cluster bus byte metrics** - `cluster_stats_bytes_sent`/`received` + pubsub/module splits in `CLUSTER INFO` (see `monitoring.md`).
+- **Lightweight pub/sub cluster-bus headers** - internal publish messages drop the 2 KB full slot bitmap in favor of a ~30-byte header (`clusterCreatePublishMsgBlock(..., is_light=1, ...)`).
 
 ## Observability
 

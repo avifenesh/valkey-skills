@@ -175,7 +175,7 @@ Pre-9.0, a node reconnected to a lost peer every 100 ms until the peer came back
 
 ### Post-incident hygiene
 
-- `CLUSTER INFO` - verify `cluster_stats_bytes_*` stopped climbing abnormally.
+- `CLUSTER INFO` - verify `cluster_stats_messages_*_sent`/`_received` per-type counters stopped climbing abnormally.
 - `CLUSTER SHARDS` - confirm `availability-zone` populated if configured (otherwise AZ-aware replica placement was silently off).
 - Re-check `cluster-slot-stats-enabled`; default-off. Enable before next incident if you need per-slot CPU accounting.
 

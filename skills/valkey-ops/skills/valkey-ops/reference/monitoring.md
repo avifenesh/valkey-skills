@@ -32,7 +32,7 @@ Beyond Redis baseline (`total_commands_processed`, `keyspace_hits/misses`, `evic
 | `evicted_scripts` | Valkey 8+ | Lua scripts evicted from the 500-entry LRU cache. Ramp = thrashing. |
 | `expired_fields` | Valkey 9.0 | Hash fields reclaimed by per-field TTL (distinct from `expired_keys`). |
 | `io_threaded_reads_processed` / `io_threaded_writes_processed` | 8+ | I/O thread utilization. |
-| `io_threads_active` | 8+ | Current active count under Ignition/Cooldown. Below `io-threads - 1` = policy demoted workers. |
+| `io_threads_active` | 8+ | Current active worker count from `adjustIOThreadsByEventLoad`. Below `io-threads - 1` = some workers parked. |
 | `io_threaded_total_prefetch_batches` / `_entries` | 9.0 | Batch prefetch activity. |
 | `tracking_total_keys` | 6.0 | Current tracked-key count. Approaching `tracking-table-max-keys` = spurious invalidations incoming. |
 | `tracking_total_items` / `tracking_total_prefixes` | 6.0 | BCAST / per-prefix scope. |
@@ -49,30 +49,15 @@ Dual-channel adds replica-side `pending_repl_data_len` for back-pressure monitor
 
 ## Cluster (`CLUSTER INFO`)
 
-`cluster_state`, `cluster_slots_assigned` (should be 16384), `cluster_slots_ok`, `cluster_slots_pfail`, `cluster_slots_fail`. Valkey additions in `CLUSTER INFO`:
-
-| Field | Meaning |
-|-------|---------|
-| `cluster_stats_bytes_sent` / `_received` | Cumulative cluster-bus traffic. |
-| `cluster_stats_pubsub_bytes_sent` / `_received` | Pub/sub slice. |
-| `cluster_stats_module_bytes_sent` / `_received` | Module-message slice. |
-
-Disproportionate pub/sub-slice growth means shard pub/sub is being routed as global (config error - check `cluster-allow-pubsubshard-when-down` interaction).
+`cluster_state`, `cluster_slots_assigned` (should be 16384), `cluster_slots_ok`, `cluster_slots_pfail`, `cluster_slots_fail`. Message-level counters in `cluster_stats_messages_*_sent` / `_received` (per message type). Byte-level cluster-bus counters (`cluster_stats_bytes_*` / pubsub / module slices) are unstable-only; not on 9.0.x.
 
 ## Error stats (`INFO errorstats`)
 
 `errorstat_<ERRCODE>` counters: `ERR`, `OOM`, `LOADING`, `MASTERDOWN`, `CROSSSLOT`, `MOVED`, `ASK`, `BUSY`, `BUSYGROUP`, `NOAUTH`, `WRONGPASS`. Rate-of-change alerts are more useful than absolute thresholds.
 
-## TLS (`INFO tls`) - Valkey-only
+## TLS (`INFO tls`)
 
-| Field | Meaning |
-|-------|---------|
-| `tls_server_cert_expire_time` | Unix seconds until server cert expires. |
-| `tls_client_cert_expire_time` | Same for outbound cert. |
-| `tls_ca_cert_expire_time` | CA expiry. |
-| `tls_*_serial` | Current cert serial - alerts on unexpected rotations. |
-
-Scrape all three expire_time fields; alert at 30 days remaining, page at 7 days.
+Standard `tls_*` counters (`tls_connections_to_timeout`, `tls_accepted_tls`, `tls_rejected_connections`). Cert expiry INFO telemetry (`tls_*_cert_expire_time`, `tls_*_serial`) and in-place `tls-auto-reload-interval` are unstable-only; on 9.0.x, track cert expiry out-of-band and rotate via restart or failover.
 
 ## Derived metrics
 
@@ -101,9 +86,8 @@ valkey-search exposes `INFO SEARCH` (`search_number_of_indexes`, `search_used_me
 | `redis_expired_subkeys_total` | `expired_fields` |
 | `redis_evicted_scripts_total` | `evicted_scripts` |
 | `redis_io_threads_active` | `io_threads_active` |
-| `redis_cluster_stats_bytes_sent_total` / `_received_total` | `cluster_stats_bytes_*` |
 
-Alert-worthy: `redis_expired_subkeys_total` jumps reveal unexpected hash-field TTL churn; `redis_io_threads_active` below `io-threads - 1` means Ignition demoted a worker.
+Alert-worthy: `redis_expired_subkeys_total` jumps reveal unexpected hash-field TTL churn; `redis_io_threads_active` below `io-threads - 1` means `adjustIOThreadsByEventLoad` parked a worker.
 
 ### Minimal ACL for the exporter
 
@@ -233,7 +217,7 @@ Cluster mode: all three subcommands carry `REQUEST_POLICY:ALL_NODES`; `LEN` addi
 
 - **Rewritten commands**: if the server rewrote `c->argv` (e.g., `SET ... EX` internally), the entry captures `c->original_argv` - what the client sent, not what executed.
 - **Script execution**: `value` from executing-client counters; `peerid`/`cname` from `scriptGetCaller()`. Lua entries show caller identity, not script engine's.
-- **Redaction**: `redactClientCommandArgument` sets bits in `c->redact_arg_bitmap` (uint32, bit 0 = "all beyond 32"); commandlog applies the bitmap lazily at log time, emitting `shared.redacted` for masked slots. Old-style eager `original_argv` rewrites on redaction are gone.
+- **Redaction**: `redactClientCommandArgument` eagerly copies `c->argv` into `c->original_argv` and writes `shared.redacted` into the redacted slot. Commandlog records from `original_argv` so the masked value is what gets logged. (The lazy-bitmap redaction model is unstable-only.)
 - **Command-level skip**: commands with `CMD_SKIP_COMMANDLOG` (AUTH, HELLO, etc.) don't enter any of the three logs.
 
 ### Exporter reality

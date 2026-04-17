@@ -4,9 +4,9 @@ Use when setting up ACLs, TLS, hardening a deployment, or restricting commands. 
 
 ## ACL - Valkey-only pieces
 
-- **`alldbs` / `resetdbs` and per-DB selectors**: restrict a user to specific databases. Absent from Redis. `src/acl.c` registers these tokens.
 - **`%R~pattern`** / **`%W~pattern`**: split read-only vs write-only key access on the same user. Redis has single `~pattern`; Valkey differentiates.
-- **Cert-to-user mapping via TLS**: `tls-auth-clients-user cn` / `uri` maps the cert subject directly to an ACL user. User must already exist or connection is rejected. See below.
+- **Cert-to-user mapping via TLS**: `tls-auth-clients-user cn` maps the cert subject CN directly to an ACL user. User must already exist or connection is rejected. See TLS section below.
+- **`alldbs` / `resetdbs` and per-DB selectors**: 9.1+/unstable only - **not available on 9.0.x**. Don't prescribe for 9.0 deployments.
 
 ## ACL - default user
 
@@ -66,22 +66,11 @@ Module mode lets you toggle TLS without rebuilding. Official Docker images ship 
 ## TLS - `tls-auth-clients-user`
 
 ```
-tls-auth-clients-user cn     # CN → ACL username
-tls-auth-clients-user uri    # SAN URI → ACL username (SPIFFE-style)
+tls-auth-clients-user CN     # CN → ACL username
 tls-auth-clients-user off    # default - no mapping
 ```
 
-Lets a connecting mTLS client skip `AUTH` entirely - cert subject maps directly to an ACL user. The user must already exist or connection is rejected. `uri` added in 9.0.
-
-## TLS - `tls-auto-reload-interval`
-
-```
-tls-auto-reload-interval 3600   # seconds; 0 disables
-```
-
-Background thread watches cert/key files and reloads `SSL_CTX` in-place without restart. BIO thread parses new certs; main thread atomically swaps the context pointer. Change detection uses SHA-256 over cert content plus inode/mtime on the key.
-
-On reload, Valkey re-validates the full material set before committing. Bad certs (mismatched key, expired) are rejected and the old context keeps serving - a bad push won't black-hole connections. INFO exposes `tls_server_cert_expire_time`, `tls_client_cert_expire_time`, `tls_ca_cert_expire_time` plus `tls_*_expires_in_seconds` for alerting.
+Lets a connecting mTLS client skip `AUTH` entirely - cert subject CN maps directly to an ACL user. The user must already exist or connection is rejected. Enum values on 9.0.3: `CN` and `off`. (SAN URI / SPIFFE-style mapping is unstable-only, not on 9.0.x.)
 
 ## TLS - separate outbound client cert
 
@@ -109,8 +98,7 @@ tls-cert-file  /etc/valkey/tls/server.crt
 tls-key-file   /etc/valkey/tls/server.key
 tls-ca-cert-file /etc/valkey/tls/ca.crt
 tls-auth-clients yes
-tls-auth-clients-user cn
-tls-auto-reload-interval 3600
+tls-auth-clients-user CN
 ```
 
 ACL user `alice` exists, cert has `CN=alice` → authenticated as `alice` with no `AUTH` step.
@@ -145,7 +133,7 @@ Auto-enables when no password is set and binding to all interfaces. Sentinel dis
 - Disable or restrict `default` user
 - Per-service ACL users, never a shared superuser
 - TLS for client, replication, and cluster bus
-- `tls-auto-reload-interval` set (cert expiry won't black-hole you)
+- External cert rotation pipeline (reload via restart/failover on 9.0.x - in-place auto-reload is unstable-only)
 - Run as `valkey` user, not root
 - Monitor `ACL LOG`
 - `COMMANDLOG` thresholds set for audit trail

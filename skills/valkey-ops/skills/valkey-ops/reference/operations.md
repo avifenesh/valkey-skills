@@ -86,7 +86,7 @@ Items marked **V** are Valkey-specific defaults/behaviors to verify.
 ### Security
 
 - [ ] ACL users per service, no app traffic on `default`.
-- [ ] **V** TLS enabled for client and replication/cluster-bus. `tls-auto-reload-interval > 0` for automated cert rotation.
+- [ ] **V** TLS enabled for client and replication/cluster-bus. Cert-rotation pipeline in place (restart/failover on 9.0.x - in-place reload is unstable-only).
 - [ ] `bind` to explicit private IPs, not `0.0.0.0`.
 - [ ] `protected-mode yes`.
 - [ ] Firewall scoped to client port, Sentinel port (26379), and cluster bus (client+10000).
@@ -95,8 +95,8 @@ Items marked **V** are Valkey-specific defaults/behaviors to verify.
 ### Monitoring
 
 - [ ] Prometheus exporter (`oliver006/redis_exporter`) running; ACL user scoped to `+info +ping +config|get +client|list +commandlog|get +commandlog|len +latency|latest +latency|history`.
-- [ ] **V** Grafana Redis dashboard (ID `11835` or `763`) imported, plus panels for Valkey-only metrics (`expired_fields`, `evicted_scripts`, `io_threads_active`, `cluster_stats_bytes_*`).
-- [ ] **V** Alerts: instance down, `used_memory / maxmemory > 0.9`, `rejected_connections > 0`, replication link down, lag > 5 s warn / 30 s crit, `rdb_last_bgsave_status != ok`, latency p99 spike, TLS cert expiry at 30/7 days (via `tls_server_cert_expire_time`).
+- [ ] **V** Grafana Redis dashboard (ID `11835` or `763`) imported, plus panels for Valkey-only metrics (`expired_fields`, `evicted_scripts`, `io_threads_active`, `io_threaded_total_prefetch_batches`).
+- [ ] **V** Alerts: instance down, `used_memory / maxmemory > 0.9`, `rejected_connections > 0`, replication link down, lag > 5 s warn / 30 s crit, `rdb_last_bgsave_status != ok`, latency p99 spike, TLS cert expiry (tracked out-of-band on 9.0.x - in-INFO expire telemetry is unstable-only).
 - [ ] COMMANDLOG reviewed periodically - `COMMANDLOG GET 25 slow / large-request / large-reply`.
 
 ### Backup

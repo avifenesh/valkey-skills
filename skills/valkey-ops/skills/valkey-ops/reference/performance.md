@@ -13,11 +13,11 @@ Under TLS, `SSL_accept` also runs on I/O threads automatically via `trySendAccep
 | Parameter | Default | Notes |
 |-----------|---------|-------|
 | `io-threads` | `1` | Total including main. `io-threads 4` = main + 3 workers. Range 1-256. |
+| `events-per-io-thread` | `2` | HIDDEN_CONFIG. Events per active worker in `adjustIOThreadsByEventLoad`. `0` = always offload. |
 | `min-io-threads-avoid-copy-reply` | `7` | HIDDEN. At ≥ this many threads, zero-copy reply path kicks in. |
 | `io-threads-do-reads` | deprecated | Reads always offloaded when workers exist. |
-| `events-per-io-thread` | deprecated | Ignition/Cooldown CPU-sample policy replaced the event-count heuristic. |
 
-Workers park on a per-thread mutex when idle and unpark under load. Monitor `io_threads_active` in `INFO stats` to see what's running.
+Workers park on a per-thread mutex when idle and unpark under load. Monitor `io_threads_active` in `INFO stats` to see what's running - below `io-threads - 1` means demoted workers.
 
 ### When to enable
 
@@ -75,7 +75,7 @@ Automatic, no tuning. Effect: `used_memory` per key is lower than Redis 7.2 for 
 
 - **Kvstore per-slot** (cluster mode, 8.0+): 16,384 per-slot hashtables replace the single global. Drops per-key overhead, localizes rehashing to the touched slot.
 - **Embedded key** (8.0+): key SDS lives inside the hashtable entry, saving a pointer dereference per lookup.
-- **Embedded string value** (9.0+): `shouldEmbedStringObject` returns true when the total allocation fits in 2 cache lines (128 bytes), including `robj` + optional key SDS + optional expire. Redis 7.2 used a flat 44-byte cutoff - Valkey's threshold is more generous and includes key+expire in the budget.
+- **Embedded string value with key + expire** (9.0+): `createStringObjectWithKeyAndExpire` fuses `robj` + optional key SDS + optional expire + value SDS into a single embedded allocation when the combined size fits in 64 bytes. Value-only strings still use the classic `OBJ_ENCODING_EMBSTR_SIZE_LIMIT = 44` cutoff. Net effect: fewer allocations per key on Valkey 9.0 than Redis 7.2 for the same dataset.
 
 ## Memory - `maxmemory-clients`
 

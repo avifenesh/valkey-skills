@@ -47,27 +47,22 @@ Support: 3 years bug+security fixes from first minor release of each major; 5 ye
 
 ## Replication compatibility
 
-`replicaRdbVersion()` selects highest RDB version the replica understands:
+On 9.0.3, a Valkey 9.0 primary **always** writes RDB 80 with `VALKEY080` magic during full sync - there is no per-replica RDB downgrade. The replica reports its version via `REPLCONF version <VALKEY_VERSION>` (stored in `c->repl_data->replica_version`) but the version isn't used to pick an RDB format on 9.0.3. Older replicas that expect `REDIS` magic can't load the snapshot.
 
-```
-{11, 0x070200}   -- Replicas reporting >= 7.2 get RDB 11
-{80, 0x090000}   -- Replicas reporting >= 9.0 get RDB 80
-```
+Practical consequence for 9.0.3: full sync is one-way into 9.0 but not out. Upgrades that need to run mixed for extended periods should put 9.0 *below* older primaries, not above. (RDB-version-aware replication is on `unstable`/9.1+ and will make this bidirectional.)
 
-Fallback is RDB 11 when replica doesn't report version (Redis 7.2 and older).
+| Primary | Replica | Full sync works | Note |
+|---------|---------|-----------------|------|
+| Valkey 9.0.x | Valkey 9.0.x | Yes | RDB 80 + VALKEY magic |
+| Valkey 9.0.x | Valkey 8.x | **No** | 8.x rejects VALKEY magic |
+| Valkey 9.0.x | Redis 7.2 | **No** | 7.2 rejects VALKEY magic |
+| Valkey 8.x | Valkey 9.0.x | Yes | RDB 11 + REDIS magic, `rdbIsVersionAccepted` accepts |
+| Redis 7.2 | Valkey 8.x | Yes | RDB 11 + REDIS magic |
+| Redis 7.2 | Valkey 9.0.x | Yes | RDB 11 + REDIS magic |
+| Redis CE 7.4+ | Valkey any | **No** | Foreign RDB range (12-79), rejected under `rdb-version-check strict` |
+| Valkey any | Redis CE 7.4+ | **No** | Redis CE rejects VALKEY magic |
 
-| Primary | Replica | Works | RDB sent |
-|---------|---------|-------|----------|
-| Valkey 9.x | Valkey 9.x | Yes | 80 |
-| Valkey 9.x | Valkey 8.x | Yes | 11 (downgraded) |
-| Valkey 9.x | Redis 7.2 | Yes | 11 (fallback) |
-| Valkey 8.x | Valkey 9.x | Yes | 11 |
-| Redis 7.2 | Valkey 8.x | Yes | 11 |
-| Redis 7.2 | Valkey 9.x | Yes | 11 |
-| Redis CE 7.4+ | Valkey any | **No** | Foreign range |
-| Valkey any | Redis CE 7.4+ | **No** | Foreign range |
-
-Key rule: replica RDB version must be ≥ primary RDB version for data to load. Higher-version primaries send downgraded RDB to older replicas automatically.
+Partial sync (PSYNC CONTINUE) operates over the replication backlog's RESP command stream, not the RDB, so it works across the Valkey 8.x ↔ 9.0.x boundary as long as the backlog hasn't rolled.
 
 ## Feature availability
 
@@ -90,7 +85,8 @@ Key rule: replica RDB version must be ≥ primary RDB version for data to load. 
 - `lua-replicate-commands` - always enabled
 - `io-threads-do-reads` - always enabled when I/O threads configured
 - `dynamic-hz` - always enabled
-- `events-per-io-thread` - Ignition/Cooldown CPU-sample policy replaced the event-count heuristic
+
+Note: `events-per-io-thread` is NOT deprecated on 9.0.x - it's a live `HIDDEN_CONFIG` with default `2`, still tunable via `CONFIG SET`. The Ignition/Cooldown policy that replaces the event-count heuristic is on `unstable` only.
 
 ## Client library compatibility
 
@@ -188,7 +184,7 @@ Plan module upgrades before the server upgrade, or accept legacy migration.
 ### 9.0 production gotchas
 
 - Use **9.0.3+**. Earlier 9.0.x had critical hash field expiration bugs.
-- **RDB 80** (`VALKEY080` magic) is only read by 9.0+. A replica on 8.x can't load a snapshot from a 9.0 primary with keys requiring RDB 80 features (e.g., hash field TTL). Primary downgrades RDB to version 11 for older replicas automatically, but keys that can't be represented in RDB 11 fall back to their pre-TTL form. Audit hash field TTL usage before mixing versions.
+- **RDB 80** (`VALKEY080` magic) is only read by 9.0+. A 9.0.3 primary always writes RDB 80 on full sync - no downgrade for older replicas. Mixed 8.x ↔ 9.0.x works for partial sync but not for full sync from 9.0 → older. Plan replica-first upgrades carefully so older replicas don't need to full-sync from a 9.0 primary.
 
 ## Zero-downtime host swap (non-HA)
 
