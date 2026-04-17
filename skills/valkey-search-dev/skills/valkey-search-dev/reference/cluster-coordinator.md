@@ -65,7 +65,7 @@ Timeouts:
 | RPC | Timeout | Source |
 |-----|---------|--------|
 | `GetGlobalMetadata` | 60 s | fixed |
-| `SearchIndexPartition` | `coordinator-query-timeout-secs` (default 25, 1-3600) | config |
+| `SearchIndexPartition` | `coordinator-query-timeout-secs` (default 120, 1-3600) | config |
 | `InfoIndexPartition` | `ft-info-rpc-timeout-ms` (default 2500) | config |
 
 All async. Each allocates a heap struct for context/request/response/callback/latency sample. Callback fires on a gRPC background thread -> `GRPCSuspensionGuard` -> user callback -> metrics + latency sample. Bytes tracked in `coordinator_bytes_in` / `_out`.

@@ -29,7 +29,7 @@ class VectorHNSW : public VectorBase {
 template class VectorHNSW<float>;
 ```
 
-`Create()` reads `dimension_count`, `distance_metric`, and `hnsw_algorithm.{m, ef_construction, ef_runtime}` from the `VectorIndex` proto. Passes `initial_cap` to the `HierarchicalNSW` constructor. `allow_replace_deleted_` set from `options::GetHNSWAllowReplaceDeleted()`.
+`Create()` reads `dimension_count`, `distance_metric`, and `hnsw_algorithm.{m, ef_construction, ef_runtime}` from the `VectorIndex` proto. Passes `initial_cap` to the `HierarchicalNSW` constructor. `allow_replace_deleted_` is **hardcoded `false`** on 1.2.0 (source TODO: "Consider making `allow_replace_deleted_` configurable") - aligns with RediSearch behavior.
 
 ## HNSW parameters
 
@@ -67,7 +67,7 @@ HNSW starts at `initial_cap`, grows on capacity overflow. `AddRecordImpl()` catc
 Double-checked locking: read-lock check -> write-lock re-check -> `algo_->resizeIndex(current + block_size)`. Block size from `ValkeySearch::Instance().GetHNSWBlockSize()`.
 
 - **hnswlib does not shrink** - capacity only grows.
-- `allow_replace_deleted_` - when true, reuse deleted slots before resize.
+- `allow_replace_deleted_` (hardcoded `false` on 1.2.0) would reuse deleted slots before resize if enabled.
 - Duration logged at WARNING via `vmsdk::StopWatch`.
 
 ## Search with inline filtering
@@ -109,7 +109,7 @@ Pre-filter flow: `VectorBase::AddPrefilteredKey()` iterates candidate keys from 
 ## Record lifecycle
 
 - **Add**: `VectorBase::AddRecord()` -> `InternVector()` (normalize if COSINE) -> `TrackKey()` assigns `inc_id_` -> `AddRecordImpl()` -> `algo_->addPoint()`. Overflow retries after `ResizeIfFull()`. Failure rolls back via `UnTrackKey()`.
-- **Modify**: `ModifyRecord` -> `UpdateMetadata` -> `IsVectorMatch()` (no-op shortcut) -> `ModifyRecordImpl` marks old point deleted, re-adds at same label with `allow_replace_deleted_`:
+- **Modify**: `ModifyRecord` -> `UpdateMetadata` -> `IsVectorMatch()` (no-op shortcut) -> `ModifyRecordImpl` marks old point deleted, re-adds at same label (passing `algo_->allow_replace_deleted_` which is hardcoded `false`):
   ```cpp
   algo_->markDelete(internal_id);
   algo_->addPoint(record.data(), internal_id, algo_->allow_replace_deleted_);
@@ -135,7 +135,7 @@ hnswlib has its own internal locks (`label_lookup_lock`, per-element mutex via `
 - `SaveIndexImpl()` -> `algo_->SaveIndex(RDBChunkOutputStream)` - full hnswlib binary format.
 - `LoadFromRDB()` -> construct `HierarchicalNSW`, `LoadIndex(RDBChunkInputStream)`.
 - `ef_runtime` NOT in binary - restored from proto `VectorIndex.hnsw_algorithm.ef_runtime` post-load.
-- `allow_replace_deleted_` re-applied from options post-load.
+- `allow_replace_deleted_` re-hardcoded to `false` post-load (on 1.2.0; when made configurable this would read from options).
 - Tracked keys via `VectorBase::SaveTrackedKeys()` / `LoadTrackedKeys()` using `TrackedKeyMetadata` protos (key, internal_id, magnitude).
 - After load, `inc_id_` resumes from `GetMaxInternalLabel() + 1`.
 

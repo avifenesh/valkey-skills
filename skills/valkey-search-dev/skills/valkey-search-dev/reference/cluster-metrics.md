@@ -74,7 +74,7 @@ Metrics::GetStats().some_counter++;
 
 ## Latency samplers
 
-`vmsdk::LatencySampler` - HdrHistogram style (1 ns .. 1 s, precision 2 -> ~40 KiB, ~1% error). Submit via `SAMPLE_EVERY_N(100)` which creates a `StopWatch` recording every 100th call. Success / failure tracked separately.
+`vmsdk::LatencySampler` (`vmsdk/src/latency_sampler.h`) - wraps `hdr_histogram` with range 1 ns to 1 s, `LATENCY_PRECISION = 2` (two significant figures, ~1% relative error). **Lazily allocated** - no memory until the first sample is submitted. Submit via `SAMPLE_EVERY_N(100)` - a thread-local counter yields a `StopWatch` once per N calls (zero-indexed), destructor records on destruction. Success / failure tracked separately.
 
 - `hnsw_vector_index_search_latency`
 - `flat_vector_index_search_latency`

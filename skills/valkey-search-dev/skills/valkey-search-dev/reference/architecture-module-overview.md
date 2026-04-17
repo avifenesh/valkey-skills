@@ -130,7 +130,6 @@ Registered via the `vmsdk::config` builder pattern. Access via `CONFIG GET searc
 | `use-coordinator` | Boolean | false | startup-only, hidden | enable cluster gRPC coordinator |
 | `log-level` | Enum | notice | warning..debug | module log verbosity |
 | `skip-rdb-load` | Boolean | false | | skip vector index data during RDB load |
-| `hnsw-allow-replace-deleted` | Boolean | false | dev | reuse deleted HNSW slots before resize |
 | `search-result-background-cleanup` | Boolean | false | | offload result destruction to utility pool |
 | `high-priority-weight` | Number | 100 | 0-100 | scheduling weight for high vs low priority (100 = backfill only when idle) |
 | `enable-partial-results` | Boolean | true | | default SOMESHARDS in cluster fanout |
