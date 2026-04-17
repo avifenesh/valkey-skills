@@ -1,283 +1,76 @@
-# TLS Configuration
+# TLS in Valkey
 
-Use when setting up TLS encryption for Valkey - certificate generation, server configuration, mutual TLS, replication encryption, and cluster bus encryption.
+Use when the Redis-standard TLS playbook needs a Valkey-specific twist.
 
-Source-verified against `src/tls.c` and `src/config.c` in valkey-io/valkey.
+Generic pieces - OpenSSL cert generation, cipher-suite hardening, PKI strategy - are the same as any TLS-enabled server. Follow the OWASP TLS Cheat Sheet, use TLS 1.2+1.3 only (which is the Valkey default via `tls-protocols`), and rotate certs on a schedule. This file covers what diverges.
 
-## Contents
+## Build
 
-- Prerequisites (line 26)
-- Certificate Generation (line 40)
-- Server Configuration (line 78)
-- Mutual TLS (Client Authentication) (line 124)
-- TLS for Replication (line 151)
-- TLS for Cluster Bus (line 172)
-- Certificate Auto-Reload (line 186)
-- Client Connection (line 199)
-- Recommended Cipher Suites (line 228)
-- TLS Material Validation (line 257)
-- Troubleshooting (line 270)
-
----
-
-## Prerequisites
-
-Valkey must be compiled with TLS support:
-
-```bash
-make BUILD_TLS=yes
+```sh
+make BUILD_TLS=yes    # built-in (recommended)
+make BUILD_TLS=module # loadable module - valkey-tls<SUFFIX>.so
 ```
 
-TLS can also be loaded as a module (`USE_OPENSSL=2`), but the built-in mode
-(`USE_OPENSSL=1`) is more common for production. The default protocol is
-TLSv1.2 + TLSv1.3 (verified in `src/tls.c`: `REDIS_TLS_PROTO_DEFAULT`).
+Module mode lets you toggle TLS without rebuilding the server binary. Official Docker images ship with `BUILD_TLS=yes`, so no rebuild needed in containers.
 
----
+## Core config (same as Redis)
 
-## Certificate Generation
+`tls-port`, `tls-cert-file`, `tls-key-file`, `tls-ca-cert-file` / `tls-ca-cert-dir`, `tls-auth-clients` (`yes`/`no`/`optional`), `tls-replication`, `tls-cluster`. All runtime-modifiable. Disable plaintext with `port 0`.
 
-### Self-signed CA and certificates
+## Valkey-specific TLS knobs
 
-```bash
-# Generate CA key and certificate
-openssl genrsa -out ca.key 4096
-openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 \
-  -out ca.crt -subj "/CN=Valkey CA"
-
-# Generate server key and certificate
-openssl genrsa -out server.key 2048
-openssl req -new -key server.key -out server.csr \
-  -subj "/CN=valkey-server"
-openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key \
-  -CAcreateserial -out server.crt -days 365 -sha256
-
-# Generate client key and certificate (for mTLS)
-openssl genrsa -out client.key 2048
-openssl req -new -key client.key -out client.csr \
-  -subj "/CN=valkey-client"
-openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key \
-  -CAcreateserial -out client.crt -days 365 -sha256
-
-# Set permissions
-chmod 600 *.key
-chmod 644 *.crt
-```
-
-### Production recommendations
-
-- Use a proper PKI or internal CA (HashiCorp Vault, cfssl, step-ca)
-- Set certificate lifetimes to 90 days or less and automate rotation
-- Use SAN extensions for hostname verification
-- Store private keys with restricted permissions (owner read-only)
-
----
-
-## Server Configuration
-
-### Basic TLS (encrypt in transit)
+### `tls-auth-clients-user` - cert-to-ACL mapping
 
 ```
-# valkey.conf
-tls-port 6379
-port 0                          # disable plaintext connections
-tls-cert-file /etc/valkey/tls/server.crt
-tls-key-file /etc/valkey/tls/server.key
-tls-ca-cert-file /etc/valkey/tls/ca.crt
+tls-auth-clients-user cn     # CN → ACL username
+tls-auth-clients-user uri    # SAN URI → ACL username
+tls-auth-clients-user off    # default - no mapping
 ```
 
-### All TLS parameters
+Lets a connecting mTLS client skip `AUTH` entirely - the cert subject maps directly to an ACL user. Valkey 9.0 added `uri` (SPIFFE-style identities). The username from the cert must already exist as an ACL user or the connection is rejected.
 
-Verified from `src/config.c` - complete list of TLS configuration options:
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `tls-port` | 0 (disabled) | TLS listening port |
-| `tls-cert-file` | none | Server certificate file path |
-| `tls-key-file` | none | Server private key file path |
-| `tls-key-file-pass` | none | Password for encrypted private key |
-| `tls-ca-cert-file` | none | CA certificate for client verification |
-| `tls-ca-cert-dir` | none | Directory of CA certificates |
-| `tls-auth-clients` | yes | Client certificate requirement: yes/no/optional |
-| `tls-auth-clients-user` | off | Map client cert field to ACL user: off/cn/uri |
-| `tls-client-cert-file` | none | Separate client cert for outbound connections |
-| `tls-client-key-file` | none | Private key for client cert |
-| `tls-client-key-file-pass` | none | Password for client key |
-| `tls-dh-params-file` | none | DH parameters file |
-| `tls-protocols` | TLSv1.2 TLSv1.3 | Space-separated list of allowed protocols |
-| `tls-ciphers` | none (OpenSSL default) | TLS 1.2 cipher list |
-| `tls-ciphersuites` | none (OpenSSL default) | TLS 1.3 ciphersuites |
-| `tls-prefer-server-ciphers` | no | Server-side cipher preference |
-| `tls-session-caching` | yes | Enable TLS session caching |
-| `tls-session-cache-size` | 20480 | Session cache size |
-| `tls-session-cache-timeout` | 300 | Session cache timeout (seconds) |
-| `tls-replication` | no | Use TLS for replication connections |
-| `tls-cluster` | no | Use TLS for cluster bus |
-| `tls-auto-reload-interval` | 0 (disabled) | Background certificate reload interval (seconds) |
-
-All TLS parameters are runtime-modifiable (`MODIFIABLE_CONFIG` flag in source).
-
----
-
-## Mutual TLS (Client Authentication)
-
-Require clients to present a valid certificate signed by the trusted CA:
+### `tls-auto-reload-interval`
 
 ```
-# valkey.conf
-tls-auth-clients yes
+tls-auto-reload-interval 3600   # seconds; 0 disables
 ```
 
-Three modes:
-- `yes` - require client certificate (mutual TLS)
-- `no` - do not request client certificate
-- `optional` - request but do not require
+Background thread watches cert/key files and reloads the `SSL_CTX` in-place without restart. Valkey splits the work - a BIO thread parses new certs, the main thread atomically swaps the context pointer. Change-detection uses SHA-256 over cert content plus inode/mtime on the key.
 
-### Certificate-based ACL user mapping
+On reload, Valkey re-validates the full material set before committing. If the new certs don't match their keys or have expired, the reload is rejected and the old context keeps serving - a bad push won't black-hole connections. INFO exposes `tls_server_cert_expire_time`, `tls_client_cert_expire_time`, `tls_ca_cert_expire_time` plus `tls_*_expires_in_seconds` for alerting.
 
-Map the client certificate CN or SAN URI to an ACL username automatically:
+### Separate outbound client cert
 
-```
-tls-auth-clients-user cn    # use Common Name as ACL username
-tls-auth-clients-user uri   # use SAN URI as ACL username
-```
+When `tls-client-cert-file` / `tls-client-key-file` are set, Valkey builds a second `SSL_CTX` just for outbound connections (replication, cluster bus, module-originated connections). Without them, the server cert is reused for both directions - fine for internal-only clusters, but breaks the principle-of-least-privilege if that cert leaks.
 
-This eliminates the need for password-based AUTH when using mTLS.
-
----
-
-## TLS for Replication
-
-Enable encryption between primary and replicas:
+## TLS for replication and cluster bus
 
 ```
-# On primary and all replicas
+tls-replication yes    # primary <-> replica
+tls-cluster     yes    # cluster bus (gossip + migration)
+```
+
+Both need to be set on every node. When enabled, the cluster bus port (`port + 10000`) serves TLS too - clients that probe the bus port to validate reachability need TLS, not plaintext.
+
+## TLS handshake offload to I/O threads
+
+When `io-threads > 1`, `SSL_accept` runs on an I/O thread via `trySendAcceptToIOThreads`. Gated by `CONN_FLAG_ALLOW_ACCEPT_OFFLOAD`. Operators see this as the main thread staying responsive during a burst of new TLS connections that would otherwise CPU-bind the accept loop. No config knob - it's automatic when I/O threads are on.
+
+## mTLS with ACL user mapping - minimal example
+
+```
 tls-port 6379
 port 0
-tls-cert-file /etc/valkey/tls/server.crt
-tls-key-file /etc/valkey/tls/server.key
+tls-cert-file  /etc/valkey/tls/server.crt
+tls-key-file   /etc/valkey/tls/server.key
 tls-ca-cert-file /etc/valkey/tls/ca.crt
-tls-replication yes
+tls-auth-clients yes
+tls-auth-clients-user cn
+tls-auto-reload-interval 3600
 ```
 
-When `tls-client-cert-file` and `tls-client-key-file` are configured, Valkey
-uses a separate SSL context for outbound connections (replication, cluster bus).
-Otherwise, the server certificate is used for both directions. Verified in
-`src/tls.c`: `valkey_tls_client_ctx` vs `valkey_tls_ctx`.
+ACL user `alice` exists, connecting cert has `CN=alice` → authenticated as `alice` with no `AUTH alice <pw>` needed.
 
----
+## Client connection
 
-## TLS for Cluster Bus
-
-Enable encryption for inter-node cluster communication:
-
-```
-# On all cluster nodes
-tls-cluster yes
-```
-
-This encrypts both the gossip protocol and data migration traffic between
-cluster nodes.
-
----
-
-## Certificate Auto-Reload
-
-Valkey can detect certificate file changes and reload without restart:
-
-```
-tls-auto-reload-interval 3600    # check every hour (seconds)
-```
-
-Set to 0 to disable. The background thread checks file modification times
-and reloads the SSL context when changes are detected.
-
----
-
-## Client Connection
-
-### valkey-cli
-
-```bash
-# Server-only TLS
-valkey-cli --tls --cacert /path/to/ca.crt -h valkey-host
-
-# Mutual TLS
-valkey-cli --tls \
-  --cert /path/to/client.crt \
-  --key /path/to/client.key \
-  --cacert /path/to/ca.crt \
-  -h valkey-host
-```
-
-### Application clients
-
-Most client libraries support TLS via connection URL:
-
-```
-valkeys://username:password@valkey-host:6379
-```
-
-Or via explicit TLS options in the client constructor. Consult your client
-library documentation for the specific parameter names.
-
----
-
-## Recommended Cipher Suites
-
-Based on OWASP TLS Cheat Sheet guidance. Only AEAD ciphers with forward
-secrecy - no CBC, RC4, DES, 3DES, MD5, SHA-1, EXPORT, NULL, or anonymous
-ciphers.
-
-**TLS 1.3 (preferred):**
-
-```
-tls-ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256
-```
-
-**TLS 1.2 (compatibility):**
-
-```
-tls-ciphers ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256
-```
-
-Enable server-side cipher preference:
-
-```
-tls-prefer-server-ciphers yes
-```
-
-PCI DSS requires TLS 1.2 minimum. Use `tls-protocols "TLSv1.2 TLSv1.3"`
-(this is already the default).
-
----
-
-## TLS Material Validation
-
-Valkey validates all TLS materials on load and reload:
-
-- Files and directories are not empty or malformed
-- Certificates match their private keys
-- Certificates are within their validity period
-
-If validation fails, the reload is rejected and existing materials remain
-in use. This prevents a bad certificate push from taking down connections.
-
----
-
-## Troubleshooting
-
-| Symptom | Likely Cause |
-|---------|-------------|
-| Connection refused on TLS port | `tls-port` not set or firewall blocking |
-| SSL handshake failure | Certificate/key mismatch or expired cert |
-| "no shared cipher" error | Protocol version mismatch (check `tls-protocols`) |
-| Client cert rejected | CA mismatch or `tls-auth-clients` set to `yes` without client cert |
-| Replication not encrypting | `tls-replication yes` missing on primary or replica |
-
-Verify TLS configuration with:
-
-```bash
-openssl s_client -connect valkey-host:6379 -CAfile ca.crt
-```
-
----
+`valkey-cli` flags (`--tls`, `--cert`, `--key`, `--cacert`) and `valkeys://` URI scheme are stock. Same as Redis with renamed command.

@@ -1,149 +1,155 @@
-# Essential Configuration
+# Essential Configuration - Defaults Reference
 
-Use when setting up a new Valkey instance or auditing an existing config. All defaults verified against `src/config.c` in the Valkey source.
+Use when setting up or auditing `valkey.conf`. Defaults verified against `src/config.c` for Valkey 9.0.
 
----
-
-Valkey reads configuration from `valkey.conf`. Most parameters can be changed at runtime via `CONFIG SET` and queried via `CONFIG GET`. To persist runtime changes: `CONFIG REWRITE`.
+All parameters are runtime-modifiable (`CONFIG SET`) unless flagged immutable. Persist runtime changes with `CONFIG REWRITE`.
 
 ## Network
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `bind` | `* -::*` | Interfaces to listen on. Default accepts all. Production: bind to specific IPs. |
-| `port` | `6379` | TCP port for client connections. Set to 0 to disable non-TLS. |
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `bind` | `* -::*` | Listens on all interfaces. Production: bind to specific IPs. Runtime-modifiable despite some old docs. |
+| `port` | `6379` | Set `0` to disable plaintext (TLS-only). |
 | `protected-mode` | `yes` | Rejects external connections when no password is set and bind is default. |
-| `tcp-backlog` | `511` | TCP listen backlog. Capped by kernel `somaxconn` - tune both. |
-| `tcp-keepalive` | `300` | Seconds between TCP keepalive probes. Detects dead peers. |
-| `timeout` | `0` | Idle client timeout in seconds. 0 means never disconnect idle clients. |
-| `maxclients` | `10000` | Maximum simultaneous client connections. |
-| `mptcp` | `no` | Multipath TCP support. |
-
-`bind` defaults to `* -::*` in the source (`CONFIG_DEFAULT_BINDADDR`), which listens on all interfaces. The research guide shows `127.0.0.1 -::1` as the recommended production setting. When `protected-mode` is `yes` and no password is set, external connections are rejected regardless of bind address.
+| `tcp-backlog` | `511` | Immutable. Capped by kernel `somaxconn`. |
+| `tcp-keepalive` | `300` | Seconds between keepalive probes. |
+| `timeout` | `0` | Idle client timeout; `0` = never. |
+| `maxclients` | `10000` | |
+| `mptcp` | `no` | Multipath TCP (Valkey 9.0+, Linux 5.6+). Immutable. Requires `mptcp yes` / `repl-mptcp yes`. |
 
 ## Memory
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `maxmemory` | `0` (unlimited) | Hard memory limit in bytes. Set explicitly in production. |
-| `maxmemory-policy` | `noeviction` | What to do when maxmemory is reached. See [eviction policies](configuration-eviction.md). |
-| `maxmemory-clients` | `0` (disabled) | Max aggregate memory for client buffers. Accepts bytes or percentage (e.g., `5%`). |
-| `maxmemory-samples` | `5` | Number of keys sampled for LRU/LFU approximation. Higher = more accurate but slower. |
-| `maxmemory-eviction-tenacity` | `10` | Effort level for eviction (0-100). Higher values try harder to meet maxmemory. |
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `maxmemory` | `0` | Unlimited. Always set explicitly. |
+| `maxmemory-policy` | `noeviction` | **Note:** source default is `noeviction`, not `allkeys-lru`. |
+| `maxmemory-clients` | `0` | Accepts percentage (`5%`) - evaluated at SET time. |
+| `maxmemory-samples` | `5` | LRU/LFU sample count. |
+| `maxmemory-eviction-tenacity` | `10` | 0-100. |
 
-**maxmemory sizing rule of thumb**: If the machine has 10 GB free, set `maxmemory` to 8-9 GB. This accounts for Valkey overhead beyond data, memory fragmentation, fork copy-on-write during BGSAVE, and client output/query buffers. With persistence on write-heavy workloads, reserve up to 40% (fork COW can double page table usage).
-
-**Source verification note**: The research guide lists `maxmemory-policy allkeys-lru` as a default. This is incorrect - the source default is `noeviction` (`MAXMEMORY_NO_EVICTION` at line 3339 in config.c). The guide was showing a recommended value, not the actual default.
+`maxmemory` should leave 30-40% RAM for fork COW + client buffers + OS. Cache-only workloads can push to 80%; write-heavy AOF+RDB setups should stay at 50-60%.
 
 ## Persistence - RDB
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `save` | (see note) | Snapshot triggers. Format: `save <seconds> <changes>`. |
-| `dbfilename` | `dump.rdb` | RDB snapshot filename. |
-| `dir` | `./` | Working directory for RDB and AOF files. |
-| `rdbchecksum` | `yes` | CRC64 checksum at end of RDB file. |
-| `rdbcompression` | `yes` | LZF compression for string objects in RDB. |
-| `stop-writes-on-bgsave-error` | `yes` | Reject writes if BGSAVE fails. Safety mechanism. |
-| `rdb-save-incremental-fsync` | `yes` | Fsync every 32MB during RDB save. Avoids I/O spikes. |
-| `rdb-del-sync-files` | `no` | Delete replication-generated RDB files immediately after use. |
-
-Note on `save` defaults: The default save rules are set in the `initServerConfig` function, not in the config table. The typical default is `save 3600 1 300 100 60 10000`.
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `save` | `3600 1 300 100 60 10000` | Initialized in `initServerConfig`, not in the config table. Means: 1 change in 1h OR 100 in 5m OR 10000 in 1m. |
+| `dbfilename` | `dump.rdb` | |
+| `dir` | `./` | |
+| `rdbchecksum` | `yes` | CRC64. |
+| `rdbcompression` | `yes` | LZF. |
+| `stop-writes-on-bgsave-error` | `yes` | Failed BGSAVE blocks writes until cleared. Common "disk full, writes frozen" incident source. |
+| `rdb-save-incremental-fsync` | `yes` | |
+| `rdb-del-sync-files` | `no` | |
+| `rdb-version-check` | `strict` | Valkey-only. `strict` rejects foreign RDB range (12-79); `relaxed` allows loading RDBs from forks. Modifiable at runtime. |
 
 ## Persistence - AOF
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `appendonly` | `no` | Enable Append-Only File persistence. |
-| `appendfilename` | `appendonly.aof` | Base name of the AOF file. |
-| `appenddirname` | `appendonlydir` | Directory for multi-part AOF files (Valkey 7+). |
-| `appendfsync` | `everysec` | Fsync policy: `always`, `everysec`, or `no`. |
-| `auto-aof-rewrite-percentage` | `100` | Trigger rewrite when AOF grows by this percentage. |
-| `auto-aof-rewrite-min-size` | `64mb` | Minimum AOF size before auto-rewrite kicks in. |
-| `aof-use-rdb-preamble` | `yes` | Hybrid format: RDB snapshot + AOF tail. Faster loading. |
-| `aof-load-truncated` | `yes` | Load truncated AOF instead of refusing to start. |
-| `aof-rewrite-incremental-fsync` | `yes` | Fsync every 32MB during AOF rewrite. |
-| `no-appendfsync-on-rewrite` | `no` | Skip fsync during BGSAVE/BGREWRITEAOF. Trades safety for performance. |
-| `aof-timestamp-enabled` | `no` | Add timestamps to AOF entries. |
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `appendonly` | `no` | |
+| `appendfilename` | `appendonly.aof` | Immutable. |
+| `appenddirname` | `appendonlydir` | Immutable. Multi-part AOF (BASE + INCR + manifest). |
+| `appendfsync` | `everysec` | |
+| `auto-aof-rewrite-percentage` | `100` | |
+| `auto-aof-rewrite-min-size` | `64mb` | |
+| `aof-use-rdb-preamble` | `yes` | RDB preamble accepts either `REDIS` or `VALKEY` magic on load. |
+| `aof-load-truncated` | `yes` | |
+| `aof-timestamp-enabled` | `no` | |
+| `no-appendfsync-on-rewrite` | `no` | `yes` silently disables `appendfsync always` during rewrites. |
 
 ## I/O Threads
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `io-threads` | `1` | Number of I/O threads. 1 = single-threaded (classic mode). Max: 256. |
-
-**Source verification note**: The research guide mentions `io-threads-do-reads yes` as a configuration parameter. In the current Valkey source, `io-threads-do-reads` is a deprecated config (listed in `deprecated_configs[]` at line 459 of config.c). When `io-threads` > 1, reads are always offloaded to I/O threads. This parameter is silently ignored if present in config files.
-
-Similarly, `dynamic-hz` is deprecated - the behavior it controlled is now always on.
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `io-threads` | `1` | 1 = single-threaded. Range 1-256. DEBUG_CONFIG flag. |
+| `io-threads-do-reads` | (deprecated) | In `deprecated_configs[]` - silently accepted. Reads are always offloaded when `io-threads > 1`. |
+| `events-per-io-thread` | `2` | `HIDDEN_CONFIG`. Not shown in `CONFIG GET *`. Still tunable via `CONFIG SET`. |
+| `min-io-threads-avoid-copy-reply` | `7` | `HIDDEN_CONFIG`. Threshold for zero-copy response path. |
+| `dynamic-hz` | (deprecated) | Auto-scaling is always on. |
 
 ## Logging
 
-| Parameter | Default | Description |
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `loglevel` | `notice` | `debug / verbose / notice / warning / nothing`. |
+| `logfile` | `""` | Immutable. Empty = stdout. |
+| `log-format` | `legacy` | Valkey-only. `legacy / logfmt / json`. |
+| `log-timestamp-format` | `legacy` | Valkey-only. `legacy / iso8601 / milliseconds`. |
+| `syslog-enabled` | `no` | Immutable. |
+
+## COMMANDLOG (replaces SLOWLOG)
+
+| Parameter | Default | Alias |
+|-----------|---------|-------|
+| `commandlog-execution-slower-than` | `10000` µs | `slowlog-log-slower-than` |
+| `commandlog-slow-execution-max-len` | `128` | `slowlog-max-len` |
+| `commandlog-request-larger-than` | `1048576` bytes | - |
+| `commandlog-large-request-max-len` | `128` | - |
+| `commandlog-reply-larger-than` | `1048576` bytes | - |
+| `commandlog-large-reply-max-len` | `128` | - |
+| `latency-monitor-threshold` | `0` ms | `0` = disabled. |
+| `latency-tracking` | `yes` | Per-command latency histogram. |
+
+All three COMMANDLOG types share a unified `COMMANDLOG GET/LEN/RESET` command family. `SLOWLOG *` still works as an alias for the slow-log type.
+
+## Replication (Valkey primary names)
+
+| Parameter | Default | Legacy alias |
 |-----------|---------|-------------|
-| `loglevel` | `notice` | Log verbosity: `debug`, `verbose`, `notice`, `warning`, `nothing`. |
-| `logfile` | `""` (stdout) | Log file path. Empty string logs to stdout. |
-| `log-format` | `legacy` | Log output format: `legacy`, `logfmt`, `json`. |
-| `log-timestamp-format` | `legacy` | Timestamp format: `legacy`, `iso8601`, `milliseconds`. |
-| `syslog-enabled` | `no` | Send logs to syslog. |
-| `syslog-ident` | `valkey` | Syslog identity string. |
-| `syslog-facility` | `local0` | Syslog facility. |
-
-## Command Log (Slow Log)
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `commandlog-execution-slower-than` | `10000` | Log commands slower than N microseconds. Alias: `slowlog-log-slower-than`. |
-| `commandlog-slow-execution-max-len` | `128` | Max entries in slow command log. Alias: `slowlog-max-len`. |
-| `commandlog-request-larger-than` | `1048576` | Log requests larger than N bytes (1MB default). |
-| `commandlog-large-request-max-len` | `128` | Max entries in large request log. |
-| `commandlog-reply-larger-than` | `1048576` | Log replies larger than N bytes (1MB default). |
-| `commandlog-large-reply-max-len` | `128` | Max entries in large reply log. |
-| `latency-monitor-threshold` | `0` | Latency monitoring threshold in ms. 0 = disabled. |
-| `latency-tracking` | `yes` | Per-command latency histogram tracking. |
-
-## Replication
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `repl-diskless-sync` | `yes` | Send RDB over socket instead of writing to disk first. |
-| `repl-diskless-sync-delay` | `5` | Seconds to wait for more replicas before starting diskless transfer. |
-| `repl-diskless-load` | `disabled` | Replica loads RDB from socket: `disabled`, `on-empty-db`, `swapdb`, `flush-before-load`. |
-| `repl-backlog-size` | `10mb` | Size of replication backlog for partial resync. |
-| `repl-backlog-ttl` | `3600` | Seconds before freeing backlog when no replicas connected. |
-| `repl-timeout` | `60` | Replication timeout in seconds. |
-| `repl-ping-replica-period` | `10` | Seconds between PING to replicas. |
-| `repl-disable-tcp-nodelay` | `no` | When yes, uses larger TCP packets (more latency, less bandwidth). |
-| `replica-serve-stale-data` | `yes` | Serve requests while syncing with primary. |
-| `replica-read-only` | `yes` | Reject writes on replicas. |
-| `replica-lazy-flush` | `yes` | Async FLUSHALL on replica before full resync. |
-| `replica-ignore-maxmemory` | `yes` | Replicas don't enforce maxmemory (primary handles eviction). |
-| `replica-priority` | `100` | Priority for Sentinel promotion. Lower = preferred. 0 = never promote. |
-| `min-replicas-to-write` | `0` | Minimum replicas that must acknowledge before primary accepts writes. 0 = disabled. |
-| `min-replicas-max-lag` | `10` | Maximum replication lag in seconds for a replica to count toward min-replicas-to-write. |
+| `replicaof` | - | `slaveof` |
+| `replica-priority` | `100` | `slave-priority` |
+| `primaryuser` | - | `masteruser` |
+| `primaryauth` | - | `masterauth` |
+| `replica-serve-stale-data` | `yes` | |
+| `replica-read-only` | `yes` | |
+| `replica-lazy-flush` | `yes` | |
+| `replica-ignore-maxmemory` | `yes` | Replicas don't enforce maxmemory; primary does. |
+| `repl-diskless-sync` | `yes` | |
+| `repl-diskless-sync-delay` | `5` | Seconds to wait for more replicas. |
+| `repl-diskless-load` | `disabled` | `disabled / on-empty-db / swapdb / flush-before-load`. |
+| `repl-backlog-size` | `10mb` | |
+| `repl-backlog-ttl` | `3600` | |
+| `repl-timeout` | `60` | |
+| `repl-ping-replica-period` | `10` | |
+| `repl-disable-tcp-nodelay` | `no` | |
+| `dual-channel-replication-enabled` | `no` | Valkey-only. Full resync uses two TCP connections. |
+| `min-replicas-to-write` | `0` | |
+| `min-replicas-max-lag` | `10` | |
 
 ## Cluster
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `cluster-enabled` | `no` | Enable cluster mode. Immutable - requires restart. |
-| `cluster-config-file` | `nodes.conf` | Auto-managed cluster state file. |
-| `cluster-node-timeout` | `15000` | Milliseconds before a node is considered failing. |
-| `cluster-require-full-coverage` | `yes` | Reject queries if any hash slot is uncovered. |
-| `cluster-allow-reads-when-down` | `no` | Allow reads when cluster is down (not all slots covered). |
-| `cluster-allow-pubsubshard-when-down` | `yes` | Allow shard pub/sub when cluster is down. |
-| `cluster-replica-validity-factor` | `10` | Factor multiplied by node-timeout to determine max replica data age for failover. |
-| `cluster-migration-barrier` | `1` | Min replicas a primary must retain before donating one to an orphan primary. |
-| `cluster-allow-replica-migration` | `yes` | Allow automatic replica migration between primaries. |
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `cluster-enabled` | `no` | Immutable. |
+| `cluster-config-file` | `nodes.conf` | Immutable. |
+| `cluster-node-timeout` | `15000` ms | |
+| `cluster-manual-failover-timeout` | `5000` ms | Valkey-only (Redis hardcodes this). |
+| `cluster-require-full-coverage` | `yes` | |
+| `cluster-allow-reads-when-down` | `no` | |
+| `cluster-allow-pubsubshard-when-down` | `yes` | Valkey-only default flip - shard pub/sub keeps working when cluster is in FAIL state. |
+| `cluster-replica-validity-factor` | `10` | |
+| `cluster-migration-barrier` | `1` | |
+| `cluster-allow-replica-migration` | `yes` | |
+| `cluster-slot-stats-enabled` | `no` | Valkey-only. Enables per-slot CPU + network accounting for `CLUSTER SLOT-STATS`. |
+| `cluster-config-save-behavior` | `sync` | Valkey-only. Controls `nodes.conf` save timing. |
+| `availability-zone` | `""` | Valkey-only. Gossiped; surfaced in `CLUSTER SHARDS`/`SLOTS`. |
 
-## General
+## General / Lazy-Free
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `databases` | `16` | Number of databases (DB 0-15). Immutable. |
-| `hz` | `10` | Server timer frequency in calls/sec. Higher = more responsive but more CPU. |
-| `disable-thp` | `yes` | Disable Transparent Huge Pages for the Valkey process. |
-| `activerehashing` | `yes` | Incrementally rehash hash tables in background. |
-| `lazyfree-lazy-*` | all `yes` | All five lazyfree parameters default to yes. See [Lazy Free Configuration](configuration-lazyfree.md) for details. |
-| `hide-user-data-from-log` | `yes` | Redact user data (keys, values) from log messages. |
-| `busy-reply-threshold` | `5000` | Milliseconds before long-running script triggers BUSY error. Alias: `lua-time-limit`. |
-| `proto-max-bulk-len` | `512mb` | Maximum size of a single RESP bulk string. |
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `databases` | `16` | Immutable. |
+| `hz` | `10` | Timer frequency. |
+| `disable-thp` | `yes` | |
+| `activerehashing` | `yes` | |
+| `hide-user-data-from-log` | `yes` | Valkey-only default. Redacts keys/values from log messages. |
+| `busy-reply-threshold` | `5000` ms | Alias: `lua-time-limit`. Triggers BUSY error. |
+| `proto-max-bulk-len` | `512mb` | |
+| `lazyfree-lazy-eviction` | `yes` | **All five lazyfree defaults are `yes` in Valkey** (Redis defaults are `no`). |
+| `lazyfree-lazy-expire` | `yes` | |
+| `lazyfree-lazy-server-del` | `yes` | |
+| `lazyfree-lazy-user-del` | `yes` | |
+| `lazyfree-lazy-user-flush` | `yes` | |
+
+The lazy-free flip means `DEL`, `FLUSH*`, eviction, expire, and server-side deletes all go to background deallocation unless explicitly turned off. Latency characteristics differ from a Redis-defaults environment - the same workload will show lower p99 but the BIO queue can back up under sustained delete pressure.

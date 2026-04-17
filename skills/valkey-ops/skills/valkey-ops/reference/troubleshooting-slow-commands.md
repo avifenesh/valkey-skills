@@ -1,257 +1,46 @@
-# Slow Command Investigation
+# Slow-Command Investigation
 
-Use when clients report high latency, timeouts, or when monitoring shows elevated command execution times.
+Use when p99 spikes, clients time out, or throughput drops while CPU stays moderate. Redis playbook applies (`KEYS *` vs `SCAN`, `HGETALL` on huge hashes, unbounded `ZRANGEBYSCORE`, Lua scripts blocking the main thread, `SMEMBERS` on million-member sets) - this file is the Valkey-specific delta.
 
-## Contents
+## COMMANDLOG replaces SLOWLOG - and splits the job
 
-- Symptoms (line 17)
-- Diagnosis (line 25)
-- Common Culprits (line 111)
-- Resolution (line 177)
-- Hot Key Detection (line 228)
+Valkey 8.1+ adds three logs in one command family. `SLOWLOG *` remains as an alias for the `slow` type only; the other two are net-new surfaces.
 
----
-
-## Symptoms
-
-- Client-side timeouts or increased error rates
-- `LATENCY LATEST` shows spikes on `command` or `fast-command` events
-- Commandlog (slowlog) entries accumulating
-- `CLIENT LIST` shows connections with long-running commands
-- Overall throughput drops while CPU usage stays moderate (blocking on main thread)
-
-## Diagnosis
-
-### Step 1: Check Commandlog (Slowlog)
-
-Source-verified defaults from `src/config.c`:
-- `commandlog-execution-slower-than` (alias `slowlog-log-slower-than`): 10000 microseconds (10ms)
-- `commandlog-slow-execution-max-len` (alias `slowlog-max-len`): 128 entries
-
-```bash
-# View recent slow commands
-valkey-cli SLOWLOG GET 25
-
-# Each entry:
-# 1) Unique ID
-# 2) Unix timestamp
-# 3) Execution time in microseconds
-# 4) Command + arguments
-# 5) Client IP:port
-# 6) Client name
+```sh
+valkey-cli COMMANDLOG GET 25 slow            # > 10ms by default
+valkey-cli COMMANDLOG GET 25 large-request   # > 1MB by default
+valkey-cli COMMANDLOG GET 25 large-reply     # > 1MB by default
+valkey-cli COMMANDLOG LEN <type>
+valkey-cli COMMANDLOG RESET <type>
 ```
 
-Look for patterns:
-- Same command type repeated (e.g., many KEYS or SMEMBERS entries)
-- Same client IP generating most slow entries
-- Duration increasing over time (growing dataset)
-- Sudden spike in entries at a specific timestamp (batch job, deployment)
+Why it matters: a client timing out on `HGETALL` against a large hash won't show in slow-log if the server side was fast - but the **reply** was megabytes. That's the `large-reply` log, and it's the signal that tells you the client's network or their own parser is the bottleneck, not the server.
 
-### Step 2: Check for Large Request/Reply Commands
+In cluster mode, `COMMANDLOG GET/LEN/RESET` carry `REQUEST_POLICY:ALL_NODES` annotations, so a cluster-aware client fan-outs and merges automatically. Aggregated IDs aren't globally unique.
 
-```bash
-# Commands with oversized requests (> 1MB default)
-valkey-cli COMMANDLOG GET 25 large-request
-
-# Commands with oversized replies (> 1MB default)
-valkey-cli COMMANDLOG GET 25 large-reply
-```
-
-Large replies often indicate retrieving entire collections (`HGETALL`,
-`SMEMBERS`, `LRANGE 0 -1`) without pagination.
-
-### Step 3: Check Latency Monitor
-
-```bash
-# Enable if not already active
-valkey-cli CONFIG SET latency-monitor-threshold 10
-
-# Check for command-related latency events
-valkey-cli LATENCY LATEST
-valkey-cli LATENCY DOCTOR
-```
-
-The `command` event tracks slow O(N) commands. The `fast-command` event
-tracks commands that are expected to be O(1) but exceeded the threshold -
-this often indicates CPU scheduling issues or memory allocation stalls.
-
-### Step 4: Inspect Active Clients
-
-```bash
-valkey-cli CLIENT LIST
-```
-
-| Field | What to check |
-|-------|--------------|
-| `cmd` | Currently executing command |
-| `age` | Connection age |
-| `idle` | Seconds since last activity |
-| `qbuf` | Query buffer size (large = big incoming command) |
-| `omem` | Output buffer memory (large = big response pending) |
-| `flags` | `b` = blocked, `x` = in MULTI, `d` = key tracking dirty |
-| `tot-mem` | Total memory used by this client |
-
-Look for:
-- Clients with `flags` containing `b` (blocked on BRPOP, BLPOP, etc.)
-- Clients with high `omem` (consuming output buffer memory)
-- Clients running `SUBSCRIBE` with no consumer processing messages
-
-### Step 5: Check Command Stats
-
-```bash
-valkey-cli INFO commandstats
-```
-
-Each command shows: `calls`, `usec`, `usec_per_call`, `rejected_calls`,
-`failed_calls`. Sort by `usec_per_call` to find the slowest commands on
-average.
-
-## Common Culprits
-
-### KEYS * in Production
-
-The `KEYS` command scans the entire keyspace in a single blocking operation.
-With millions of keys, this can block for seconds.
-
-```bash
-# NEVER in production:
-KEYS user:*
-
-# Use instead:
-SCAN 0 MATCH user:* COUNT 100
-# Iterate with the returned cursor until 0
-```
-
-### Large Collection Operations
-
-| Command | Problem | Alternative |
-|---------|---------|------------|
-| `SMEMBERS` on huge set | Returns all members at once | `SSCAN` with cursor |
-| `HGETALL` on huge hash | Returns all fields at once | `HSCAN` with cursor |
-| `LRANGE 0 -1` on long list | Returns entire list | Paginate with `LRANGE start stop` |
-| `SORT` on large list | O(N*log(N)) + O(N) | Sort client-side or use sorted sets |
-| `ZRANGEBYSCORE` unbounded | Can return millions | Add `LIMIT offset count` |
-
-### Large Key Deletion
-
-`DEL` on a key with millions of elements blocks the main thread. Use `UNLINK`
-for asynchronous deletion.
-
-```bash
-# Blocking (bad for large keys):
-DEL my_huge_set
-
-# Non-blocking (freed in background):
-UNLINK my_huge_set
-```
-
-### Long-Running Lua Scripts
-
-Lua scripts execute atomically on the main thread. A script that runs for
-seconds blocks all other clients.
-
-```bash
-# Check for Lua-related slowlog entries
-SLOWLOG GET 25
-# Look for EVAL / EVALSHA entries with high duration
-
-# Set a script timeout
-CONFIG SET lua-time-limit 5000    # 5 seconds, then allows SCRIPT KILL
-```
-
-### Pub/Sub Without Consumers
-
-Publishers pushing to channels with slow or absent subscribers cause output
-buffer growth on the server.
-
-```bash
-# Check pub/sub clients
-CLIENT LIST TYPE pubsub
-
-# Set buffer limits
-CONFIG SET client-output-buffer-limit "pubsub 32mb 8mb 60"
-```
-
-## Resolution
-
-### 1. Lower Commandlog Threshold for Investigation
-
-```bash
-# Temporarily capture commands slower than 1ms
-CONFIG SET commandlog-execution-slower-than 1000
-
-# Increase buffer for more history
-CONFIG SET commandlog-slow-execution-max-len 512
-
-# After investigation, restore defaults
-CONFIG SET commandlog-execution-slower-than 10000
-CONFIG SET commandlog-slow-execution-max-len 128
-```
-
-### 2. Rename or Disable Dangerous Commands
+Tightening thresholds during investigation:
 
 ```
-# In valkey.conf (cannot be set at runtime)
-rename-command KEYS ""
-rename-command FLUSHALL ""
-rename-command FLUSHDB ""
+commandlog-execution-slower-than 1000     # 1ms - surface more
+commandlog-slow-execution-max-len 512
+commandlog-reply-larger-than 65536        # 64KB - catch medium replies
 ```
 
-### 3. Use OBJECT ENCODING to Check Data Structure Efficiency
+Restore defaults (10000 µs, 128, 1048576 B) after.
 
-```bash
-# Check if a key has been promoted to a less efficient encoding
-OBJECT ENCODING mykey
+## Argv capture nuance
 
-# If a hash shows "hashtable" instead of "listpack", it has exceeded
-# encoding thresholds - consider splitting the data
-```
+COMMANDLOG entries capture `c->original_argv` when the server rewrote the command (e.g., `SET ... EX` rewritten internally). Per-argument redaction is separate: `redactClientCommandArgument` sets bits in `c->redact_arg_bitmap` applied lazily at log time. Commands marked with `CMD_SKIP_COMMANDLOG` (AUTH, HELLO) never enter any of the three logs. Scripts: `peerid`/`cname` come from `scriptGetCaller()` so entries from Lua show the caller's identity, not the scripting engine's.
 
-### 4. Pipeline Instead of Individual Commands
+## Hot-key detection
 
-Client-side optimization. Instead of N round-trips, batch commands into
-pipelines of 50-100 commands to reduce network overhead.
+`valkey-cli --hotkeys` needs `maxmemory-policy` set to one of the LFU variants; it internally calls `OBJECT FREQ`. `--bigkeys` and `--memkeys` ship in `valkey-cli` and work without LFU (same binary identity as `redis-cli`). For ad-hoc sampling, `MONITOR` still exists but adds per-command overhead - only run briefly, never leave on.
 
-### 5. Enable I/O Threads for Throughput
+In cluster mode, a hot key lives on exactly one shard; `CLUSTER SLOT-STATS ORDERBY cpu-usec LIMIT 10 DESC` (with `cluster-slot-stats-enabled yes`) points directly at the slot and, via `CLUSTER NODES`, the shard owning it. That replaces the "run --hotkeys on every node and diff" workflow.
 
-If the bottleneck is I/O (many clients, moderate command complexity):
+## Mitigation handles
 
-```bash
-CONFIG SET io-threads 4
-```
-
-I/O threads do not help with slow individual commands - they parallelize
-the I/O path, not command execution.
-
-## Hot Key Detection
-
-A hot key receives disproportionate operations. In cluster mode, it means one
-shard handles all the load while others idle. Five detection methods:
-
-```bash
-# Method 1: --hotkeys mode (requires LFU eviction policy)
-valkey-cli CONFIG SET maxmemory-policy allkeys-lfu
-valkey-cli --hotkeys
-# Reports keys ranked by access frequency using OBJECT FREQ internally
-
-# Method 2: Individual key frequency (LFU mode required)
-valkey-cli OBJECT FREQ <key>
-
-# Method 3: MONITOR sampling (brief use only - adds overhead)
-timeout 10 valkey-cli MONITOR > /tmp/monitor.log
-# Parse most accessed keys from the capture
-
-# Method 4: OBJECT IDLETIME for cold key detection (LRU mode)
-valkey-cli OBJECT IDLETIME <key>
-# Find keys never accessed (wasted memory)
-
-# Method 5: Big key analysis (memory, not frequency)
-valkey-cli --bigkeys       # Largest key per data type
-valkey-cli --memkeys       # Ranks by actual MEMORY USAGE
-```
-
-Mitigation: read replicas for hot reads, client-side caching with
-`CLIENT TRACKING`, key sharding (split hot key across sub-keys), or
-cluster rebalancing to move the hot slot to a less-loaded shard.
-
----
+- Disable dangerous commands via `rename-command KEYS ""` (valkey.conf only, not runtime).
+- `UNLINK` instead of `DEL` for large keys - asynchronous via BIO (same as Redis, but all five lazyfree defaults are `yes` on Valkey so `DEL` already goes async unless you've disabled that).
+- `CLIENT NO-EVICT on` on the exporter's connection so scraping doesn't churn the LRU.
+- `io-threads > 1` helps I/O-bound workloads (many small commands) but doesn't parallelize command execution - a slow single command is still slow.

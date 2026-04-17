@@ -19,9 +19,10 @@ Valkey auto-enables protected mode when no password is set and binding to all in
 
 | Check | Command |
 |-------|---------|
-| Commandlog configured | `CONFIG GET commandlog-execution-slower-than` |
-| Sentinel user has `+failover` | `ACL GETUSER sentinel` (Valkey 9.0+) |
-| TLS for replication | `CONFIG GET tls-replication` |
+| COMMANDLOG thresholds set | `CONFIG GET commandlog-execution-slower-than` |
+| TLS for replication + cluster bus | `CONFIG GET tls-replication tls-cluster` |
+| TLS auto-reload enabled | `CONFIG GET tls-auto-reload-interval` |
+| Default user disabled or password-only | `ACL GETUSER default` |
 
 ## Security Checklist
 

@@ -1,150 +1,81 @@
 # Active Defragmentation
 
-Use when memory fragmentation ratio is high, Valkey is consuming more RSS than expected, or you want to reclaim memory without restarting.
+Use when `mem_fragmentation_ratio` is high and you want to reclaim RSS without restarting.
 
-## What It Is
+## Prerequisite
 
-Over time, allocations and deallocations create gaps in memory (external
-fragmentation). Valkey's active defragmentation scans the keyspace and asks
-jemalloc to relocate allocations into contiguous regions, reducing RSS without
-any data loss or downtime.
+Jemalloc-only feature (`HAVE_DEFRAG` gated on `USE_JEMALLOC`). With libc or tcmalloc, `activedefrag yes` is silently a no-op. Linux builds default to jemalloc; verify:
 
-Active defrag requires jemalloc (the default allocator). It is not available
-when Valkey is compiled with libc malloc or tcmalloc. The source guards this
-behind `HAVE_DEFRAG` (defined in `src/allocator_defrag.h` and set via
-`CMakeLists.txt` when jemalloc is detected).
-
-## Configuration
-
-All defaults source-verified from `src/config.c`:
-
-| Parameter | Default | Range | Description |
-|-----------|---------|-------|-------------|
-| `activedefrag` | `no` | yes/no | Main toggle. Default is `no` in production builds (`CONFIG_ACTIVE_DEFRAG_DEFAULT` = 0 in `src/server.h` line 166). |
-| `active-defrag-threshold-lower` | `10` | 0-1000 | Fragmentation percentage below which defrag does not start. |
-| `active-defrag-threshold-upper` | `100` | 0-1000 | Fragmentation percentage at which defrag runs at maximum CPU effort. |
-| `active-defrag-cycle-min` | `1` | 1-99 | Minimum CPU percentage used for defrag (at lower threshold). |
-| `active-defrag-cycle-max` | `25` | 1-99 | Maximum CPU percentage used for defrag (at upper threshold). |
-| `active-defrag-cycle-us` | `500` | 0-100000 | Base duty cycle in microseconds when wait time is unknown. |
-| `active-defrag-max-scan-fields` | `1000` | 1-LONG_MAX | Keys with more fields than this are processed in a separate stage. |
-| `active-defrag-ignore-bytes` | `104857600` (100 MB) | 1-LLONG_MAX | Defrag does not start if fragmentation overhead is below this byte count. |
-
-### How CPU Effort Scales
-
-The defrag engine interpolates between `cycle-min` and `cycle-max` based on
-the current fragmentation percentage relative to the lower/upper thresholds.
-From `src/defrag.c` (`updateDefragCpuPercent`):
-
-- At `threshold-lower` (10%) fragmentation: uses `cycle-min` (1%) CPU
-- At `threshold-upper` (100%) fragmentation: uses `cycle-max` (25%) CPU
-- Between thresholds: linearly interpolated
-- Below `threshold-lower` or below `ignore-bytes`: defrag does not start
-
-### Enabling at Runtime
-
-```bash
-# Enable defrag
-valkey-cli CONFIG SET activedefrag yes
-
-# Tune for aggressive defrag (high-memory, can spare CPU)
-valkey-cli CONFIG SET active-defrag-cycle-min 5
-valkey-cli CONFIG SET active-defrag-cycle-max 75
-valkey-cli CONFIG SET active-defrag-threshold-lower 5
-
-# Tune for gentle defrag (latency-sensitive)
-valkey-cli CONFIG SET active-defrag-cycle-min 1
-valkey-cli CONFIG SET active-defrag-cycle-max 15
+```sh
+valkey-cli INFO server | grep mem_allocator     # should be 'jemalloc'
 ```
 
-All parameters are modifiable at runtime via `CONFIG SET`.
+## Config
 
-## Monitoring
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `activedefrag` | `no` | Main on/off switch. |
+| `active-defrag-threshold-lower` | `10` (%) | Below this fragmentation %, defrag doesn't start. |
+| `active-defrag-threshold-upper` | `100` (%) | At this %, defrag runs at max CPU. |
+| `active-defrag-cycle-min` | `1` (%) | CPU % at lower threshold. |
+| `active-defrag-cycle-max` | `25` (%) | CPU % at upper threshold. |
+| `active-defrag-cycle-us` | `500` µs | **Valkey-specific.** Base duty-cycle duration; larger = more work per cycle, longer per-cycle stalls. |
+| `active-defrag-max-scan-fields` | `1000` | Keys with more fields than this go through a separate staged pass. |
+| `active-defrag-ignore-bytes` | `100 MB` | Don't start if fragmentation overhead is below this absolute byte count. |
 
-### Key Metrics
+CPU effort scales linearly between `cycle-min` and `cycle-max` as fragmentation goes from `threshold-lower` to `threshold-upper`. Below lower or below ignore-bytes, defrag is dormant. All parameters are runtime-modifiable.
 
-From `INFO memory` and `INFO stats` (source-verified from `src/server.c`):
+## Runtime tuning profiles
 
-| Metric | Section | Meaning |
-|--------|---------|---------|
-| `mem_fragmentation_ratio` | memory | RSS / used_memory. Values above 1.5 indicate significant fragmentation. |
-| `active_defrag_running` | memory | Current CPU percentage being used (0 if not running). |
-| `active_defrag_hits` | stats | Total allocations successfully relocated. |
-| `active_defrag_misses` | stats | Total allocations scanned but not moved (already optimal). |
-| `active_defrag_key_hits` | stats | Keys that had at least one allocation relocated. |
-| `active_defrag_key_misses` | stats | Keys scanned where no relocation was needed. |
+```sh
+# Aggressive - lots of RAM churn, CPU to spare
+CONFIG SET active-defrag-cycle-min 5
+CONFIG SET active-defrag-cycle-max 75
+CONFIG SET active-defrag-threshold-lower 5
 
-### Checking Current State
-
-```bash
-# Quick fragmentation check
-valkey-cli INFO memory | grep -E "mem_fragmentation|active_defrag"
-
-# Watch defrag progress
-valkey-cli INFO stats | grep active_defrag
+# Gentle - latency-sensitive
+CONFIG SET active-defrag-cycle-min 1
+CONFIG SET active-defrag-cycle-max 15
 ```
 
-### Interpreting mem_fragmentation_ratio
+## Fragmentation ratio thresholds
 
-| Ratio | Interpretation | Action |
-|-------|---------------|--------|
-| < 1.0 | Swap is being used. Critical. | Increase RAM or reduce maxmemory. |
-| 1.0 - 1.1 | Healthy | No action needed. |
-| 1.1 - 1.5 | Normal fragmentation | Monitor. Enable defrag if trending up. |
-| 1.5 - 2.0 | Significant fragmentation | Enable active defrag. |
-| > 2.0 | Severe fragmentation | Enable aggressive defrag or consider restart. |
+`mem_fragmentation_ratio = used_memory_rss / used_memory`:
 
-## Common Causes of Fragmentation
+| Ratio | What it means |
+|-------|---------------|
+| < 1.0 | Swap is in use (check `used_memory` against peak, examine `smaps`). |
+| 1.0-1.1 | Healthy. |
+| 1.1-1.5 | Normal, watch the trend. |
+| 1.5-2.0 | Enable active defrag. |
+| > 2.0 | Aggressive defrag or plan a failover-restart cycle. |
+| > 3.0 | Defrag may not keep up - restart via failover. |
 
-1. **Delete-heavy workloads** - Filling 5GB then deleting 2GB leaves RSS at
-   ~5GB while `used_memory` shows ~3GB. The allocator keeps freed pages for
-   future reuse but the OS sees them as allocated.
-2. **Variable-size key churn** - Repeatedly creating and deleting keys of
-   different sizes fragments jemalloc's size classes.
-3. **Large key deletion** - Deleting a 1GB sorted set returns memory in small
-   chunks, creating fragmentation across multiple size classes.
-4. **Listpack-to-hashtable conversions** - When collections exceed
-   `*-max-listpack-entries`, the compact encoding converts to a full hash
-   table, fragmenting the memory that held the original listpack.
+## Metrics to watch
 
-### Recovery for Extreme Fragmentation
+From `INFO memory` + `INFO stats`:
 
-If fragmentation ratio exceeds 2.0 and active defrag is insufficient:
-1. Enable aggressive defrag settings (cycle-max 25-50).
-2. If ratio exceeds 3.0, consider a rolling restart: failover to replica,
-   restart the old primary (fresh memory layout), then failover back.
-3. For persistent fragmentation, review workload patterns - high delete rates
-   with variable sizes are the primary cause.
+- `active_defrag_running` - current CPU % (0 when idle).
+- `active_defrag_hits` / `active_defrag_misses` - allocations moved vs scanned-but-not-moved.
+- `active_defrag_key_hits` / `active_defrag_key_misses` - per-key rollup.
 
-## When to Use vs When to Restart
+A high ratio of misses to hits means defrag is scanning without finding relocatable allocations - drop threshold-lower or check if the fragmentation is actually swap (`mem_fragmentation_ratio < 1.0`).
 
-**Use active defrag when:**
+## Workload patterns that fragment
 
-- You cannot afford downtime for a restart
-- Fragmentation is moderate (1.5 - 2.5)
-- You have spare CPU headroom
-- The instance is a primary with replicas (restart causes full resync)
+- Large-key deletion (multi-GB sorted sets, hashes).
+- Delete-heavy mixed workloads (churn fills + frees across size classes).
+- Listpack → hashtable promotions (compact encoding freed, full encoding allocated in different size class).
 
-**Consider restart instead when:**
+## When a restart beats defrag
 
-- Fragmentation is extreme (> 3.0) - defrag may take too long
-- The instance is a replica that can be rebuilt quickly
-- You are running a version without jemalloc
-- CPU headroom is zero and latency is already critical
+- Ratio > 3.0 and defrag can't keep up (observable: ratio not dropping over hours despite defrag running).
+- Replica that can be rebuilt quickly from the primary.
+- Instance is on libc/tcmalloc (no defrag possible at all).
+- Zero CPU headroom and latency already critical - defrag adds CPU pressure on top.
 
-**Restart approach:**
+Restart path for a replicated primary: promote a replica (`SENTINEL FAILOVER ... COORDINATED` or `CLUSTER FAILOVER`), restart the old primary with fresh memory layout, let it resync, optionally fail back.
 
-1. If using replication, promote a replica, restart the old primary, resync
-2. If standalone, ensure persistence is enabled, restart, let data reload
-3. After restart, fragmentation ratio resets to near 1.0
+## Logs
 
-## Operational Notes
-
-- Defrag runs as a timer event in the main thread. It yields periodically to
-  avoid blocking command processing, but it does consume CPU cycles.
-- The `active-defrag-cycle-us` parameter controls the base duty cycle duration.
-  The actual duty cycle adapts based on measured wait time between invocations.
-- Large keys (with more fields than `active-defrag-max-scan-fields`) are
-  processed in a dedicated stage to avoid long pauses.
-- Defrag cycles are logged at `verbose` log level with duration and hit count.
-- After a cycle completes, defrag immediately checks if another cycle is
-  needed (fragmentation may have changed during the scan).
+Defrag cycles log at `verbose` (not default `notice`). Bump `loglevel verbose` temporarily if you need visibility into cycle durations and hit counts during a tuning pass.

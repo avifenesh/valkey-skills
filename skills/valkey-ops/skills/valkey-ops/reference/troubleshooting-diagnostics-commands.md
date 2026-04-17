@@ -1,173 +1,82 @@
 # Diagnostic Commands and Incident Patterns
 
-Use when looking up Valkey diagnostic commands, investigating real incident patterns, or running a quick health check script.
+Use as a command cheat-sheet and a collection of Valkey-specific incident patterns.
 
-## Diagnostic Commands Reference
+The command reference below is Redis-standard except for `COMMANDLOG` and cluster additions. For the full per-command docs, the official site or `HELP` output is authoritative.
 
-### Server State
+## Command cheat sheet
 
-| Command | Purpose |
-|---------|---------|
-| `INFO [section]` | Server statistics (server, clients, memory, persistence, stats, replication, cpu, modules, keyspace) |
-| `CONFIG GET <pattern>` | Current configuration values |
-| `DBSIZE` | Number of keys in current database |
-| `DEBUG SLEEP <seconds>` | Simulate delay (testing only - never in production) |
+| Category | Command | Notes |
+|---------|---------|-------|
+| Server | `INFO [section]` | Valkey-specific sections: `tls`, `clients_statistics`, module-loaded sections. |
+| Memory | `MEMORY DOCTOR / USAGE / STATS / PURGE / MALLOC-STATS` | |
+| Latency | `LATENCY DOCTOR / LATEST / HISTORY <event> / GRAPH <event> / HISTOGRAM [cmd ...] / RESET` | |
+| Commandlog | `COMMANDLOG GET <count> <type> / LEN <type> / RESET <type>` | `type` = `slow` / `large-request` / `large-reply`. `SLOWLOG *` is alias for `slow`. |
+| Clients | `CLIENT LIST [TYPE type] / INFO / GETNAME / KILL <filter> / NO-EVICT on` | |
+| Keys | `OBJECT ENCODING <key> / FREQ <key> / IDLETIME <key>`, `TYPE <key>`, `SCAN 0 MATCH <pattern> COUNT n` | `FREQ` needs LFU policy, `IDLETIME` needs LRU. |
+| Cluster | `CLUSTER INFO / NODES / SHARDS / SLOTS / MYID / COUNTKEYSINSLOT <slot> / SLOT-STATS ...` | `SHARDS` scales better than `NODES` on large topologies. `SLOT-STATS` is Valkey-only. |
 
-### Memory
+## Valkey incident patterns
 
-| Command | Purpose |
-|---------|---------|
-| `MEMORY DOCTOR` | Automated memory issue analysis |
-| `MEMORY USAGE <key> [SAMPLES n]` | Estimated memory for a key (SAMPLES 0 for exact) |
-| `MEMORY STATS` | Detailed memory breakdown by category |
-| `MEMORY PURGE` | Force jemalloc to release pages to OS |
-| `MEMORY MALLOC-STATS` | Raw allocator statistics |
+### Mass TTL expiry spike
 
-### Latency
+Same-second TTLs on thousands of keys → active-expire-cycle finds > stale-ratio threshold, loops aggressively, main thread stalls.
 
-| Command | Purpose |
-|---------|---------|
-| `LATENCY DOCTOR` | Automated latency analysis with advice |
-| `LATENCY LATEST` | Most recent spike per event type |
-| `LATENCY HISTORY <event>` | Time series for specific event |
-| `LATENCY GRAPH <event>` | ASCII visualization of latency over time |
-| `LATENCY HISTOGRAM [cmd ...]` | Per-command HdrHistogram distributions |
-| `LATENCY RESET [event ...]` | Clear latency data |
+- **Symptom**: periodic latency spikes spaced exactly `N` seconds apart; `expire-cycle` appears in `LATENCY HISTORY`.
+- **Fix**: jitter TTLs at the application: `EXPIRE key (base + rand(0..jitter))`. Tune `active-expire-effort` down if needed (Valkey 9.0 defaults to `1` already).
 
-### Commandlog (Slowlog)
+### THP-induced BGSAVE latency
 
-| Command | Purpose |
-|---------|---------|
-| `SLOWLOG GET [count]` | Recent slow commands (default 10) |
-| `SLOWLOG LEN` | Number of entries in slow log |
-| `SLOWLOG RESET` | Clear slow log |
-| `COMMANDLOG GET <count> <type>` | Entries by type: slow, large-request, large-reply |
-| `COMMANDLOG LEN <type>` | Entry count by type |
-| `COMMANDLOG RESET <type>` | Clear entries by type |
+Transparent Huge Pages on → after fork, each COW copies a 2 MB hugepage instead of a 4 KB page. `rdb_last_cow_size` approaches `used_memory`.
 
-### Client Connections
+- **Symptom**: seconds-long latency spikes correlated with BGSAVE, even though `latest_fork_usec` is low.
+- **Fix**: `echo never > /sys/kernel/mm/transparent_hugepage/enabled`. Valkey logs a warning at startup if THP is enabled; easy to miss in Docker.
 
-| Command | Purpose |
-|---------|---------|
-| `CLIENT LIST [TYPE type]` | All connected clients with details |
-| `CLIENT INFO` | Current connection details |
-| `CLIENT GETNAME` | Current client name |
-| `CLIENT KILL <filter>` | Terminate specific connections |
-| `CLIENT NO-EVICT on` | Protect current client from eviction |
+### Pub/Sub slow-subscriber OOM
 
-### Key Inspection
+Publisher fast, subscriber slow → output buffer grows unboundedly.
 
-| Command | Purpose |
-|---------|---------|
-| `OBJECT ENCODING <key>` | Internal encoding (listpack, hashtable, skiplist, etc.) |
-| `OBJECT FREQ <key>` | LFU frequency counter (requires LFU policy) |
-| `OBJECT IDLETIME <key>` | Seconds since last access (requires LRU policy) |
-| `TYPE <key>` | Data type (string, list, set, zset, hash, stream) |
-| `SCAN 0 MATCH <pattern> COUNT n` | Iterate keyspace without blocking |
+- **Symptom**: `used_memory` climbs; `CLIENT LIST` shows pub/sub clients with `omem` in hundreds of MB.
+- **Fix**: `client-output-buffer-limit pubsub 32mb 8mb 60`. Add `maxmemory-clients 5%` as a second line of defense.
 
-### Cluster
+### Replica cascading full resync
 
-| Command | Purpose |
-|---------|---------|
-| `CLUSTER INFO` | Cluster state summary |
-| `CLUSTER NODES` | Full node topology |
-| `CLUSTER SLOTS` | Slot-to-node mapping |
-| `CLUSTER MYID` | Current node's ID |
-| `CLUSTER COUNTKEYSINSLOT <slot>` | Keys in a specific slot |
+Undersized `repl-backlog-size` + brief network blip → replicas all trigger full resync simultaneously → fork amplifies latency → more replicas disconnect.
 
-## Real Incident Patterns
+- **Symptom**: `sync_full` increments, `latest_fork_usec` climbs, replica lag across the board.
+- **Fix**: size `repl-backlog-size` per `replication-tuning.md`. `repl-diskless-sync-delay 5` batches concurrent arrivals into one stream.
 
-### Mass Key Expiration Spike
+### Swap-induced latency
 
-**Symptoms**: Periodic latency spikes every N seconds, `expire-cycle` events
-in latency monitor.
+- **Symptom**: Random 100 ms+ spikes uncorrelated with any command.
+- **Diagnose**: `cat /proc/$(pidof valkey-server)/smaps | grep '^Swap:' | grep -v '0 kB'`.
+- **Fix**: `maxmemory` well below physical RAM; `vm.swappiness=1`; add RAM or shrink dataset.
 
-**Root cause**: Application sets thousands of keys with identical TTL. When
-the expiration second arrives, the active expiry cycle finds > 25% of
-sampled keys expired and loops aggressively, blocking the main thread.
+### Large-key cluster migration blocked (pre-9.0)
 
-**Resolution**: Add jitter to TTLs:
-`EXPIRE key (base_ttl + random(0, jitter_seconds))`. Monitor with
-`LATENCY HISTORY expire-cycle`.
+Key-by-key `MIGRATE` of a multi-million-element set exceeds target buffer → migration hangs in MIGRATING/IMPORTING.
 
-### THP-Induced Latency After BGSAVE
+- **9.0 fix**: atomic slot migration (see `cluster-resharding.md`). Pre-9.0 workarounds: raise `proto-max-bulk-len` on target, or delete-and-recreate the large key before migration.
 
-**Symptoms**: Periodic 500ms-2s latency spikes correlated with BGSAVE schedule.
-`latest_fork_usec` shows 50ms, but `rdb_last_cow_size` is nearly equal to
-`used_memory` (near-complete COW).
+## Quick health-check script
 
-**Root cause**: THP enabled. After fork, every page touched triggers a 2MB COW
-copy instead of 4KB.
+```sh
+#!/usr/bin/env bash
+set -eu
+host="${1:-127.0.0.1}" port="${2:-6379}"
+cli="valkey-cli -h $host -p $port"
 
-**Resolution**: `echo never > /sys/kernel/mm/transparent_hugepage/enabled`
-
-### Pub/Sub Subscriber OOM
-
-**Symptoms**: Memory usage growing unboundedly, eventually OOM kill.
-`CLIENT LIST` shows pub/sub clients with `omem` in the hundreds of MB.
-
-**Root cause**: Slow subscriber cannot consume messages fast enough. Output
-buffer grows without limit.
-
-**Resolution**: Set strict limits:
-`CONFIG SET client-output-buffer-limit pubsub 32mb 8mb 60`. Implement
-application-level backpressure. Use `maxmemory-clients` to cap aggregate
-client memory.
-
-### Replica Cascade Full Resync
-
-**Symptoms**: Repeated full resyncs (`sync_full` incrementing), spike in primary
-memory during BGSAVE, high I/O.
-
-**Root cause**: Replication backlog too small (default 10MB). Brief network glitch
-overflows the backlog, full resync fork causes latency spike, which disconnects
-other replicas.
-
-**Resolution**: Increase `repl-backlog-size` to >= 512MB. Enable
-`repl-diskless-sync yes`. Monitor `sync_partial_err`.
-
-### Swap-Induced Latency
-
-**Symptoms**: Sporadic 100ms+ latency spikes unrelated to commands.
-
-**Root cause**: Some Valkey memory pages swapped to disk.
-
-**Diagnosis**:
-```bash
-REDIS_PID=$(valkey-cli INFO server | grep process_id | cut -d: -f2 | tr -d '\r')
-cat /proc/$REDIS_PID/smaps | grep '^Swap:' | grep -v '0 kB'
+section() { echo; echo "=== $1 ==="; }
+section Server      ; $cli INFO server      | grep -E 'valkey_version|uptime_in_days|connected_clients'
+section Memory      ; $cli INFO memory      | grep -E 'used_memory_human|maxmemory_human|mem_fragmentation_ratio'
+section Persistence ; $cli INFO persistence | grep -E 'rdb_last_bgsave_status|aof_last_bgrewrite_status|latest_fork_usec'
+section Replication ; $cli INFO replication | grep -E 'role|connected_slaves|master_link_status'
+section Stats       ; $cli INFO stats       | grep -E 'instantaneous_ops_per_sec|rejected_connections|expired_keys|evicted_keys'
+section Latency     ; $cli LATENCY LATEST
+section "Slow cmds" ; $cli COMMANDLOG GET 5 slow
 ```
 
-**Resolution**: Set `maxmemory` well below available RAM. Increase RAM or
-reduce dataset size.
+## See also
 
-### Large Key Migration Blocked (Cluster)
-
-**Symptoms**: Slot migration hangs, slot stuck in `migrating`/`importing` state.
-
-**Root cause**: Very large key exceeds target node's buffer during migration.
-
-**Resolution (pre-9.0)**: Increase `proto-max-bulk-len` on target. Valkey 9.0
-fixes this with atomic slot-level migration.
-
-## Quick Health Check Script
-
-```bash
-#!/bin/bash
-HOST="${1:-127.0.0.1}"; PORT="${2:-6379}"; CLI="valkey-cli -h $HOST -p $PORT"
-echo "=== Server ===";      $CLI INFO server | grep -E "valkey_version|uptime_in_days|connected_clients"
-echo "=== Memory ===";      $CLI INFO memory | grep -E "used_memory_human|maxmemory_human|mem_fragmentation_ratio"
-echo "=== Persistence ==="; $CLI INFO persistence | grep -E "rdb_last_bgsave_status|aof_last_bgrewrite_status|latest_fork_usec"
-echo "=== Replication ==="; $CLI INFO replication | grep -E "role|connected_slaves|master_link_status"
-echo "=== Stats ===";       $CLI INFO stats | grep -E "instantaneous_ops_per_sec|rejected_connections|expired_keys|evicted_keys"
-echo "=== Latency ===";     $CLI LATENCY LATEST
-echo "=== Slow Cmds ===";   $CLI SLOWLOG GET 5
-```
-
----
-
-## See Also
-
-- [diagnostics-runbook](troubleshooting-diagnostics-runbook.md) - 7-phase investigation runbook, fork latency, memory testing
-- [oom](troubleshooting-oom.md) - Out of memory troubleshooting
-- [slow-commands](troubleshooting-slow-commands.md) - Slow command investigation
+- `troubleshooting-diagnostics-runbook.md` - structured 7-phase investigation flow.
+- `troubleshooting-oom.md`, `troubleshooting-slow-commands.md`, `troubleshooting-cluster-partitions.md`, `troubleshooting-replication-lag.md` for focused playbooks.

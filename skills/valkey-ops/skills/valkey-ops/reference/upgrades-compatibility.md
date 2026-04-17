@@ -100,11 +100,6 @@ Lua VM crash after `FUNCTION FLUSH ASYNC` + `FUNCTION LOAD`, and crash
 when aborting slot migration during child snapshot. **Use 9.0.3+ in
 production.**
 
-**Sentinel ACL change**: Sentinel 9.0+ requires `+failover` ACL permission
-in the failover path. This is a permanent requirement since Valkey Sentinel
-9.0, not a temporary regression. Add `+failover` to Sentinel user ACL
-before upgrading to any 9.0.x release.
-
 ---
 
 ## Feature Compatibility Between Versions
@@ -115,11 +110,10 @@ before upgrading to any 9.0.x release.
 | Dual-channel replication | 8.0+ | Parallel RDB + backlog transfer |
 | Atomic slot migration | 9.0+ | `CLUSTER MIGRATESLOTS` command |
 | Coordinated Sentinel failover | 9.0+ | `SENTINEL FAILOVER ... COORDINATED` |
-| Memory prefetching for pipelines | 9.0+ | Up to 40% throughput improvement |
-| Zero-copy responses | 9.0+ | Up to 20% improvement for large payloads |
+| Memory prefetching for pipelines | 9.0+ | `prefetch-batch-max-size` config |
+| Zero-copy response path | 9.0+ | `min-io-threads-avoid-copy-reply` gates it |
 | SIMD optimizations | 8.1+ | BITCOUNT, HyperLogLog |
-| Multipath TCP | 9.0+ | `mptcp` config |
-| 2000-node clusters | 9.0+ | 1B+ RPS capable |
+| Multipath TCP | 9.0+ | `mptcp` config (Linux 5.6+) |
 | `extended-redis-compatibility` | 8.0+ | Reports as Redis for client compatibility |
 
 ## Client Library Compatibility

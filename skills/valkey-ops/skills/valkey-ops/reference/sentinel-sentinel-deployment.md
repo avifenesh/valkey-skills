@@ -32,6 +32,6 @@ valkey-cli -p 26379 SENTINEL ckquorum mymaster
 valkey-cli -p 26379 SENTINEL get-primary-addr-by-name mymaster
 ```
 
-## ACL Requirement (Valkey 9.0+)
+## Sentinel ACL user
 
-When using ACL authentication, the Sentinel user needs `+failover` permission. See security-acl.md for the full Sentinel ACL user example.
+`FAILOVER` and `CLUSTER FAILOVER` use the standard `@admin`/`@dangerous`/`@slow` categories - no special permission beyond what any admin command needs. See `security-acl.md` for the minimal per-command grant list that matches what Sentinel actually invokes.

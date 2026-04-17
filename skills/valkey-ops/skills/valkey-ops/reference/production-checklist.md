@@ -1,124 +1,103 @@
 # Production Deployment Checklist
 
-Use when preparing a Valkey deployment for production, auditing an existing setup, or verifying readiness before go-live.
+Use as a pre-go-live audit. Items marked **V** are Valkey-specific defaults/behaviors to verify; the rest are the Redis-standard operator checklist.
 
-## Quick-Verify Script
+## Verify script
 
-Run against a live instance to check the most critical production settings:
-
-```bash
+```sh
 #!/usr/bin/env bash
-# Usage: ./verify-valkey.sh [host] [port] [password]
-H=${1:-127.0.0.1}; P=${2:-6379}; A=${3:+"-a $3"}
-CLI="valkey-cli -h $H -p $P $A --no-auth-warning"
-echo "=== Valkey Production Verify ==="
-echo "maxmemory:        $($CLI CONFIG GET maxmemory | tail -1)"
-echo "maxmemory-policy: $($CLI CONFIG GET maxmemory-policy | tail -1)"
-echo "appendonly:        $($CLI CONFIG GET appendonly | tail -1)"
-echo "tcp-keepalive:     $($CLI CONFIG GET tcp-keepalive | tail -1)"
-echo "protected-mode:    $($CLI CONFIG GET protected-mode | tail -1)"
-echo "connected_slaves:  $($CLI INFO replication | grep connected_slaves)"
-echo "cluster_enabled:   $($CLI INFO cluster | grep cluster_enabled)"
-echo "io_threads:        $($CLI CONFIG GET io-threads | tail -1)"
-echo "used_memory_human: $($CLI INFO memory | grep used_memory_human:)"
-echo "uptime_in_days:    $($CLI INFO server | grep uptime_in_days)"
-# [WARN] if maxmemory is 0 (unlimited)
-MM=$($CLI CONFIG GET maxmemory | tail -1)
-[ "$MM" = "0" ] && echo "[WARN] maxmemory is unlimited - set it explicitly"
-echo "=== Done ==="
-```
+set -eu
+H=${1:-127.0.0.1} P=${2:-6379} ${3:+A="-a $3"}
+cli="valkey-cli -h $H -p $P ${A:-} --no-auth-warning"
 
----
+g() { $cli CONFIG GET "$1" | tail -1; }
+echo "maxmemory         : $(g maxmemory)"
+echo "maxmemory-policy  : $(g maxmemory-policy)"
+echo "appendonly        : $(g appendonly)"
+echo "protected-mode    : $(g protected-mode)"
+echo "io-threads        : $(g io-threads)"
+echo "lazyfree-lazy-*   : $($cli CONFIG GET 'lazyfree-lazy-*' | paste - - | head -5)"  # V: all should be 'yes'
+echo "extended-redis-*  : $(g extended-redis-compatibility)"                            # V: off unless migrating
+echo "rdb-version-check : $(g rdb-version-check)"                                       # V
+echo "cluster_enabled   : $($cli INFO cluster      | grep cluster_enabled)"
+echo "connected_slaves  : $($cli INFO replication  | grep connected_slaves)"
+echo "used_memory_human : $($cli INFO memory       | grep used_memory_human:)"
+[ "$(g maxmemory)" = "0" ] && echo "[WARN] maxmemory is unlimited"
+```
 
 ## System
 
-- [ ] **vm.overcommit_memory = 1** - prevents BGSAVE/BGREWRITEAOF fork failures. Set in `/etc/sysctl.d/99-valkey.conf` or via init container in Kubernetes.
-- [ ] **net.core.somaxconn >= 65535** - TCP listen backlog. Must match or exceed `tcp-backlog` config.
-- [ ] **Transparent huge pages disabled** - THP causes latency spikes. `echo never > /sys/kernel/mm/transparent_hugepage/enabled`. Make persistent via systemd unit or init container.
-- [ ] **Swap enabled** - safety net to prevent OOM kills. Swap is slow but better than process death. Set `vm.swappiness=1` to minimize swap use under normal operation.
-- [ ] **File descriptor limit >= `maxclients` + 32** - Valkey needs file descriptors for client connections plus internal file handles. Set via `LimitNOFILE` in systemd or `ulimit -n`.
-- [ ] **Valkey runs as unprivileged user** - never run as root. Create a dedicated `valkey` user with `--system --no-create-home --shell /usr/sbin/nologin`.
+- [ ] `vm.overcommit_memory=1` (BGSAVE/BGREWRITEAOF fork path needs it).
+- [ ] `net.core.somaxconn ≥ 65535` (≥ `tcp-backlog`).
+- [ ] Transparent huge pages = `never` - non-negotiable. Valkey warns at startup if enabled.
+- [ ] Swap enabled with `vm.swappiness=1` - safety net, not a runtime path.
+- [ ] `ulimit -n` ≥ `maxclients + 32`. In systemd: `LimitNOFILE=65535`.
+- [ ] Valkey runs as unprivileged `valkey` user; binary not setuid-root.
 
 ## Configuration
 
-- [ ] **`maxmemory` set explicitly** - never leave `maxmemory` unlimited in production. Valkey will grow until the OS kills it.
-- [ ] **Eviction policy chosen for workload** - `allkeys-lru` for general cache, `noeviction` for primary data store, `volatile-ttl` for session stores. Source: `maxmemory_policy_enum` in `src/config.c` lists all 8 policies.
-- [ ] **`maxmemory-clients` 5%** - caps aggregate client buffer memory. Prevents a few clients from consuming all memory with large pipelines or pub/sub.
-- [ ] **tcp-keepalive 300** - detects dead connections. Lower values (60-120) for environments with aggressive NAT timeouts.
-- [ ] **Persistence strategy configured and tested** - choose RDB, AOF, or hybrid. Test restore from backup before go-live.
-  - Cache-only: `save ""`, `appendonly no`
-  - Durable store: `appendonly yes`, `appendfsync everysec`, `aof-use-rdb-preamble yes`
-- [ ] **latency-monitor-threshold enabled** - set to 50-100ms. Enables `LATENCY DOCTOR` and `LATENCY LATEST` diagnostics.
-- [ ] **Commandlog configured** - `commandlog-execution-slower-than 10000` (10ms), `commandlog-slow-execution-max-len 128`. Legacy `slowlog-*` aliases also work. Review periodically.
+- [ ] **`maxmemory` set explicitly** - never leave at `0` in production.
+- [ ] Eviction policy matches workload: `allkeys-lru`/`allkeys-lfu` for cache, `noeviction` for primary data store, `volatile-*` only if every cache key has a TTL.
+- [ ] `maxmemory-clients 5%` to cap aggregate client-buffer memory.
+- [ ] `tcp-keepalive 300` (lower in NAT-aggressive environments).
+- [ ] Persistence chosen and restore tested: cache-only (`save ""`, `appendonly no`), durable (`appendonly yes` + `appendfsync everysec` + `aof-use-rdb-preamble yes`), or hybrid.
+- [ ] `latency-monitor-threshold` > 0 (typical: 50-100 ms) - required for `LATENCY DOCTOR`.
+- [ ] COMMANDLOG thresholds set: `commandlog-execution-slower-than 10000` + the two large-* thresholds. Review regularly. **V**
+- [ ] `hide-user-data-from-log yes` (Valkey default; verify not flipped to `no` for debugging leftover). **V**
 
 ## Security
 
-- [ ] **ACLs configured per service** - do not use the default user for application connections. Create per-service users with minimal permissions.
-- [ ] **TLS enabled** - encrypt client-server and replication traffic. Build with `BUILD_TLS=yes` or use Docker images with TLS support.
-- [ ] **Bound to specific interfaces** - `bind 127.0.0.1 -::1` or specific private IPs. Never bind to `0.0.0.0` without authentication.
-- [ ] **protected-mode yes** - rejects external connections when no password is set. Default is on; verify it stays on.
-- [ ] **Firewall rules in place** - restrict access to port 6379 (client), 26379 (Sentinel), and cluster bus port (client+10000).
-- [ ] **Default user restricted** - either disable the default user or set a strong password. Use ACL users for all connections.
-- [ ] **Dangerous commands renamed or disabled** - consider ACL rules to restrict `FLUSHALL`, `FLUSHDB`, `DEBUG`, `SHUTDOWN`, `CONFIG` for non-admin users.
+- [ ] ACL users per service, no app traffic on `default`.
+- [ ] TLS enabled for client and replication/cluster-bus traffic. `tls-auto-reload-interval > 0` for automated cert rotation. **V**
+- [ ] `bind` to explicit private IPs, not `0.0.0.0`.
+- [ ] `protected-mode yes`.
+- [ ] Firewall scoped to client port, Sentinel port (26379), and cluster bus port (client+10000).
+- [ ] Default user disabled or strong password; dangerous commands (`FLUSHALL`, `DEBUG`, `SHUTDOWN`, `CONFIG`) restricted via ACL or `rename-command`.
 
 ## Monitoring
 
-- [ ] **Prometheus exporter running** - deploy redis_exporter (oliver006/redis_exporter) as a sidecar or standalone. Exposes metrics on port 9121.
-- [ ] **Grafana dashboards imported** - community dashboards (ID 11835 or 763) cover key metrics.
-- [ ] **Alerts configured** - critical alerts at minimum:
-  - Instance down (`redis_up == 0`)
-  - Memory usage > 90% of maxmemory
-  - Replication lag increasing
-  - Replication link down
-  - BGSAVE failures
-  - Rejected connections
-  - Latency spikes (p99 > threshold)
-- [ ] **Commandlog reviewed periodically** - `COMMANDLOG GET 25 slow` to catch expensive commands. `SLOWLOG GET 25` also works.
-- [ ] **LATENCY DOCTOR available** - requires `latency-monitor-threshold > 0`.
+- [ ] Prometheus exporter (`oliver006/redis_exporter`) running; ACL user scoped to `+info +ping +config|get +client|list +commandlog|get +commandlog|len +latency|latest +latency|history`.
+- [ ] Grafana Redis dashboard (ID `11835` or `763`) imported. Add panels for Valkey-only metrics (`expired_fields`, `evicted_scripts`, `io_threads_active`, `cluster_stats_bytes_*`). **V**
+- [ ] Alerts: instance down, `used_memory / maxmemory > 0.9`, `rejected_connections` rate > 0, replication link down, replication lag > 5 s warn / 30 s crit, `rdb_last_bgsave_status != ok`, latency p99 spike, TLS cert expiry at 30 / 7 days. **V** (TLS cert alerts via `tls_server_cert_expire_time` etc.)
+- [ ] COMMANDLOG reviewed periodically - `COMMANDLOG GET 25 slow / large-request / large-reply`.
 
 ## Backup
 
-- [ ] **RDB snapshots shipped off-host** - do not rely on local snapshots alone. Copy to object storage (S3, GCS, Azure Blob) or remote filesystem.
-- [ ] **Backup retention policy** - hourly snapshots for 24 hours, daily for 30 days. Adjust based on RPO requirements.
-- [ ] **Restore procedure tested** - perform a test restore at least once before production. Verify data integrity after restore. Document the procedure.
-- [ ] **Backup monitoring** - alert on `rdb_last_bgsave_status != ok` and on backup age exceeding threshold.
+- [ ] RDB shipped off-host (S3/GCS/Azure Blob or remote FS).
+- [ ] Retention policy written down (e.g., hourly 24 h, daily 30 d).
+- [ ] Restore procedure tested in staging at least once; restore time documented.
+- [ ] Alerting on backup age exceeding RPO and on upload failures.
 
-## High Availability
+## High availability
 
-- [ ] **Sentinel or Cluster deployed** - standalone instances have no automatic failover.
-  - Sentinel: minimum 3 instances on independent infrastructure
-  - Cluster: minimum 3 primaries with 1 replica each (6 nodes)
-- [ ] **`min-replicas-to-write` configured** - prevents split-brain writes. Set to 1 (or N-1 for N replicas). Combine with `min-replicas-max-lag` (e.g., 10 seconds).
-- [ ] **Failover tested in staging** - trigger a manual failover and verify:
-  - Clients reconnect automatically
-  - Data integrity preserved
-  - Monitoring detects the event
-  - Recovery time within SLA
-- [ ] **Replication backlog sized appropriately** - `repl-backlog-size` should be proportional to write rate and expected disconnection time. Formula: `write_rate_bytes_per_second * max_expected_disconnect_seconds`.
-- [ ] **Pod Disruption Budget (Kubernetes)** - `maxUnavailable: 1` to prevent simultaneous eviction during node drains.
+- [ ] Sentinel ≥ 3 instances on independent failure domains OR Cluster ≥ 3 primaries each with 1 replica.
+- [ ] `min-replicas-to-write` ≥ 1 and `min-replicas-max-lag 10` - bounds split-brain write-loss window.
+- [ ] Failover tested: manual `SENTINEL FAILOVER` or `CLUSTER FAILOVER` in staging, clients reconnect, monitoring catches the event.
+- [ ] `repl-backlog-size` sized per write rate + disconnect window (see `replication-tuning.md`).
+- [ ] On Kubernetes: PodDisruptionBudget with `maxUnavailable: 1`.
 
-## Kubernetes-Specific
+## Kubernetes-specific
 
-- [ ] **Kernel tuning applied** - `vm.overcommit_memory`, `somaxconn`, THP disabled via init container or DaemonSet.
-- [ ] **Persistent volumes on SSD** - use SSD-backed StorageClass. PVC size >= 2x `maxmemory`.
-- [ ] **Pod anti-affinity configured** - spread Valkey pods across nodes or availability zones.
-- [ ] **Resource requests and limits set** - memory limits >= 2x requests for fork headroom. Avoid CPU limits for latency-sensitive workloads.
-- [ ] **Startup probe configured** - prevents liveness probe kills during AOF/RDB loading. Set `failureThreshold * periodSeconds` to exceed maximum load time.
-- [ ] **Cluster mode NAT handled** - use `cluster-announce-ip`, `hostNetwork`, or an operator that manages cluster bus routing.
+- [ ] Kernel tuning via DaemonSet or privileged init container (sysctls aren't settable in all K8s distros).
+- [ ] StorageClass is SSD-backed; PVC size ≥ 2× `maxmemory`.
+- [ ] Pod anti-affinity across nodes or AZs.
+- [ ] Memory limit ≥ 2× request (fork COW headroom). No CPU limit on latency-sensitive workloads (CFS throttling spikes tail latency).
+- [ ] Startup probe's `failureThreshold * periodSeconds` > worst-case load time (AOF replay on a large dataset can take minutes).
+- [ ] Cluster bus port (+10000) reachable between pods - handled by `hostNetwork`, `cluster-announce-*`, or an operator.
 
-## Persistence Specifics
+## Persistence math to sanity-check
 
-- [ ] **Fork memory headroom verified** - COW can use up to 2x memory during BGSAVE/AOF rewrite. Page table overhead = `dataset_size / 4KB * 8 bytes`. For 24GB dataset, that is 48MB page table alone.
-- [ ] **`appendfsync everysec` worst case understood** - actual worst-case data loss is 2 seconds (not 1 second). If background fsync takes > 1s, writes are delayed up to an additional second.
-- [ ] **`no-appendfsync-on-rewrite` implications known** - if set to `yes`, durability drops to `appendfsync no` during rewrites (up to 30s data loss).
-- [ ] **Recovery time estimated** - 1GB loads in 2-5s on SSD, 100GB in 3-6 minutes. AOF is slower unless using hybrid (`aof-use-rdb-preamble yes`).
-- [ ] **Off-site backup verified** - verify upload size matches, use independent alerting on backup transfer failures.
+- Fork COW can approach 2× dataset on write-heavy workloads. Plan `maxmemory` at 60-70% of node RAM in that case.
+- Page table overhead: `dataset_bytes / 4096 * 8`. 24 GB → 48 MB. Visible in `rdb_last_cow_size` during save.
+- `appendfsync everysec` worst case is ~2 s of loss (one second normally; up to one more if the fsync itself takes a second).
+- `no-appendfsync-on-rewrite yes` silently downgrades durability to `appendfsync no` during rewrites. Set `no` if `always`/`everysec` promises matter.
+- Valkey: recovery from `appendonly yes` + `aof-use-rdb-preamble yes` is near-RDB speed plus AOF tail replay. RDB-only: ~2-5 s per GB on SSD.
 
-## Pre-Upgrade Verification
+## Pre-upgrade
 
-- [ ] **Current version documented** - `INFO server | grep valkey_version`
-- [ ] **RDB/AOF backup taken** - fresh backup before any upgrade
-- [ ] **Release notes reviewed** - check for breaking changes, deprecated configs, new defaults
-- [ ] **Rollback plan documented** - know how to revert if the upgrade fails
-- [ ] **Replica versions compatible** - see [upgrades/compatibility.md](upgrades-compatibility.md)
-- [ ] **Valkey 9.0: use 9.0.3+** - 9.0.0-9.0.1 had critical hash field expiration bugs (memory leaks, crashes, data corruption). Sentinel 9.0+ requires `+failover` ACL permission (permanent requirement, not a regression).
+- [ ] Current version captured: `INFO server | grep valkey_version`.
+- [ ] Fresh RDB/AOF backup taken immediately before the upgrade.
+- [ ] Release notes read; note deprecated configs and any default changes.
+- [ ] Rollback plan documented - for cross-RDB-major upgrades (Valkey 9.0 writes RDB 80 once hash field TTL is in use), downgrade is a restore-from-backup, not an in-place revert.
+- [ ] Replica-version compatibility verified (`upgrades-compatibility.md`).
+- [ ] **Valkey 9.0**: use **9.0.3+** only. 9.0.0-9.0.1 had hash field TTL bugs (memory leaks, crashes, data corruption). **V**

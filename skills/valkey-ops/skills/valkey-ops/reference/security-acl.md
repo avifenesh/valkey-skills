@@ -1,44 +1,51 @@
 # ACL Configuration
 
-Use when setting up access control for Valkey - creating users, assigning permissions, restricting commands and keys.
+Use when setting up access control. Redis-standard ACL model (`ACL SETUSER`, categories, selectors, `aclfile`) applies; this file covers Valkey-specific operational knobs.
 
-Standard Redis ACL model applies - SETUSER syntax, categories, selectors, ACL file vs inline config. See Redis docs for full ACL reference.
+## Valkey-only ACL pieces
 
-## Valkey-Specific: Sentinel ACL (9.0+)
+- **`alldbs` / `resetdbs` and per-DB selectors**: restrict a user to specific databases. Absent from Redis. Grep `alldbs` in `src/acl.c` to see the registered tokens.
+- **`%R~pattern`** / **`%W~pattern`**: split read-only vs write-only key access on the same user. Redis has a single `~pattern`; Valkey lets you differentiate.
+- **Cert-to-user mapping via TLS**: `tls-auth-clients-user cn` / `uri` maps the connecting cert's subject directly to an ACL user. The user must already exist - otherwise the connection is rejected. See `security-tls.md`.
 
-The Sentinel user requires `+failover` in addition to the standard Redis Sentinel permissions:
+## Sentinel user
 
-```
-ACL SETUSER sentinel on >sentinelpass allchannels \
-  +multi +slaveof +ping +exec +subscribe \
-  +config|rewrite +role +publish +info \
-  +client|setname +client|kill +script|kill \
-  +failover
-```
-
-The `+failover` requirement was added in Valkey 9.0. Without it, Sentinel cannot execute the failover command on the monitored instance.
-
-## Default User (same as Redis)
-
-Full permissions by default. Restrict or disable in production:
+Sentinel's monitoring and failover commands need access to `multi`, `exec`, `subscribe`, `publish`, `replicaof` (aliased from `slaveof`), `ping`, `info`, `role`, `config|rewrite`, `client|setname`, `client|kill`, `script|kill`. Standard categories (`@admin`, `@dangerous`, `@slow`) contain the heavier items - an explicit per-command grant matches what Sentinel actually invokes and avoids over-permissioning.
 
 ```
-ACL SETUSER default off
+ACL SETUSER sentinel on >pw allchannels \
+    +multi +exec +subscribe +publish +replicaof \
+    +ping +info +role +config|rewrite \
+    +client|setname +client|kill +script|kill
 ```
 
-When `requirepass` is set, it applies to the default user's password. ACLs are preferred over `requirepass`.
+`FAILOVER` and `CLUSTER FAILOVER` use the standard `@admin` / `@dangerous` / `@slow` categories - no special permission beyond what any admin command needs.
 
-## ACL Persistence
+## Default user
+
+Redis-standard: full access unless restricted.
 
 ```
-aclfile /etc/valkey/users.acl   # immutable config option
+ACL SETUSER default off                 # disable entirely
+ACL SETUSER default on >pw -@all +@connection  # keep AUTH path but deny everything else
 ```
 
-Manage at runtime: `ACL LOAD` (reload from file), `ACL SAVE` (write to file).
+When `requirepass` is set, it becomes the password on the `default` user. Prefer named ACL users over `requirepass` in modern deployments.
+
+## Persistence
+
+```
+aclfile /etc/valkey/users.acl    # immutable - restart required to toggle
+```
+
+Runtime: `ACL LOAD` re-reads the file, `ACL SAVE` writes current state to it. Use one or the other (aclfile or inline-in-valkey.conf) - mixing leads to `ACL REWRITE` surprises.
 
 ## Monitoring
 
-```bash
-valkey-cli ACL LOG       # access denial audit trail
-valkey-cli ACL WHOAMI    # current connection's user
 ```
+valkey-cli ACL LOG [COUNT N | RESET]   # denial audit trail
+valkey-cli ACL WHOAMI                  # this connection's user
+valkey-cli ACL LIST / GETUSER <name>
+```
+
+Alert on `ACL LOG` entries growing - it's the signal that a service is attempting operations its ACL doesn't allow (legitimate rollout mismatch, or an attacker probing).

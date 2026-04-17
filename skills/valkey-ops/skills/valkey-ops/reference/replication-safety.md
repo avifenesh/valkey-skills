@@ -1,208 +1,78 @@
 # Replication Safety
 
-Use when configuring write safety guarantees, preventing data loss during network partitions, understanding auto-restart risks, or hardening a replication deployment against failure modes.
+Use when hardening replication against data loss. Redis baseline applies - this file is the ops-gotcha list.
 
-Source: `src/config.c`, `src/replication.c` (Valkey source).
+## min-replicas knobs
 
-## Contents
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `min-replicas-to-write` | `0` | Minimum online replicas required to accept writes. `0` = disabled. |
+| `min-replicas-max-lag` | `10` s | A replica counts as "online" only if its last interaction was within this window. |
 
-- Safety Configuration (line 18)
-- The WAIT Command (line 62)
-- Critical Warnings (line 81)
-- Monitoring Checklist (line 191)
-- Pre-Deployment Safety Checklist (line 201)
+Example: `min-replicas-to-write 1` + `min-replicas-max-lag 10` means the primary rejects writes (`-NOREPLICAS ...`) when it has no replica within 10 seconds. Reads still work.
 
----
+Trade-off is availability: higher `min-replicas-to-write` makes the primary read-only during replica maintenance. Typical prod setting for a 1+2 topology is `1`/`10`; strict-durability setups use `2`/`10` and accept reduced availability.
 
-## Safety Configuration
-
-### min-replicas Settings
-
-These settings prevent the primary from accepting writes when it cannot confirm that writes are being replicated.
-
-| Parameter | Default | Mutable | Description |
-|-----------|---------|---------|-------------|
-| `min-replicas-to-write` | `0` | Yes | Minimum connected replicas to accept writes (0 = disabled) |
-| `min-replicas-max-lag` | `10` | Yes | Maximum replication lag (seconds) for a replica to count as "connected" |
-
-Defaults verified in `src/config.c`:
-- `min-replicas-to-write`: `0` (disabled by default)
-- `min-replicas-max-lag`: `10` seconds
-
-### How They Work Together
-
-A replica counts as "connected" only if its last interaction was within `min-replicas-max-lag` seconds. If the number of connected replicas drops below `min-replicas-to-write`, the primary rejects all write commands with an error.
-
-**Example - require at least 1 replica within 10 seconds:**
+## `WAIT` - per-command sync
 
 ```
-min-replicas-to-write 1
-min-replicas-max-lag 10
+WAIT <numreplicas> <timeout-ms>
 ```
 
-Effect:
-- If the sole replica disconnects or falls more than 10 seconds behind, the primary stops accepting writes
-- Clients receive `NOREPLICAS` error on write attempts
-- Reads continue to work normally
+Blocks until `numreplicas` replicas acknowledge the **in-memory** apply, or the timeout hits. Returns the number that ack'd.
 
-### Recommended Settings by Deployment
+Caveats: `WAIT` confirms memory application, not disk fsync. It doesn't make Valkey strongly consistent - a subsequent failover can still lose writes if the ack'd replicas aren't all up-to-date. Use sparingly - adds latency equal to replication-ACK RTT per call.
 
-| Deployment | min-replicas-to-write | min-replicas-max-lag | Rationale |
-|------------|----------------------|---------------------|-----------|
-| 1 primary + 1 replica | `1` | `10` | Stops writes immediately on replica loss |
-| 1 primary + 2 replicas | `1` | `10` | Tolerates 1 replica failure |
-| 1 primary + 2 replicas (strict) | `2` | `10` | Requires both replicas - more durable but less available |
-| Cache-only (no durability) | `0` (default) | `10` | Writes always accepted |
+## Incident patterns
 
-### Trade-off
+### 1. Primary without persistence → cascading data loss
 
-Higher `min-replicas-to-write` increases durability but reduces availability. If replicas go down for maintenance, the primary becomes read-only. Plan maintenance windows accordingly.
+**Scenario**: primary runs pure in-memory (no `appendonly`, no `save`). systemd restarts it after a crash. It comes back empty. Replicas connect, full-sync from the empty primary, wipe their own data. Total loss.
 
-## The WAIT Command
+This is a real production outage pattern, not theoretical. Prevention:
 
-`WAIT` provides synchronous replication for individual commands.
+- Turn on persistence on every primary (`appendonly yes` + `save 3600 1 300 100 60 10000`), **or**
+- Set `Restart=no` / `Restart=on-failure` + `StartLimitBurst=0` in systemd so the empty primary doesn't come back automatically, **or**
+- Run Sentinel with `down-after-milliseconds` tight enough that promotion wins the race.
 
-```bash
-# Write a critical value
-SET critical:key "value"
+If you take nothing else from this file: persistence on the primary is the single most important safety knob.
 
-# Wait for at least 1 replica to acknowledge, with 5 second timeout
-WAIT 1 5000
-```
+### 2. Writable replicas
 
-`WAIT` returns the number of replicas that acknowledged the write. If it returns 0, the write may not have been replicated.
+Default is `replica-read-only yes`. Flipping it to `no` lets writes land on a replica, where they exist until the next full resync wipes them. Symptoms: clients see "phantom" writes that vanish post-resync, monitoring shows divergent key counts. Don't change this unless the use case is truly niche.
 
-Limitations:
-- WAIT only confirms the write reached the replica's memory, not that it was persisted to disk
-- WAIT does not make Valkey into a strongly consistent system
-- Use for critical writes only - it adds latency equal to replication lag
+### 3. Network partition split-brain
 
-## Critical Warnings
+Classic Sentinel/cluster case: primary + client on one side of the partition, replica + failover quorum on the other. Partition heals, old primary becomes a replica of the promoted one, writes from the isolated window are lost.
 
-### 1. Primary Without Persistence: Cascading Data Loss
+Mitigation is `min-replicas-to-write` + `min-replicas-max-lag` - the isolated primary goes read-only after the lag threshold, bounding the write-loss window to roughly `min-replicas-max-lag` seconds.
 
-**The most dangerous misconfiguration in Valkey replication.**
+### 4. Cascading full resyncs
 
-Scenario:
-1. Primary runs without persistence (no RDB, no AOF) - used as a pure cache
-2. Primary crashes or is restarted by systemd
-3. Primary starts with an empty dataset
-4. All replicas connect and full-sync from the empty primary
-5. All replicas wipe their data to match the empty primary
+Primary restart or brief network blip → all replicas reconnect simultaneously → if `repl-backlog-size` is undersized → all trigger **full** resync. The primary forks (or batches with `repl-diskless-sync-delay`), CPU/memory spike cascades into more lag, more resyncs.
 
-**Result:** Complete data loss across all nodes.
+Mitigation:
 
-**Prevention:**
+- Size `repl-backlog-size` generously (see `replication-tuning.md`).
+- Keep `repl-diskless-sync-delay 5` so multiple replicas arriving together share one transfer.
+- Stagger replica restarts during maintenance.
+- Alert on `sync_full` counter (should be ~0 in steady state).
 
-Option A - Always enable persistence on the primary:
-```
-appendonly yes
-save 3600 1 300 100 60 10000
-```
+### 5. Replication lag under write burst
 
-Option B - Disable auto-restart on the primary (if persistence is truly unwanted):
-```ini
-# In the systemd service file
-[Service]
-Restart=no
-# Or limit restarts
-Restart=on-failure
-StartLimitBurst=0
-```
+Replicas fall behind when they can't keep up with the primary's write rate. Once a replica exceeds `min-replicas-max-lag`, it stops counting toward `min-replicas-to-write` - if enough replicas lag out, the primary goes read-only.
 
-Option C - Use Sentinel with the primary and do not auto-restart:
-Sentinel detects the crash and promotes a replica. The old primary does not come back empty.
+Check `INFO replication`'s `slave*:lag` field. Sustained lag > 5 s is worth investigating; > 30 s usually means the replica is underprovisioned (CPU or network) relative to the primary's write rate.
 
-**This is not a theoretical risk.** It has caused production data loss. If you take away one thing from this document, configure persistence on every primary.
+### 6. Bandwidth-bound failures
 
-### 2. Writable Replicas Cause Inconsistency
+Large payload distributions saturate network before CPU or memory thresholds trip. Alert on NIC utilization per node (> 70% of line rate) alongside the classic command-count metrics. MPTCP (`mptcp yes` / `repl-mptcp yes`, Valkey 9.0+, Linux 5.6+) can help by using multiple network paths, but only if both ends of the link support it.
 
-The default `replica-read-only yes` is correct. If a replica accepts writes:
+## What to alert on
 
-- Those writes exist only on the replica
-- They are lost on the next full resync
-- They create a divergent dataset that confuses monitoring
-- Clients may read data that does not exist on the primary
-
-Never set `replica-read-only no` in production unless you have a very specific use case and understand the consequences.
-
-### 3. Network Partition Split-Brain
-
-During a network partition:
-
-```
-[Partition A]           [Partition B]
-Primary + Client        Replica + Sentinel majority
-  (isolated)              (promotes replica)
-```
-
-- Client continues writing to the isolated primary
-- Sentinel promotes the replica in Partition B
-- When the partition heals, the old primary becomes a replica of the new primary
-- All writes to the old primary during the partition are lost
-
-**Mitigation:**
-
-```
-min-replicas-to-write 1
-min-replicas-max-lag 10
-```
-
-The isolated primary stops accepting writes after `min-replicas-max-lag` seconds. The data loss window is limited to at most `min-replicas-max-lag` seconds of writes.
-
-### 4. Cascading Full Resyncs
-
-**Production incident pattern**: Primary restart or brief network blip causes all replicas to reconnect simultaneously. If the replication backlog is undersized, all replicas trigger full resync. The primary forks for each (or batches with diskless sync delay), consuming massive memory and CPU. This can cascade - the fork overhead causes further lag, triggering more resyncs.
-
-**Mitigation:**
-- Size `repl-backlog-size` generously to reduce full resyncs (see [Replication Tuning](replication-tuning.md))
-- Use `repl-diskless-sync-delay 5` to batch multiple replicas into one transfer
-- Stagger replica restarts during maintenance
-- Monitor `sync_full` and `sync_partial_ok` counters in `INFO stats` to detect the pattern early
-
-### 5. Replication Lag Under Load
-
-High write throughput can cause replicas to fall behind. Monitor:
-
-```bash
-valkey-cli INFO replication | grep lag
-# slave0:...,lag=0   <- healthy
-# slave0:...,lag=15  <- replica is 15 seconds behind
-```
-
-If lag exceeds `min-replicas-max-lag`, that replica no longer counts toward `min-replicas-to-write`. If enough replicas fall behind, the primary stops accepting writes.
-
-**Mitigation:**
-- Ensure replicas have sufficient CPU and network bandwidth
-- Reduce write batches or pipeline depth if lag is persistent
-- Consider `repl-disable-tcp-nodelay no` (the default) for lowest latency
-
-### 6. Bandwidth-Driven Node Failures
-
-**Production incident pattern** (source: Mercado Libre, Valkey Unlocked Conference): Payload size distribution causes network bandwidth saturation before CPU or memory thresholds trigger alerts. Nodes fail from bandwidth exhaustion, not traditional resource metrics.
-
-**Mitigation:**
-- Monitor payload size distribution, not just request count
-- Monitor network bytes in/out per node
-- Alert on bandwidth utilization (e.g., >70% of NIC capacity)
-- Use MULTIPATH TCP (`repl-mptcp yes`, Valkey 9.0) to reduce network-induced latency by up to 25%
-
-## Monitoring Checklist
-
-| Metric | Source | Alert Threshold |
-|--------|--------|-----------------|
-| `master_link_status` | `INFO replication` on replica | `down` |
-| Replica lag | `INFO replication` on primary | > 5 seconds |
-| `rdb_last_bgsave_status` | `INFO persistence` on primary | `err` |
-| Connected replicas count | `INFO replication` on primary | < expected |
-| Replication backlog coverage | `repl_backlog_size` vs write rate | < 60s of writes |
-
-## Pre-Deployment Safety Checklist
-
-- [ ] Persistence is enabled on the primary (`appendonly yes` or `save` directives)
-- [ ] `min-replicas-to-write` is set to at least 1 (if durability matters)
-- [ ] `replica-read-only yes` is set on all replicas
-- [ ] `repl-backlog-size` is sized for your write rate and expected disconnection window
-- [ ] Auto-restart behavior is reviewed (especially if persistence is off)
-- [ ] Backup procedures are tested and verified
-- [ ] Monitoring and alerting cover replication lag, link status, and BGSAVE status
+- `master_link_status:down` on any replica.
+- `slave*:lag` on primary > 5 s warn, > 30 s crit.
+- `rdb_last_bgsave_status:err` on primary.
+- `connected_slaves` lower than expected.
+- `sync_full` counter incrementing in steady state (indicates backlog is undersized).
+- `master_repl_offset - slave_repl_offset` approaching `repl_backlog_size * 0.8`.

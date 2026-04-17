@@ -1,219 +1,43 @@
 # Benchmarking
 
-Use when measuring Valkey throughput, comparing performance across versions or configurations, validating tuning changes, or establishing performance baselines for capacity planning.
+Use when measuring Valkey throughput or comparing config/version changes.
 
-## Contents
+## Pick a tool
 
-- Tool Comparison (line 17)
-- valkey-benchmark (Built-in) (line 29)
-- valkey-perf-benchmark (CI/Regression Harness) (line 78)
-- Benchmarking Best Practices (line 208)
+- **`valkey-benchmark`** - ships with every install. Use for ad-hoc throughput checks, smoke tests, sanity-check after a config change. Zero setup.
+- **`valkey-perf-benchmark`** - separate Python harness at `valkey-io/valkey-perf-benchmark`. Use when you need commit-to-commit regression testing, statistical analysis across runs, flamegraphs, or a TLS/cluster matrix. Reads full docs from its own repo.
 
----
+`redis-benchmark` also works against Valkey (same wire protocol). The `USE_REDIS_SYMLINKS=yes` build installs `redis-benchmark` as a symlink to `valkey-benchmark` so old scripts keep working.
 
-## Tool Comparison
+## `valkey-benchmark` essential flags
 
-| Tool | Scope | Use When |
-|------|-------|----------|
-| `valkey-benchmark` | Quick, built-in | Ad-hoc throughput checks, smoke tests, comparing config changes on a single instance |
-| `valkey-perf-benchmark` | Full harness | Comparing commits/versions, CI regression testing, TLS/cluster matrix, statistical analysis, flamegraphs |
+| Flag | Default | Notes |
+|------|---------|-------|
+| `-c` | 50 | Parallel connections |
+| `-n` | 100000 | Total requests |
+| `-d` | 3 | Value size in bytes |
+| `-P` | 1 | Pipeline depth (`-P 16` simulates pipelined clients) |
+| `-t` | all | Comma-separated command list (`-t set,get`) |
+| `-q` | off | Quiet - print req/s summary only |
+| `--cluster` | off | Cluster mode (hash-tag fan-out) |
+| `--tls` / `--cert` / `--key` / `--cacert` | - | TLS |
+| `--threads` | 1 | Client I/O threads (different from server `io-threads`) |
+| `--csv` | off | Machine-readable output |
 
-`valkey-benchmark` ships with Valkey and requires zero setup. Use it for quick
-spot-checks. `valkey-perf-benchmark` is a separate Python project that automates
-server build, setup, teardown, multi-run statistical analysis, and result
-comparison - use it for structured, repeatable performance evaluations.
+## Comparing runs - what to hold constant
 
-## valkey-benchmark (Built-in)
+When comparing configs, versions, or hardware, keep `-c`, `-P`, `-d`, `-n` identical across runs. Pipelining (`-P`) especially: a 1-connection pipelined run measures different things than a 50-connection unpipelined run. Valkey 9.0's prefetch (`prefetch-batch-max-size`) and zero-copy reply path only kick in with `-P > 1` and enough I/O threads - use pipelining when you want to measure them.
 
-Ships with every Valkey installation at `src/valkey-benchmark`.
+## Isolation heuristics
 
-### Quick Usage
+- Disable other workloads on the host. On shared VMs, benchmark results are noisy and often non-reproducible.
+- Set CPU governor to performance: `cpupower frequency-set -g performance`.
+- Pin server and client cores via `taskset` - prevents scheduler-induced latency blips.
+- Disable persistence during throughput benchmarks (`--save "" --appendonly no`) unless durability overhead is what you're measuring.
+- Warm up: discard the first run or use the harness's `warmup` config parameter for read-workload tests (the harness seeds data then reads against a populated keyspace).
+- Run at least 3-5 iterations, report mean and std-dev. Coefficient of variation (`sigma/mu * 100%`) under 5% is a reasonable threshold for "this result is reproducible".
+- Check CPU saturation on the server: if Valkey's main thread is pinned at 100%, you're measuring CPU limits, not I/O or network.
 
-```bash
-# Default: 50 parallel connections, 100K requests, 3-byte payload
-valkey-benchmark
+## What valkey-perf-benchmark adds
 
-# Specific commands with options
-valkey-benchmark -t set,get -c 100 -n 1000000 -d 256 -q
-
-# Pipeline mode (batch N commands per round-trip)
-valkey-benchmark -t set -c 50 -n 1000000 -P 16 -q
-
-# Cluster mode
-valkey-benchmark --cluster -t set,get -c 100 -n 1000000 -q
-
-# TLS
-valkey-benchmark --tls --cert ./client.crt --key ./client.key --cacert ./ca.crt \
-  -t set,get -c 100 -n 500000 -q
-
-# CSV output for parsing
-valkey-benchmark -t set,get -c 50 -n 100000 --csv
-```
-
-### Key Flags
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `-c` | Parallel connections | 50 |
-| `-n` | Total requests | 100000 |
-| `-d` | Data size (bytes) | 3 |
-| `-P` | Pipeline depth | 1 (no pipelining) |
-| `-t` | Comma-separated command list | all |
-| `-q` | Quiet - show only req/sec summary | off |
-| `--cluster` | Cluster mode | off |
-| `--tls` | Enable TLS | off |
-| `--csv` | CSV output | off |
-| `--threads` | Client I/O threads | 1 |
-
-### Interpreting Results
-
-Each command reports requests per second and latency percentiles. When
-comparing, always keep these constant: connection count (`-c`), pipeline
-depth (`-P`), data size (`-d`), and request count (`-n`). Run multiple
-iterations and discard the first (warmup).
-
-## valkey-perf-benchmark (CI/Regression Harness)
-
-Repository: [valkey-io/valkey-perf-benchmark](https://github.com/valkey-io/valkey-perf-benchmark)
-
-A Python-based harness that automates end-to-end performance benchmarking.
-It clones Valkey source for each target commit, builds it, starts/stops
-the server, runs `valkey-benchmark` under controlled conditions, and
-collects structured results with statistical analysis.
-
-### Features
-
-- Builds Valkey from source per commit for reproducible comparisons
-- Supports TLS and cluster mode matrix testing
-- CPU pinning via `taskset` for isolated measurements
-- Multi-run averaging with standard deviation and coefficient of variation
-- Comparison reports between commits/versions (markdown + graphs)
-- Flamegraph generation via `perf` profiling
-- Full-text search (FTS) benchmarking with the valkey-search module
-- Grafana dashboards for visualizing results over time
-- GitHub Actions workflow for continuous benchmarking
-
-### Prerequisites
-
-- Linux (required for `taskset` CPU pinning)
-- Python 3.6+
-- Git, gcc, make (Valkey build tools)
-
-### Setup
-
-```bash
-git clone https://github.com/valkey-io/valkey-perf-benchmark.git
-cd valkey-perf-benchmark
-python3 -m venv venv
-. venv/bin/activate
-pip install --require-hashes -r requirements.txt
-```
-
-### Usage
-
-```bash
-# Benchmark current HEAD with defaults
-python benchmark.py
-
-# Benchmark a specific commit
-python benchmark.py --commits abc1234
-
-# Compare HEAD against a baseline branch
-python benchmark.py --commits HEAD --baseline unstable
-
-# Multiple runs for statistical reliability
-python benchmark.py --commits HEAD --runs 5
-
-# Use a pre-existing Valkey directory (skip clone/build)
-python benchmark.py --valkey-path /path/to/valkey
-
-# Benchmark against an already-running server
-python benchmark.py --valkey-path /path/to/valkey --use-running-server
-
-# Server-only or client-only mode (split across machines)
-python benchmark.py --mode server
-python benchmark.py --mode client --target-ip 192.168.1.100
-
-# Custom valkey-benchmark binary
-python benchmark.py --valkey-benchmark-path /usr/local/bin/valkey-benchmark
-```
-
-### Configuration
-
-Benchmark configs are JSON files in `configs/`. Each object defines a test
-matrix - commands, data sizes, pipelines, I/O threads, cluster/TLS modes.
-
-```json
-[
-  {
-    "requests": [10000000],
-    "keyspacelen": [10000000],
-    "data_sizes": [16, 64, 256],
-    "pipelines": [1, 10, 100],
-    "commands": ["SET", "GET"],
-    "cluster_mode": "yes",
-    "tls_mode": "yes",
-    "warmup": 10,
-    "io-threads": [1, 4, 8],
-    "server_cpu_range": "0-1",
-    "client_cpu_range": "2-3"
-  }
-]
-```
-
-Key config parameters: `requests`, `keyspacelen`, `data_sizes`, `pipelines`,
-`clients`, `commands`, `cluster_mode`, `tls_mode`, `warmup`, `io-threads`,
-`server_cpu_range`, `client_cpu_range`.
-
-When `warmup` is set for read commands, the harness seeds data first, runs
-a warmup pass, then executes the measured benchmark.
-
-### Comparing Results
-
-```bash
-# Compare two result sets
-python utils/compare_benchmark_results.py \
-  --baseline results/commit1/metrics.json \
-  --new results/commit2/metrics.json \
-  --output comparison.md
-
-# With graphs
-python utils/compare_benchmark_results.py \
-  --baseline results/commit1/metrics.json \
-  --new results/commit2/metrics.json \
-  --output comparison.md --graphs --graph-dir graphs/
-
-# Filter to RPS or latency only
-python utils/compare_benchmark_results.py \
-  --baseline results/commit1/metrics.json \
-  --new results/commit2/metrics.json \
-  --output comparison.md --metrics rps --graphs
-```
-
-Statistical output includes mean, standard deviation, and coefficient of
-variation (CV = sigma/mu x 100%). Lower CV indicates more consistent results.
-
-### Results Structure
-
-```
-results/<commit-id>/
-  logs.txt          # Benchmark output
-  metrics.json      # Structured performance data
-  valkey_log_*.log  # Server logs
-```
-
-## Benchmarking Best Practices
-
-1. **Isolate the machine** - disable other workloads, pin CPUs, disable
-   frequency scaling (`cpupower frequency-set -g performance`)
-2. **Disable persistence** - use `--save ""` and `appendonly no` unless
-   you are specifically benchmarking durability impact
-3. **Warm up** - discard the first run or use the `warmup` config parameter
-4. **Multiple runs** - at least 3-5 runs; report mean and standard deviation
-5. **Match production topology** - test with the same cluster size, TLS
-   settings, and client count you will deploy
-6. **Control data size** - vary `-d` to match your actual value sizes
-7. **Check CPU saturation** - if Valkey is pinned at 100% on one core,
-   you are measuring CPU limits not network or I/O capacity
-
----
+The harness builds Valkey from source per commit, runs `valkey-benchmark` under a config-matrix JSON (commands × data sizes × pipeline × io-threads × TLS × cluster modes), collects multi-run stats, and emits markdown + graph comparisons. The GitHub Actions workflow in its repo does continuous regression benchmarking. Use it when you need to prove (or disprove) "did this PR regress performance" before merging - not for one-off tuning validation.

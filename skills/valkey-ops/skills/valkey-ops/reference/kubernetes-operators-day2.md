@@ -1,130 +1,65 @@
-# Kubernetes Operators - SAP, Day-2, and Selection
+# Operator Day-2 and Selection
 
-Use when deploying Valkey via the SAP Kubernetes operator, performing day-2 operator operations (scaling, upgrades), or choosing between the available operators.
+Use when choosing between the three Valkey operators or running day-2 operations through them.
 
-## SAP Valkey Operator
+## Picking an operator (decision matrix)
 
-The SAP operator wraps the Bitnami Helm chart, adding operator lifecycle management.
+| Scenario | Pick |
+|----------|------|
+| Production cluster mode with sharding **today** | Hyperspike |
+| Sentinel HA, no sharding, enterprise support | SAP |
+| Declarative ACL users as part of the CRD | Official |
+| Stable upstream Valkey project alignment | Official (once past `v1alpha1`) |
+| Need Bitnami image hardening as the runtime | SAP |
+| OpenShift with SCC constraints | Hyperspike |
 
-### Installation
+Full feature matrix in `kubernetes-operators-overview.md`.
 
-```bash
-# Install the SAP operator via its Helm chart
+## SAP operator (`cache.cs.sap.com/v1alpha1`)
+
+SAP wraps the Bitnami Helm chart with operator lifecycle management. Install via its own Helm chart:
+
+```sh
 helm repo add sap https://sap.github.io/valkey-operator/
 helm install valkey-operator sap/valkey-operator
 ```
 
-### CRD: Sentinel Topology
+CRD shape (`kind: Valkey`): `spec.replicas`, `spec.sentinel.enabled` (Sentinel vs static primary topology), `spec.tls.enabled` (cert-manager integration), `spec.persistence`. Auto-generates a binding Secret with connection details (host, port, password, CA cert, sentinel config) - customizable via Go templates. Ships ServiceMonitor + PrometheusRule. Auto-generates topology-spread constraints when not specified.
 
-```yaml
-apiVersion: cache.cs.sap.com/v1alpha1
-kind: Valkey
-metadata:
-  name: my-valkey
-spec:
-  replicas: 3
-  sentinel:
-    enabled: true
-  tls:
-    enabled: true
-  persistence:
-    storageClass: standard
-    size: 10Gi
-```
+**`spec.sentinel.enabled` is immutable after creation** - you can't toggle Sentinel mode on an existing deployment.
 
-Key behaviors:
-- Sentinel is exposed on port 26379
-- Valkey data nodes on port 6379
-- `spec.sentinel.enabled` is **immutable after creation** - you cannot toggle Sentinel mode on an existing deployment
-- The operator manages the Bitnami chart release internally
+Static-primary mode (no Sentinel) makes the first pod the primary with no automatic failover. Rarely what you want in prod - use Sentinel mode unless you specifically want a manual-only topology.
 
-### CRD: Static Primary
+## Day-2 commands (all three operators)
 
-```yaml
-apiVersion: cache.cs.sap.com/v1alpha1
-kind: Valkey
-metadata:
-  name: my-valkey
-spec:
-  replicas: 3
-  sentinel:
-    enabled: false
-  persistence:
-    storageClass: standard
-    size: 10Gi
-```
+All use the same `kubectl patch` pattern - the difference is which CRD and which field names:
 
-Without Sentinel, the first pod is always the primary. No automatic failover occurs.
-
-### SAP Operator Features
-
-- Two topologies: static primary and Sentinel
-- Auto-generates a binding secret with connection details (host, port,
-  password, CA cert, sentinel config) - customizable via Go templates
-- cert-manager integration (auto self-signed or custom issuer)
-- Prometheus exporter + ServiceMonitor + PrometheusRule
-- Auto-generates topology spread constraints when not specified
-- `sentinel.enabled` is immutable after creation
-- Bitnami chart values passthrough for advanced config
-- Namespace-scoped operation
-
-## Operator Day-2 Operations
-
-### Scaling
-
-```bash
-# Valkey Official - edit the CRD
-kubectl patch valkeycluster cluster-sample --type merge \
+```sh
+# Official: scale shards/replicas
+kubectl patch valkeycluster my-cluster --type merge \
   -p '{"spec":{"shards":6,"replicas":2}}'
-# Operator rebalances slots across new shards
 
-# Hyperspike - edit the CRD
+# Hyperspike: scale (cluster mode)
 kubectl patch valkey my-cluster --type merge \
-  -p '{"spec":{"replicas":9}}'
-# Operator handles adding nodes and rebalancing (cluster mode)
+  -p '{"spec":{"replicas":9,"clusterReplicas":1}}'
 
-# SAP - edit the CRD
+# SAP: scale replicas
 kubectl patch valkey my-valkey --type merge \
   -p '{"spec":{"replicas":5}}'
-```
 
-### Version Upgrades
-
-```bash
-# Update the image version in the CRD
+# Any of them: bump image version
 kubectl patch valkey my-cluster --type merge \
-  -p '{"spec":{"image":"valkey/valkey:9.1"}}'
-# Operator performs rolling upgrade automatically
+  -p '{"spec":{"image":"valkey/valkey:9.0.3"}}'
 ```
 
-### Monitoring Operator Health
+All operators translate the CRD change into a rolling upgrade. Watch progress via operator logs (`kubectl logs -n valkey-operator-system deploy/valkey-operator-controller-manager` or equivalent) and the CR status subresource (`kubectl describe <kind> <name>`).
 
-```bash
-# Check operator logs
-kubectl logs -n valkey-operator-system deployment/valkey-operator-controller-manager
+## Health check pattern
 
-# Check CRD status
-kubectl get valkey
-kubectl describe valkey my-cluster
+```sh
+kubectl get <kind>                          # status column: Ready / Reconciling / Degraded
+kubectl describe <kind> <name>              # conditions: Ready / Progressing / Degraded / ClusterFormed / SlotsAssigned
+kubectl logs -n <operator-ns> deploy/<controller>   # operator-level errors
 ```
 
-## Choosing Between Operators
-
-| Scenario | Recommendation |
-|----------|---------------|
-| Official Valkey project alignment | Valkey Official (once stable) |
-| Valkey Cluster with sharding (production today) | Hyperspike |
-| Sentinel HA without sharding | Hyperspike or SAP (SAP simpler) |
-| Enterprise support needed | SAP |
-| Declarative ACL user management | Valkey Official |
-| GitOps with ArgoCD/Flux | Any (all CRD-based) |
-| Need Bitnami image hardening | SAP (uses Bitnami) |
-| Full cluster lifecycle automation | Hyperspike |
-
----
-
-## See Also
-
-- [operators-overview](kubernetes-operators-overview.md) - Operator comparison, Official and Hyperspike CRDs
-- [helm](kubernetes-helm.md) - Helm chart deployment
-- [statefulset-config](kubernetes-statefulset-config.md) - Raw StatefulSet patterns
+The controller-manager deployment name differs per operator; check the namespace you installed into.

@@ -1,262 +1,79 @@
-# Redis to Valkey Migration
+# Redis → Valkey Migration
 
-Use when migrating from Redis OSS to Valkey, planning a migration strategy, or understanding what changes between the two systems.
+Use when moving a running Redis deployment to Valkey.
 
-## Contents
+## Compatibility baseline
 
-- Compatibility Baseline (line 22)
-- What Changes (line 28)
-- What Does NOT Change (line 40)
-- Extended Redis Compatibility Mode (line 51)
-- Method 1: Binary Replacement (Downtime Required) (line 65)
-- Method 2: Replication-Based (Minimal Downtime) (line 98)
-- Method 3: Cluster Migration (line 133)
-- Configuration Changes Without Restart (line 162)
-- Data Validation After Migration (line 220)
-- Downtime Estimates by Method (line 236)
-- Migration Checklist (line 251)
+Valkey is compatible with Redis OSS 7.2 and earlier. **Redis CE 7.4+ is not compatible** - it uses RDB versions in Valkey's reserved "foreign" range (12-79), which Valkey rejects under `rdb-version-check strict` (default). Using `relaxed` mode will *attempt* to load but can't guarantee compatibility for Redis CE-specific features.
 
----
+| What changes | What doesn't |
+|--------------|--------------|
+| Binary names: `redis-*` → `valkey-*` (symlinks preserve old names) | RESP wire protocol |
+| Config file: `redis.conf` → `valkey.conf` (format identical) | Redis 7.2 command set |
+| Data dir: `/var/lib/redis` → `/var/lib/valkey` | RDB/AOF file formats (both load) |
+| Service unit: `redis.service` → `valkey.service` | Client library compatibility |
+| Default user: `redis` → `valkey` | Ports (6379, 26379, bus +10000) |
+| Server identity: INFO/HELLO/LOLWUT report "valkey" | ACL syntax |
+| RDB magic (9.0+): `REDIS` → `VALKEY` for version 80+ | Lua scripting |
+|  | Module API (Redis modules load) |
 
-## Compatibility Baseline
-
-Valkey is compatible with Redis OSS 7.2 and all earlier versions. Redis CE 7.4+ is NOT compatible - it uses RDB versions in the reserved foreign range (12-79) that Valkey rejects by default.
-
-Source: `src/rdb.h` reserves versions 12-79 as `RDB_FOREIGN_VERSION_MIN` to `RDB_FOREIGN_VERSION_MAX`.
-
-## What Changes
-
-| Area | Change |
-|------|--------|
-| Binary names | `redis-server` -> `valkey-server`, `redis-cli` -> `valkey-cli` |
-| Config file | `redis.conf` -> `valkey.conf` (format identical) |
-| Data directory | `/var/lib/redis` -> `/var/lib/valkey` |
-| Service name | `redis.service` -> `valkey.service` |
-| Default user | `redis` -> `valkey` |
-| Server identity | Reports as "valkey" in `INFO`, `HELLO`, `LOLWUT` |
-| RDB magic (9.0+) | `REDIS` -> `VALKEY` for RDB version 80+ |
-
-## What Does NOT Change
-
-- RESP protocol - identical wire format
-- Command set - all Redis OSS 7.2 commands work
-- Data formats - RDB and AOF files are compatible
-- Client libraries - all Redis clients work with Valkey
-- Port defaults - still 6379 (client), 26379 (Sentinel), +10000 (cluster bus)
-- ACL format - identical syntax
-- Lua scripting - fully compatible
-- Module API - Redis modules load in Valkey
-
-## Extended Redis Compatibility Mode
-
-For clients that check the server identity string, Valkey provides `extended-redis-compatibility` mode:
+## `extended-redis-compatibility` - identity mask
 
 ```
 CONFIG SET extended-redis-compatibility yes
 ```
 
-When enabled, Valkey reports as "redis" and shows `REDIS_VERSION` (7.2.4) in `HELLO`, `INFO`, `LOLWUT`, and `CLIENT SETNAME` responses.
+When `yes`, Valkey reports `redis_version: 7.2.4` in `INFO`, `HELLO`, `LOLWUT`, and `CLIENT SETNAME` responses. Useful transition knob for clients that check the server identity string. Runtime-modifiable; turn off once every client is updated.
 
-Source: verified across `src/networking.c`, `src/lolwut.c`, `src/debug.c`, `src/server.c`. The `REDIS_VERSION` is "7.2.4" (`src/version.h`).
+## Three migration paths
 
-Runtime-modifiable - no restart needed.
+### 1. Binary replacement (minutes of downtime)
 
-## Method 1: Binary Replacement (Downtime Required)
+Stop Redis, copy `dump.rdb` (or `appendonlydir/`) into Valkey's data dir, update paths in `valkey.conf`, fix ownership, start Valkey. Safest for simple single-instance deployments where you own a maintenance window. Downtime equals AOF replay time on large datasets.
 
-Best for: single-instance setups, development environments, short maintenance windows.
+### 2. Replication-based (seconds of switchover)
 
-```bash
-# 1. Stop Redis
-systemctl stop redis
+Spin up Valkey as a replica of the running Redis primary:
 
-# 2. Copy data files
-cp /var/lib/redis/dump.rdb /var/lib/valkey/dump.rdb
-# If using AOF:
-cp -r /var/lib/redis/appendonlydir /var/lib/valkey/appendonlydir
-
-# 3. Migrate config
-# Copy redis.conf -> valkey.conf, update paths:
-#   dir /var/lib/valkey
-#   logfile /var/log/valkey/valkey.log
-#   pidfile /var/run/valkey/valkey.pid
-
-# 4. Set ownership
-chown -R valkey:valkey /var/lib/valkey /var/log/valkey
-
-# 5. Start Valkey
-systemctl start valkey
-
-# 6. Verify
-valkey-cli ping
-valkey-cli DBSIZE
-valkey-cli INFO server | grep valkey_version
+```
+REPLICAOF redis-host 6379
 ```
 
-Downtime: seconds to minutes depending on dataset size (AOF replay time).
+Wait for `master_link_status:up` and `master_sync_in_progress:0`. Verify `DBSIZE` matches. Flip client endpoints. Promote Valkey with `REPLICAOF NO ONE`. Shut down Redis. Downtime is the client endpoint-flip window only.
 
-## Method 2: Replication-Based (Minimal Downtime)
+Valkey's `replicaof` accepts and follows a Redis primary; the old `slaveof` keyword also works as an alias. Works for Redis OSS 7.2 and below.
 
-Best for: production systems where downtime must be minimized.
+### 3. Cluster migration (zero downtime per shard)
 
-```bash
-# 1. Install Valkey on a separate host or port
-# Configure valkey.conf with appropriate settings
+For Redis Cluster deployments. For each Redis primary, add a Valkey node as its replica (`--cluster add-node ... --cluster-replica --cluster-master-id <redis-primary-node-id>`). Wait for all Valkey replicas to sync. Failover each shard by running `CLUSTER FAILOVER` on the Valkey replica. Remove old Redis nodes with `--cluster del-node`. Verify with `valkey-cli --cluster check`.
 
-# 2. Start Valkey as a replica of Redis
-valkey-server /etc/valkey/valkey.conf
-valkey-cli REPLICAOF redis-host 6379
+Cross-version caveat: during the mixed window, any resharding uses legacy key-by-key MIGRATE (ASM requires all nodes on Valkey 9.0+).
 
-# 3. Wait for initial sync to complete
-valkey-cli INFO replication
-# Watch for:
-#   master_link_status:up
-#   master_sync_in_progress:0
-#   master_repl_offset matches the Redis primary offset
+## Immutable configs - restart required
 
-# 4. Verify data integrity
-valkey-cli DBSIZE     # should match Redis DBSIZE
-# Spot-check critical keys
+These cannot be changed at runtime (`IMMUTABLE_CONFIG`):
 
-# 5. Switch application connections to Valkey
-# Update connection strings, DNS, or load balancer
+`cluster-enabled`, `daemonize`, `databases`, `cluster-config-file`, `unixsocket`, `logfile`, `syslog-enabled`, `aclfile`, `appendfilename`, `appenddirname`, `tcp-backlog`, `cluster-port`, `supervised`, `pidfile`, `disable-thp`. Get them right in the migrated `valkey.conf` before start.
 
-# 6. Promote Valkey to primary
-valkey-cli REPLICAOF NO ONE
+`bind` and `port` ARE runtime-modifiable despite what some Redis docs claim.
 
-# 7. Stop Redis
-redis-cli SHUTDOWN
-```
+## Validation after migration
 
-Downtime: effectively zero for reads, brief (connection switch time) for writes.
+1. **Key count**: `INFO keyspace` - `db0:keys` match source and target.
+2. **Spot check**: pull a handful via `RANDOMKEY` + `TYPE` + `GET`/`HGETALL`/`LRANGE` on both sides.
+3. **TTL**: compare `PTTL` on samples - should be within a few seconds.
+4. **Replication offset** (if using method 2): `master_repl_offset` matches before promotion.
+5. **Cluster check** (method 3): `valkey-cli --cluster check` - all 16384 slots covered, no errors.
+6. **commandstats**: `INFO commandstats` - no unexpected `failed_calls` climbing post-cutover.
+7. **Application tests**: run your own smoke tests, compare p50/p99 latency, monitor error rates.
 
-## Method 3: Cluster Migration
+## Migration checklist
 
-Best for: Redis Cluster deployments.
-
-```bash
-# 1. For each Redis primary, add a Valkey node as its replica
-valkey-cli --cluster add-node valkey-host:7000 redis-host:7000 \
-  --cluster-replica --cluster-master-id <redis-primary-node-id>
-
-# 2. Wait for all Valkey replicas to sync
-valkey-cli -p 7000 CLUSTER NODES
-# Verify all Valkey nodes show as connected replicas
-
-# 3. Failover each shard to promote Valkey replicas
-# On each Valkey replica:
-valkey-cli -p 7000 CLUSTER FAILOVER
-
-# 4. Verify all Valkey nodes are now primaries
-valkey-cli -p 7000 CLUSTER NODES
-# All Valkey nodes should show "master" flag
-
-# 5. Remove old Redis nodes
-valkey-cli --cluster del-node valkey-host:7000 <redis-node-id>
-# Repeat for each Redis node
-
-# 6. Final verification
-valkey-cli --cluster check valkey-host:7000
-```
-
-## Configuration Changes Without Restart
-
-Most Valkey parameters support runtime modification via CONFIG SET. This is relevant during migration when tuning the new deployment.
-
-```bash
-# Change at runtime
-valkey-cli CONFIG SET maxmemory 4gb
-
-# Persist to config file
-valkey-cli CONFIG REWRITE
-```
-
-### Immutable Configs (Require Restart)
-
-These cannot be changed at runtime (verified from `src/config.c` IMMUTABLE_CONFIG flag):
-
-| Config | Description |
-|--------|-------------|
-| `cluster-enabled` | Toggle cluster mode |
-| `daemonize` | Run as daemon |
-| `databases` | Number of databases |
-| `cluster-config-file` | Cluster state file |
-| `unixsocket` | Unix socket path |
-| `logfile` | Log file path |
-| `syslog-enabled` | Syslog output |
-| `aclfile` | ACL file path |
-| `appendfilename` | AOF filename |
-| `appenddirname` | AOF directory name |
-| `tcp-backlog` | TCP listen backlog |
-| `cluster-port` | Cluster bus port |
-| `supervised` | Supervision mode |
-| `pidfile` | PID file path |
-| `disable-thp` | THP disabling |
-
-`bind` and `port` ARE modifiable at runtime despite some documentation stating otherwise. Verified from source: both use MODIFIABLE_CONFIG flag.
-
-### Runtime-Modifiable Configs (Common Tuning)
-
-| Config | Description |
-|--------|-------------|
-| `maxmemory` | Memory limit |
-| `maxmemory-policy` | Eviction policy |
-| `maxclients` | Connection limit |
-| `timeout` | Idle client timeout |
-| `tcp-keepalive` | Keepalive interval |
-| `hz` | Server tick frequency |
-| `appendonly` | Toggle AOF |
-| `appendfsync` | AOF sync policy |
-| `save` | RDB snapshot triggers |
-| `bind` | Network bind addresses |
-| `port` | Client port |
-| `protected-mode` | External connection protection |
-| `loglevel` | Logging verbosity |
-| `slowlog-log-slower-than` | Slow log threshold |
-| `latency-monitor-threshold` | Latency monitor threshold |
-| `extended-redis-compatibility` | Redis identity mode |
-| `rdb-version-check` | RDB version strictness |
-
-## Data Validation After Migration
-
-Run these checks after any migration to verify data integrity:
-
-1. **Key count**: `INFO keyspace` on source and target - compare `db0:keys` values
-2. **Memory usage**: `INFO memory` - should be within ~10% between instances
-3. **Spot-check values**: `RANDOMKEY` then compare values and types on both
-4. **TTL validation**: Compare TTLs on sampled keys - should be within a few seconds
-5. **Data type verification**: `TYPE <key>` and `OBJECT ENCODING <key>` on samples
-6. **Replication offset**: Before promoting, verify `master_repl_offset` matches on both
-7. **Cluster health**: `valkey-cli --cluster check` - all 16384 slots covered, no errors
-8. **Application-level**: Run test suites, compare P50/P99 latency, monitor error rates
-9. **Command stats**: `INFO commandstats` - check for unexpected command failures
-
----
-
-## Downtime Estimates by Method
-
-| Method | Topology | Downtime |
-|--------|----------|----------|
-| Replication + failover | Standalone | Seconds (client switch only) |
-| RDB snapshot restore | Standalone | Minutes to hours (dataset dependent) |
-| Rolling upgrade | Cluster | Zero (per-shard seconds) |
-| Sentinel failover | Sentinel | 1-5 seconds |
-| Helm migration (Bitnami to Official) | Kubernetes | Brief maintenance window |
-| ElastiCache RDB export | Managed to self-hosted | 30-60+ minutes |
-| ElastiCache replication | Managed to self-hosted | Seconds (if network allows) |
-| Dual-write | Any | Zero (requires code changes) |
-
----
-
-## Migration Checklist
-
-1. [ ] Verify source is Redis OSS 7.2 or earlier (not Redis CE 7.4+)
-2. [ ] Install Valkey on target hosts
-3. [ ] Translate config file (update paths, review new features)
-4. [ ] Enable `extended-redis-compatibility` if clients check server identity
-5. [ ] Test replication between Redis primary and Valkey replica
-6. [ ] Verify DBSIZE and spot-check keys after sync
-7. [ ] Update monitoring to use Valkey binary names
-8. [ ] Switch application connections
-9. [ ] Promote Valkey instances
-10. [ ] Disable `extended-redis-compatibility` once clients are updated
-11. [ ] Update backup scripts to reference new paths
+- [ ] Verify source is Redis OSS ≤ 7.2 (not Redis CE 7.4+).
+- [ ] Install Valkey on target hosts; confirm allocator (`mem_allocator`) and build flags match target workload.
+- [ ] Translate `redis.conf` → `valkey.conf`, update paths, review Valkey-specific defaults (lazyfree all `yes`, COMMANDLOG, hide-user-data-from-log).
+- [ ] Enable `extended-redis-compatibility yes` temporarily if any client does identity checks.
+- [ ] Test the flow in staging with a sample of production data.
+- [ ] Update monitoring/alerts for new binary names, new INFO fields, COMMANDLOG replacing SLOWLOG.
+- [ ] Execute the chosen migration method.
+- [ ] Post-cutover: disable `extended-redis-compatibility`, update backup scripts for new paths.

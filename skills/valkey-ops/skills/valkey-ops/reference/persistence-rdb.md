@@ -1,168 +1,77 @@
-# RDB Snapshot Persistence
+# RDB Snapshots
 
-Use when configuring point-in-time snapshots, tuning BGSAVE behavior, or understanding RDB trade-offs for backup and recovery scenarios.
+Use when configuring or tuning RDB. Redis-baseline semantics carry over; this file is the Valkey-specific operational delta.
 
-Source: `src/config.c`, `src/rdb.c` (Valkey source). Cross-ref: valkey-dev `reference/persistence/rdb.md` for binary format internals.
+## `save` directives
 
-## When to Use RDB
-
-- You need fast restarts from a compact binary file
-- You want periodic backups with minimal runtime overhead
-- Some data loss between snapshots is acceptable
-- You need to ship snapshots to off-site storage
-
-## Trade-offs
-
-| Strength | Weakness |
-|----------|----------|
-| Compact single-file format | Data loss between snapshots |
-| Fast server restart | Fork can cause latency spikes with large datasets |
-| Low runtime overhead | Copy-on-write doubles memory during save (worst case) |
-| Ideal for backups and disaster recovery | Not suitable for zero-data-loss requirements |
-
-## Configuration Reference
-
-All defaults verified against `src/config.c` in the Valkey source tree.
-
-### Save Directives
-
-The `save` directive triggers automatic background snapshots. Format: `save <seconds> <changes>`.
+`save <seconds> <changes>` triggers automatic BGSAVE. Defaults (set in `initServerConfig`, not the config table):
 
 ```
-save 3600 1        # snapshot if >= 1 write in 3600 seconds
-save 300 100       # snapshot if >= 100 writes in 300 seconds
-save 60 10000      # snapshot if >= 10000 writes in 60 seconds
+save 3600 1
+save 300 100
+save 60 10000
 ```
 
-These are the compiled defaults (from `server.c`):
+= snapshot if at least 1 write in 1 h OR 100 writes in 5 min OR 10000 writes in 1 min. Disable with `save ""`.
 
-```c
-appendServerSaveParams(60*60, 1);   // save after 1 hour and 1 change
-appendServerSaveParams(300, 100);   // save after 5 minutes and 100 changes
-appendServerSaveParams(60, 10000);  // save after 1 minute and 10000 changes
-```
+## Core knobs
 
-To disable automatic RDB snapshots entirely:
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `dbfilename` | `dump.rdb` | Empty → no RDB file written; `BGSAVE` becomes a no-op. Useful for pure-cache setups. |
+| `dir` | `./` | Working dir for RDB + AOF + nodes.conf. |
+| `rdbcompression` | `yes` | LZF. ~10-20% CPU on save for ~30-50% file shrink. |
+| `rdbchecksum` | `yes` | **Immutable.** CRC64 tail, ~10% save/load overhead. |
+| `stop-writes-on-bgsave-error` | `yes` | Failed BGSAVE blocks writes until cleared. |
+| `rdb-save-incremental-fsync` | `yes` | Fsync every 32 MB during save; smooths I/O. |
+| `rdb-del-sync-files` | `no` | Delete replication-generated RDBs immediately. |
+| `rdb-version-check` | `strict` | **Valkey-only.** `strict` rejects foreign RDB range (12-79, i.e. Redis CE 7.4+); `relaxed` attempts to load anyway. |
 
-```
-save ""
-```
+## RDB commands
 
-### Core Parameters
+| Command | Notes |
+|---------|-------|
+| `BGSAVE` | Fork + write in background. |
+| `BGSAVE SCHEDULE` | Queue behind an in-flight AOF rewrite. |
+| `BGSAVE CANCEL` | Valkey 8.1+. Kills the fork or cancels a scheduled BGSAVE. Emergency stop when fork memory is blowing up. |
+| `SAVE` | Synchronous - blocks all clients. Emergency only. |
+| `LASTSAVE` | Unix timestamp of last successful save. |
 
-| Parameter | Default | Mutable | Description |
-|-----------|---------|---------|-------------|
-| `dbfilename` | `dump.rdb` | Yes (protected) | RDB file name |
-| `dir` | `./` | Yes | Working directory for RDB and AOF files |
-| `rdbcompression` | `yes` | Yes | LZF compression for string values |
-| `rdbchecksum` | `yes` | No (immutable) | CRC64 checksum at end of file |
-| `stop-writes-on-bgsave-error` | `yes` | Yes | Reject writes if last BGSAVE failed |
-| `rdb-save-incremental-fsync` | `yes` | Yes | Fsync every 32MB during RDB save |
-| `rdb-del-sync-files` | `no` | Yes | Delete RDB files created for replication |
-| `rdb-version-check` | `strict` | Yes | RDB version validation mode (`strict` or `relaxed`) |
+## Magic + version
 
-`rdbchecksum` is IMMUTABLE - it cannot be changed at runtime via CONFIG SET. Plan at deployment time.
+Valkey 9.0+ writes RDB version **80** with magic `VALKEY080`. Loader accepts both `VALKEY080` (new) and `REDIS0011` (RDB 11, pre-Valkey-9.0) on the same code path. Redis CE 7.4+ writes into the foreign range (`RDB_FOREIGN_VERSION_MIN = 12`, `MAX = 79`) which Valkey rejects by default - set `rdb-version-check relaxed` to attempt loading them (at your own risk for CE-specific features).
 
-### RDB Commands
-
-| Command | Behavior | Use Case |
-|---------|----------|----------|
-| `BGSAVE` | Fork child process, write RDB in background | Production snapshots - non-blocking |
-| `SAVE` | Write RDB synchronously, blocks all clients | Emergency only - avoid in production |
-| `BGSAVE SCHEDULE` | Schedule BGSAVE when no AOF rewrite is running | Safe scheduling (since 3.2.2) |
-| `BGSAVE CANCEL` | Terminate in-progress RDB save or scheduled BGSAVE | Emergency fork termination (8.1+) |
-| `LASTSAVE` | Returns Unix timestamp of last successful save | Monitoring and backup verification |
-| `DEBUG RELOAD` | Save + quit + restart + load | Testing only |
-
-`BGSAVE CANCEL` (Valkey 8.1.0+) immediately terminates any in-progress RDB
-save, replication full sync, or scheduled save. Use for emergency stop when
-a fork is consuming too much memory.
-
-## Operational Procedures
-
-### Verify RDB Is Working
-
-```bash
-# Check last save status
-valkey-cli INFO persistence | grep rdb_
-
-# Key fields:
-# rdb_last_save_time       - epoch of last successful save
-# rdb_last_bgsave_status   - ok or err
-# rdb_last_bgsave_time_sec - duration of last BGSAVE
-# rdb_changes_since_last_save - unsaved write count
-```
-
-### Trigger Manual Snapshot
-
-```bash
-# Background save (non-blocking)
-valkey-cli BGSAVE
-
-# Wait for completion
-while [ "$(valkey-cli LASTSAVE)" = "$PREV_LASTSAVE" ]; do
-  sleep 1
-done
-```
-
-### Estimate Fork Overhead
-
-Fork time depends on dataset size and OS copy-on-write behavior. Monitor:
-
-```bash
-# Check fork duration in microseconds
-valkey-cli INFO stats | grep latest_fork_usec
-```
-
-**Page table size formula** (from Valkey latency docs): Linux divides memory
-into 4KB pages. Each page requires an 8-byte pointer in the page table.
+## Fork overhead sanity check
 
 ```
-page_table_size = dataset_size / 4KB * 8 bytes
+latest_fork_usec     # INFO stats
+rdb_last_cow_size    # INFO persistence - peak COW during save
 ```
 
-| Dataset Size | Page Table Size | Approx Fork Time |
-|-------------|-----------------|-------------------|
-| 1 GB | 2 MB | ~1-2 ms |
-| 10 GB | 20 MB | ~10-20 ms |
-| 24 GB | 48 MB | ~24-48 ms |
-| 64 GB | 128 MB | ~64-128 ms |
-| 128 GB | 256 MB | ~128-256 ms |
+Page-table cost formula: `page_table_bytes = dataset_bytes / 4096 * 8` (approx). Above 24 GB dataset, fork alone is tens of ms even on fast hardware.
 
-**Fork rate quality thresholds** (from LATENCY DOCTOR):
-Fork rate = dataset_size / fork_time. < 10 GB/s terrible, < 25 GB/s poor,
-< 100 GB/s good, >= 100 GB/s excellent.
+COW overhead rules of thumb:
+- Read-only traffic during save: near-zero COW.
+- Moderate writes: 10-30% of dataset duplicated.
+- Write-heavy: COW can approach **2× dataset size**. Plan `maxmemory` accordingly (60-70% of node RAM for AOF+RDB write-heavy setups).
 
-**Copy-on-write memory overhead**: Write-heavy workloads during fork can
-use up to 2x memory (100% COW). Typical moderate writes: 10-30% additional.
-Read-heavy: near-zero. With THP enabled, COW granularity jumps from 4KB to
-2MB pages, causing near-total memory duplication - always disable THP.
+**Always disable THP.** With transparent huge pages enabled, COW granularity becomes 2 MB per touched page instead of 4 KB → near-total memory duplication during save. `echo never > /sys/kernel/mm/transparent_hugepage/enabled`.
 
-### Disable RDB for Cache-Only Deployments
+## Pure-cache setup (no RDB, no AOF)
 
 ```
 save ""
 dbfilename ""
+appendonly no
 stop-writes-on-bgsave-error no
 ```
 
-When `dbfilename` is empty, no RDB file is written and `BGSAVE` becomes a no-op.
+`dbfilename ""` + `save ""` makes BGSAVE a no-op and skips the initial load attempt. Use when the Valkey instance is truly ephemeral cache - and pair with the **primary-without-persistence incident pattern** warning in `replication-safety.md` (systemd auto-restart of an empty primary wipes replicas).
 
-## Production Recommendations
+## Monitoring
 
-1. **Always combine with AOF** for durability - use RDB primarily for backups, not as sole persistence
-2. **Set `stop-writes-on-bgsave-error yes`** (the default) to detect disk issues early
-3. **Keep `rdbchecksum yes`** (the default) to detect corruption on load (~10% save/load overhead)
-4. **Keep `rdbcompression yes`** (the default) to reduce file size and I/O
-5. **Monitor `rdb_last_bgsave_status`** in your alerting system
-6. **Size memory to 2x dataset** to handle copy-on-write during fork
-7. **Disable THP** - causes unpredictable latency during BGSAVE fork
-
-## RDB File Format Overview
-
-For operational purposes, the key facts about the binary format:
-
-- Magic string: `VALKEY080` (Valkey 9.0+) or `REDIS0011` (legacy)
-- Ends with CRC64 checksum (8 bytes, little-endian)
-- Contains database selectors, key-value pairs, and metadata
-- Fully portable across architectures
+Alert on:
+- `rdb_last_bgsave_status != ok` on primary.
+- `rdb_changes_since_last_save` climbing unbounded = `save` rules not triggering (disk full? permission denied?).
+- `rdb_last_cow_size` approaching `used_memory` during save (COW storm, likely THP).
+- `latest_fork_usec > 500000` (500 ms) on any dataset - indicates slow kernel fork path (check virtualization overhead).

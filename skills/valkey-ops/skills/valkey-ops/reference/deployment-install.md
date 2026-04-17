@@ -1,172 +1,65 @@
 # Installing Valkey
 
-Use when setting up Valkey on a new machine - package manager, source build, or PREFIX install.
+Use when setting up Valkey on a new host - this covers Valkey-specific bits on top of a standard Linux package install.
 
-## Current Versions (as of 2026-03-29)
+## Versions
 
-| Branch | Latest | Docker Tags | Notes |
-|--------|--------|-------------|-------|
-| 9.0.x (stable) | 9.0.3 | `9`, `9.0`, `9.0.3`, `latest` | Security release - patch immediately |
-| 8.1.x | 8.1.6 | `8`, `8.1`, `8.1.6` | |
-| 8.0.x | 8.0.7 | `8.0`, `8.0.7` | |
-| 7.2.x | 7.2.12 | `7`, `7.2`, `7.2.12` | |
+| Branch | Latest GA | Notes |
+|--------|-----------|-------|
+| 9.0.x (stable) | 9.0.3 | Use 9.0.3+ in production - earlier 9.0.x had hash field TTL bugs and CVE patches. |
+| 8.1.x | 8.1.6 | |
+| 8.0.x | 8.0.7 | |
+| 7.2.x | 7.2.12 | Upstream Redis OSS compatibility branch. |
 
-**9.0.3 is a security release** fixing three CVEs:
-- CVE-2025-67733: RESP protocol injection via Lua error_reply
-- CVE-2026-21863: Remote DoS with malformed cluster bus message
-- CVE-2026-27623: Reset request type after handling empty requests
+Subscribe to `valkey-io/valkey` releases for CVE advisories. Binary artifacts on arm64 and x86_64 for Ubuntu Jammy/Noble; Homebrew, apt, dnf, pacman, apk, and FreeBSD pkg all carry packages.
 
-Subscribe to [valkey-io/valkey releases](https://github.com/valkey-io/valkey/releases) for security advisories.
+## Build flags worth knowing
 
-Binary artifacts are published for arm64 and x86_64 on Ubuntu Jammy and Noble.
+Redis-standard build (`make && sudo make install`) works; the Valkey-specific knobs:
 
+| Flag | Default | Effect |
+|------|---------|--------|
+| `USE_REDIS_SYMLINKS` | `yes` | Installs `redis-*` symlinks next to `valkey-*` binaries. Set `no` to avoid collision when Redis is also installed. |
+| `BUILD_TLS` | unset | `yes` = linked, `module` = `valkey-tls<PROG_SUFFIX>.so`. |
+| `BUILD_RDMA` | unset | `yes` / `module`. Linux only. |
+| `BUILD_LUA` | implicit `yes` | `no` drops the Lua module entirely. |
+| `PROG_SUFFIX` | empty | Suffixes every produced binary + module `.so`. Useful for side-by-side installs. |
+| `MALLOC` | Linux=`jemalloc`, other=`libc` | Jemalloc is required for active defrag - don't override on Linux production. |
+| `SANITIZER` | unset | `address` / `undefined` / `thread`. Forces `MALLOC=libc` for ASan/UBSan. Dev/test only. |
 
-## Package Manager Install
+CMake asymmetry: `cmake` accepts only `ON`/`OFF` for `BUILD_TLS` (passing `module` triggers a warning and disables TLS), but accepts `ON`/`OFF`/`module` for `BUILD_RDMA`. The Makefile accepts `module` for both. Prefer `make` if you want TLS-as-module.
 
-| OS | Command |
-|----|---------|
-| Debian/Ubuntu | `sudo apt install valkey` |
-| RHEL/CentOS | `sudo yum install valkey` |
-| Fedora | `sudo dnf install valkey` |
-| Arch Linux | `sudo pacman -Sy valkey` |
-| Alpine | `sudo apk add valkey` |
-| macOS (Homebrew) | `brew install valkey` |
-| macOS (MacPorts) | `sudo port install valkey` |
-| FreeBSD | `sudo pkg install valkey` |
-| openSUSE | `sudo zypper install valkey` |
+## Binaries and their identities
 
-Valkey is not officially supported on Windows. Use WSL for development only.
-
-After install, verify with:
-
-```bash
-valkey-server --version
-valkey-cli ping    # returns PONG
 ```
-
-
-## Building from Source
-
-### Basic Build
-
-```bash
-# Download from https://github.com/valkey-io/valkey/releases
-tar xzf valkey-<version>.tar.gz
-cd valkey-<version>
-make -j$(nproc)
-make test              # optional but recommended
-sudo make install      # installs to /usr/local/bin by default
-```
-
-The `make install` target installs these binaries to `PREFIX/bin` (default `/usr/local/bin`):
-- `valkey-server` - the server binary
-- `valkey-cli` - command-line client
-- `valkey-benchmark` - benchmarking tool
-- `valkey-check-rdb` - symlink to valkey-server (RDB file checker)
-- `valkey-check-aof` - symlink to valkey-server (AOF file checker)
-- `valkey-sentinel` - symlink to valkey-server (Sentinel mode)
-
-Redis-compatible symlinks (`redis-server`, `redis-cli`, etc.) are created by default. Disable with `USE_REDIS_SYMLINKS=no`.
-
-### Custom Install Prefix
-
-```bash
-make -j$(nproc)
-sudo make install PREFIX=/opt/valkey
-```
-
-### Build Flags
-
-Source-verified from `src/Makefile`:
-
-| Flag | Values | Effect |
-|------|--------|--------|
-| `BUILD_TLS` | `yes`, `module`, (unset) | TLS support: linked in, loadable module, or disabled |
-| `BUILD_RDMA` | `yes`, `module`, (unset) | RDMA transport support |
-| `BUILD_LUA` | `no`, (unset) | Disable Lua scripting module (enabled by default) |
-| `MALLOC` | `jemalloc`, `libc`, `tcmalloc`, `tcmalloc_minimal` | Memory allocator |
-| `USE_SYSTEMD` | `yes`, `no`, (unset) | systemd notify support (auto-detected by default) |
-| `USE_REDIS_SYMLINKS` | `yes`, `no` | Create redis-* compatibility symlinks (default: yes) |
-| `SANITIZER` | `address`, `undefined`, `thread` | Build with sanitizers (forces libc allocator) |
-| `USE_LTTNG` | `yes` | LTTng tracing support |
-| `PREFIX` | path | Install prefix (default: `/usr/local`) |
-
-### Memory Allocator Selection
-
-The default allocator depends on platform:
-- **Linux**: jemalloc (provides active defragmentation support)
-- **All other OS**: libc
-
-To override:
-
-```bash
-make MALLOC=jemalloc     # explicit jemalloc
-make USE_JEMALLOC=no     # force libc on Linux
-make USE_TCMALLOC=yes    # Google tcmalloc
-```
-
-Jemalloc is strongly recommended for production on Linux - it enables `activedefrag` and provides better memory fragmentation behavior.
-
-Official Docker images are built with `BUILD_TLS=yes` and `USE_FAST_FLOAT=yes` (>= 8.1), so TLS is available out of the box in containers without a custom build.
-
-### TLS Build
-
-```bash
-# Linked directly (smaller overhead, always available)
-make BUILD_TLS=yes
-
-# As loadable module (can be toggled without rebuild)
-make BUILD_TLS=module
-```
-
-On macOS, Homebrew's OpenSSL path is auto-detected:
-- arm64: `/opt/homebrew/opt/openssl`
-- x86: `/usr/local/opt/openssl`
-
-Override with `OPENSSL_PREFIX=/path/to/openssl`.
-
-### Optimization
-
-The default optimization level is `-O3` with LTO (Link-Time Optimization):
-- Clang: `-O3 -flto`
-- GCC: `-O3 -flto=auto -ffat-lto-objects`
-
-For debug builds:
-
-```bash
-make noopt              # -O0 build
-make OPTIMIZATION=-O0   # same effect
-```
-
-### Running Tests After Build
-
-```bash
-make test               # full integration test suite (Tcl-based)
-make test-unit          # C unit tests
-```
-
-
-## Verifying the Installation
-
-```bash
-# Check version and build info
-valkey-server --version
-
-# Start with default config
 valkey-server
-
-# Start with custom config
-valkey-server /etc/valkey/valkey.conf
-
-# Test connectivity
-valkey-cli ping
-# PONG
+valkey-cli
+valkey-benchmark
+valkey-sentinel      -> symlink to valkey-server (Sentinel mode)
+valkey-check-rdb     -> symlink to valkey-server (RDB checker)
+valkey-check-aof     -> symlink to valkey-server (AOF checker)
 ```
 
-Check build details at runtime:
+With `USE_REDIS_SYMLINKS=yes` (default), the full `redis-*` set is also installed as symlinks. Legacy scripts that `exec redis-server` keep working; new scripts should use `valkey-*`.
 
-```bash
+## Allocator choice
+
+- **Linux**: jemalloc (required for `activedefrag`).
+- **macOS / BSD / musl**: libc (jemalloc build flakiness; activedefrag not supported there).
+
+Override only if you have a reason: `make USE_JEMALLOC=no` forces libc on Linux. Tcmalloc is buildable (`USE_TCMALLOC=yes`) but not tested against active defrag.
+
+Confirm at runtime:
+```sh
+valkey-cli INFO server | grep mem_allocator
+```
+
+## Verify
+
+```sh
+valkey-server --version
 valkey-cli INFO server | grep -E 'valkey_version|os|gcc_version|mem_allocator'
+valkey-cli ping       # PONG
 ```
 
-This shows the exact version, OS, compiler, and allocator in use.
+`LOLWUT` output changed from "Redis ver." to "Valkey ver." in 9.0 - scripts that parsed LOLWUT for version detection break. Use `INFO server` instead.

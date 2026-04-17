@@ -1,158 +1,88 @@
-# Sentinel Advanced Configuration
+# Sentinel Advanced
 
-Use when tuning Sentinel timing, deploying across datacenters, handling Docker/NAT environments, using coordinated failover (Valkey 9.0+), or setting up Sentinel as a systemd service.
+Use when tuning Sentinel timing, deploying across DCs, handling NAT, or using coordinated failover.
 
-## Tuning Recommendations
+## Timing knobs
 
 | Scenario | `down-after-milliseconds` | `failover-timeout` | Notes |
-|----------|--------------------------|--------------------|----|
-| Low-latency apps | 5000 | 60000 | Faster detection, risk of false positives |
-| Stable networks | 30000 (default) | 180000 (default) | Conservative, fewer false failovers |
-| Cross-region | 30000-60000 | 300000 | Account for higher latency |
-| Development | 2000 | 10000 | Quick iteration, not for production |
+|----------|--------------------------|--------------------|-----|
+| Low-latency apps | 5000 | 60000 | Faster detection; more false-positive risk |
+| Stable networks (default) | 30000 | 180000 | Conservative |
+| Cross-region | 30000-60000 | 300000 | Compensate for WAN RTT |
+| Dev | 2000 | 10000 | Iteration speed, not for prod |
 
----
+## Cross-DC Sentinel placement
 
-## Cross-Datacenter Sentinel Placement
-
-### Pattern: 2-2-1 Across 3 DCs
+### 2-2-1 across 3 DCs (quorum 3)
 
 ```
-DC-A: Primary + S1 + S2
-DC-B: Replica + S3 + S4
-DC-C: S5 (tiebreaker)
+DC-A: primary + S1 + S2
+DC-B: replica + S3 + S4
+DC-C:                    S5 (tiebreaker)
 ```
 
-Quorum=3 ensures no single DC failure triggers unwanted failover. DC-C's sole Sentinel acts as the tiebreaker. If DC-A goes down, S3+S4+S5 (3 of 5) authorize failover to DC-B's replica.
+DC-C's single Sentinel breaks ties - a DC-A outage still leaves 3 of 5 Sentinels (S3+S4+S5) to authorize failover.
 
-### Pattern: Sentinels in Client Boxes
-
-```
-DC-A: Primary + S1
-DC-B: Replica + S2
-App-Servers: S3, S4, S5 (collocated with clients)
-```
-
-Quorum=3. This places Sentinels where clients are, so failover reflects client connectivity. If the primary is reachable by the majority of clients, it stays primary. Documented in the official docs as "Example 3: Sentinel in the client boxes."
-
----
-
-## Docker and NAT Considerations
-
-Port remapping and NAT break Sentinel auto-discovery because Sentinel learns addresses from INFO output and hello messages - these report the container-internal address, not the host-accessible one.
-
-### Option 1: Host Networking (Recommended)
-
-```bash
-docker run -d --name sentinel --net=host \
-  valkey/valkey:9 \
-  valkey-sentinel /etc/sentinel.conf
-```
-
-This avoids all address translation issues. The container shares the host's network stack.
-
-### Option 2: Explicit Address Announcement
-
-If host networking is not possible, configure each Sentinel and Valkey instance to announce its externally-reachable address:
-
-Sentinel config:
+### Sentinels on client boxes (quorum 3)
 
 ```
-sentinel announce-ip 203.0.113.10
-sentinel announce-port 26379
+DC-A: primary + S1
+DC-B: replica + S2
+App hosts: S3, S4, S5 (collocated with clients)
 ```
 
-Valkey data node config:
+Failover reflects client-side reachability - if most clients can still reach the primary, it stays primary.
+
+## Docker / NAT
+
+Port remapping breaks Sentinel's auto-discovery (INFO + hello messages carry container-internal addresses).
+
+- **`--net=host`** is the simplest fix; container shares host netns.
+- **Explicit announce-* values** if host networking isn't an option:
+
+  ```
+  # Sentinel
+  sentinel announce-ip   203.0.113.10
+  sentinel announce-port 26379
+  # Data node
+  replica-announce-ip   203.0.113.10
+  replica-announce-port 6379
+  ```
+- **Kubernetes**: StatefulSet with stable pod DNS, either `announce-ip <pod-ip>` via init script, or `resolve-hostnames yes` + `announce-hostnames`.
+
+## Coordinated failover (Valkey 9.0+)
+
+New command: `SENTINEL FAILOVER <name> COORDINATED`. Instead of sending `REPLICAOF NO ONE` to the replica, Sentinel drives the swap through the **primary**:
 
 ```
-replica-announce-ip 203.0.113.10
-replica-announce-port 6379
+MULTI
+CLIENT PAUSE WRITE <ms>
+FAILOVER TO <replica-host> <replica-port> TIMEOUT <ms>
+EXEC
 ```
 
-### Option 3: Kubernetes
+Primary pauses writes, waits for the replica to catch up, swaps atomically. Near-zero data-loss; preferred for planned maintenance.
 
-In Kubernetes, use a StatefulSet with stable network identities. Each pod gets a predictable DNS name (`sentinel-0.sentinel-svc.namespace.svc.cluster.local`). Configure `announce-ip` to the pod IP or use `resolve-hostnames` with `announce-hostnames`.
+| | Standard | Coordinated |
+|---|---|---|
+| Mechanism | `REPLICAOF NO ONE` to the replica | `FAILOVER TO <replica>` on the primary |
+| Write safety | Replica may lag | Primary coordinates catch-up, no lag-at-promotion |
+| When primary is | Unreachable or force-stopped | Running and responsive (required) |
+| Use | Unplanned failures | Planned maintenance, upgrades |
 
----
+Requires Valkey 9.0+ on both the Sentinel and the data nodes. Mixed-version falls back to standard. Track via `SUBSCRIBE +switch-master` on the Sentinel.
 
-## Coordinated Failover (Valkey 9.0+)
+## Quick operational commands
 
-For planned maintenance (server upgrades, host migrations), use coordinated failover instead of standard failover. This minimizes data loss by having the primary itself orchestrate the role swap.
-
-```bash
-SENTINEL FAILOVER mymaster COORDINATED
 ```
-
-| Aspect | Standard Failover | Coordinated Failover |
-|--------|------------------|---------------------|
-| Trigger | `SENTINEL FAILOVER mymaster` | `SENTINEL FAILOVER mymaster COORDINATED` |
-| Mechanism | Sends `REPLICAOF NO ONE` to replica | Sends `FAILOVER TO <replica>` to primary |
-| Write safety | Replica may lag behind primary | Primary pauses writes, waits for replica to catch up |
-| Data loss risk | Small window of unreplicated writes | Near-zero (primary coordinates the handover) |
-| Primary state | Must be unreachable or is force-stopped | Must be running and responsive |
-| Use case | Unplanned failures, emergencies | Planned maintenance, upgrades |
-
-The primary must support the `FAILOVER` command (Valkey 9.0+).
-
-Source: `sentinel.c` - `SRI_COORD_FAILOVER` flag (line 80), `sentinelFailoverSendFailover()` sends `FAILOVER TO <host> <port> TIMEOUT <ms>` wrapped in MULTI with CLIENT PAUSE WRITE
-
-### Coordinated Failover Procedure
-
-```bash
-# 1. Verify Sentinel health
-valkey-cli -p 26379 SENTINEL ckquorum mymaster
-
-# 2. Verify primary supports coordinated failover
-valkey-cli -p 6379 INFO server | grep valkey_version
-# Must be 9.0+
-
-# 3. Execute coordinated failover
-valkey-cli -p 26379 SENTINEL FAILOVER mymaster COORDINATED
-
-# 4. Monitor progress
-valkey-cli -p 26379 SUBSCRIBE +switch-master
-
-# 5. Verify new topology
+valkey-cli -p 26379 SENTINEL ckquorum mymaster          # will a failover work?
+valkey-cli -p 26379 SENTINEL masters
+valkey-cli -p 26379 SENTINEL replicas mymaster
+valkey-cli -p 26379 SENTINEL sentinels mymaster
 valkey-cli -p 26379 SENTINEL get-primary-addr-by-name mymaster
+valkey-cli -p 26379 SENTINEL FAILOVER mymaster [COORDINATED]
 ```
 
----
+## Systemd notes
 
-## Systemd Service Files
-
-### Sentinel Service
-
-Create `/etc/systemd/system/valkey-sentinel.service`:
-
-```ini
-[Unit]
-Description=Valkey Sentinel
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=notify
-User=valkey
-Group=valkey
-ExecStart=/usr/bin/valkey-sentinel /etc/valkey/sentinel.conf --supervised systemd
-ExecStop=/usr/bin/valkey-cli -p 26379 shutdown
-Restart=always
-RestartSec=3
-LimitNOFILE=65535
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now valkey-sentinel
-```
-
----
-
-## See Also
-
-- [sentinel-deployment](sentinel-sentinel-deployment.md) - Step-by-step deployment, config directives
-- [architecture](sentinel-architecture.md) - How Sentinel works
-- [split-brain](sentinel-split-brain.md) - Split-brain prevention
+`valkey-sentinel` is a symlink to `valkey-server` - your unit file should `ExecStart=/usr/bin/valkey-sentinel /etc/valkey/sentinel.conf --supervised systemd` and `ExecStop=/usr/bin/valkey-cli -p 26379 shutdown`. Generic `Type=notify` + `Restart=always` + `LimitNOFILE=65535`. Nothing Valkey-specific beyond the binary name.

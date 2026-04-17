@@ -1,175 +1,72 @@
-# I/O Threads Configuration
+# I/O Threads
 
-Use when tuning Valkey throughput on multi-core systems, deciding whether to enable I/O threads, or choosing the right thread count for your workload.
+Use when deciding whether to enable I/O threads and how many to run.
 
-## Tested Example: Enable I/O Threads
+## What I/O threads do
 
-```bash
-# Start Valkey with 4 I/O threads (3 workers + 1 main)
-docker run -d --name valkey-io -p 6379:6379 valkey/valkey:9 \
-  valkey-server --io-threads 4 --save ""
+Command execution stays **single-threaded** on the main thread. I/O threads only handle socket read/write, RESP parsing, and response serialization. No data-structure locking - parallelism is strictly in the I/O path. Each worker has its own SPSC queue; clients are assigned to threads deterministically by `client-id % (active-threads - 1) + 1`, so the same client always maps to the same thread for cache locality.
 
-# Verify the setting
-valkey-cli CONFIG GET io-threads
-# Expected: io-threads = 4
+Under TLS, `SSL_accept` also runs on I/O threads automatically via `trySendAcceptToIOThreads` - see `security-tls.md`.
 
-# Quick benchmark to exercise I/O threads
-docker exec valkey-io valkey-benchmark -t set,get -c 100 -n 100000 -q
+## Config
 
-# Check if I/O threads activated under load
-valkey-cli INFO server | grep io_threads_active
-# Expected: io_threads_active:1 (under load)
+| Parameter | Default | Notes |
+|-----------|---------|-------|
+| `io-threads` | `1` | Total including main. `io-threads 4` = main + 3 workers. Range 1-256. Runtime-modifiable (DEBUG_CONFIG). |
+| `events-per-io-thread` | `2` | HIDDEN_CONFIG on 9.0. Events needed per active worker. `0` = always offload. |
+| `min-io-threads-avoid-copy-reply` | `7` | HIDDEN_CONFIG. At ≥ this many threads, the zero-copy reply path kicks in. |
+| `io-threads-do-reads` | (deprecated) | Silently accepted. Reads are always offloaded when workers exist. |
 
-# Adjust at runtime (no restart needed)
-valkey-cli CONFIG SET io-threads 2
-valkey-cli CONFIG GET io-threads
-# Expected: io-threads = 2
-```
+## Dynamic activation
 
----
-
-## How It Works
-
-Valkey keeps command execution single-threaded on the main thread. I/O threads
-handle only network read/write, parsing, response serialization, and polling.
-No locking around data structures - the parallelism is strictly in
-the I/O path.
-
-Each I/O thread has its own lock-free ring buffer job queue (2048 entries).
-Clients are assigned to threads deterministically by client ID, so the same
-client always maps to the same thread for cache locality.
-
-## Configuration
-
-| Directive | Default | Range | Notes |
-|-----------|---------|-------|-------|
-| `io-threads` | 1 | 1-256 | Total threads including main. Set N+1 for N I/O workers |
-| `events-per-io-thread` | 2 | 0-INT_MAX | Events needed per active thread. 0 = always offload |
-
-Source-verified defaults from `src/config.c`:
-- `io-threads` default is 1 (single-threaded, line 3359)
-- `events-per-io-thread` default is 2 (line 3360, hidden config)
-- Maximum is `IO_THREADS_MAX_NUM` = 256 (defined in `src/config.h`)
-- Both are modifiable at runtime via `CONFIG SET`
-
-### Deprecated Config
-
-`io-threads-do-reads` is deprecated in current Valkey. It appears in the
-deprecated config list in `src/config.c`. When I/O threads are enabled (count
-> 1), reads are always offloaded - there is no separate toggle.
-
-## When to Enable
-
-Enable I/O threads when:
-
-- CPU is not the bottleneck but network I/O is
-- You have spare CPU cores dedicated to Valkey
-- Your workload is throughput-bound (high request rate, many clients)
-- You see the main thread saturated on read/write operations
-
-Do NOT enable when:
-
-- Running on a single-core or dual-core system
-- Your workload is latency-sensitive with low request rates
-- Memory is the bottleneck (I/O threads do not help with eviction or persistence)
-
-## Thread Count Guidelines
-
-| Available Cores | Recommended `io-threads` | Rationale |
-|-----------------|--------------------------|-----------|
-| 4 | 2 | Leave cores for main thread + OS. Over-subscribing hurts - a Raspberry Pi CM4 dropped from 416K to 336K RPS with io-threads=5 on 4 cores. |
-| 8 | 5-6 | Reserve 2 cores for IRQ affinity, 1 for main thread, rest for I/O. |
-| 16 | 8-9 | Best tested config: 8 I/O threads + main on c7g.4xlarge (16 ARM cores) reached 1.19M RPS. |
-| 64 (e.g. c7g.16xlarge) | 6 | 1B RPS cluster setup uses 2 cores for IRQ, 6 for valkey-server per node. More threads not needed per shard. |
-
-Key rule: never set io-threads >= number of available cores. Over-subscribing
-causes context switching that degrades performance. On a 4-core Raspberry Pi,
-io-threads=2 with prefetch reached 760K RPS while io-threads=5 only managed
-336K RPS.
-
-## Dynamic Thread Adjustment
-
-Valkey dynamically activates and deactivates I/O threads based on current event
-load. The formula from `src/io_threads.c`:
+Workers park on a per-thread mutex when idle and unpark when load rises. The scaling formula (9.0):
 
 ```
-target_threads = numevents / events_per_io_thread
-target_threads = max(1, min(target_threads, io_threads))
+target = clamp(numevents / events-per-io-thread, 1, io-threads)
 ```
 
-Threads are parked via mutex when idle and unparked when load increases. This
-means setting `io-threads 8` does not force 8 threads to run constantly - they
-spin up only as needed.
+Setting `io-threads 8` doesn't spin 8 threads constantly - they activate on demand. Monitor `io_threads_active` in `INFO stats` to see what's actually running.
 
-## Performance Benchmarks
+## When to enable
 
-From Valkey benchmarks on AWS c7g.4xlarge (16-core ARM, 650 clients, 512-byte
-values, 3M keys):
+- Throughput-bound workload, many concurrent clients, spare cores.
+- Main thread is near-saturated on read/write (visible in CPU profiling as time in `readQueryFromClient` / `sendReplyToClient`).
 
-| Config | Throughput (SET RPS) | Avg Latency |
-|--------|---------------------|-------------|
-| `io-threads 1` (Valkey 7.2) | ~360K | 1.792ms |
-| `io-threads 9` + prefetch (Valkey 8.0) | 1.19M | 0.542ms |
+When NOT to enable:
 
-That is a 230% throughput improvement and 69.8% latency reduction.
+- 2-core boxes (context switching costs more than the I/O parallelism buys).
+- Latency-sensitive low-RPS workloads (the handoff adds a few microseconds per request).
+- Memory or eviction-bound workloads (I/O threads don't help those paths).
 
-The bottleneck in high-throughput scenarios is memory access latency, not CPU
-compute. I/O threads parallelize the memory-intensive read/write/parse work.
-Combined with batch key prefetching, this amortizes cache misses across commands.
-Profiling shows `lookupKey` consumed >40% of main thread time due to cache
-misses before prefetching was added.
+## Sizing
 
-### Reproducing 1.19M RPS
+Rule: never set `io-threads` ≥ the number of physical cores available. Over-subscription adds context switches that hurt throughput.
 
-```bash
-# 1. Pin network IRQs to 2 dedicated cores
-for i in {48..51}; do echo 1000 > /proc/irq/$i/smp_affinity; done
-for i in {52..55}; do echo 2000 > /proc/irq/$i/smp_affinity; done
+| Cores | Reasonable `io-threads` | Rationale |
+|-------|------------------------|-----------|
+| 4 | 2 | Leave main + OS + IRQs headroom. |
+| 8 | 5-6 | 1-2 cores for IRQ affinity, 1 for main, rest I/O. |
+| 16 | 8-9 | Common sweet spot on bigger boxes. |
+| 32+ | 6-8 | Gains flatten - you're single-main-thread limited on command execution. |
 
-# 2. Start server with 9 threads (8 I/O + 1 main)
-./valkey-server --io-threads 9 --save "" --protected-mode no
+A 4-core Raspberry Pi CM4 case study: `io-threads 2` reached ~760K RPS; `io-threads 5` dropped to ~336K RPS. Over-subscription is real.
 
-# 3. Pin main thread to core 3 (avoid IRQ cores)
-sudo taskset -cp 3 $(pidof valkey-server)
+## IRQ affinity for high-throughput nodes
 
-# 4. Run benchmark from a SEPARATE machine
-./valkey-benchmark -t set -d 512 -r 3000000 -c 650 \
-  --threads 50 -h "host-name" -n 100000000000
-```
+On a big server (32+ cores) where you're chasing the highest numbers:
 
-Key details: match client `--threads` to available load-generation capacity.
-Run the benchmark from a different host - never on the same machine as the
-server.
+1. Pin NIC IRQs to dedicated cores (`/proc/irq/<n>/smp_affinity`).
+2. Set `server-cpulist` to the remaining cores.
+3. Set `bio-cpulist` on a separate NUMA node if applicable.
 
-## Applying the Configuration
+Don't do this on a shared VM - the underlying CPU topology isn't under your control.
 
-```bash
-# Check current setting
-valkey-cli CONFIG GET io-threads
+## Client-side threading
 
-# Enable 4 I/O threads (3 workers + main)
-valkey-cli CONFIG SET io-threads 4
+`valkey-benchmark --threads N` is the **client** thread count (separate from server `io-threads`). To stress-test server I/O threading, the benchmark client needs enough threads to saturate server sockets - usually `--threads 50` or more from a different host.
 
-# Persist to config file
-valkey-cli CONFIG REWRITE
-```
+## Troubleshooting
 
-Monitor I/O thread utilization with `INFO server` - check
-`io_threads_active` to check if I/O threads are active (0=off, 1=on).
-
-## Troubleshooting I/O Threads
-
-**No throughput improvement after enabling**:
-- Check if workload is actually I/O-bound (not CPU or memory-bound)
-- Verify `events-per-io-thread` is not too high (default 2 is fine for most workloads)
-- Ensure sufficient CPU cores are available
-
-**Higher latency after enabling**:
-- Too many threads competing for cores - reduce `io-threads`
-- Check CPU affinity settings (`server-cpulist` config)
-
-**Thread not activating**:
-- Dynamic adjustment requires enough concurrent events
-- Set `events-per-io-thread 0` temporarily to force all threads active for testing
-
----
+- **No throughput gain after enabling**: workload might not be I/O-bound. Profile `main` thread CPU; if `readQueryFromClient` / `sendReplyToClient` aren't the top symbols, I/O threads won't help.
+- **Latency up after enabling**: too few cores for the thread count. Reduce `io-threads`.
+- **`io_threads_active` stays at 1**: dynamic activation requires enough concurrent events. Temporarily set `events-per-io-thread 0` to force all workers active during testing.

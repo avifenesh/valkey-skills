@@ -1,288 +1,49 @@
-# Kubernetes Tuning for Valkey
+# Kubernetes Tuning - Valkey-specific concerns
 
-Use when tuning kernel parameters for Valkey in Kubernetes, setting up init containers for sysctl, handling Docker/NAT limitations, or configuring monitoring in K8s.
+Use when running Valkey in K8s and hitting the parts that don't "just work".
 
-## Contents
+Generic prereqs - `vm.overcommit_memory=1`, `net.core.somaxconn=65535`, THP `never`, SSD-backed PVC - are the same as Redis; apply them via node DaemonSet, privileged init container, or (where allowed) pod `securityContext.sysctls`. What follows is what's Valkey-specific or what breaks in ways a Redis-on-K8s agent wouldn't expect.
 
-- Kernel Tuning (line 14)
-- Docker and NAT Limitations (line 136)
-- Monitoring in Kubernetes (line 199)
+## Cluster gossip breaks under NAT
 
----
+Valkey cluster gossip advertises `<ip>:<port>:<bus-port>` between nodes. Bus port is always `port + 10000` - so a pod listening on 6379 also needs 16379 reachable from every other cluster node. Any NAT or Service remapping between pods breaks the protocol.
 
-## Kernel Tuning
+Three ways to fix:
 
-Valkey requires specific kernel settings for optimal operation. In Kubernetes, these must be applied at the pod or node level since containers share the host kernel.
+- **`hostNetwork: true`** - simplest, limits one Valkey pod per node, bypasses NetworkPolicy. Acceptable for dedicated nodes.
+- **`cluster-announce-*`** overrides - tell Valkey to announce a different triple than what it binds locally:
 
-### Required Kernel Settings
-
-| Setting | Value | Why |
-|---------|-------|-----|
-| `vm.overcommit_memory` | `1` | Prevents BGSAVE/BGREWRITEAOF fork failures |
-| `net.core.somaxconn` | `65535` | TCP listen backlog for high connection counts |
-| Transparent Huge Pages | `never` | THP causes latency spikes during fork and memory allocation |
-
-### Pod-Level Sysctl
-
-Some sysctls can be set at the pod level via `securityContext`:
-
-```yaml
-spec:
-  securityContext:
-    sysctls:
-      - name: net.core.somaxconn
-        value: "65535"
-```
-
-Only "safe" sysctls are allowed by default. The Kubernetes cluster must have `net.core.somaxconn` in the allowed unsafe sysctls list, or it must be configured as a safe sysctl via the kubelet `--allowed-unsafe-sysctls` flag.
-
-### Init Container for Transparent Huge Pages
-
-THP cannot be set via pod sysctls - it requires host-level access. Use a privileged init container:
-
-```yaml
-initContainers:
-  - name: disable-thp
-    image: busybox
-    command:
-      - sh
-      - -c
-      - echo never > /sys/kernel/mm/transparent_hugepage/enabled
-    securityContext:
-      privileged: true
-    volumeMounts:
-      - name: sys
-        mountPath: /sys
-volumes:
-  - name: sys
-    hostPath:
-      path: /sys
-```
-
-This requires the pod to have `privileged: true` for the init container, which may conflict with PodSecurityPolicies or PodSecurityStandards.
-
-### Node-Level Tuning via DaemonSet
-
-For clusters where privileged init containers are not allowed, apply tuning at the node level:
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: valkey-node-tuner
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      app: valkey-node-tuner
-  template:
-    metadata:
-      labels:
-        app: valkey-node-tuner
-    spec:
-      hostPID: true
-      nodeSelector:
-        valkey-workload: "true"    # label nodes that run Valkey
-      containers:
-        - name: tuner
-          image: busybox
-          command:
-            - sh
-            - -c
-            - |
-              sysctl -w vm.overcommit_memory=1
-              sysctl -w net.core.somaxconn=65535
-              echo never > /sys/kernel/mm/transparent_hugepage/enabled
-              echo "Kernel tuning applied"
-              sleep infinity
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: sys
-              mountPath: /sys
-      volumes:
-        - name: sys
-          hostPath:
-            path: /sys
-```
-
-### Managed Kubernetes (EKS, GKE, AKS)
-
-On managed Kubernetes services, node-level tuning options:
-
-| Provider | Method |
-|----------|--------|
-| AWS EKS | Custom AMI with sysctl in `/etc/sysctl.d/`, or use a DaemonSet |
-| GCP GKE | Use a DaemonSet, or configure via node pool `--system-config-from-file` |
-| Azure AKS | Use a DaemonSet, or configure via `customLinuxOsConfig` in node pool |
-
-### StorageClass per Cloud Provider
-
-| Provider | Recommended Class | Provisioner | Notes |
-|----------|------------------|-------------|-------|
-| AWS EKS | `gp3` | `ebs.csi.aws.com` | 3000 IOPS baseline, cheaper than gp2 |
-| GKE | `premium-rwo` | `pd.csi.storage.gke.io` | SSD-backed, single-zone |
-| AKS | `managed-premium` | `disk.csi.azure.com` | Premium SSD, use `cachingMode: ReadOnly` for reads |
-| On-prem | Local PV or Ceph | varies | Lowest latency with local PV (pins pods to nodes) |
-
-All should use `volumeBindingMode: WaitForFirstConsumer` and
-`allowVolumeExpansion: true`. For Valkey, I/O latency matters more than
-throughput - SSD/NVMe storage classes are strongly recommended.
-
-**GKE Autopilot note**: Cannot set sysctls (`net.core.somaxconn` not
-tunable). Security context managed by Autopilot. Resource requests mandatory.
-
-## Docker and NAT Limitations
-
-Valkey Cluster uses a gossip protocol where nodes exchange their IP addresses and two ports (client port and cluster bus port at client+10000). NAT and port remapping break this protocol.
-
-### The Problem
-
-In standard Kubernetes networking:
-- Pods have their own IP addresses (no NAT between pods in the same cluster)
-- But Docker port mapping (`-p 7000:6379`) and NodePort services remap ports
-- Cluster nodes advertise the container's internal address, which may not be routable from other nodes
-
-### Solutions for Cluster Mode
-
-**Option 1: hostNetwork (simplest, least portable)**
-
-```yaml
-spec:
-  hostNetwork: true
-  dnsPolicy: ClusterFirstWithHostNet
-```
-
-Pods use the host's network stack directly. No port remapping. Works but limits one Valkey pod per node and bypasses Kubernetes network policies.
-
-**Option 2: Use an operator**
-
-The Hyperspike and similar operators handle cluster bus port routing automatically. They configure `cluster-announce-ip` and `cluster-announce-port` on each pod.
-
-**Option 3: Manual announcement**
-
-Set announcement addresses in the Valkey config:
-
-```
-cluster-announce-ip <pod-ip>
-cluster-announce-port 6379
-cluster-announce-bus-port 16379
-```
-
-In a StatefulSet, use an init script to discover the pod IP:
-
-```yaml
-command:
-  - sh
-  - -c
-  - |
-    POD_IP=$(hostname -i)
-    valkey-server /etc/valkey/valkey.conf \
-      --cluster-announce-ip $POD_IP \
+  ```sh
+  valkey-server /etc/valkey/valkey.conf \
+      --cluster-announce-ip   $(hostname -i) \
       --cluster-announce-port 6379 \
       --cluster-announce-bus-port 16379
-```
+  ```
 
-### Sentinel Mode in Kubernetes
+  Put in a StatefulSet init script; pod-ip discovery with `hostname -i` is stable because Valkey's own pods are stateful.
 
-Sentinel mode is simpler than Cluster mode in Kubernetes because:
-- Sentinel only needs the client port (no bus port)
-- Sentinel can use `announce-ip` and `announce-port` to handle NAT
-- Pod-to-pod communication works with standard ClusterIP services
+- **Operator-managed** - the Hyperspike/SAP operators inject announce-* values for you. See `kubernetes-operators-overview.md`.
 
-```
-sentinel announce-ip <pod-ip>
-sentinel announce-port 26379
-```
+Sentinel mode doesn't have the bus port problem - `sentinel announce-ip / announce-port` plus a standard ClusterIP Service is enough. Use Sentinel over cluster mode when the K8s networking stack makes bus routing painful.
 
-## Monitoring in Kubernetes
+## GKE Autopilot
 
-### Sidecar Pattern: redis_exporter
+Autopilot blocks `securityContext.sysctls` (no `net.core.somaxconn` bump, no THP disable), forbids privileged init containers, and mandates resource requests. Net effect: you get default sysctls only, and BGSAVE fork behavior on a large dataset is unpredictable. For production Valkey on GKE, use Standard clusters.
 
-Deploy the Prometheus exporter as a sidecar container alongside each Valkey pod:
+## Exporter sidecar sizing
+
+`redis_exporter` as a sidecar talks to Valkey over `localhost` (same pod = no network overhead, no extra Service):
 
 ```yaml
-containers:
-  - name: valkey
-    image: valkey/valkey:9
-    ports:
-      - containerPort: 6379
-        name: client
-  - name: exporter
-    image: oliver006/redis_exporter:latest
-    ports:
-      - containerPort: 9121
-        name: metrics
-    env:
-      - name: REDIS_ADDR
-        value: "redis://localhost:6379"
-      - name: REDIS_PASSWORD
-        valueFrom:
-          secretKeyRef:
-            name: valkey-secret
-            key: password
-    resources:
-      requests:
-        memory: 64Mi
-        cpu: 50m
-      limits:
-        memory: 128Mi
+- name: exporter
+  image: oliver006/redis_exporter:latest
+  env:
+    - { name: REDIS_ADDR, value: "redis://localhost:6379" }
+  resources:
+    requests: { memory: 64Mi, cpu: 50m }
+    limits:   { memory: 128Mi }
 ```
 
-The exporter connects to Valkey on localhost (same pod), so no network overhead.
+The `REDIS_ADDR` env var accepts `valkey://` too, but `redis://localhost:6379` is what every operator emits by default - keep it unless you're hand-rolling.
 
-### ServiceMonitor for Prometheus Operator
-
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: valkey
-  labels:
-    release: prometheus    # must match your Prometheus Operator selector
-spec:
-  selector:
-    matchLabels:
-      app: valkey
-  endpoints:
-    - port: metrics
-      interval: 15s
-      path: /metrics
-```
-
-### Service with Metrics Port
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: valkey
-  labels:
-    app: valkey
-spec:
-  ports:
-    - port: 6379
-      targetPort: 6379
-      name: client
-    - port: 9121
-      targetPort: 9121
-      name: metrics
-  selector:
-    app: valkey
-```
-
-### Key Metrics to Alert On
-
-| Metric | Alert Condition | Severity |
-|--------|----------------|----------|
-| `redis_up` | `== 0` for 1 min | Critical |
-| `redis_memory_used_bytes / redis_memory_max_bytes` | `> 0.9` | Warning |
-| `redis_connected_slaves` | `< expected` for 2 min | Warning |
-| `redis_master_link_up` | `== 0` for 1 min | Critical |
-| `redis_rejected_connections_total` | rate `> 0` | Warning |
-| `redis_rdb_last_bgsave_status` | `!= 1` | Warning |
-| `redis_commands_duration_seconds_total` | p99 latency spike | Warning |
-
-### Grafana Dashboard
-
-Import the community Redis/Valkey dashboard (Grafana dashboard ID 11835 or 763) and configure the Prometheus data source.
+ServiceMonitor / alert-rule plumbing is identical to Redis; use the Grafana Redis dashboards (community IDs `11835`, `763`) - the `redis_exporter` metric names are stable. See `monitoring-prometheus.md` for Valkey-only metrics worth alerting on beyond the standard panel set.

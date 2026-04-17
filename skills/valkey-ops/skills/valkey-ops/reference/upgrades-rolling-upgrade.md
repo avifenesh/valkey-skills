@@ -1,265 +1,65 @@
 # Rolling Upgrades
 
-Use when upgrading Valkey with zero downtime in Sentinel or Cluster setups, performing planned primary swaps, or executing maintenance windows.
+Use when doing zero-downtime Valkey upgrades. Redis-style mechanics carry over; this file is the Valkey-specific delta.
 
-## Contents
+## Baseline (same as Redis)
 
-- General Rules (line 18)
-- Rolling Upgrade: Sentinel Setup (line 26)
-- Rolling Upgrade: Cluster Setup (line 92)
-- Zero-Downtime Primary Swap (line 158)
-- Health Checks Between Steps (line 200)
-- Valkey 9.0 Cluster Upgrade Considerations (line 218)
-- Rollback Plan (line 238)
+Upgrade replicas first, then promote-and-upgrade each primary. For Sentinel: upgrade non-primary instances, `SENTINEL FAILOVER <name>` to shift ownership, upgrade the old primary, then upgrade the Sentinel processes. For cluster: upgrade all replicas across all shards first, then `CLUSTER FAILOVER` per shard and upgrade the old primary one at a time. Never upgrade more than one primary simultaneously; wait for `master_link_status:up` between steps.
 
----
+## Valkey 9.0 coordinated failover (`SENTINEL FAILOVER <name> COORDINATED`)
 
-## General Rules
+Sentinel 9.0 added a coordinated failover path that drives the swap through the **primary** rather than sending `REPLICAOF NO ONE` to the replica:
 
-1. Always upgrade replicas before primaries
-2. Replica RDB version must be >= primary RDB version
-3. Do not run mixed minor versions in production long-term
-4. Verify replication health after each node upgrade
-5. Monitor cluster/sentinel state throughout the process
-
-## Rolling Upgrade: Sentinel Setup
-
-### Prerequisites
-
-- At least one primary + two replicas + three Sentinels
-- New Valkey version packages available on all hosts
-- Maintenance window communicated (zero-downtime, but communicate anyway)
-
-### Procedure
-
-```bash
-# Step 1: Verify current topology
-valkey-cli -p 26379 SENTINEL masters
-valkey-cli -p 26379 SENTINEL replicas mymaster
-# Record: primary host/port, replica hosts/ports
-
-# Step 2: Upgrade replicas one at a time
-# On each replica host:
-systemctl stop valkey
-# Install new version (package manager or binary replacement)
-systemctl start valkey
-
-# Step 3: Verify replica rejoined and synced
-valkey-cli -h <replica-host> INFO replication
-# Confirm:
-#   role:slave
-#   master_link_status:up
-#   master_sync_in_progress:0
-
-# Wait for replication offset to converge before proceeding to next replica
-
-# Step 4: Trigger failover to promote an upgraded replica
-valkey-cli -p 26379 SENTINEL FAILOVER mymaster
-
-# Step 5: Wait for failover to complete
-valkey-cli -p 26379 SENTINEL masters
-# Confirm: new primary is an upgraded node
-
-# Step 6: Upgrade the old primary (now a replica)
-systemctl stop valkey
-# Install new version
-systemctl start valkey
-
-# Step 7: Verify final state
-valkey-cli -p 26379 SENTINEL masters
-valkey-cli -p 26379 SENTINEL replicas mymaster
-# All nodes should be on the new version
-
-# Step 8: Upgrade Sentinels (one at a time)
-# On each Sentinel host:
-systemctl stop valkey-sentinel
-# Install new version
-systemctl start valkey-sentinel
-valkey-cli -p 26379 SENTINEL sentinels mymaster
+```
+MULTI
+CLIENT PAUSE WRITE <ms>
+FAILOVER TO <replica-host> <replica-port> TIMEOUT <ms>
+EXEC
 ```
 
-### Coordinated Failover (Valkey 9.0+)
+The primary pauses writes, waits for the replica to catch up, and atomically swaps roles. Result: fewer spurious `-REDIRECT`s at cutover and no risk of promoting a still-catching-up replica. Prefer this over the standard `SENTINEL FAILOVER` for planned upgrades - it's exactly the case it was built for.
 
-For planned maintenance, use coordinated failover instead of standard failover for less disruption:
+Needs `SRI_COORD_FAILOVER` support on the Sentinel side (9.0+) **and** `master_failover_state` reported in INFO by the Valkey instance (also 9.0+). Mixed versions fall back to classic `REPLICAOF NO ONE`.
 
-```bash
-valkey-cli -p 26379 SENTINEL FAILOVER mymaster COORDINATED
+## Mixed 8.x/9.0 cluster concerns
+
+- **Atomic slot migration is off** until every node is 9.0+. During the upgrade window, any resharding falls back to the legacy key-by-key `MIGRATE`/`ASK` path. Delay planned reshards until the upgrade completes.
+- **`CLUSTER SYNCSLOTS CAPA`** gates ASM availability - 9.0+ primaries advertise the capability; replicas and peer primaries gate behavior on the set. Operators don't touch this, but it's what keeps the mixed state safe.
+- **Light-weight cluster bus headers** (9.0+) reduce cluster bus traffic on pub/sub-heavy workloads. A duplicate multi-meet packet bug in mixed 8.x/9.0 meshes was fixed in **9.0.1** - if you hit gossip-storm symptoms during the upgrade window, that's the fix.
+
+## Module ASM opt-in
+
+Modules must explicitly declare Atomic Slot Migration support. If any loaded module hasn't opted in, ASM is disabled cluster-wide (not just for that module). Before a 9.0 upgrade, audit every module:
+
+```sh
+valkey-cli MODULE LIST
+# for each: check the module's release notes or ValkeyModule_* flags for ASM capability
 ```
 
-This performs a supervised handover between primary and replica, coordinating the switch with minimal client impact.
+Plan a module upgrade before the server upgrade, or accept that the cluster will use legacy migration.
 
-## Rolling Upgrade: Cluster Setup
+## `replica_version` gate on CLUSTER SETSLOT
 
-### Prerequisites
+`CLUSTER SETSLOT` replicates to eligible replicas before executing (adds topology-change resilience). Replicas must report `replica_version > 0x702ff` (i.e. > 7.2) to be eligible. During a mixed upgrade from Redis OSS 7.2 -> Valkey 8.x+, the replicated-before-executed path is skipped until replicas are on a version that supports it. Falls back cleanly - doesn't block, just loses the consistency guarantee.
 
-- Cluster with at least 3 primaries, each with at least 1 replica
-- New version packages on all hosts
-- Cluster health verified: `valkey-cli --cluster check <host>:<port>`
+## 9.0 production gotchas
 
-### Procedure
+- **9.0.0-9.0.1 had hash field expiration bugs** - memory leaks, crashes, occasional data corruption. Also a Lua VM crash after `FUNCTION FLUSH ASYNC + FUNCTION LOAD`, and a crash when aborting a slot migration mid-snapshot. **Use 9.0.3+**.
+- **RDB version 80** (`VALKEY080` magic) is only read by 9.0+. A replica on 8.x can't load a snapshot from a 9.0 primary with keys that require RDB 80 features (e.g., hash field TTL). Primary downgrades RDB to version 11 for older replicas automatically (`replicaRdbVersion()` in `src/replication.c`), but keys that can't be represented in RDB 11 fall back to their pre-TTL form. Audit hash field TTL usage before mixing versions.
 
-Repeat the following for each shard:
+## Zero-downtime host swap (non-HA)
 
-```bash
-# Step 1: Identify shard members
-valkey-cli -p 7000 CLUSTER NODES
-# Find the primary node-id and its replica node-ids for this shard
+For a standalone primary without Sentinel or cluster, use replication as the mechanism:
 
-# Step 2: Upgrade replicas first
-# On each replica host for this shard:
-systemctl stop valkey
-# Install new version
-systemctl start valkey
+1. Start new instance with `--replicaof <old-primary> 6379` (or `primaryof` - same knob, new name).
+2. Wait for `master_link_status:up` + `master_sync_in_progress:0`.
+3. `WAIT 1 5000` on the old primary to confirm the new replica has the latest writes.
+4. Flip client endpoints (DNS/LB/config).
+5. `REPLICAOF NO ONE` on the new instance.
+6. `SHUTDOWN NOSAVE` on the old one.
 
-# Step 3: Verify replica rejoined the cluster
-valkey-cli -h <replica-host> -p <replica-port> INFO replication
-# Confirm: role:slave, master_link_status:up
+The `WAIT` step is the one you skip at your peril - client endpoint flips without it can leave straggler writes on the abandoned primary.
 
-valkey-cli -p 7000 CLUSTER NODES
-# Confirm: replica shows "slave" with "connected" status
+## Rollback
 
-# Step 4: Failover to promote upgraded replica
-valkey-cli -h <replica-host> -p <replica-port> CLUSTER FAILOVER
-# This blocks writes briefly, waits for replication sync, then swaps roles
-
-# Step 5: Verify failover
-valkey-cli -h <replica-host> -p <replica-port> ROLE
-# Should return "master"
-
-valkey-cli -p 7000 CLUSTER NODES
-# Confirm: the upgraded node is now the primary for this shard
-
-# Step 6: Upgrade old primary (now a replica)
-systemctl stop valkey
-# Install new version
-systemctl start valkey
-
-# Step 7: Verify old primary rejoined as replica
-valkey-cli -h <old-primary> -p <port> INFO replication
-# Confirm: role:slave, master_link_status:up
-
-# Step 8: Run cluster health check
-valkey-cli --cluster check <host>:<port>
-# Confirm: all 16384 slots assigned, no errors
-
-# Proceed to next shard
-```
-
-### Cluster Upgrade Order
-
-When upgrading a cluster with many shards:
-
-1. Upgrade all replicas across all shards first
-2. Then failover and upgrade primaries one shard at a time
-3. Never upgrade more than one primary simultaneously
-4. After each failover, wait for the cluster to stabilize before proceeding
-
-## Zero-Downtime Primary Swap
-
-Use when replacing hardware, moving to a different host, or upgrading a standalone primary without Sentinel.
-
-```bash
-# Step 1: Start new instance as a replica of the current primary
-valkey-server /etc/valkey/valkey.conf --replicaof <old-primary-host> 6379
-
-# Step 2: Wait for sync completion
-valkey-cli -h <new-host> -p 6379 INFO replication
-# Watch for:
-#   master_link_status:up
-#   master_sync_in_progress:0
-#   Replication offset converging with primary
-
-# Step 3: Verify data
-valkey-cli -h <new-host> DBSIZE
-# Should match the primary's DBSIZE
-
-# Step 4: Switch client connections
-# Update DNS, load balancer, or application config to point to new host
-# At this point, reads go to new host but writes still go to old primary
-
-# Step 5: Promote new instance
-valkey-cli -h <new-host> -p 6379 REPLICAOF NO ONE
-
-# Step 6: Decommission old primary
-valkey-cli -h <old-primary-host> SHUTDOWN NOSAVE
-```
-
-### With WAIT for Safety
-
-For critical data, use `WAIT` before the switchover to ensure writes are replicated:
-
-```bash
-# On the old primary, after the last critical write:
-valkey-cli -h <old-primary-host> WAIT 1 5000
-# Waits up to 5 seconds for at least 1 replica to acknowledge
-
-# Then proceed with client switch and promotion
-```
-
-## Health Checks Between Steps
-
-Run these between each upgrade step:
-
-```bash
-# Sentinel setup
-valkey-cli -p 26379 SENTINEL masters        # primary info
-valkey-cli -p 26379 SENTINEL replicas mymaster  # replica status
-
-# Cluster setup
-valkey-cli --cluster check <host>:<port>    # slot coverage, connectivity
-valkey-cli -p 7000 CLUSTER INFO             # cluster_state should be "ok"
-
-# Any setup
-valkey-cli INFO replication                 # replication lag, link status
-valkey-cli INFO server | grep valkey_version  # confirm version
-```
-
-## Valkey 9.0 Cluster Upgrade Considerations
-
-- **Atomic Slot Migration**: Mixed 8.x/9.0 clusters use legacy key-by-key
-  migration. The `SYNCSLOTS CAPA` mechanism (9.0-rc3) handles forward
-  compatibility. Full ASM only after all nodes are 9.0+.
-- **Module compatibility**: Modules must explicitly opt in to Atomic Slot
-  Migration (ASM). Clusters loading modules without ASM support will have
-  ASM disabled cluster-wide. Check all modules before upgrading.
-- **Light-weight cluster messages**: 9.0 uses light-weight messages between
-  nodes. Fix for duplicate multi-meet packets in mixed clusters landed in
-  9.0.1.
-- **Sentinel ACL change**: Sentinel 9.0+ requires `+failover` ACL permission
-  in the failover path. This is a permanent requirement since Valkey Sentinel
-  9.0, not a temporary regression. Add `+failover` to Sentinel user ACL
-  before upgrading.
-- **Hash field expiration bugs**: 9.0.0-9.0.1 had memory leaks, crashes,
-  and data corruption. Use 9.0.3+ in production.
-
----
-
-## Rollback Plan
-
-If the upgraded version causes issues:
-
-### Sentinel Rollback
-
-```bash
-# Failover back to an old-version replica (if one remains)
-valkey-cli -p 26379 SENTINEL FAILOVER mymaster
-
-# Or stop the upgraded node and reinstall the old version
-systemctl stop valkey
-# Reinstall old version
-systemctl start valkey
-```
-
-### Cluster Rollback
-
-```bash
-# Failover the affected shard back to the old-version replica
-valkey-cli -p <old-replica-port> CLUSTER FAILOVER
-
-# Downgrade the problematic node
-systemctl stop valkey
-# Reinstall old version
-systemctl start valkey
-```
-
-Key constraint: downgrading across RDB major versions may fail if the new version wrote data in a newer RDB format. Always keep backups from before the upgrade.
+Downgrades work as long as you haven't crossed an RDB major. Valkey 9.0 writes RDB 80 once a hash-field-TTL key exists; a downgrade to 8.x after that point fails to load. Keep an RDB from just before the upgrade and be prepared to restore rather than downgrade in place.
