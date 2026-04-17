@@ -139,7 +139,7 @@ Wrapper (same process)  <--UDS-->  socket_listener  -->  glide-core
 
 **UDS here is in-process IPC, not a network connection.** The wrapper and the Rust core run in the same process - the Unix socket is just a message-passing channel between the language layer and the Rust Tokio runtime. The core is not a separate process.
 
-`socket_listener.rs` builds the socket path as `{UNIX_SOCKER_DIR}/{SOCKET_FILE_NAME}-{pid}-{uuid}.sock`. The PID is included so the name stays unique in Docker containers where PIDs can be reused. Requests are protobuf-encoded `CommandRequest` messages framed by varint length prefixes. `RotatingBuffer::new(65_536)` handles framing.
+`socket_listener.rs` builds the socket path as `{UNIX_SOCKER_DIR}/{SOCKET_FILE_NAME}-{pid}-{uuid}.sock` (yes, `UNIX_SOCKER_DIR` is the verbatim constant name in upstream source - typo preserved; its value is `"/tmp"`). The PID is included so the name stays unique in Docker containers where PIDs can be reused. Requests are protobuf-encoded `CommandRequest` messages framed by varint length prefixes. `RotatingBuffer::new(65_536)` handles framing.
 
 Key constants (verified in `socket_listener.rs`):
 - `SOCKET_FILE_NAME = "glide-socket"`

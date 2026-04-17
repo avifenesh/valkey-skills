@@ -48,6 +48,7 @@ These are the recurring agent mistakes. Every change touching `glide-core/` or `
 5. **HA/reliability and performance are both top priorities - never risk either.** HA/reliability is arbitrated first when tradeoffs force a choice, but performance is not "secondary". Every core change is measured and validated for both. No change ships if it regresses reconnect/failover behavior OR throughput/latency.
 6. **Cross-language blast radius.** `glide-core/` or `ffi/` changes affect every wrapper (Python async + sync, Node, Java, Go, PHP, C#, Ruby) and both FFI modes. Validate across the matrix.
 7. **Routing lives in `redis::cluster_routing` (vendored), not `request_type.rs`.** `request_type.rs` is a command-name → enum mapping, nothing more. Routing decisions come from `RoutingInfo::for_routable()` and user-specified overrides.
+8. **Typo in upstream constant: `UNIX_SOCKER_DIR` (not `UNIX_SOCKET_DIR`).** In `glide-core/src/socket_listener.rs`. Grep for the misspelled name or you'll miss the socket-path source.
 
 ## Core Architecture
 
