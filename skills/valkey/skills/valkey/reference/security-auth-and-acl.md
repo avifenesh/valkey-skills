@@ -4,10 +4,10 @@ Use when connecting your application to Valkey with authentication, configuring 
 
 ## Contents
 
-- Authentication (line 15)
-- ACL Basics for Application Developers (line 82)
-- TLS Connection Setup (line 159)
-- Security Checklist for Application Developers (line 233)
+- Authentication
+- ACL Basics for Application Developers
+- TLS Connection Setup
+- Security Checklist for Application Developers
 
 ---
 
@@ -87,9 +87,12 @@ ACLs are configured by the ops team. Application developers need to understand w
 | Scope | Example | Meaning |
 |-------|---------|---------|
 | Commands | `+@read +@write` | Which commands the user can run |
-| Keys | `~app:*` | Which key patterns the user can access |
-| Channels | `&notifications:*` | Which pub/sub channels the user can use |
-| Databases | `alldbs` or specific database restrictions | Which databases the user can SELECT |
+| Keys | `~app:*`, `allkeys`, `resetkeys` | Which key patterns the user can access |
+| Read/write-scoped keys | `%R~read:*`, `%W~write:*` | Restrict a pattern to read-only or write-only access |
+| Channels | `&notifications:*`, `allchannels`, `resetchannels` | Which pub/sub channels the user can use |
+| Connection state | `on`/`off`, `>password`, `nopass` | Enable/disable the user and manage credentials |
+
+ACLs do **not** restrict by database number - a user with `@write` on `~*` can write in any numbered database the server has. Use separate instances (or separate cluster deployments in 9.0+ cluster multi-db) for database-level isolation.
 
 ### Common Application Permission Patterns
 
@@ -131,7 +134,7 @@ Specify:
 2. **Command categories** needed (e.g., `@read`, `@write`, `@string`, `@hash`)
 3. **Specific dangerous commands** you need, if any (e.g., `FLUSHDB` - usually not)
 4. **Pub/sub channels** if your application uses pub/sub
-5. **Database numbers** if using numbered databases (9.0+ cluster mode)
+5. **Read-only vs read-write** access per pattern if you need tighter isolation within the same user (`%R~` / `%W~`)
 
 ### Command Categories Reference
 
@@ -223,9 +226,9 @@ r = redis.Redis(
 
 ### TLS Performance Notes
 
-- Valkey 8.1+ offloads TLS handshakes to I/O threads, reducing connection setup overhead by 300%
-- Once the TLS session is established, per-command overhead is minimal
-- For internal networks where encryption is handled at the network layer, plaintext connections are fine
+- Valkey 8.1+ offloads TLS handshakes to I/O threads, so handshake cost no longer monopolizes the main thread under connection storms. Tune `io-threads` if TLS-heavy workloads are connection-bound.
+- Once the TLS session is established, per-command overhead is minimal.
+- For internal networks where encryption is handled at the network layer, plaintext connections are fine.
 
 ---
 

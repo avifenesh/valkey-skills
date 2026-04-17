@@ -12,21 +12,47 @@ Valkey 9.0 adds per-field TTL. Each hash field has its own expiration, independe
 
 ## New Commands
 
-11 new commands for hash field expiration:
+11 new commands for hash field expiration (all since 9.0.0):
 
-| Command | Purpose |
-|---------|---------|
-| `HEXPIRE key seconds FIELDS n field [field ...]` | Set TTL (seconds) on existing fields |
-| `HEXPIREAT key unix-timestamp FIELDS n field [field ...]` | Set expiration at absolute Unix time |
-| `HPEXPIRE key milliseconds FIELDS n field [field ...]` | Set TTL (milliseconds) on existing fields |
-| `HPEXPIREAT key unix-ms-timestamp FIELDS n field [field ...]` | Set expiration at absolute Unix time (ms) |
-| `HTTL key FIELDS n field [field ...]` | Get remaining TTL (seconds) per field |
-| `HPTTL key FIELDS n field [field ...]` | Get remaining TTL (milliseconds) per field |
-| `HEXPIRETIME key FIELDS n field [field ...]` | Get absolute expiration time per field |
-| `HPEXPIRETIME key FIELDS n field [field ...]` | Get absolute expiration time (ms) per field |
-| `HPERSIST key FIELDS n field [field ...]` | Remove TTL from fields (make persistent) |
-| `HSETEX key [NX \| XX] [FNX \| FXX] [EX s \| PX ms \| EXAT t \| PXAT t \| KEEPTTL] FIELDS n field value [field value ...]` | Set fields with TTL and optional conditions in one command |
-| `HGETEX key [EX s \| PX ms \| EXAT t \| PXAT t \| PERSIST] FIELDS n field [field ...]` | Get fields and set/refresh/remove TTL |
+### Setters (HEXPIRE family)
+
+| Command | Syntax |
+|---------|--------|
+| `HEXPIRE` | `HEXPIRE key seconds [NX \| XX \| GT \| LT] FIELDS n field [field ...]` |
+| `HEXPIREAT` | `HEXPIREAT key unix-timestamp [NX \| XX \| GT \| LT] FIELDS n field [field ...]` |
+| `HPEXPIRE` | `HPEXPIRE key milliseconds [NX \| XX \| GT \| LT] FIELDS n field [field ...]` |
+| `HPEXPIREAT` | `HPEXPIREAT key unix-ms-timestamp [NX \| XX \| GT \| LT] FIELDS n field [field ...]` |
+
+Condition flags (`NX | XX | GT | LT`) are **per-field** and mutually exclusive:
+
+- `NX` - set TTL only if the field has no existing TTL
+- `XX` - set TTL only if the field already has a TTL
+- `GT` - set TTL only if the new TTL is greater than the current one
+- `LT` - set TTL only if the new TTL is less than the current one
+
+### Inspection
+
+| Command | Syntax |
+|---------|--------|
+| `HTTL` | `HTTL key FIELDS n field [field ...]` — remaining seconds per field |
+| `HPTTL` | `HPTTL key FIELDS n field [field ...]` — remaining milliseconds per field |
+| `HEXPIRETIME` | `HEXPIRETIME key FIELDS n field [field ...]` — absolute Unix seconds |
+| `HPEXPIRETIME` | `HPEXPIRETIME key FIELDS n field [field ...]` — absolute Unix milliseconds |
+
+### Clear TTL
+
+| Command | Syntax |
+|---------|--------|
+| `HPERSIST` | `HPERSIST key FIELDS n field [field ...]` — remove TTL from fields |
+
+### Combined set-and-expire, get-and-expire
+
+| Command | Syntax |
+|---------|--------|
+| `HSETEX` | `HSETEX key [FNX \| FXX] [EX s \| PX ms \| EXAT t \| PXAT t \| KEEPTTL] FIELDS n field value [field value ...]` |
+| `HGETEX` | `HGETEX key [EX s \| PX ms \| EXAT t \| PXAT t \| PERSIST] FIELDS n field [field ...]` |
+
+`FNX` = set only if **none** of the named fields already exist; `FXX` = set only if **all** of the named fields already exist. Applies to the whole operation — if the condition fails, **nothing** is set (HSETEX is atomic all-or-nothing).
 
 The `FIELDS n` argument specifies the count of field names that follow.
 
@@ -74,15 +100,48 @@ HPERSIST user:1000 FIELDS 1 profile_data
 
 ---
 
-## Return Values for TTL Commands
+## Return Values
 
-Commands return an array with one value per field:
+### HEXPIRE / HEXPIREAT / HPEXPIRE / HPEXPIREAT (setters)
 
-| Value | Meaning |
-|-------|---------|
-| Positive integer | Remaining TTL in seconds (or ms for HP* variants) |
+Array of per-field result codes:
+
+| Code | Meaning |
+|------|---------|
+| `1` | Expiration was applied |
+| `2` | TTL was `0` (or absolute time in the past) - field was deleted immediately |
+| `0` | `NX` / `XX` / `GT` / `LT` condition not met - no change |
+| `-2` | Field does not exist (or the hash key does not exist) |
+
+Common mistake: checking for `-1` on an HEXPIRE result. `-1` is an HTTL/HPTTL code, not a setter code. HEXPIRE never returns `-1`.
+
+### HTTL / HPTTL / HEXPIRETIME / HPEXPIRETIME (inspection)
+
+Array of per-field result codes:
+
+| Code | Meaning |
+|------|---------|
+| Positive integer | Remaining TTL or absolute expiration (seconds or ms per command) |
 | `-1` | Field exists but has no TTL |
 | `-2` | Field does not exist |
+
+### HPERSIST
+
+Array of per-field result codes:
+
+| Code | Meaning |
+|------|---------|
+| `1` | TTL was removed |
+| `-1` | Field exists but had no TTL to remove |
+| `-2` | Field does not exist |
+
+### HSETEX
+
+Scalar (atomic): `1` if all fields (and any conditions) succeeded, `0` if any `FNX`/`FXX` condition failed - in which case **nothing** was written.
+
+### HGETEX
+
+Array of values in field order: each element is the field's current string value, or `nil` if the field is missing or already expired. Same shape as `HMGET`.
 
 ---
 
@@ -138,9 +197,7 @@ HSETEX cache:user:1000 EX 300 FIELDS 1 recommendations '[...]'
 
 ## Memory Overhead
 
-16-29 bytes overhead per expiring field. No measurable performance regression on standard hash operations.
-
-Fields without TTL incur no additional overhead.
+Only fields that carry a TTL pay the extra metadata cost; fields without TTL are stored exactly as before. Adding TTLs to a previously-non-volatile hash promotes it into a "volatile-capable" encoding - budget for a small per-field increase when you start using HEXPIRE heavily.
 
 ---
 
@@ -155,11 +212,11 @@ Fields without TTL incur no additional overhead.
 
 ## Important Notes
 
-- Hash field expiration uses the same lazy + active expiration mechanisms as key-level TTL
-- HGETALL returns only non-expired fields
-- HSCAN skips expired fields
+- Hash field expiration uses the same lazy + active expiration mechanisms as key-level TTL. A field expires when it's next accessed or when the active expiration cycle visits the hash, whichever comes first.
+- `HGETALL`, `HSCAN`, `HKEYS`, `HVALS` skip fields that have already been expired by either mechanism. A field whose TTL has just passed but hasn't yet been evaluated may be returned once, then disappear. If strict freshness matters, follow up with `HTTL`/`HEXISTS`.
 - Field expiration events are published via keyspace notifications (when enabled)
-- The `n` in `FIELDS n` must match the number of field names provided
+- The `n` in `FIELDS n` must match the number of field names provided - mismatch returns a syntax error.
+- Setting TTL to `0` (or a past absolute timestamp) via `HEXPIRE` / `HEXPIREAT` / `HPEXPIRE` / `HPEXPIREAT` **deletes the field immediately** and returns `2`. This is a feature, not an edge case - `HEXPIRE key 0 FIELDS n f1 f2` is a conditional delete based on existence.
 
 ---
 

@@ -2,21 +2,6 @@
 
 Use when writing atomic multi-key operations, migrating EVAL scripts to FUNCTION LOAD, debugging script timeouts, or deciding whether a Lua script is still needed now that SET IFEQ and DELIFEQ exist.
 
-## Contents
-
-- EVAL vs FCALL: When to Use Each (line 13)
-- Script Replication (line 38)
-- Determinism Requirements (line 56)
-- Read-Only Scripts: EVAL_RO and FCALL_RO (line 73)
-- Script Timeout (line 87)
-- Valkey Replacements for Common Lua Patterns (line 112)
-- Library Registration with FUNCTION LOAD (line 122)
-- Error Handling in Lua (line 147)
-- Anti-Patterns (line 163)
-- Practical Examples (line 177)
-
----
-
 ## EVAL vs FCALL: When to Use Each
 
 - **EVAL** - ad-hoc scripts sent inline with each call. Simple, no setup. Cached by SHA1 after the first call via `EVALSHA`.
@@ -83,26 +68,19 @@ In cluster mode, all keys in `KEYS[]` must still hash to the same slot.
 ## Script Timeout
 
 ```
-# Renamed from lua-time-limit in Valkey 8.0+
-# Default: 5000 ms
-CONFIG SET busy-script-time 5000
+# Canonical Valkey name; legacy alias `lua-time-limit` still accepted.
+# Default: 5000 ms.
+CONFIG SET busy-reply-threshold 5000
 ```
 
-Both `busy-script-time` (Valkey) and `lua-time-limit` (Redis compat) are accepted. Use `busy-script-time` in new configs.
+**When a script exceeds the threshold**:
+1. Valkey enters BUSY state - most commands are rejected with a `-BUSY ...` error.
+2. The exact `-BUSY` reply tells you which kill command applies:
+   - Running EVAL / EVALSHA → *"You can only call SCRIPT KILL or SHUTDOWN NOSAVE"*
+   - Running FCALL / FCALL_RO → *"You can only call FUNCTION KILL or SHUTDOWN NOSAVE"*
+3. `SCRIPT KILL` / `FUNCTION KILL` only work **before the script has performed any write**. Once a write has been executed, the script cannot be killed - partial writes cannot be rolled back, so only `SHUTDOWN NOSAVE` can abort it.
 
-**When a script exceeds the timeout**:
-1. Valkey enters BUSY state - all commands rejected except `SCRIPT KILL` and `SHUTDOWN NOSAVE`.
-2. Clients receive: `BUSY Valkey is busy running a script`
-3. `SCRIPT KILL` terminates the script only if it has not yet executed any writes. A script that has written cannot be killed (partial writes cannot be rolled back) - only `SHUTDOWN NOSAVE` can abort it.
-
-**Script memory limit**:
-```
-lua-memory-limit 10mb    # Default: 10 MB per execution
-```
-
-Scripts that accumulate large intermediate tables or strings will hit this limit and be terminated.
-
-**Prevention**: keep scripts short; never iterate large collections inside Lua - use SCAN-based iteration in application code instead.
+**Prevention**: keep scripts short; never iterate large collections inside Lua - use SCAN-based iteration in application code instead. Lua memory is not separately capped - it counts against the same `maxmemory` budget as regular data, so an accumulating script can OOM the server.
 
 ---
 
@@ -121,8 +99,9 @@ Native commands are faster (no Lua VM overhead), simpler to audit, and work with
 
 ## Library Registration with FUNCTION LOAD
 
+Register a named library. The shebang `#!lua name=<libname>` is required on the first line of the function code:
+
 ```lua
--- Register a named library (once per deployment)
 FUNCTION LOAD "#!lua name=mylib\n
   local function cas(keys, args)
     local current = server.call('get', keys[1])
@@ -133,6 +112,23 @@ FUNCTION LOAD "#!lua name=mylib\n
   end
   server.register_function('cas', cas)"
 ```
+
+`server.register_function` accepts two forms:
+
+```lua
+-- Positional: shown above. Works for basic registration.
+server.register_function('cas', cas)
+
+-- Named (table): required when setting flags or a description.
+server.register_function{
+  function_name = 'getprofile',
+  callback      = getprofile,
+  description   = 'Read-only user profile lookup',
+  flags         = {'no-writes'}   -- marks the function as read-only (callable via FCALL_RO)
+}
+```
+
+The `no-writes` flag is the one most often needed - without it you cannot expose a function through `FCALL_RO` even if it never writes.
 
 ```
 -- Call from application code
@@ -148,7 +144,7 @@ FUNCTION RESTORE <binary>
 FUNCTION LOAD REPLACE "#!lua name=mylib\n ..."
 ```
 
-Libraries persist across restarts. EVALSHA cache does not. For production scripts that must survive restarts or redeploys, use `FUNCTION LOAD` over `SCRIPT LOAD`.
+Libraries persist across restarts (they are included in RDB/AOF). EVALSHA cache does not - a restart means every `EVALSHA <sha>` will return `NOSCRIPT` until the script is loaded again. For production scripts that must survive restarts or redeploys, use `FUNCTION LOAD` over `SCRIPT LOAD`.
 
 Library versioning convention: embed version in the name (`mylib_v2`) or use `FUNCTION LOAD REPLACE` to overwrite atomically.
 
@@ -158,23 +154,31 @@ Library versioning convention: embed version in the name (`mylib_v2`) or use `FU
 
 ```lua
 -- Raise an error (client sees error response)
-return redis.error_reply("ERR something went wrong")
+return server.error_reply("ERR something went wrong")
 
 -- Return a status (client sees simple string, not error)
-return redis.status_reply("OK")
+return server.status_reply("OK")
 ```
 
-`server.call()` raises on any Valkey error and aborts the script. Use `server.pcall()` to catch errors within the script:
+`server.call()` raises on any Valkey error and aborts the script. Use `server.pcall()` to catch errors within the script.
+
+**`server.pcall` return shape** - this trips people up. It is NOT Lua's native `pcall`. It returns **one** value:
+
+- On success: the command result (string, number, array, etc.).
+- On error: a Lua **table** with a single `err` field (not a `(status, value)` tuple).
+
+Correct pattern:
 
 ```lua
-local ok, err = server.pcall('get', KEYS[1])
-if err then
-  return redis.error_reply("ERR key has wrong type")
+local result = server.pcall('get', KEYS[1])
+if type(result) == 'table' and result.err then
+  -- Propagate the actual Valkey error message
+  return server.error_reply(result.err)
 end
-return ok
+return result
 ```
 
-`redis.call` and `server.call` are identical. Prefer `server.call` in new code - it is the Valkey naming convention.
+**Aliases**: `redis.call` / `redis.pcall` / `redis.error_reply` / `redis.status_reply` all work identically to the `server.*` versions - the `redis` global is an alias of `server` set up for pre-Valkey compatibility. Prefer `server.*` in new code; `redis.*` is fine in existing scripts.
 
 ---
 

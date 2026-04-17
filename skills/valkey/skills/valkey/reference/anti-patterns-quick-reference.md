@@ -15,7 +15,7 @@ Use when reviewing application code for common Valkey mistakes, or as a checklis
 | One connection per request | TCP connection setup is expensive (especially with TLS). Exhausts server connection limits under load. | Use connection pools (traditional clients) or GLIDE's multiplexed connections. |
 | `FLUSHALL` accessible | An application bug or compromised credential can wipe all data instantly. | Rename or disable the command via `rename-command` or ACL restrictions. |
 | Short cryptic key names | Saves negligible memory (keys are small relative to values) but makes debugging and operations painful. | Use readable colon-delimited names: `user:1000:profile`, `cache:api:products:page:1`. |
-| Single hot key for counters | In cluster mode, all operations on one key go to one shard. Creates a bottleneck under high write rates. | Shard the key: `counter:{0}`, `counter:{1}`, ..., `counter:{N}`. Sum across shards when reading. See [Counter Patterns](patterns-counters-atomic.md). |
+| Single hot key for counters | All writes serialize on one object and its replication stream, even on a single node. In cluster mode they also pin to one shard. | Shard across N keys: `counter:0`, `counter:1`, ..., `counter:N`. Sum across shards when reading. Hash tags (`counter:{pool}:0`, ...) co-locate shards on one slot for atomic MGET; drop the hash tag only when you need true cross-node spread. See [Counter Patterns](patterns-counters-atomic.md). |
 | Storing values > 1 MB | Large values cause network and memory pressure. Slow reads, high bandwidth, increased fragmentation. | Compress values before storing. For truly large objects, use object storage (S3, GCS) and store only the reference in Valkey. |
 | Multiple databases in production (pre-9.0) | Databases share everything (memory, CPU, connections). No isolation. `FLUSHDB` on the wrong database is catastrophic. | Use separate instances for workload isolation. In Valkey 9.0+ cluster mode, numbered databases are available but still share resources. |
 | Missing TTL on cache entries | Keys without TTL live forever. Memory fills up with stale data until eviction kicks in (if configured) or OOM. | Always set TTL at write time: `SET key value EX 3600`. Use `allkeys-lru` eviction as a safety net. See [Caching Patterns](patterns-caching-strategies.md). |
@@ -75,7 +75,9 @@ valkey-cli --bigkeys
 # Find keys consuming the most memory
 valkey-cli --memkeys
 
-# Find hot keys (most-accessed)
+# Find hot keys (most-accessed) - requires maxmemory-policy = allkeys-lfu or volatile-lfu,
+# otherwise it errors out. The sampling uses object access frequency, which only
+# tracks under an *lfu policy.
 valkey-cli --hotkeys
 
 # Check if maxmemory is set
@@ -97,7 +99,7 @@ valkey-cli SLOWLOG GET 10
 
 ### "Should I use DEL or UNLINK?"
 
-Always use `UNLINK` unless you need synchronous deletion. In Valkey 8.0+, `DEL` defaults to async behavior (`lazyfree-lazy-user-del yes`), but `UNLINK` is explicit and clear.
+Prefer `UNLINK` - it's explicit about async. `DEL` actually also runs async by default (`lazyfree-lazy-user-del yes` in the shipped config), so the behavioral gap is small; the value of `UNLINK` is that the intent is visible in the code and isn't silently toggled by a config change.
 
 ### "Should I use KEYS or SCAN?"
 
@@ -118,7 +120,7 @@ Never use `KEYS` in production. Use `SCAN` with a cursor. SCAN may return duplic
 
 - **Key names**: Readable, not abbreviated. `user:1000:profile` costs negligible extra bytes.
 - **Values**: Keep under 100 KB ideally, under 1 MB maximum. Compress JSON/serialized data.
-- **Collections**: Keep hashes under 10K fields, lists under 100K elements, sets under 100K members. Split larger collections.
+- **Collections**: Default listpack thresholds (`hash-max-listpack-entries 512`, `set-max-listpack-entries 128`, `zset-max-listpack-entries 128`) are where the encoding flips to hashtable/skiplist - below them most ops are effectively O(1) constant-time on a compact buffer. Past those thresholds, whole-collection commands (`HGETALL`, `HKEYS`, `SMEMBERS`, `ZRANGE` without limit) become O(N) and latency scales with collection size. Operational rule of thumb: keep hashes under 10K fields, lists under 100K elements, sets/zsets under 100K members. Split or partition larger collections.
 
 ---
 

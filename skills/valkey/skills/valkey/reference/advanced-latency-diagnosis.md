@@ -4,13 +4,13 @@ Use when investigating high p99 latency, intermittent timeouts, slow command exe
 
 ## Contents
 
-- End-to-End Diagnosis Workflow (line 12)
-- Step 1: Establish Baselines (line 23)
-- Step 2: Check the Latency Monitor (line 53)
-- Step 3: Correlate with COMMANDLOG (line 95)
-- Step 4: Common Latency Sources (line 126)
-- Step 5: Event Loop and I/O Thread Impact (line 166)
-- Practical Playbook: "Client Reports High p99" (line 193)
+- End-to-End Diagnosis Workflow
+- Step 1: Establish Baselines
+- Step 2: Check the Latency Monitor
+- Step 3: Correlate with COMMANDLOG
+- Step 4: Common Latency Sources
+- Step 5: Event Loop and I/O Thread Impact
+- Practical Playbook: "Client Reports High p99"
 
 ---
 
@@ -167,7 +167,7 @@ During the fork, all clients are paused. Check `INFO persistence` for `latest_fo
 
 ### Lazy Expiry and Active Expiration
 
-Valkey expires keys lazily on access and actively via a periodic sweep that samples random keys with TTLs. If > 25% of sampled keys are expired, the sweep loops immediately. A burst of expirations (all session keys expire at the same time) can block the main thread for multiple milliseconds.
+Valkey expires keys lazily on access and actively via a periodic sweep that samples random keys with TTLs. If the sampled stale percentage exceeds `ACTIVE_EXPIRE_CYCLE_ACCEPTABLE_STALE` (10% by default, lowered by `active-expire-effort`), the sweep keeps looping on that DB until it drops back below. A burst of expirations (all session keys expire at the same time) can block the main thread for multiple milliseconds.
 
 Fix: **jitter your TTLs**. Instead of `SET key val EX 3600`, use `SET key val EX <3600 + random(0, 300)>`. This spreads expirations over a 5-minute window.
 

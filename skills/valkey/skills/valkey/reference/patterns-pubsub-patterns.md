@@ -4,12 +4,12 @@ Use when implementing real-time messaging, event broadcasting, or notification s
 
 ## Contents
 
-- Fan-Out Messaging (line 17)
-- Sharded Pub/Sub (Cluster Mode) (line 82)
-- Keyspace Notifications (line 123)
-- Pub/Sub vs Streams Comparison (line 214)
-- Channel Naming Patterns (line 243)
-- Production Tips (line 277)
+- Fan-Out Messaging
+- Sharded Pub/Sub (Cluster Mode)
+- Keyspace Notifications
+- Pub/Sub vs Streams Comparison
+- Channel Naming Patterns
+- Production Tips
 
 ---
 

@@ -4,7 +4,7 @@ Use when building prefix autocomplete, tag filtering, or lightweight search with
 
 ## Prefix Autocomplete
 
-Store terms with score 0, query by prefix with `ZRANGEBYLEX`. Preferred modern syntax (Valkey 6.2+):
+Store terms with score 0 so sorted-set order is purely lexicographic. Query by prefix with `ZRANGE ... BYLEX` (the canonical form since 6.2; the legacy `ZRANGEBYLEX` still works):
 
 ```
 ZADD autocomplete 0 "apple"

@@ -4,10 +4,10 @@ Use when implementing a caching layer with Valkey - choosing between cache-aside
 
 ## Contents
 
-- Cache-Aside (Lazy Loading) (line 13)
-- Write-Through (line 100)
-- Write-Behind (Write-Back) (line 126)
-- Client-Side Caching (CLIENT TRACKING) (line 142)
+- Cache-Aside (Lazy Loading)
+- Write-Through
+- Write-Behind (Write-Back)
+- Client-Side Caching (CLIENT TRACKING)
 
 ---
 
@@ -244,7 +244,6 @@ CLIENT TRACKING ON NOLOOP
 |--------|---------|
 | valkey-go | Yes (server-assisted) |
 | redisson | Yes |
-| valkey-glide | Not yet (planned) |
 | iovalkey / ioredis | No |
 | valkey-py / redis-py | No |
 

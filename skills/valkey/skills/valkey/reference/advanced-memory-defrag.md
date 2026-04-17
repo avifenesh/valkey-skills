@@ -4,12 +4,12 @@ Use when Valkey is consuming more memory than expected, `INFO memory` shows a hi
 
 ## Contents
 
-- What Memory Fragmentation Is (line 13)
-- Reading Fragmentation Metrics (line 38)
-- Active Defragmentation (line 76)
-- When NOT to Enable Defrag (line 126)
-- Diagnosing Memory Issues from Application Code (line 140)
-- Valkey Version Changes (line 179)
+- What Memory Fragmentation Is
+- Reading Fragmentation Metrics
+- Active Defragmentation
+- When NOT to Enable Defrag
+- Diagnosing Memory Issues from Application Code
+- Valkey Version Changes
 
 ---
 
@@ -149,10 +149,10 @@ Active defrag is not always beneficial. Skip it when:
 (integer) 296
 
 127.0.0.1:6379> MEMORY USAGE user:session:abc123 SAMPLES 0
-(integer) 128
+(integer) 312
 ```
 
-Returns the number of bytes a key and its value consume, including overhead. The `SAMPLES` option controls how many elements are sampled for aggregate types (hashes, sets, sorted sets). `SAMPLES 0` returns only the top-level overhead without sampling elements - fast but less accurate.
+Returns the number of bytes a key and its value consume, including overhead. The `SAMPLES` option controls how many elements are sampled for aggregate types (hashes, sets, sorted sets). Default is 5 - fast, approximate. `SAMPLES 0` means **sample every element** - the most accurate but slowest option, appropriate for one-off forensic use but not continuous monitoring.
 
 Use this to find unexpectedly large keys:
 
@@ -200,17 +200,17 @@ Dumps jemalloc's internal statistics. This is verbose output primarily for ops t
 
 - Default allocator remains jemalloc with defrag support.
 - No changes to defrag configuration defaults.
-- The new hashtable implementation (landing in 8.1) reduces per-key overhead by 20-30 bytes, which indirectly reduces fragmentation by packing more data into fewer pages.
+- The new hashtable implementation (landing in 8.1) reduces per-key overhead, which indirectly reduces fragmentation by packing more data into fewer pages.
 
 ### Valkey 8.1
 
-- New open-addressing hashtable with 64-byte bucket alignment. This improves memory density and reduces the number of small allocations that drive fragmentation.
-- The combination of fewer allocations per key and SIMD-based probing means the keyspace generates less fragmentation under churn compared to the legacy dict-based hashtable.
+- New hashtable with cache-line (64-byte) buckets and bucket chaining - 7 entries per bucket, with the 8th slot pointing to the next bucket in the chain when needed. This improves memory density and reduces the number of small allocations that drive fragmentation.
+- The combination of fewer allocations per key and SIMD-based presence-hash scanning means the keyspace generates less fragmentation under churn compared to the legacy dict-based hashtable.
 
 ### Valkey 9.0
 
 - No changes to active defrag configuration or behavior.
-- Zero-copy responses reduce temporary buffer allocations during reads, which marginally reduces allocation churn.
+- Reply Copy Avoidance (9.0) avoids copying large value data into the output buffer on the reply path, which marginally reduces temporary allocations and allocation churn for read-heavy workloads.
 
 ### General Guidance
 

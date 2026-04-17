@@ -1,20 +1,6 @@
 # Performance Improvements Summary
 
-Use when evaluating Valkey's performance characteristics or understanding what version-specific optimizations benefit your application without configuration changes.
-
----
-
-Performance figures below are from Valkey project benchmarks and release notes. Actual improvements depend on workload characteristics, hardware, and configuration. See the linked Valkey release notes for methodology details.
-
-## Contents
-
-- Version-by-Version Performance Changes (line 17)
-- What Application Developers Get for Free (line 51)
-- What Requires Configuration (line 82)
-- I/O Thread Tuning Details (line 117)
-- MPTCP Details (line 153)
-- Benchmarking Guidance (line 185)
-- Application-Side Optimizations (line 241)
+Use when you need to know what version-specific optimizations benefit your workload and what tuning knobs control them. Numbers below are rough - treat as ballpark, not specification.
 
 ## Version-by-Version Performance Changes
 
@@ -22,31 +8,29 @@ Performance figures below are from Valkey project benchmarks and release notes. 
 
 | Feature | Impact | Detail |
 |---------|--------|--------|
-| I/O multithreading overhaul | 3x throughput (360K -> 1.2M RPS) | I/O threads handle read/parse/write; main thread handles command execution |
-| Command batching | Reduced CPU cache misses | Commands grouped for better cache locality |
+| Async I/O threading | Higher throughput under high connection concurrency | I/O threads handle read/parse/write; main thread handles command execution |
 | Dual-channel replication | Faster replica sync | RDB transfer and replication stream run in parallel |
 
 ### Valkey 8.1
 
 | Feature | Impact | Detail |
 |---------|--------|--------|
-| New hashtable implementation | 20-30 bytes less memory per key | Open-addressing with 64-byte buckets, SIMD probing |
+| New hashtable implementation | Lower per-key memory and better cache locality | 64-byte (cache-line) buckets holding 7 entries each, bucket chaining, SIMD hash-bit scan, incremental rehashing |
 | Iterator prefetching | 3.5x faster iteration | SCAN, KEYS, HGETALL, and similar commands benefit |
-| TLS offload to I/O threads | 300% faster TLS connection acceptance | TLS handshake no longer blocks main thread |
-| ZRANK optimization | 45% faster | Optimized skiplist traversal |
-| BITCOUNT (AVX2) | 514% faster | SIMD-accelerated bit counting |
-| PFMERGE/PFCOUNT (AVX) | 12x faster | SIMD-accelerated HyperLogLog operations |
+| TLS offload to I/O threads | Small (~10%) throughput gain on TLS workloads | TLS handshake and error-queue handling moved off main thread; activates with io-threads > 1 |
+| ZRANK optimization | Up to 45% faster (mostly unique scores); ~8-27% with many duplicate scores | Skiplist traversal skips redundant string comparisons |
+| BITCOUNT SIMD | Negligible for <256B; ~6x at 1MB (AVX2), up to ~10x at 10MB (ARM NEON) | Enabled at runtime when CPU has AVX2 or ARM NEON |
+| PFMERGE/PFCOUNT SIMD | ~12x faster on multi-HLL merge with dense encoding (AVX2) | Sparse-encoded HLLs unaffected; requires default HLL config |
 
 ### Valkey 9.0
 
 | Feature | Impact | Detail |
 |---------|--------|--------|
-| Pipeline memory prefetch | Up to 40% higher throughput | Batch key prefetching for pipelined commands |
-| Zero-copy responses | Up to 20% higher throughput for large values | Eliminates buffer copies for read-heavy workloads |
-| SIMD BITCOUNT/HLL | Up to 200% higher throughput | Further SIMD improvements over 8.1 |
-| Multipath TCP (MPTCP) | Up to 25% latency reduction | Multiple network paths for a single connection |
-| Atomic slot migration | Faster resharding | Bulk transfer instead of key-by-key |
-| 1 billion RPS at scale | Cluster benchmark | Across 2,000 cluster nodes |
+| Pipeline memory prefetch | Measurable throughput gain on pipelined workloads (also helps MGET/MSET/DEL) | Parser reads multiple commands from the query buffer; keys for queued commands are prefetched in batches. Batch size: `prefetch-batch-max-size` (default 16). |
+| Reply copy avoidance | Skips a payload copy when replying with large bulk strings under I/O threads | Auto-enabled above thread and size thresholds (`min-io-threads-avoid-copy-reply`, `min-string-size-avoid-copy-reply`). Internal/hidden configs. |
+| Additional SIMD (BITCOUNT, HLL findBucket, hash findBucket) | Further acceleration on CPUs with ARM NEON or AVX2 | Complements the 8.1 SIMD work |
+| Multipath TCP (MPTCP) | Latency resilience under packet loss (opt-in); negligible on clean networks | Config `mptcp yes` + `repl-mptcp yes`, both immutable. See MPTCP section. |
+| Atomic slot migration | Faster, safer resharding | Bulk transfer instead of key-by-key |
 
 ---
 
@@ -72,12 +56,13 @@ Applications using these operations see immediate speedups:
 
 | Command | Improvement | Version |
 |---------|------------|---------|
-| `BITCOUNT` | 5-7x faster | 8.1+ |
-| `PFCOUNT` / `PFMERGE` | 12x faster | 8.1+ |
-| `ZRANK` / `ZREVRANK` | 45% faster | 8.1+ |
-| `SCAN` / `HSCAN` / `SSCAN` / `ZSCAN` | 3.5x faster | 8.1+ |
-| Pipelined commands | 40% higher throughput | 9.0+ |
-| Large value reads | 20% higher throughput | 9.0+ |
+| `BITCOUNT` | Negligible <256B; ~6x at 1MB (AVX2), up to ~10x at 10MB (ARM NEON) | 8.1+ |
+| `PFCOUNT` / `PFMERGE` | ~12x on multi-HLL merge, dense encoding, AVX2 CPU | 8.1+ |
+| `ZRANK` / `ZREVRANK` | Up to 45% (mostly unique scores); less with duplicate scores | 8.1+ |
+| `KEYS` full iteration | ~3.5x faster | 8.1+ |
+| `SCAN` / `HSCAN` / `SSCAN` / `ZSCAN` | Benefit from the same iterator; magnitude unmeasured | 8.1+ |
+| Pipelined commands | Measurable throughput gain via batch key prefetch | 9.0+ |
+| Large bulk-string replies under I/O threads | Skips a payload copy | 9.0+ |
 
 ---
 
@@ -102,11 +87,11 @@ TLS handshake is offloaded to I/O threads automatically when `io-threads > 1`. N
 
 ### Multipath TCP (9.0+)
 
-Requires kernel support and network configuration. When available, Valkey uses MPTCP automatically. This benefits deployments with multiple network interfaces.
+Opt-in. Requires Linux kernel 5.6+ and explicit `mptcp yes` (client-facing) and/or `repl-mptcp yes` (replication) in valkey.conf. Both are immutable. See MPTCP section below.
 
 ### Pipeline prefetch (9.0+)
 
-Enabled automatically for pipelined commands. Applications already pipelining benefit with no changes. Applications not pipelining should add it - the gains are significant.
+Enabled automatically. Tune via `prefetch-batch-max-size` (default 16, max 128). Applications already pipelining benefit with no changes. Multi-key commands (MGET, MSET, DEL) also benefit when pipelined or when `io-threads > 1`.
 
 ---
 
@@ -114,30 +99,24 @@ Enabled automatically for pipelined commands. Applications already pipelining be
 
 ### Choosing `io-threads` count
 
-Rule of thumb: set `io-threads` to half your available cores, capped at 8. The value includes the main thread, so `io-threads 4` means the main thread plus 3 I/O threads.
+The server accepts `io-threads` up to 256. Beyond a handful of threads the main thread (which still executes commands single-threaded) becomes the bottleneck and additional I/O threads stop helping. Start at half the available cores and tune with a benchmark.
 
-| Core count | Recommended `io-threads` |
-|------------|--------------------------|
-| 2-4 cores  | 2                        |
-| 6-8 cores  | 4                        |
-| 12-16 cores | 6-8                     |
-| 32+ cores  | 8 (max)                  |
+| Core count | Starting `io-threads` |
+|------------|-----------------------|
+| 2-4 cores  | 2                     |
+| 6-8 cores  | 4                     |
+| 12-16 cores | 6-8                  |
+| 32+ cores  | 8, then measure       |
 
-The maximum useful value is 8. Beyond that, lock contention on the command queue cancels any I/O gains. The main thread remains single-threaded for command execution regardless of `io-threads`.
+The value includes the main thread, so `io-threads 4` means the main thread plus 3 I/O threads. The main thread remains single-threaded for command execution regardless of `io-threads`, so CPU-bound commands (Lua, long EVAL) do not scale with more I/O threads.
 
 ### `events-per-io-thread`
 
-Controls how many epoll events each I/O thread processes per cycle before yielding back to the main thread.
+Controls how many epoll events each I/O thread processes per cycle before yielding back to the main thread. Hidden/internal config; default `2`. Raise it if you want I/O threads to amortize more events per yield; lower it only to investigate tail-latency.
 
-```
-events-per-io-thread 16   # default
-```
+### `io-threads-do-reads` silently ignored
 
-Lower values reduce latency at the cost of throughput (more frequent context switches). Higher values improve throughput but can increase tail latency under bursty traffic. The default of 16 is appropriate for most workloads. Reduce to 4-8 if you see p99 spikes on mixed small/large payload workloads.
-
-### `io-threads-do-reads` is removed in Valkey
-
-In Redis, reads were optionally threaded via `io-threads-do-reads yes`. Valkey removed this option - reads are always handled by I/O threads when `io-threads > 1`. There is no separate toggle. If you are migrating configuration from Redis, remove `io-threads-do-reads` from valkey.conf to avoid a startup warning.
+Valkey always handles reads on I/O threads when `io-threads > 1` - there is no toggle. The `io-threads-do-reads` directive, if present in valkey.conf, is silently ignored with no warning and no effect. Safe to leave in or remove when migrating from Redis.
 
 ### When I/O threads do NOT help
 
@@ -171,7 +150,7 @@ If `instantaneous_ops_per_sec` does not improve after enabling I/O threads, the 
 
 Multipath TCP (MPTCP) allows a single TCP connection to use multiple network subflows simultaneously across two NICs or two network paths. Each subflow is standard TCP so firewalls and middleboxes see no change. The socket API is unchanged for applications.
 
-For Valkey, MPTCP reduces per-request latency (up to 25% in Valkey 9.0 benchmarks) by distributing traffic across paths and enabling faster retransmission when one path congests. The benefit is latency variance reduction and resilience, not raw bandwidth increase.
+For Valkey, MPTCP reduces per-request latency under packet loss by retransmitting on an alternate subflow instead of waiting on the lossy path. The benefit is latency variance reduction and resilience, not raw bandwidth increase. On a clean single-path network, MPTCP provides near-zero improvement.
 
 ### Kernel requirements
 
@@ -189,7 +168,14 @@ sudo sysctl -w net.mptcp.enabled=1
 echo "net.mptcp.enabled = 1" | sudo tee /etc/sysctl.d/99-mptcp.conf
 ```
 
-Valkey 9.0+ detects MPTCP availability at startup and uses it automatically. No `valkey.conf` change is needed.
+MPTCP is **opt-in**. Two config options, both default `no` and both immutable (set at startup, not via `CONFIG SET`):
+
+```
+mptcp yes           # listener accepts MPTCP connections from clients
+repl-mptcp yes      # replica opens MPTCP connection to primary
+```
+
+Startup fails with `MPTCP is not supported on this platform` if the kernel lacks MPTCP.
 
 ### Verifying MPTCP is active
 
@@ -208,15 +194,13 @@ ss -tlnp | grep 6379
 # On MPTCP-enabled systems, Valkey binds using SOCK_MPTCP internally
 ```
 
-Valkey logs a startup notice when MPTCP is active: `MPTCP socket type in use`.
+### When MPTCP pays off
 
-### Expected latency reduction
+Loss resilience, not bandwidth. Pays off with packet loss and at least two reachable network paths. On a clean single-NIC network, expect near-zero delta. Use MPTCP when:
 
-25% p99 latency reduction is the figure from Valkey 9.0 benchmarks on multi-path hardware. Results vary by:
-
-- Number of available network paths (benefit requires at least 2 subflows)
-- Baseline congestion on the primary path
-- Geographic distance (MPTCP helps more at higher RTTs)
+- Clients cross an unreliable path (WAN, multi-AZ with occasional loss)
+- Host has two NICs or two routable paths to the server
+- Clients also run Linux 5.6+ with MPTCP enabled
 
 On single-NIC hosts with no secondary path, MPTCP falls back to standard TCP behavior with no regression.
 
@@ -282,7 +266,7 @@ These are approximate figures on modern hardware (bare metal, 10 GbE, io-threads
 | GET | 1 KB | no | 350K-600K |
 | HSET (10 fields) | 64 B | no | 300K-500K |
 
-Valkey 9.0 cluster benchmarks at 1 billion RPS were achieved across 2,000 nodes, not a single instance. Single-instance peak is approximately 1.5M RPS for small payloads with `io-threads 8` and aggressive pipelining.
+Single-instance peak is roughly 1-1.5M RPS for small payloads with `io-threads` tuned and aggressive pipelining. Cluster throughput scales roughly linearly with shard count when the workload avoids cross-slot operations.
 
 ### Pipeline vs non-pipeline comparison
 
@@ -332,7 +316,7 @@ Not version-specific, but compound with server-side improvements:
 
 ### Pipelining
 
-Send multiple commands in one batch. Up to 10x throughput improvement at the application level, further amplified by server-side pipeline prefetch in 9.0.
+Send multiple commands in one batch. Up to ~10x throughput improvement at the application level by eliminating RTT per command. Further amplified on 9.0+ by server-side pipeline prefetch.
 
 ```
 # Without pipelining: N round-trips
