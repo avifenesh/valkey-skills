@@ -11,7 +11,7 @@ Use when sizing an instance, planning capacity, or running the pre-go-live audit
 | Client output buffer - replica | `256mb hard, 64mb soft, 60s` |
 | Client output buffer - pubsub | `32mb hard, 8mb soft, 60s` |
 
-Valkey defaults `hash-max-listpack-entries 512` (vs Redis 128) - hash memory estimates may be lower than Redis for the same workload because more hashes stay compact.
+All encoding defaults match Redis 7.2.4 (including `hash-max-listpack-entries 512`). Hash memory savings on Valkey 9.0 come from the per-slot kvstore and the embedded-string-with-key-and-expire fused allocation, not from a threshold bump. See `performance.md`.
 
 ## Sizing
 
@@ -97,7 +97,7 @@ Items marked **V** are Valkey-specific defaults/behaviors to verify.
 ### Monitoring
 
 - [ ] Prometheus exporter (`oliver006/redis_exporter`) running; ACL user scoped to `+info +ping +config|get +client|list +commandlog|get +commandlog|len +latency|latest +latency|history`.
-- [ ] **V** Grafana Redis dashboard (ID `11835` or `763`) imported, plus panels for Valkey-only metrics (`expired_fields`, `evicted_scripts`, `io_threads_active`, `io_threaded_total_prefetch_batches`).
+- [ ] **V** Grafana Redis dashboard (ID `11835` or `763`) imported, plus panels for Valkey-added INFO fields not in Redis 7.2 dashboards (`expired_fields`, `evicted_scripts`, `io_threaded_total_prefetch_batches`).
 - [ ] **V** Alerts: instance down, `used_memory / maxmemory > 0.9`, `rejected_connections > 0`, replication link down, lag > 5 s warn / 30 s crit, `rdb_last_bgsave_status != ok`, latency p99 spike, TLS cert expiry (tracked out-of-band on 9.0.x - in-INFO expire telemetry is unstable-only).
 - [ ] COMMANDLOG reviewed periodically - `COMMANDLOG GET 25 slow / large-request / large-reply`.
 

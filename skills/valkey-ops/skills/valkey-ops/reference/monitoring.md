@@ -36,7 +36,7 @@ Beyond Redis baseline (`total_commands_processed`, `keyspace_hits/misses`, `evic
 | `evicted_scripts` | Valkey 8+ | Lua scripts evicted from the 500-entry LRU cache. Ramp = thrashing. |
 | `expired_fields` | Valkey 9.0 | Hash fields reclaimed by per-field TTL (distinct from `expired_keys`). |
 | `io_threaded_reads_processed` / `io_threaded_writes_processed` | 8+ | I/O thread utilization. |
-| `io_threaded_total_prefetch_batches` / `_entries` | 9.0 | Batch prefetch activity. |
+| `io_threaded_total_prefetch_batches` / `_entries` | Valkey 8+ | Batch prefetch activity (tied to `prefetch-batch-max-size`). |
 | `tracking_total_keys` | 6.0 | Current tracked-key count. Approaching `tracking-table-max-keys` = spurious invalidations incoming. |
 | `tracking_total_items` / `tracking_total_prefixes` | 6.0 | BCAST / per-prefix scope. |
 
@@ -88,7 +88,6 @@ valkey-search exposes `INFO SEARCH` (`search_number_of_indexes`, `search_used_me
 |--------|-------------------|
 | `redis_expired_subkeys_total` | `expired_fields` |
 | `redis_evicted_scripts_total` | `evicted_scripts` |
-| `redis_io_threads_active` | `io_threads_active` (boolean, `INFO server`) |
 
 Alert-worthy: `redis_expired_subkeys_total` jumps reveal unexpected hash-field TTL churn; `redis_io_threads_active == 0` with `io-threads > 1` configured and meaningful load means all workers parked - check `adjustIOThreadsByEventLoad` logic or whether `events-per-io-thread` is too high.
 

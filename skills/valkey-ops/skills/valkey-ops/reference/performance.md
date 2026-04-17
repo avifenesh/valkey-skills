@@ -54,28 +54,17 @@ Don't pin on shared VMs - CPU topology isn't yours to control.
 - **Latency up after enabling**: too few cores for the thread count. Reduce `io-threads`.
 - **`io_threads_active` stays at 1**: dynamic activation needs enough concurrent events; not a bug.
 
-## Memory - divergent encoding
+## Memory - encoding defaults (same as Redis 7.2)
 
-Valkey 8.1 bumped `hash-max-listpack-entries` from 128 to **512**. Redis-trained mental models of "at 128 fields the hash promotes" are wrong on Valkey.
+All listpack/intset/quicklist encoding thresholds match Redis 7.2.4 defaults. No Valkey-specific divergence here. See `configuration.md` for the full table. The commonly-repeated "Valkey default 512 vs Redis default 128" for `hash-max-listpack-entries` is a myth - both default to 512.
 
-| Directive | Valkey default | Redis 7.2 default |
-|-----------|---------------|-------------------|
-| `hash-max-listpack-entries` | **512** | 128 |
-| `hash-max-listpack-value` | 64 | 64 |
-| `set-max-listpack-entries` | 128 | 128 |
-| `zset-max-listpack-entries` | 128 | 128 |
-| listpack value caps | 64 B | 64 B |
-| `list-max-listpack-size` | `-2` (8 KB/node) | `-2` |
+## Memory - built-in per-key savings on 9.0
 
-Knock-on: hashes promoted on Redis may stay listpack on Valkey. Lookups are O(N) on listpack but N is small; memory drops 2-5x vs hashtable. Keep the bump unless tail-latency on hash reads spikes.
+Automatic, no tuning. Effect: `used_memory` per key can be lower than Redis 7.2 for the same dataset thanks to these 9.0 structural changes. Relevant when capacity-planning a Redis → Valkey migration at constant RAM.
 
-## Memory - built-in per-key savings
-
-Automatic, no tuning. Effect: `used_memory` per key is lower than Redis 7.2 for the same dataset. Relevant when capacity-planning a Redis → Valkey migration at constant RAM.
-
-- **Kvstore per-slot** (cluster mode, 8.0+): 16,384 per-slot hashtables replace the single global. Drops per-key overhead, localizes rehashing to the touched slot.
-- **Embedded key** (8.0+): key SDS lives inside the hashtable entry, saving a pointer dereference per lookup.
-- **Embedded string value with key + expire** (9.0+): `createStringObjectWithKeyAndExpire` fuses `robj` + optional key SDS + optional expire + value SDS into a single embedded allocation when the combined size fits in 64 bytes. Value-only strings still use the classic `OBJ_ENCODING_EMBSTR_SIZE_LIMIT = 44` cutoff. Net effect: fewer allocations per key on Valkey 9.0 than Redis 7.2 for the same dataset.
+- **Kvstore per-slot** (cluster mode, Valkey 8.0+): 16,384 per-slot key stores replace Redis's single global dict per database. Drops per-key overhead, localizes rehashing to the touched slot.
+- **Hashtable for kvstore + commands** (Valkey 9.0+): `src/hashtable.c` is new in 9.0 with bucket chaining (64-byte buckets, 7 entries + chain pointer). On 9.0.3, kvstore and the global commands table use hashtable; `src/dict.c` still exists for other internal uses. Full dict-to-hashtable consolidation is on `unstable`.
+- **Embedded string with key + expire** (Valkey 9.0+): `createStringObjectWithKeyAndExpire` fuses `robj` + optional key SDS + optional expire + value SDS into a single allocation when combined size ≤ 64 bytes. Value-only strings still use the classic `OBJ_ENCODING_EMBSTR_SIZE_LIMIT = 44` cutoff. Net: fewer allocations per key vs Redis 7.2 for small strings.
 
 ## Memory - `maxmemory-clients`
 
@@ -174,15 +163,16 @@ Mixed mode for prod (Valkey default): `appendonly yes` + `appendfsync everysec` 
 
 **`stop-writes-on-bgsave-error yes` incident mode** - after failed BGSAVE, writes reject with `-MISCONF` until a successful save clears the flag. Common "disk cleared but writes still frozen" cause - `CONFIG SET stop-writes-on-bgsave-error no` temporarily or trigger `BGSAVE` manually after the underlying issue resolves.
 
-## Valkey 9.0 performance features
+## Valkey performance features
 
-| Feature | Config knob | What ops see |
-|---------|-------------|--------------|
-| Pipeline memory prefetch | `prefetch-batch-max-size` (default 16, max 128) | Lower p99 on pipelined workloads. Disable with `0` or `1`. |
-| Zero-copy reply path | `min-io-threads-avoid-copy-reply` (default 7, HIDDEN) | Skips reply buffering when I/O threads ≥7. Fewer allocations; lower RSS under high fanout. |
-| SIMD BITCOUNT / HLL | no knob | Automatic if CPU has AVX2 / NEON. |
-| Multipath TCP | `mptcp yes` / `repl-mptcp yes`; immutable | Requires Linux 5.6+; both ends must support. Reduces tail latency on multi-path networks. |
-| Atomic slot migration | `CLUSTER MIGRATESLOTS` | No ASK storms during resharding; multi-key ops keep working. See `cluster.md`. |
+| Feature | Since | Config knob | What ops see |
+|---------|-------|-------------|--------------|
+| Pipeline memory prefetch | Valkey 8.0+ | `prefetch-batch-max-size` (default 16, max 128) | Lower p99 on pipelined workloads. Disable with `0` or `1`. |
+| SIMD BITCOUNT / HLL | Valkey 8.1+ | no knob | Automatic if CPU has AVX2 / NEON. |
+| Zero-copy reply path | Valkey 9.0+ | `min-io-threads-avoid-copy-reply` (default 7, HIDDEN) | Skips reply buffering when I/O threads ≥7. Fewer allocations; lower RSS under high fanout. |
+| Multipath TCP | Valkey 9.0+ | `mptcp yes` / `repl-mptcp yes`; immutable | Requires Linux 5.6+; both ends must support. Reduces tail latency on multi-path networks. |
+| Atomic slot migration | Valkey 9.0+ | `CLUSTER MIGRATESLOTS` | No ASK storms during resharding; multi-key ops keep working. See `cluster.md`. |
+| Embedded string with key+expire | Valkey 9.0+ | automatic | Single allocation when combined size ≤64 bytes. Fewer per-key allocations vs Redis 7.2. |
 
 Exact throughput/latency improvement is workload-dependent - don't quote percentages without your own measurement.
 

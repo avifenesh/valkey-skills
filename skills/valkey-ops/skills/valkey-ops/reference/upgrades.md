@@ -68,13 +68,13 @@ Partial sync (PSYNC CONTINUE) operates over the replication backlog's RESP comma
 
 | Feature | Since | Notes |
 |---------|-------|-------|
-| I/O threads | 8.0+ | `io-threads` config |
+| Dynamic I/O thread activation | Valkey 8.0+ | `io-threads` config itself exists since Redis 6.0. What 8.0 added: dynamic worker park/unpark via `adjustIOThreadsByEventLoad`, `active_io_threads_num` tracking, `events-per-io-thread` tuning. |
 | Dual-channel replication | 8.0+ | Parallel RDB + backlog transfer |
 | SIMD BITCOUNT / HyperLogLog | 8.1+ | Automatic with AVX2 / NEON |
 | `extended-redis-compatibility` | 8.0+ | Reports as Redis for client compat |
 | Atomic slot migration | 9.0+ | `CLUSTER MIGRATESLOTS` |
 | Coordinated Sentinel failover | 9.0+ | `SENTINEL FAILOVER ... COORDINATED` |
-| Memory prefetching for pipelines | 9.0+ | `prefetch-batch-max-size` |
+| Memory prefetching for pipelines | Valkey 8.0+ | `prefetch-batch-max-size` (also `io_threaded_total_prefetch_*` INFO fields) |
 | Zero-copy response path | 9.0+ | `min-io-threads-avoid-copy-reply` |
 | Multipath TCP | 9.0+ | `mptcp` (Linux 5.6+) |
 | Hash field TTL | 9.0+ | Requires RDB 80 |

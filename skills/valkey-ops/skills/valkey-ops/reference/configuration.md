@@ -23,7 +23,7 @@ Unix socket: `unixsocket` + `unixsocketperm 770` + `unixsocketgroup <shared>`. T
 |-----------|---------|-------|
 | `maxmemory` | `0` | Unlimited. **Always set explicitly** - otherwise OOM killer fires. |
 | `maxmemory-policy` | `noeviction` | Source default is `noeviction`, not `allkeys-lru`. |
-| `maxmemory-clients` | `0` | Valkey-only. Caps aggregate client buffer memory. Accepts `5%` - evaluated at SET time. Replica output buffers and repl backlog are NOT counted. |
+| `maxmemory-clients` | `0` | Caps aggregate client buffer memory. Accepts `5%` - evaluated at SET time. Replica output buffers and repl backlog are NOT counted. (Added in Redis 7.0; inherited, not Valkey-only.) |
 | `maxmemory-samples` | `5` | LRU/LFU sample count. Above 10 is diminishing returns. |
 | `maxmemory-eviction-tenacity` | `10` | 0-100. |
 
@@ -35,16 +35,18 @@ All 8 policy names are identical to Redis (`noeviction`, `allkeys-lru/lfu/random
 
 Standard compact-encoding model (listpack, intset, quicklist, skiplist). Once a collection upgrades to hashtable/skiplist it stays there until DEL + re-add.
 
-| Parameter | Valkey default | Redis default |
-|-----------|---------------|---------------|
-| `hash-max-listpack-entries` | `512` | `128` |
-| `hash-max-listpack-value` | `64` | `64` |
-| `zset-max-listpack-entries` | `128` | `128` |
-| `zset-max-listpack-value` | `64` | `64` |
-| `set-max-intset-entries` | `512` | `512` |
-| `set-max-listpack-entries` | `128` | `128` |
+| Parameter | Default |
+|-----------|---------|
+| `hash-max-listpack-entries` | `512` |
+| `hash-max-listpack-value` | `64` |
+| `zset-max-listpack-entries` | `128` |
+| `zset-max-listpack-value` | `64` |
+| `set-max-intset-entries` | `512` |
+| `set-max-listpack-entries` | `128` |
+| `set-max-listpack-value` | `64` |
+| `list-max-listpack-size` | `-2` (8 KB/node) |
 
-The `hash-max-listpack-entries 512` default is 4x Redis - more hashes stay compact. Check encoding: `OBJECT ENCODING mykey`, `MEMORY USAGE mykey`.
+Defaults match Redis 7.2.4 — no Valkey-specific divergence here. Check encoding: `OBJECT ENCODING mykey`, `MEMORY USAGE mykey`.
 
 ## Persistence - RDB
 

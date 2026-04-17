@@ -82,7 +82,7 @@ Points directly at the slot - combined with `CLUSTER NODES`, at the shard owning
 
 Standard Redis mitigation (`maxmemory`, eviction policy, `vm.overcommit_memory=1`, fragmentation check) applies.
 
-Valkey-specific: `maxmemory-clients` caps aggregate client-buffer memory independently of `maxmemory`:
+`maxmemory-clients` (inherited from Redis 7.0+) caps aggregate client-buffer memory independently of `maxmemory`:
 
 ```sh
 valkey-cli CONFIG SET maxmemory-clients 5%
