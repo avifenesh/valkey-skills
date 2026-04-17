@@ -197,6 +197,33 @@
         "url": "https://github.com/avifenesh/valkey-skills.git",
         "path": "skills/spring-data-valkey"
       }
+    },
+    {
+      "name": "glide-mq",
+      "description": "Use when building message queues with glide-mq. Covers queue setup, producer/consumer patterns, job scheduling, workflows, batch processing, streaming, and suspend/resume. Vendored from upstream avifenesh/glide-mq.",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
+        "path": "skills/glide-mq"
+      }
+    },
+    {
+      "name": "glide-mq-migrate-bullmq",
+      "description": "Use when migrating Node.js message queues from BullMQ to glide-mq. Covers API mapping, connection configuration, new features, and migration patterns. Vendored from upstream avifenesh/glide-mq.",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
+        "path": "skills/glide-mq-migrate-bullmq"
+      }
+    },
+    {
+      "name": "glide-mq-migrate-bee",
+      "description": "Use when migrating Node.js message queues from Bee-Queue to glide-mq. Covers API mapping, connection configuration, new features, and migration patterns. Vendored from upstream avifenesh/glide-mq.",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/avifenesh/valkey-skills.git",
+        "path": "skills/glide-mq-migrate-bee"
+      }
     }
   ]
 }

@@ -39,11 +39,9 @@
 | `skills/migrate-stackexchange/` | migrate-stackexchange | StackExchange.Redis to GLIDE C# migration | 3 |
 | `skills/spring-data-valkey/` | spring-data-valkey | Spring Boot + Spring Data Valkey integration | 3 |
 
-### Glide-MQ (sourced externally)
+### Glide-MQ (3 skills, vendored from upstream)
 
-The three glide-mq skills (glide-mq, glide-mq-migrate-bullmq, glide-mq-migrate-bee) are no longer distributed from this repo. They are maintained upstream at https://github.com/avifenesh/glide-mq and vendored into the `agent-sh/glidemq` plugin - install from there.
-
-For local development in this workspace, `skills/glide-mq*/skills/<name>/` are symlinked to `../../glidemq/skills/<name>/` (gitignored). They are not part of the marketplace.
+`skills/glide-mq/`, `skills/glide-mq-migrate-bullmq/`, `skills/glide-mq-migrate-bee/`. SKILL.md + `references/*` vendored from [avifenesh/glide-mq](https://github.com/avifenesh/glide-mq) by `scripts/sync-glide-mq-upstream.sh`; pin in `UPSTREAM-GLIDE-MQ.md`. `.github/workflows/sync-glide-mq.yml` runs weekly and opens a PR on drift; `version-watch.yml` tracks version bumps separately.
 
 ## Architecture
 
