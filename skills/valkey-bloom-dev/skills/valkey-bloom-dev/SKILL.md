@@ -25,7 +25,7 @@ Targets valkey-bloom 1.0.1. Module registers itself as `bf` (not `bloom`). All R
 | BF.ADD / BF.MADD / BF.EXISTS / BF.MEXISTS / BF.CARD / BF.INFO handlers, auto-creation defaults, `handle_bloom_add` multi-mode, INFO field table, command flags and ACL | `reference/commands-command-handlers.md` |
 | BF.RESERVE / BF.INSERT argument parsing, TIGHTENING and SEED replication-internal args, VALIDATESCALETO check, NOCREATE, internal BF.LOAD, error summary | `reference/commands-bf-reserve-insert.md` |
 | Deterministic replication, three cases, synthetic BF.INSERT form, ReplicateArgs, must_obey_client (8.0 vs 8.1+), size-limit bypass, keyspace events | `reference/commands-replication.md` |
-| 7 module configs (defaults + ranges), string-as-f64 pattern, `on_string_config_set`, storage (AtomicI64 vs ValkeyGILGuard + Mutex<f64>), FIXED_SEED, BLOOM_MIN_SUPPORTED_VERSION, `module_args_as_configuration` | `reference/commands-module-configs.md` |
+| 7 module configs (defaults + ranges), string-as-f64 pattern, `on_string_config_set`, storage (`AtomicI64` vs `ValkeyGILGuard` + `Mutex<f64>`), FIXED_SEED, BLOOM_MIN_SUPPORTED_VERSION, `module_args_as_configuration` | `reference/commands-module-configs.md` |
 | Cargo setup (cdylib, `valkey_bloom`), feature flags (`enable-system-alloc`, `valkey_8_0`), ValkeyAlloc, `build.sh` env vars, build.sh vs CI differences | `reference/contributing-build.md` |
 | Unit tests (rstest seed parameterization), integration tests (pytest + valkey-test-framework), base class helpers, test inventory, ASAN skip, running tests | `reference/contributing-testing.md` |
 | CI jobs (ubuntu / macos / asan), matrix, LeakSanitizer detection scan, release-trigger workflow dispatching to valkey-bundle, debug tips | `reference/contributing-ci-pipeline.md` |
