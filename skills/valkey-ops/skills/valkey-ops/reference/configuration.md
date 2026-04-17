@@ -148,7 +148,7 @@ All three COMMANDLOG types share a unified `COMMANDLOG GET/LEN/RESET` command fa
 | `cluster-manual-failover-timeout` | `5000` ms | Valkey-only (Redis hardcodes this). |
 | `cluster-require-full-coverage` | `yes` | |
 | `cluster-allow-reads-when-down` | `no` | |
-| `cluster-allow-pubsubshard-when-down` | `yes` | Valkey-only default flip - shard pub/sub keeps working when cluster is in FAIL state. |
+| `cluster-allow-pubsubshard-when-down` | `yes` | Shard pub/sub keeps working when cluster is in FAIL state. Same default as Redis 7.0+. |
 | `cluster-replica-validity-factor` | `10` | |
 | `cluster-migration-barrier` | `1` | |
 | `cluster-allow-replica-migration` | `yes` | |

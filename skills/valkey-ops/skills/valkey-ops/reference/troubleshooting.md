@@ -157,7 +157,7 @@ done
 
 ### Config defaults that differ
 
-- `cluster-allow-pubsubshard-when-down` defaults to `yes` (Valkey-only flip) - shard pub/sub keeps working when cluster is FAIL. Redis-trained operators expect all ops to reject. Disable explicitly if your use case needs fail-closed pub/sub.
+- `cluster-allow-pubsubshard-when-down` defaults to `yes` - shard pub/sub keeps working when the cluster is FAIL. Disable explicitly if your use case needs fail-closed pub/sub. (Same default as Redis 7.0+; not a Valkey-specific divergence.)
 
 ### Large-key migration (pre-9.0 issue)
 

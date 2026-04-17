@@ -47,7 +47,7 @@ These names differ from Redis or are Valkey-specific - agents trained on Redis s
 - `busy-script-time` / `lua-memory-limit` → **not real**. Actual: `busy-reply-threshold` (default 5000 ms, alias `lua-time-limit`). Lua has no separate memory limit (shares `maxmemory`).
 - **lazy-free defaults flipped** in Valkey (all five are `yes`; Redis defaults `no`): `lazyfree-lazy-eviction`, `lazyfree-lazy-expire`, `lazyfree-lazy-server-del`, `lazyfree-lazy-user-del`, `lazyfree-lazy-user-flush`. `DEL` behaves like `UNLINK` unless disabled.
 - `hash-max-listpack-entries` default is **512** on Valkey (128 on Redis 7.2) - 4× more hashes stay compact.
-- `cluster-allow-pubsubshard-when-down` defaults **`yes`** on Valkey (Redis-trained ops expect fail-closed) - shard pub/sub keeps working when the cluster is FAIL.
+- `cluster-allow-pubsubshard-when-down` defaults **`yes`** on 9.0.3 (same as Redis 7.0+) - shard pub/sub keeps working when the cluster is FAIL. Set `no` explicitly if your use case needs fail-closed pub/sub.
 - `+failover` ACL permission → **not real** (fabrication). FAILOVER and CLUSTER FAILOVER use standard `@admin`/`@dangerous`/`@slow` categories - no special gate beyond any admin command.
 - `alldbs` / per-DB ACL selectors → **9.1+/unstable only**, not 9.0.x. Don't prescribe on 9.0 deployments.
 - `tls-auth-clients-user uri` (SPIFFE-style SAN URI mapping) and `tls-auto-reload-interval` (in-place cert reload) are **unstable-only**. On 9.0.x the enum has `CN` and `off` only; cert rotation requires restart/failover. TLS cert expire INFO fields (`tls_server_cert_expire_time` etc.) and `cluster_stats_bytes_*` byte counters are also unstable-only.

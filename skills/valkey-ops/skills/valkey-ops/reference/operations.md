@@ -41,7 +41,9 @@ Prefer more smaller nodes. Smaller nodes mean faster BGSAVE, faster failover, fa
 ```sh
 #!/usr/bin/env bash
 set -eu
-H=${1:-127.0.0.1} P=${2:-6379} ${3:+A="-a $3"}
+H=${1:-127.0.0.1}
+P=${2:-6379}
+A=${3:+-a $3}
 cli="valkey-cli -h $H -p $P ${A:-} --no-auth-warning"
 
 g() { $cli CONFIG GET "$1" | tail -1; }
