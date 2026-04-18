@@ -11,12 +11,14 @@ Use when integrating GLIDE with Spring Boot applications via Spring Data Valkey,
 
 ## Routing
 
-- ValkeyTemplate, StringValkeyTemplate, auto-configuration, repositories -> Auto-Configuration and Templates
-- @Cacheable, @CacheEvict, @CachePut, Spring Cache, cache TTL -> Auto-Configuration and Templates
-- Actuator, health indicator, health check -> Auto-Configuration and Templates
-- Spring Data Redis, migration, RedisTemplate rename -> Migration and Comparison
-- Driver comparison, Lettuce vs GLIDE, when to use -> Migration and Comparison
-- Hybrid approach, direct GLIDE API -> Migration and Comparison
+| Question | Reference |
+|----------|-----------|
+| ValkeyTemplate, StringValkeyTemplate, auto-configuration, repositories | [auto-configuration](reference/auto-configuration.md) |
+| `@Cacheable`, `@CacheEvict`, `@CachePut`, Spring Cache, cache TTL | [auto-configuration](reference/auto-configuration.md) |
+| Actuator, health indicator, health check | [auto-configuration](reference/auto-configuration.md) |
+| Spring Data Redis, migration, RedisTemplate rename | [migration-and-comparison](reference/migration-and-comparison.md) |
+| Driver comparison, Lettuce vs GLIDE, when to use | [migration-and-comparison](reference/migration-and-comparison.md) |
+| Hybrid approach, direct GLIDE API | [migration-and-comparison](reference/migration-and-comparison.md) |
 
 ## Overview
 

@@ -1,12 +1,24 @@
-# Stream-Based Queues
+# Queues on Valkey
 
-Use when implementing robust task queues with consumer groups, message acknowledgment, dead letter handling, or when choosing between queue patterns for production workloads.
+Use when implementing task queues on Valkey: choosing between list-based and stream-based implementations, wiring consumer groups, handling acknowledgment and dead letters, or comparing patterns for production workloads.
 
 ## Contents
 
+- List-Based Queue Orientation (LPUSH/BRPOP, LPUSH/BLMOVE)
 - Stream-Based Queue (XADD/XREADGROUP)
 - Comparison Table
 - Priority Queue
+
+---
+
+## List-Based Queue Orientation
+
+Two standard patterns using generic Redis/Valkey list commands. A model trained on Redis already knows the implementation shape - these are listed so you can choose before reading the stream section below.
+
+- **Simple queue** - `LPUSH` to enqueue, `BRPOP` to consume. At-most-once delivery. No acknowledgment. Consumer crash loses the in-flight message.
+- **Reliable queue** - `LPUSH` to enqueue, `BLMOVE` to atomically move to a processing list, `LREM` on success. At-least-once delivery. Requires a recovery job to requeue stuck messages.
+
+List queues lack retry counts, dead-letter queues, priority, and scheduling. For production workloads, use the stream-based pattern documented below - Valkey Streams (`XADD`/`XREADGROUP`/`XACK`) cover all of those out of the box.
 
 ---
 

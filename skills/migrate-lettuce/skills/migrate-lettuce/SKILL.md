@@ -11,10 +11,12 @@ Use when migrating a Java application from Lettuce to the GLIDE client library.
 
 ## Routing
 
-- String, hash, list, set, sorted set, delete, exists, cluster -> API Mapping
-- Pipeline, transaction, Batch API, MULTI/EXEC -> Advanced Patterns
-- PubSub, subscribe, publish, RedisPubSubAdapter -> Advanced Patterns
-- Spring Data Valkey, Spring Boot, compatibility layer -> Advanced Patterns
+| Question | Reference |
+|----------|-----------|
+| String, hash, list, set, sorted set, delete, exists, cluster | [api-mapping](reference/api-mapping.md) |
+| Pipeline, transaction, Batch API, MULTI/EXEC | [advanced-patterns](reference/advanced-patterns.md) |
+| PubSub, subscribe, publish, RedisPubSubAdapter | [advanced-patterns](reference/advanced-patterns.md) |
+| Spring Data Valkey, Spring Boot, compatibility layer | [advanced-patterns](reference/advanced-patterns.md) |
 
 ## Key Differences
 

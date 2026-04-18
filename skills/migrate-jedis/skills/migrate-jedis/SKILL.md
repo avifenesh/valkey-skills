@@ -11,10 +11,12 @@ Use when migrating a Java application from Jedis to the GLIDE client library.
 
 ## Routing
 
-- String, hash, list, set, sorted set, delete, exists, cluster, error handling -> API Mapping
-- Pipeline, transaction, Batch API, MULTI/EXEC -> Advanced Patterns
-- PubSub, subscribe, publish, JedisPubSub -> Advanced Patterns
-- Spring Data Valkey, Spring Boot -> Advanced Patterns
+| Question | Reference |
+|----------|-----------|
+| String, hash, list, set, sorted set, delete, exists, cluster, error handling | [api-mapping](reference/api-mapping.md) |
+| Pipeline, transaction, Batch API, MULTI/EXEC | [advanced-patterns](reference/advanced-patterns.md) |
+| PubSub, subscribe, publish, JedisPubSub | [advanced-patterns](reference/advanced-patterns.md) |
+| Spring Data Valkey, Spring Boot | [advanced-patterns](reference/advanced-patterns.md) |
 
 ## Key Differences
 

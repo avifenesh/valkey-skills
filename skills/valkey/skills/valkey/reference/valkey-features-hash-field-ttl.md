@@ -220,3 +220,18 @@ Only fields that carry a TTL pay the extra metadata cost; fields without TTL are
 
 ---
 
+## Key-level TTL inspection (EXPIRETIME family)
+
+For completeness: key-level TTL inspection still applies alongside hash-field TTL.
+
+| Command | Success reply | `-1` | `-2` |
+|---------|---------------|------|------|
+| `TTL key` | Remaining seconds | Key exists, no TTL | Key missing |
+| `PTTL key` | Remaining milliseconds | Key exists, no TTL | Key missing |
+| `EXPIRETIME key` | Absolute Unix timestamp in seconds | Key exists, no TTL | Key missing |
+| `PEXPIRETIME key` | Absolute Unix timestamp in milliseconds | Key exists, no TTL | Key missing |
+
+`PERSIST key` returns `1` when a TTL was removed, `0` either when the key has no TTL or when the key does not exist. Use `EXISTS` separately if you need to distinguish the two zero cases.
+
+`EXPIRETIME` and `PEXPIRETIME` were added in Redis 7.0 and are available in all Valkey versions. Use the absolute form when passing expiration to another service - relative TTL decays in transit.
+

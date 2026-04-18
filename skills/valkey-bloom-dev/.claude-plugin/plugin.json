@@ -1,6 +1,6 @@
 {
   "name": "valkey-bloom-dev",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Use when contributing to valkey-io/valkey-bloom source - Rust bloom filter internals, building, testing, RDB/AOF, replication, or reviewing PRs. Not for using BF commands in apps (valkey) or Valkey server internals (valkey-dev).",
   "author": {
     "name": "Avi Fenesh",
