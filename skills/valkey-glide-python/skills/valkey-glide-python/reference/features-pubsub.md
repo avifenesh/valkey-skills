@@ -1,19 +1,20 @@
 # Pub/Sub
 
-Use when you need real-time message broadcasting between clients - chat, notifications, event distribution, or live data feeds. For durable message processing with consumer groups and replay, see [Streams](features-streams.md) instead.
+Use when working with publish/subscribe. Covers what differs from `redis-py` - the core publish/message-receive loop is similar but the subscription model diverges significantly.
 
-GLIDE supports Valkey's publish/subscribe messaging with three subscription modes, automatic reconnection with resubscription, and a synchronizer that reconciles desired vs actual subscription state. Sharded subscriptions require Valkey 7.0+. Dynamic subscribe/unsubscribe requires GLIDE 2.3+.
+## Divergence from redis-py
 
-## Contents
+| redis-py | GLIDE Python |
+|----------|--------------|
+| `pubsub = r.pubsub(); pubsub.subscribe(...)` - runtime object per subscriber | Either static subscriptions configured into client config, or dynamic `client.subscribe()` calls (GLIDE 2.3+) |
+| `for msg in pubsub.listen(): ...` | Either callback (push) or `get_pubsub_message()` / `try_get_pubsub_message()` (polling) - cannot mix |
+| Manual resubscribe on reconnect | GLIDE's synchronizer reconciles desired vs actual across reconnects and topology changes |
+| No notion of "desired" state | `client.get_subscriptions()` exposes desired and actual; metrics `subscription_out_of_sync_count` and `subscription_last_sync_timestamp` |
+| Cluster sharded pub/sub not built in | `GlideClusterClient` with `PubSubChannelModes.Sharded` + `publish(..., sharded=True)` |
 
-- Subscription Modes (line 16)
-- Subscription Approaches (line 24)
-- Receiving Messages (line 123)
-- Subscription State Inspection (line 152)
-- Reconciliation (line 171)
-- Publishing (line 191)
+Static subscriptions require RESP3. Using RESP2 raises `ConfigurationError`.
 
-## Subscription Modes
+## Subscription modes
 
 | Mode | Subscribe / Unsubscribe | Description | Client |
 |------|------------------------|-------------|--------|

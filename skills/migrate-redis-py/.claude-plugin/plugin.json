@@ -1,6 +1,6 @@
 {
   "name": "migrate-redis-py",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Use when migrating Python from redis-py to Valkey GLIDE. Covers async-first API, bytes returns (no decode_responses), list args, PubSub, ExpirySet/ConditionalChange. Not for greenfield Python apps - use valkey-glide-python instead.",
   "author": {
     "name": "Avi Fenesh",

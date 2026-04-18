@@ -1,33 +1,37 @@
 # Error Handling
 
-Use when implementing error handling, retry logic, or batch error semantics in the GLIDE Python client.
+Use when implementing error handling, retry logic, or batch error semantics. Covers GLIDE-specific divergence from `redis-py` (which raises `redis.exceptions.ConnectionError`, `TimeoutError`, `ResponseError`, etc.).
 
-## Error Types
+## Key gotcha: GLIDE error classes shadow Python built-ins
 
-GLIDE defines its own `TimeoutError` and `ConnectionError` classes that shadow Python built-ins when imported directly. Always import with explicit aliases:
+`GlideError`, `RequestError`, `ClosingError`, `LoggerError` are GLIDE-specific. But `TimeoutError` and `ConnectionError` collide with Python built-ins if imported directly. Always alias:
 
 ```python
 from glide import (
-    GlideClient,
     GlideError,
+    RequestError,
     TimeoutError as GlideTimeoutError,
     ConnectionError as GlideConnectionError,
-    RequestError,
     ExecAbortError,
     ConfigurationError,
     ClosingError,
 )
 ```
 
-| Error | Parent | When It Occurs |
-|-------|--------|---------------|
-| `GlideError` | `Exception` | Base class for all GLIDE errors |
-| `RequestError` | `GlideError` | Base class for server/protocol errors |
-| `GlideTimeoutError` | `RequestError` | Request exceeded `request_timeout` (default 250ms) |
-| `GlideConnectionError` | `RequestError` | Connection lost (auto-reconnects) |
-| `ExecAbortError` | `RequestError` | Atomic batch aborted by server (e.g., command error in MULTI) |
-| `ConfigurationError` | `RequestError` | Invalid configuration (TLS, PubSub, compression) |
-| `ClosingError` | `GlideError` | Client was closed while requests pending |
+## Hierarchy
+
+```
+GlideError                       # base - catches everything
+├── ClosingError                 # client closed / unusable
+├── LoggerError                  # logger init failure
+└── RequestError                 # catches everything below too - most code catches at this level
+    ├── TimeoutError             # request exceeded request_timeout (default 250ms)
+    ├── ExecAbortError           # server aborted atomic batch (type mismatch in MULTI/EXEC)
+    ├── ConnectionError          # network disconnect - GLIDE is already reconnecting; retry after delay
+    └── ConfigurationError       # invalid config (TLS, RESP2+PubSub, compression)
+```
+
+**Common mistake:** catching `Exception` in redis-py matches `redis.exceptions.RedisError` and subclasses. In GLIDE, `except RequestError:` already catches timeouts, connection errors, and configuration errors - they are subclasses. Catch `GlideError` only if you also need `ClosingError` / `LoggerError`.
 
 ## Basic Error Handling
 
@@ -112,27 +116,21 @@ for attempt in range(3):
 
 ---
 
-## Reconnection Behavior
+## Reconnection behavior
 
-GLIDE reconnects automatically on connection loss with exponential backoff:
+GLIDE reconnects automatically on connection loss with exponential backoff. Two key differences from redis-py's `retry_on_timeout`:
+
+1. **Reconnection is infinite.** `num_of_retries` caps the backoff sequence length, not the total number of retries. After `num_of_retries` attempts the delay plateaus at the ceiling and the client keeps retrying until close. This is very different from redis-py where retries give up after N attempts.
+2. **Permanent errors are only blocked at INITIAL connect.** During reconnection, auth failures and `RESP3NotSupported` will also end up in an error state, but the mid-session classification logic is in the Rust core - callers just see `ConnectionError` until the client is closed or the server recovers.
 
 ```python
-from glide import BackoffStrategy, GlideClientConfiguration, NodeAddress
+from glide import BackoffStrategy
 
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("localhost", 6379)],
-    reconnect_strategy=BackoffStrategy(
-        num_of_retries=5,
-        factor=100,          # 100ms base delay
-        exponent_base=2,
-    ),
-)
+BackoffStrategy(num_of_retries=5, factor=100, exponent_base=2, jitter_percent=20)
+# Delay formula: rand_jitter * factor * (exponent_base ** attempt), clamped at the ceiling
 ```
 
-- Delay formula: `rand(0 ... factor * (exponent_base ^ attempt))`
-- After `num_of_retries`, delay stays at the ceiling indefinitely
-- PubSub channels are automatically resubscribed on reconnect
-- Permanent errors (NOAUTH, WRONGPASS) are not retried
+PubSub channels resubscribe automatically on reconnect via the synchronizer (see [pubsub-internals](../../../glide-dev/skills/glide-dev/reference/pubsub-internals.md) on the core side).
 
 ---
 

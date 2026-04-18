@@ -1,111 +1,59 @@
-# Production Deployment
+# Production deployment
 
-Use when deploying GLIDE Python to production, configuring timeouts, managing connections, or setting up observability.
+Use when deploying GLIDE Python to production. Covers GLIDE-specific defaults and the pitfalls that matter for operators. For basic setup examples see [features-connection](features-connection.md).
 
-## Connection Management
+## One client per process
 
-### Single Client Per Application
+Do not pool `GlideClient` / `GlideClusterClient`. The multiplexer is the pool. Creating N clients opens N sets of TCP connections to every node and defeats the connection-state tracking the core does.
 
-GLIDE multiplexes all requests over one connection per node. Do not create client pools.
+Use `lazy_connect=True` if your app must start before Valkey is reachable - the first command pays the connection cost.
 
-```python
-from glide import GlideClient, GlideClientConfiguration, NodeAddress
+Always `await client.close()` on shutdown; pending futures get `ClosingError`.
 
-# Correct: one client shared across the application
-config = GlideClientConfiguration(addresses=[NodeAddress("localhost", 6379)])
-client = await GlideClient.create(config)
+## GLIDE defaults agents should know
 
-# Wrong: do not pool GLIDE clients
-# pool = [await GlideClient.create(config) for _ in range(10)]
-```
+| Knob | Default | Config |
+|------|---------|--------|
+| Request timeout | 250 ms | `request_timeout` |
+| Connection timeout | 2000 ms | `AdvancedGlideClientConfiguration.connection_timeout` |
+| Inflight request cap | 1000 | `inflight_requests_limit` |
+| Topology check interval (cluster) | 60 s | `periodic_checks=PeriodicChecksManualInterval(...)` |
+| Backoff retries | (infinite; cap only on sequence length) | `reconnect_strategy` |
+| Protocol | RESP3 | `protocol=ProtocolVersion.RESP2` to downgrade |
+| TCP_NODELAY | True | `AdvancedGlideClientConfiguration.tcp_nodelay` |
 
-### Lazy Connect
+GLIDE also extends the effective request timeout for blocking commands (BLPOP, XREADGROUP BLOCK, etc.) by 0.5 s beyond the block duration - no tuning required.
 
-Defers connection until the first command. Allows startup when the server is not yet available.
+## Timeout tuning
 
-```python
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("localhost", 6379)],
-    lazy_connect=True,
-)
-client = await GlideClient.create(config)
-# No connection yet - first command triggers it
-```
+The 250 ms default is tight. Raise per-workload, not globally:
 
-### Client Cleanup
+| Workload | Recommended |
+|----------|-------------|
+| Cache lookup (GET, HGET) | 250-500 ms |
+| Writes (SET, HSET, ZADD) | 250-500 ms |
+| Complex (SORT, SCAN, ZRANGEBYSCORE large) | 1-5 s |
+| Lua scripts | 5-30 s |
+| Blocking commands | Auto-extended - do not raise |
 
-Always close clients on shutdown. Pending futures receive `ClosingError`.
+## Cluster: seed nodes and AZ affinity
 
-```python
-await client.close()
-await client.close("shutting down")  # custom error message
-```
+Provide multiple seed addresses for redundancy. Topology is auto-discovered.
 
----
-
-## Timeout Configuration
-
-| Timeout | Default | Config Parameter |
-|---------|---------|-----------------|
-| Request timeout | 250ms | `request_timeout` |
-| Connection timeout | 2000ms | `AdvancedGlideClientConfiguration(connection_timeout=ms)` |
-
-### Tuning by Workload
-
-| Workload | Recommended Timeout |
-|----------|-------------------|
-| Cache lookups (GET, HGET) | 250-500ms |
-| Write operations (SET, HSET) | 250-500ms |
-| Complex operations (SORT, SCAN) | 1000-5000ms |
-| Lua scripts (EVALSHA) | 5000-30000ms |
-| Blocking commands (BLPOP, XREADGROUP) | Handled automatically |
-
-GLIDE extends blocking command timeouts by 500ms beyond the block duration.
-
-```python
-from glide import AdvancedGlideClientConfiguration
-
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("localhost", 6379)],
-    request_timeout=1000,
-    advanced_config=AdvancedGlideClientConfiguration(connection_timeout=5000),
-)
-```
-
----
-
-## Cluster Configuration
-
-Provide multiple seed nodes for redundancy. GLIDE discovers the full topology automatically.
-
-### AZ Affinity
-
-Route reads to same-AZ replicas to reduce latency and cross-AZ costs:
-
-```python
-from glide import GlideClusterClientConfiguration, NodeAddress, ReadFrom
-
-config = GlideClusterClientConfiguration(
-    addresses=[NodeAddress("node1.example.com", 6379)],
-    read_from=ReadFrom.AZ_AFFINITY,
-    client_az="us-east-1a",
-)
-```
+`ReadFrom` strategies (in `glide_shared.config.ReadFrom`):
 
 | Strategy | Behavior |
 |----------|----------|
 | `PRIMARY` | All reads to primary (default) |
-| `PREFER_REPLICA` | Round-robin replicas, fallback to primary |
-| `AZ_AFFINITY` | Prefer same-AZ replicas |
-| `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | Same-AZ replicas, then primary, then remote |
+| `PREFER_REPLICA` | Round-robin replicas, fall back to primary |
+| `AZ_AFFINITY` | Same-AZ replicas preferred, then other replicas, then primary |
+| `AZ_AFFINITY_REPLICAS_AND_PRIMARY` | Same-AZ replicas, then same-AZ primary, then any replica, then primary |
 
-Requires Valkey 8.0+ with `availability-zone` configured on each server node.
-
----
+AZ-affinity strategies require `client_az` to be set AND the server exposing availability-zone metadata in CLUSTER SHARDS - otherwise falls back to primary.
 
 ## OpenTelemetry
 
-OTel is initialized globally before creating any clients:
+Initialize once, globally, before creating clients (subsequent `init()` calls are ignored):
 
 ```python
 from glide import (
@@ -118,28 +66,20 @@ OpenTelemetry.init(OpenTelemetryConfig(
         endpoint="http://otel-collector:4317",
         sample_percentage=1,
     ),
-    metrics=OpenTelemetryMetricsConfig(
-        endpoint="http://otel-collector:4317",
-    ),
+    metrics=OpenTelemetryMetricsConfig(endpoint="http://otel-collector:4317"),
     flush_interval_ms=5000,
 ))
+
+# Runtime adjustments
+OpenTelemetry.set_sample_percentage(10)
+OpenTelemetry.is_initialized()
 ```
 
-| Environment | Sample Rate |
-|-------------|------------|
-| Production | 1-2% |
-| Staging | 5-10% |
-| Debugging | 50-100% |
+Rough sampling rates: 1-2% prod, 5-10% staging, 50-100% debugging.
 
----
+## Platform constraints
 
-## Connection Defaults
-
-| Parameter | Default |
-|-----------|---------|
-| Request timeout | 250ms |
-| Connection timeout | 2000ms |
-| Inflight request limit | 1000 |
-| Connections per node | 2 (data + management) |
-| Topology check | 60s |
-| Protocol | RESP3 |
+- **glibc 2.17+** required. Alpine (musl) is NOT supported - use Debian/Ubuntu-based images.
+- **Protobuf**: the `protobuf` Python package must be ≥ 3.20. Conflicts with other packages pinning older protobuf will surface as import errors on client creation.
+- **Proxies / connection inspectors**: GLIDE sends `CLIENT SETNAME`, `CLIENT SETINFO`, `INFO REPLICATION` during setup. Transparent proxies that strip or rewrite these will break topology detection.
+- **Protocol**: RESP3 is the default. RESP2 is accepted but PubSub static subscriptions require RESP3 and raise `ConfigurationError` otherwise.

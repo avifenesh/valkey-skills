@@ -1,7 +1,7 @@
 {
   "name": "valkey-glide-python",
-  "version": "2.0.0",
-  "description": "Use when building Python apps with Valkey GLIDE - async/sync APIs, GlideClient, GlideClusterClient, asyncio, TLS, OpenTelemetry, batching, PubSub, streams, Lua scripting. Not for redis-py migration - use migrate-redis-py skill.",
+  "version": "2.1.0",
+  "description": "Use when building Python apps with Valkey GLIDE - async/sync APIs, GlideClient, GlideClusterClient, multiplexer behavior, IAM, AZ affinity, OpenTelemetry, batching, PubSub, streams. Covers the divergence from redis-py; basic command shapes are assumed knowable from training. Not for redis-py migration - use migrate-redis-py.",
   "author": {
     "name": "Avi Fenesh",
     "url": "https://github.com/avifenesh"

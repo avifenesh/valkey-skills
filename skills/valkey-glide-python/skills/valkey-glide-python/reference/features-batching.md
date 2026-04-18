@@ -1,164 +1,101 @@
-# Batching - Pipelines and Transactions
+# Batching - pipelines and transactions
 
-Use when you need to send multiple commands in a single round-trip for throughput or atomicity - pipelines for bulk operations, transactions for atomic multi-command blocks.
+Use when sending multiple commands in one round-trip. Pipelines for bulk throughput, transactions for atomicity. Covers what differs from `redis-py` - the basic "queue commands, run them" pattern works as expected.
 
-GLIDE uses a unified `Batch` / `ClusterBatch` class hierarchy with an `is_atomic` flag. Setting `is_atomic=True` creates a transaction (MULTI/EXEC); `is_atomic=False` creates a pipeline.
+## Divergence from redis-py
 
-## Core Concepts
+| redis-py | GLIDE Python |
+|----------|--------------|
+| `pipe = r.pipeline(transaction=True)` + `pipe.execute()` | `batch = Batch(is_atomic=True)` + `await client.exec(batch, raise_on_error=True)` |
+| `pipe.watch(...)` then `pipe.multi()` | WATCH/MULTI/EXEC needs a dedicated client (occupies the multiplexer); result is `None` on WATCH conflict |
+| Separate pipeline vs transaction methods | Unified `Batch` / `ClusterBatch` with `is_atomic` flag |
+| Cluster pipelining: manual slot split | `ClusterBatch(is_atomic=False)` auto-routes per-slot; multi-node batches split internally |
+| `strict_transactions=True` errors | `raise_on_error=True` raises on first error after all retries; `False` puts `RequestError` in the result array |
 
-| Mode | Flag | Protocol | Slot Constraint |
-|------|------|----------|-----------------|
-| Transaction | `is_atomic=True` | MULTI/EXEC | All keys must map to the same hash slot in cluster mode |
-| Pipeline | `is_atomic=False` | Pipelined commands | Can span multiple slots and nodes in cluster mode |
+One class, two modes:
 
-## Standalone Batching
+| Mode | `is_atomic` | Protocol | Cluster constraint |
+|------|-------------|----------|---------------------|
+| Transaction | `True` | MULTI/EXEC | All keys must map to one hash slot (use hash tags) |
+| Pipeline | `False` | Pipelined commands | Any slots; GLIDE splits and dispatches per-slot |
+
+## Minimal shape
 
 ```python
-from glide import GlideClient, Batch, BatchOptions
+from glide import Batch, ClusterBatch
 
-# Atomic batch (transaction)
-transaction = Batch(is_atomic=True)
-transaction.set("key", "1")
-transaction.incr("key")
-transaction.get("key")
-
-result = await client.exec(transaction, raise_on_error=True)
-# result: [OK, 2, b'2']
+batch = Batch(is_atomic=False)  # or ClusterBatch for a cluster client
+batch.set("k1", "v1")
+batch.incr("k1")
+batch.get("k1")
+results = await client.exec(batch, raise_on_error=True)
 ```
 
-```python
-# Non-atomic batch (pipeline)
-pipeline = Batch(is_atomic=False)
-pipeline.set("key1", "value1")
-pipeline.set("key2", "value2")
-pipeline.get("key1")
-pipeline.get("key2")
-
-result = await client.exec(pipeline, raise_on_error=True)
-# result: [OK, OK, b'value1', b'value2']
-```
-
-## Cluster Batching
+## Cluster-only options (`ClusterBatchOptions`)
 
 ```python
-from glide import GlideClusterClient, ClusterBatch, ClusterBatchOptions
+from glide import (
+    ClusterBatchOptions, BatchRetryStrategy, SlotKeyRoute, SlotType,
+)
 
-batch = ClusterBatch(is_atomic=False)
-batch.set("key1", "value1")
-batch.set("key2", "value2")
-batch.get("key1")
-
-result = await client.exec(batch, raise_on_error=True)
-```
-
-For atomic cluster batches, all keys must hash to the same slot. Use hash tags (e.g., `{user}.name`, `{user}.email`) to colocate keys.
-
-## Batch Options
-
-### Standalone
-
-```python
-options = BatchOptions(timeout=5000)  # timeout in milliseconds
-result = await client.exec(transaction, raise_on_error=True, options=options)
-```
-
-### Cluster
-
-```python
-from glide import ClusterBatchOptions, BatchRetryStrategy, SlotKeyRoute, SlotType
-
-options = ClusterBatchOptions(
-    timeout=5000,
-    route=SlotKeyRoute(SlotType.PRIMARY, "my-key"),
+opts = ClusterBatchOptions(
+    timeout=5000,                                # ms
+    route=SlotKeyRoute(SlotType.PRIMARY, "key"), # optional; pins entire batch to one node
     retry_strategy=BatchRetryStrategy(
-        retry_server_error=True,
-        retry_connection_error=False,
+        retry_server_error=True,     # retry on TRYAGAIN etc.
+        retry_connection_error=True, # retry the batch on connection failure
     ),
 )
-result = await client.exec(batch, raise_on_error=False, options=options)
+results = await client.exec(batch, raise_on_error=False, options=opts)
 ```
 
-## Routing Behavior (Cluster)
+### Routing behavior
 
-- With explicit `route`: entire batch goes to the specified node.
-- Without `route` + atomic: routed to the slot owner of the first key.
-- Without `route` + non-atomic: each command routed individually by key slot. Multi-node commands are split and dispatched automatically.
+| Config | Dispatch |
+|--------|----------|
+| `route=` specified | Entire batch to that node |
+| Atomic, no `route` | Slot owner of the first key |
+| Non-atomic, no `route` | Per-command by key slot; multi-node batches split automatically |
 
-## Error Handling
+### Retry strategy (cluster non-atomic only)
+
+`BatchRetryStrategy` is not supported on atomic batches. Hazards:
+
+- `retry_server_error=True` can reorder commands within a slot.
+- `retry_connection_error=True` can cause duplicate executions - the server may have already processed the request before the connection died.
+- Increase `timeout` when enabling retries so the retry window fits.
+
+MOVED / ASK redirects are always handled automatically and are orthogonal to this knob.
+
+## `raise_on_error` semantics
 
 ```python
 from glide import RequestError
 
-# raise_on_error=True: first error raises RequestError after all retries
+# raise_on_error=True: first error raises; nothing returned
 try:
-    result = await client.exec(batch, raise_on_error=True)
+    results = await client.exec(batch, raise_on_error=True)
 except RequestError as e:
-    print(f"Batch failed: {e}")
+    ...
 
-# raise_on_error=False: errors appear as RequestError instances in the result array
-result = await client.exec(batch, raise_on_error=False)
-for i, res in enumerate(result):
-    if isinstance(res, RequestError):
-        print(f"Command {i} failed: {res}")
-    else:
-        print(f"Command {i} result: {res}")
+# raise_on_error=False: errors are inline in results as RequestError instances
+results = await client.exec(batch, raise_on_error=False)
+for i, r in enumerate(results):
+    if isinstance(r, RequestError):
+        ...
 ```
 
-## Retry Strategy (Cluster Only)
+## WATCH with transactions
 
-`BatchRetryStrategy` controls retry behavior for non-atomic cluster batches.
-
-```python
-strategy = BatchRetryStrategy(
-    retry_server_error=True,     # retry on TRYAGAIN etc.
-    retry_connection_error=True, # retry on connection failure
-)
-```
-
-Cautions:
-- `retry_server_error=True` may cause commands targeting the same slot to execute out of order.
-- `retry_connection_error=True` may cause duplicate executions since the server may have already processed the request.
-- Retry strategies are only supported for non-atomic batches.
-- Increase `timeout` when enabling retries.
-
-## WATCH with Transactions
-
-Atomic batches support optimistic locking via WATCH. If a watched key changes before EXEC, the transaction returns `None`.
+Atomic batches support WATCH. If a watched key changes before EXEC, `exec()` returns `None` (not a list, not an error):
 
 ```python
-transaction = Batch(is_atomic=True)
-transaction.set("counter", "10")
-transaction.incr("counter")
-
-result = await client.exec(transaction, raise_on_error=True)
-# result is None if a WATCH conflict occurred
+batch = Batch(is_atomic=True)
+batch.incr("counter")
+result = await client.exec(batch, raise_on_error=True)
 if result is None:
-    print("Transaction aborted due to WATCH conflict")
+    # WATCH conflict - retry or abort
+    ...
 ```
 
-## Building Batches with All Command Types
-
-`Batch` and `ClusterBatch` support the full GLIDE command set. Commands are queued and executed in order:
-
-```python
-batch = Batch(is_atomic=False)
-batch.set("str-key", "hello")
-batch.hset("hash-key", {"field1": "val1", "field2": "val2"})
-batch.lpush("list-key", ["c", "b", "a"])
-batch.sadd("set-key", ["x", "y", "z"])
-batch.xadd("stream-key", [("sensor", "42")])
-batch.publish("hello", "notifications")
-
-result = await client.exec(batch, raise_on_error=True)
-# Each result corresponds to the command at the same index
-```
-
-## Custom Commands in Batches
-
-```python
-batch = Batch(is_atomic=False)
-batch.custom_command(["SET", "key", "value"])
-batch.custom_command(["GET", "key"])
-result = await client.exec(batch, raise_on_error=True)
-# result: [OK, b'value']
-```
+WATCH itself must be issued on a dedicated client - it's a connection-state command; the multiplexed connection would leak watch state across callers.

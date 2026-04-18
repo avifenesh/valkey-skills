@@ -1,238 +1,168 @@
 # Connection and Configuration
 
-Use when creating GLIDE client instances, configuring addresses, authentication, TLS, reconnection, protocol version, compression, AZ affinity, or managing connection lifecycle.
+Use when creating GLIDE client instances, configuring addresses, authentication, TLS, reconnection, protocol version, compression, AZ affinity, or managing connection lifecycle. Covers what differs from `redis-py` / `RedisCluster` - skip the basics, they work as expected.
 
-## Contents
+## Divergence from redis-py
 
-- Client Types (line 20)
-- Standalone Client (line 29)
-- Cluster Client (line 63)
-- TLS and mTLS (line 85)
-- Authentication (line 135)
-- Runtime Password Update (line 157)
-- IAM Token Refresh (line 170)
-- Compression (line 177)
-- AZ Affinity (line 195)
-- Lazy Connect (line 207)
-- Connection Statistics (line 218)
-- Graceful Shutdown (line 230)
+| redis-py | GLIDE Python |
+|----------|--------------|
+| `redis.Redis(host, port, ...)` | `await GlideClient.create(config)` - async classmethod |
+| `redis.asyncio.Redis(...)` / `redis.RedisCluster(...)` | `GlideClient` / `GlideClusterClient` (separate types, not wrappers) |
+| Connection pool with `max_connections` | Single multiplexed connection per node - no pool knob |
+| Per-task client OK | One client shared across all coroutines in the process (multiplexer) |
+| Blocking commands share the pool | Blocking commands (BLPOP, BRPOP, BZPOPMAX, WATCH/MULTI/EXEC) occupy the single connection - use a dedicated client for them |
+| `decode_responses=True` | No equivalent - always `bytes`; call `.decode()` or use `str` arg overloads where typed |
+| `socket_timeout` seconds | `request_timeout` milliseconds |
+| `retry_on_timeout=True` | `reconnect_strategy=BackoffStrategy(...)` |
 
-## Client Types
+## Client types
 
-| Client | Class | Config Class | Use Case |
-|--------|-------|-------------|----------|
-| Standalone | `GlideClient` | `GlideClientConfiguration` | Single node or read replicas |
-| Cluster | `GlideClusterClient` | `GlideClusterClientConfiguration` | Cluster mode with slot-based routing |
+| Client | Class | Config |
+|--------|-------|--------|
+| Standalone / primary + replicas | `GlideClient` | `GlideClientConfiguration` |
+| Cluster | `GlideClusterClient` | `GlideClusterClientConfiguration` |
 
-Both clients are created via the async `create()` classmethod and closed via `close()`.
-
-## Standalone Client
-
-```python
-import asyncio
-from glide import (
-    GlideClient, GlideClientConfiguration, NodeAddress,
-    ServerCredentials, BackoffStrategy, ReadFrom, ProtocolVersion,
-)
-
-async def main():
-    config = GlideClientConfiguration(
-        addresses=[
-            NodeAddress("localhost", 6379),
-            NodeAddress("replica1.example.com", 6379),
-        ],
-        use_tls=False,
-        credentials=ServerCredentials(password="secretpass"),
-        read_from=ReadFrom.PREFER_REPLICA,
-        request_timeout=500,          # ms
-        reconnect_strategy=BackoffStrategy(
-            num_of_retries=5, factor=100, exponent_base=2,
-            jitter_percent=20,  # optional, adds randomness to retry intervals
-        ),
-        database_id=0,
-        client_name="my-app",
-        protocol=ProtocolVersion.RESP3,
-    )
-    client = await GlideClient.create(config)
-    await client.set("key", "value")
-    await client.close()
-
-asyncio.run(main())
-```
-
-## Cluster Client
-
-```python
-from glide import (
-    GlideClusterClient, GlideClusterClientConfiguration, NodeAddress,
-    PeriodicChecksManualInterval, ServerCredentials, BackoffStrategy,
-)
-
-config = GlideClusterClientConfiguration(
-    addresses=[NodeAddress("cluster-node-1.example.com", 6379)],
-    use_tls=True,
-    credentials=ServerCredentials(username="admin", password="secret"),
-    periodic_checks=PeriodicChecksManualInterval(duration_in_sec=30),
-    reconnect_strategy=BackoffStrategy(
-        num_of_retries=5, factor=1000, exponent_base=2,
-    ),
-)
-client = await GlideClusterClient.create(config)
-```
-
-Seed addresses can be partial - the client discovers the full cluster topology automatically.
-
-## TLS and mTLS
-
-```python
-from glide import TlsAdvancedConfiguration, AdvancedGlideClientConfiguration
-
-# Basic TLS
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("host", 6380)],
-    use_tls=True,
-)
-
-# mTLS with custom CA
-with open("/path/to/ca-cert.pem", "rb") as f:
-    ca_cert = f.read()
-with open("/path/to/client-cert.pem", "rb") as f:
-    client_cert = f.read()
-with open("/path/to/client-key.pem", "rb") as f:
-    client_key = f.read()
-
-tls_config = TlsAdvancedConfiguration(
-    root_pem_cacerts=ca_cert,
-    client_cert_pem=client_cert,
-    client_key_pem=client_key,
-)
-advanced = AdvancedGlideClientConfiguration(
-    connection_timeout=5000,  # ms
-    tls_config=tls_config,
-    tcp_nodelay=True,         # disable Nagle's algorithm (default: True)
-)
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("host", 6380)],
-    use_tls=True,
-    advanced_config=advanced,
-)
-```
-
-For self-signed certs in dev, set `use_insecure_tls=True` on `TlsAdvancedConfiguration`.
-
-For cluster clients, use `AdvancedGlideClusterClientConfiguration` which adds `refresh_topology_from_initial_nodes`:
-
-```python
-from glide import AdvancedGlideClusterClientConfiguration
-
-advanced = AdvancedGlideClusterClientConfiguration(
-    connection_timeout=5000,
-    tls_config=tls_config,
-    refresh_topology_from_initial_nodes=True,  # only use seed nodes for topology
-)
-```
+Both are GLIDE's own code; neither wraps the other. Create via `await ClientClass.create(config)`, close via `await client.close()`. Seed addresses can be partial - topology is discovered.
 
 ## Authentication
 
 ```python
-# Password-only
-creds = ServerCredentials(password="my-password")
+from glide import ServerCredentials, IamAuthConfig, ServiceType
 
-# Username + password (ACL)
-creds = ServerCredentials(username="app-user", password="my-password")
+# Password or username+password (ACL)
+creds = ServerCredentials(password="pw")
+creds = ServerCredentials(username="user", password="pw")
 
-# IAM authentication (AWS ElastiCache / MemoryDB)
-from glide import IamAuthConfig, ServiceType
-iam = IamAuthConfig(
-    cluster_name="my-cluster",
-    service=ServiceType.ELASTICACHE,
-    region="us-east-1",
-    refresh_interval_seconds=300,
-)
-creds = ServerCredentials(username="iam-user", iam_config=iam)
-```
-
-Password and IAM are mutually exclusive. IAM requires a username.
-
-## Runtime Password Update
-
-```python
-# Update stored password for future reconnections (no immediate AUTH)
-await client.update_connection_password("new-password")
-
-# Update and immediately re-authenticate all connections
-await client.update_connection_password("new-password", immediate_auth=True)
-
-# Remove stored password
-await client.update_connection_password(None)
-```
-
-## IAM Token Refresh
-
-```python
-# Manually refresh IAM token (only for clients created with IAM auth)
-await client.refresh_iam_token()
-```
-
-## Compression
-
-```python
-from glide import CompressionConfiguration, CompressionBackend
-
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("localhost", 6379)],
-    compression=CompressionConfiguration(
-        enabled=True,
-        backend=CompressionBackend.LZ4,   # or ZSTD (default)
-        compression_level=3,               # backend-specific
-        min_compression_size=64,           # bytes, minimum threshold
+# IAM (ElastiCache / MemoryDB) - GLIDE-only, no redis-py equivalent
+creds = ServerCredentials(
+    username="iam-user",
+    iam_config=IamAuthConfig(
+        cluster_name="my-cluster",
+        service=ServiceType.ELASTICACHE,  # or ServiceType.MEMORYDB
+        region="us-east-1",
+        refresh_interval_seconds=300,  # optional
     ),
 )
 ```
 
-Compression is transparent - set-type commands compress automatically, get-type commands decompress.
+Password and IAM are mutually exclusive on a single `ServerCredentials`. IAM requires a username.
 
-## AZ Affinity
+### Runtime updates
 
 ```python
-config = GlideClusterClientConfiguration(
-    addresses=[NodeAddress("host", 6379)],
-    read_from=ReadFrom.AZ_AFFINITY,
-    client_az="us-east-1a",
+await client.update_connection_password("new-pw")                   # stored, used on next reconnect
+await client.update_connection_password("new-pw", immediate_auth=True)  # re-AUTH now
+await client.update_connection_password(None)                       # clear stored password
+await client.refresh_iam_token()                                    # force IAM token refresh
+```
+
+## TLS / mTLS
+
+Basic TLS is just `use_tls=True`. Everything else (client cert, insecure dev mode, custom CA) goes through `TlsAdvancedConfiguration` + `AdvancedGlideClientConfiguration`:
+
+```python
+from glide import (
+    TlsAdvancedConfiguration, AdvancedGlideClientConfiguration,
+    AdvancedGlideClusterClientConfiguration,
+)
+
+tls = TlsAdvancedConfiguration(
+    root_pem_cacerts=ca_bytes,
+    client_cert_pem=cert_bytes,
+    client_key_pem=key_bytes,
+    use_insecure_tls=False,  # True to bypass verification (dev only)
+)
+advanced = AdvancedGlideClientConfiguration(
+    connection_timeout=5000,  # ms; default 2000
+    tls_config=tls,
+    tcp_nodelay=True,         # default True; disable Nagle
+    pubsub_reconciliation_interval=None,  # ms; sets PubSub reconciliation cadence
 )
 ```
 
-`AZ_AFFINITY` routes reads to same-AZ replicas first. `AZ_AFFINITY_REPLICAS_AND_PRIMARY` includes the local primary in the rotation. Both require `client_az` to be set.
+`AdvancedGlideClusterClientConfiguration` adds `refresh_topology_from_initial_nodes: bool = False` - when `True`, only seed nodes are used for periodic topology refresh.
 
-## Lazy Connect
+## GLIDE-only features
+
+### AZ affinity
 
 ```python
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("localhost", 6379)],
-    lazy_connect=True,   # defer connection until first command
+from glide import ReadFrom
+
+GlideClusterClientConfiguration(
+    addresses=[...],
+    read_from=ReadFrom.AZ_AFFINITY,             # or AZ_AFFINITY_REPLICAS_AND_PRIMARY
+    client_az="us-east-1a",                      # REQUIRED when AZ_AFFINITY*
 )
 ```
 
-The first command pays the connection establishment cost. Governed by `connection_timeout`, not `request_timeout`.
+Raises `ConfigurationError` if `client_az` is missing on an AZ-affinity strategy.
 
-## Connection Statistics
+### Lazy connect
+
+```python
+GlideClientConfiguration(addresses=[...], lazy_connect=True)
+```
+
+Connection establishment deferred until the first command. That first command pays connection-timeout cost, not request-timeout.
+
+### Compression
+
+Transparent value compression, driven by the Rust core:
+
+```python
+from glide import CompressionConfiguration, CompressionBackend
+
+CompressionConfiguration(
+    enabled=False,                          # default False
+    backend=CompressionBackend.ZSTD,        # or CompressionBackend.LZ4
+    compression_level=None,                  # backend default if None; core validates range
+    min_compression_size=64,                 # bytes; below this, no compression
+)
+```
+
+### BackoffStrategy
+
+```python
+from glide import BackoffStrategy
+
+BackoffStrategy(
+    num_of_retries=5,
+    factor=100,
+    exponent_base=2,
+    jitter_percent=20,  # Optional; default used if not set
+)
+```
+
+Reconnection retries are **infinite** regardless of `num_of_retries` - `num_of_retries` only caps the backoff sequence length before the max interval plateaus. Client will keep reconnecting until close.
+
+## Connection statistics
 
 ```python
 stats = await client.get_statistics()
-# Returns dict with int values:
-#   total_connections, total_clients, total_values_compressed,
-#   total_values_decompressed, total_original_bytes,
-#   total_bytes_compressed, total_bytes_decompressed,
-#   compression_skipped_count, subscription_out_of_sync_count,
-#   subscription_last_sync_timestamp (ms since epoch)
+# dict[str, str] - all values are stringified counters/timestamps
+# Keys:
+#   total_connections, total_clients,
+#   total_values_compressed, total_values_decompressed,
+#   total_original_bytes, total_bytes_compressed, total_bytes_decompressed,
+#   compression_skipped_count,
+#   subscription_out_of_sync_count, subscription_last_sync_timestamp   # ms since epoch
 ```
 
-## Graceful Shutdown
+## Graceful shutdown
 
 ```python
-await client.close()
-# Optional: pass an error message for in-flight futures
-await client.close("shutting down")
+await client.close()                # in-flight futures get ClosingError
+await client.close("draining")     # optional message stored on the error
 ```
 
-All pending futures receive a `ClosingError` with the provided message.
+## Periodic topology checks (cluster)
+
+```python
+from glide import PeriodicChecksManualInterval, PeriodicChecksStatus
+
+GlideClusterClientConfiguration(
+    addresses=[...],
+    periodic_checks=PeriodicChecksManualInterval(duration_in_sec=30),  # override default 60s
+)
+```
