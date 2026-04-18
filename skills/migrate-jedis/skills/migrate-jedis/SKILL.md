@@ -96,10 +96,10 @@ For the zero-code-change path using the Jedis compatibility layer, see the Migra
 
 ## Gotchas (the short list)
 
-1. **`publish()` argument order is REVERSED.** Jedis is `jedis.publish(channel, message)`; GLIDE Java is `client.publish(message, channel).get()`. **Silent bug factory during migration** - code compiles and runs but publishes to the wrong channel. Verified in `java/client/.../commands/PubSubBaseCommands.java:54`.
+1. **`publish()` argument order is REVERSED.** Jedis is `jedis.publish(channel, message)`; GLIDE Java is `client.publish(message, channel).get()`. **Silent bug factory during migration** - code compiles and runs but publishes to the wrong channel. Verified in `java/client/.../commands/PubSubBaseCommands.java`.
 2. **Every command returns `CompletableFuture<T>`.** Call `.get(timeout, TimeUnit)` for synchronous behavior - never bare `.get()` (can block indefinitely on a bad connection).
 3. **Array args, not varargs.** Multi-key commands take `String[]` arrays. `jedis.del("k1", "k2")` -> `client.del(new String[]{"k1", "k2"}).get()`.
-4. **No connection pool management.** Drop `JedisPool` and `JedisPoolConfig` entirely. Multiplexer is the pool. Blocking commands (`blpop`, `brpop`, `blmove`, `bzpopmax`/`min`, `brpoplpush`, `blmpop`, `bzmpop`, `xread`/`xreadgroup` with block) and WATCH/MULTI/EXEC need a dedicated client.
+4. **No connection pool management.** Drop `JedisPool` and `JedisPoolConfig` entirely. Multiplexer is the pool. Blocking commands (`blpop`, `brpop`, `blmove`, `bzpopmax`, `bzpopmin`, `brpoplpush`, `blmpop`, `bzmpop`, `xread`/`xreadgroup` with block, `wait`/`waitaof`) need a dedicated client due to **occupancy**. WATCH/MULTI/EXEC need a dedicated client due to **connection-state leakage**.
 5. **Builder pattern everywhere.** Lombok `@Builder` on config, set options, batch options. `GlideClientConfiguration.builder()...build()`.
 6. **Batch replaces both Transaction and Pipeline.** `new Batch(true)` for atomic (replaces `jedis.multi()`), `new Batch(false)` for pipeline. Same class, `isAtomic` flag.
 7. **Classifier required in Maven / Gradle.** Use `os-maven-plugin` (Maven) or `osdetector-gradle-plugin` (Gradle) to pick the right native library. **Uber JAR (GLIDE 2.3+)** bundles all platform natives - preferred for projects that ship cross-platform.

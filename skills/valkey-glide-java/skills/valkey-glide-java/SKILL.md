@@ -28,15 +28,15 @@ One `GlideClient` / `GlideClusterClient` per JVM. Shared across every thread / C
 
 **Exceptions that need a dedicated client:**
 
-- Blocking commands: `blpop`, `brpop`, `blmove`, `bzpopmax`, `bzpopmin`, `brpoplpush`, `blmpop`, `bzmpop`, plus `xread` / `xreadgroup` with block, and `wait` / `waitaof`.
-- `watch` / `multi` / `exec` (atomic batch after WATCH) - connection-state commands.
-- Long polling `getPubSubMessage()` - holds the future indefinitely.
+- Blocking commands (dedicated client due to **occupancy** - they hold the multiplexed connection for the block duration): `blpop`, `brpop`, `blmove`, `bzpopmax`, `bzpopmin`, `brpoplpush`, `blmpop`, `bzmpop`, plus `xread` / `xreadgroup` with block, and `wait` / `waitaof`.
+- Transactional commands (dedicated client due to **connection-state leakage** across callers on the shared multiplexer): `watch` / `multi` / `exec` (atomic batch after WATCH).
+- Long polling `getPubSubMessage()` - holds the future indefinitely (occupancy).
 
 Large values are NOT an exception - they pipeline through the multiplexer fine.
 
 ## Grep hazards
 
-1. **`publish(message, channel)` - REVERSED from Jedis / Lettuce.** Java matches the Python/Node reversed pattern. `client.publish("message", "channel").get()` - message first, channel second. Jedis is `publish(channel, message)`; Lettuce is `publish(channel, message)`. **Silent bug factory during migration.** Go and C# GLIDE match the legacy convention; Python, Node, and Java GLIDE reverse it. Source: `java/client/.../commands/PubSubBaseCommands.java:54` `CompletableFuture<String> publish(String message, String channel);`.
+1. **`publish(message, channel)` - REVERSED from Jedis / Lettuce.** Java matches the Python/Node reversed pattern. `client.publish("message", "channel").get()` - message first, channel second. Jedis is `publish(channel, message)`; Lettuce is `publish(channel, message)`. **Silent bug factory during migration.** Go and C# GLIDE match the legacy convention; Python, Node, and Java GLIDE reverse it. Source: `java/client/.../commands/PubSubBaseCommands.java` `CompletableFuture<String> publish(String message, String channel);`.
 2. **Java uses direct JNI, NOT UDS.** Migrated from UDS to direct JNI in GLIDE 2.2 for Windows support. UDS is Python-async and Node.js ONLY; Java, Go, Python-sync, C#, PHP, Ruby are all direct-FFI. Do not describe Java as UDS-backed.
 3. **Every command returns `CompletableFuture<T>`.** Unwrap with `.get(timeout, TimeUnit)` - never bare `.get()` (blocks indefinitely if the connection has issues).
 4. **Errors come via `ExecutionException` from `.get()`.** Unwrap via `.getCause()` and `instanceof` check against specific `GlideException` subclasses.

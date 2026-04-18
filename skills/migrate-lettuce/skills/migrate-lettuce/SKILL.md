@@ -89,11 +89,11 @@ For native migration, the key steps:
 
 ## Gotchas (the short list)
 
-1. **`publish()` argument order is REVERSED.** Lettuce is `redis.async().publish(channel, message)`; GLIDE Java is `client.publish(message, channel).get()`. **Silent bug factory during migration.** Verified in `java/client/.../commands/PubSubBaseCommands.java:54`.
+1. **`publish()` argument order is REVERSED.** Lettuce is `redis.async().publish(channel, message)`; GLIDE Java is `client.publish(message, channel).get()`. **Silent bug factory during migration.** Verified in `java/client/.../commands/PubSubBaseCommands.java`.
 2. **No reactive API.** Lettuce offers Project Reactor (`Flux` / `Mono`). GLIDE only provides `CompletableFuture`. Adapt with `Mono.fromFuture(client.get(key))`. Significant for Spring WebFlux - the reactive `ReactiveRedisTemplate` / `ReactiveValueOperations` is only available via Lettuce in Spring Data Valkey today.
 3. **No codec system.** Lettuce `RedisCodec<K, V>` has no equivalent. Handle serialization manually or use `GlideString` for binary-safe bytes.
 4. **`hset("hash", "field", "value")` variadic form** in Lettuce takes 3 strings; GLIDE takes a `Map<String, String>` or an array of `String[]` pairs via overloads. Always check signature.
-5. **Array args for multi-element commands** - `lpush`, `rpush`, `sadd`, `srem`, etc. take `String[]` arrays instead of varargs.
+5. **Array args for multi-element commands** - `lpush`, `rpush`, `sadd`, `srem`, `del`, `exists` take `String[]` arrays instead of varargs.
 6. **No `ClientResources` / thread-pool configuration.** GLIDE Rust core manages its own threading.
 7. **Simpler connection lifecycle** - no separate `StatefulConnection` + `Commands` layers. Call commands directly on the client.
 8. **Multi-arch native library distribution.** Use `osdetector-gradle-plugin` or `os-maven-plugin`. **Uber JAR (GLIDE 2.3+)** bundles all platform natives - preferred for cross-platform projects.

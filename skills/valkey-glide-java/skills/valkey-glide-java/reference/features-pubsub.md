@@ -150,7 +150,7 @@ Optional<GlideString> pattern = msg.getPattern(); // pattern that matched (if pa
 
 **GOTCHA: argument order is REVERSED from Jedis / Lettuce.** Jedis is `publish(channel, message)`; Lettuce is `publish(channel, message)`; GLIDE Java is `publish(message, channel)` - message first, channel second. **Silent mis-routing during migration if you don't notice.**
 
-Source: `java/client/src/main/java/glide/api/commands/PubSubBaseCommands.java:54` -
+Source: `java/client/src/main/java/glide/api/commands/PubSubBaseCommands.java` -
 `CompletableFuture<String> publish(String message, String channel);`
 
 ```java

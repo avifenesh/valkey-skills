@@ -4,7 +4,7 @@ Use for retry logic and batch error semantics. Covers GLIDE-specific divergence 
 
 ## Hierarchy - FLAT under GlideException
 
-All errors extend `GlideException extends RuntimeException` directly. No multi-level subclass tree (unlike Python's `ValkeyError -> RequestError -> TimeoutError/etc.`).
+All errors extend `GlideException extends RuntimeException` directly. No multi-level subclass tree (unlike Python's `ValkeyError -> RequestError -> TimeoutError` / `ExecAbortError` / `ConnectionError` / `ConfigurationError`).
 
 ```
 GlideException extends RuntimeException         # concrete base; catch-all
@@ -12,7 +12,7 @@ GlideException extends RuntimeException         # concrete base; catch-all
 ├── ConnectionException          # network / connection issue (temporary - auto-reconnecting)
 ├── ConfigurationError           # invalid config (note "Error" suffix - inconsistent with others)
 ├── ExecAbortException           # atomic batch aborted (WATCH conflict)
-├── RequestException             # server-side / protocol error (WRONGTYPE, OOM, etc.)
+├── RequestException             # server-side / protocol error (WRONGTYPE, OOM, NOAUTH, MOVED, ASK)
 └── TimeoutException             # GLIDE request timeout
 ```
 
@@ -26,7 +26,7 @@ Every command returns `CompletableFuture<T>`. Errors from the server come back i
 
 | Error kind | When it occurs |
 |-----------|----------------|
-| `RequestException` | Server / protocol errors - WRONGTYPE, OOM, NOAUTH, etc. |
+| `RequestException` | Server / protocol errors - WRONGTYPE, OOM, NOAUTH, MOVED, ASK |
 | `TimeoutException` (GLIDE) | Request exceeded `requestTimeout` (default 250 ms) |
 | `ConnectionException` | Connection lost. Auto-reconnect in progress. |
 | `ExecAbortException` | Atomic batch aborted (WATCH key changed) |
