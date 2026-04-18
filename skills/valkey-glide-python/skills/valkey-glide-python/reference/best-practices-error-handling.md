@@ -130,7 +130,7 @@ BackoffStrategy(num_of_retries=5, factor=100, exponent_base=2, jitter_percent=20
 # Delay formula: rand_jitter * factor * (exponent_base ** attempt), clamped at the ceiling
 ```
 
-PubSub channels resubscribe automatically on reconnect via the synchronizer (see [pubsub-internals](../../../glide-dev/skills/glide-dev/reference/pubsub-internals.md) on the core side).
+PubSub channels resubscribe automatically on reconnect via the synchronizer on the core side (see the `glide-dev` skill for the reconciliation loop details).
 
 ---
 
