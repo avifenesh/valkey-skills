@@ -1,7 +1,7 @@
 {
   "name": "valkey-glide-ruby",
-  "version": "2.0.0",
-  "description": "Use when building Ruby apps with Valkey GLIDE - valkey-rb gem (GA), redis-rb drop-in replacement, FFI bridge, PubSub, pipelining, OpenTelemetry, TLS. Not for other languages - see valkey-glide router.",
+  "version": "2.1.0",
+  "description": "Use when building Ruby apps with Valkey GLIDE - valkey-rb gem (GA), single Valkey class, drop-in for redis-rb, FFI bridge, varargs subscribe, pubsub_callback module method, pipelined/multi blocks, statistics method, Valkey::OpenTelemetry.init. Assumes redis-rb knowledge; only GLIDE divergence is documented.",
   "author": {
     "name": "Avi Fenesh",
     "url": "https://github.com/avifenesh"
