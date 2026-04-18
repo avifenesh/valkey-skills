@@ -1,18 +1,32 @@
-# Connection and Configuration (C#)
+# Connection and configuration (C#)
 
-Use when creating a GLIDE client in C#, choosing between standalone and cluster mode, configuring authentication, TLS, timeouts, reconnection backoff, read strategy, or the StackExchange.Redis-compatible ConnectionMultiplexer.
+Use when creating clients, configuring auth, TLS, timeouts, reconnection, read strategy, or using the StackExchange.Redis-compatible ConnectionMultiplexer. Covers what differs from StackExchange.Redis's `ConnectionMultiplexer.Connect(connString)` + `IDatabase`.
 
-## Client Classes
+## Two entry points - pick one
 
-| Class | Mode | Description |
-|-------|------|-------------|
-| `GlideClient` | Standalone | Single-node or primary+replicas via builder config |
-| `GlideClusterClient` | Cluster | Valkey Cluster with auto-topology discovery |
-| `ConnectionMultiplexer` | Auto-detect | StackExchange.Redis-compatible facade, detects cluster automatically |
+| API | When to use |
+|-----|-------------|
+| `GlideClient.CreateClient(config)` / `GlideClusterClient.CreateClient(config)` | GLIDE-native builder pattern; explicit standalone vs cluster |
+| `ConnectionMultiplexer.ConnectAsync(connString)` | SE.Redis facade; auto-detects standalone vs cluster from connection string |
 
-All clients implement `IAsyncDisposable` - use `await using` for automatic cleanup.
+Both sit on the same underlying multiplexer. All clients implement `IAsyncDisposable` - use `await using` for cleanup.
 
-## Standalone Client (Builder Pattern)
+## Divergence from StackExchange.Redis
+
+| SE.Redis | GLIDE C# |
+|----------|---------|
+| `ConnectionMultiplexer.Connect(connString)` - sync or `ConnectAsync(...)` | Facade has both `Connect` and `ConnectAsync`; GLIDE-native `GlideClient.CreateClient(config)` is async-only |
+| Connection pool with `syncTimeout` / `responseTimeout` | Multiplexer - single multiplexed connection per node; no pool knobs |
+| `RedisKey` / `RedisValue` primitive wrappers | `ValkeyKey` / `ValkeyValue` - same idea, rebranded |
+| `IDatabase db = mux.GetDatabase()` | Call commands directly on `client` (or `mux.GetDatabase()` through the facade) |
+| `db.StringSetAsync(key, value)` | `client.SetAsync(key, value)` - SE.Redis-compatible method names but `String*` prefix dropped where redundant |
+| `db.ListLeftPushAsync` / `ListRightPushAsync` | Same names (SE.Redis-compatible) |
+| `ConnectionMultiplexer.GetServer()` / `GetServers()` | Not exposed; server commands on the client |
+| `ConfigurationOptions` parser | `StandaloneClientConfigurationBuilder` / `ClusterClientConfigurationBuilder` fluent builder; connection strings also parsed by `ConnectionMultiplexer` facade |
+| `OnConnectionFailed` / `OnConnectionRestored` events | No events - errors surface per-Task via `await`; track via `client.GetStatistics()` |
+| `MaxRetries`, `MaxInflightOperations` | `RetryStrategy(n, factor, exponentBase, jitter)` caps BACKOFF sequence length only - reconnection is INFINITE |
+
+## GLIDE-native builder pattern
 
 ```csharp
 using Valkey.Glide;
@@ -24,8 +38,8 @@ var config = new StandaloneClientConfigurationBuilder()
 
 await using var client = await GlideClient.CreateClient(config);
 
-await client.StringSetAsync("key", "value");
-var result = await client.StringGetAsync("key");
+await client.SetAsync("key", "value");         // NOT StringSetAsync
+ValkeyValue val = await client.GetAsync("key"); // NOT StringGetAsync
 ```
 
 With full configuration:
@@ -71,7 +85,7 @@ Only seed addresses are needed - GLIDE discovers full topology automatically.
 using Valkey.Glide;
 
 var mux = await ConnectionMultiplexer.ConnectAsync("localhost:6379");
-var db = mux.Database;
+var db = mux.GetDatabase();
 await db.StringSetAsync("key", "value");
 ```
 

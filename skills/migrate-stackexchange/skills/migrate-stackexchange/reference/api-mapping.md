@@ -1,149 +1,86 @@
-# StackExchange.Redis to GLIDE API Mapping
+# StackExchange.Redis to GLIDE: where signatures diverge
 
-Use when migrating specific StackExchange.Redis commands to their GLIDE equivalents, looking up type differences, or converting data type operations.
+Use when translating SE.Redis calls. GLIDE C# intentionally mirrors SE.Redis method names, so for most commands the only change is the type rename (`RedisKey`/`RedisValue` -> `ValkeyKey`/`ValkeyValue`) and `async` method call-sites.
 
-## String Operations
+## Most commands: name-identical, just rename types
 
-**StackExchange.Redis:**
+The big one: `RedisKey` -> `ValkeyKey`, `RedisValue` -> `ValkeyValue`. Both sets implicit-convert from `string` / `byte[]` so most call-sites keep working unchanged.
+
+| SE.Redis | GLIDE C# | Comment |
+|----------|---------|---------|
+| `await db.HashSetAsync(k, f, v)` | `await client.HashSetAsync(k, f, v)` | Identical |
+| `await db.HashGetAsync(k, f)` returning `RedisValue` | `await client.HashGetAsync(k, f)` returning `ValkeyValue` | Type rename only |
+| `await db.ListLeftPushAsync(k, v)` / `ListRightPushAsync` / `ListLeftPopAsync` / `ListRightPopAsync` | Identical names | |
+| `await db.SetAddAsync(k, v)` / `SetMembersAsync` / `SetRemoveAsync` / `SetContainsAsync` | Identical names | |
+| `await db.SortedSetAddAsync(k, m, score)` / `SortedSetRangeAsync` / `SortedSetScoreAsync` | Identical names | |
+| `await db.StreamAddAsync(key, field, value)` / `StreamReadAsync` / `StreamReadGroupAsync` | Identical names | |
+| `await db.KeyDeleteAsync(k)` / `KeyExistsAsync` / `KeyExpireAsync` / `KeyTimeToLiveAsync` | Identical names | |
+| `await db.StringBitCountAsync(k)` / `StringSetBitAsync` / `StringGetBitAsync` | Identical names | |
+| `await db.HyperLogLogAddAsync` / `HyperLogLogLengthAsync` | Identical names | |
+| `await db.GeoAddAsync` / `GeoDistanceAsync` / `GeoSearchAsync` | Identical names | |
+| `await db.ScriptEvaluateAsync(lua, keys, values)` | Identical | |
+
+## Handful of renames (`String*` prefix dropped for GET / SET)
+
+| SE.Redis | GLIDE C# |
+|----------|---------|
+| `await db.StringSetAsync(k, v)` | `await client.SetAsync(k, v)` |
+| `await db.StringSetAsync(k, v, TimeSpan.FromSeconds(60))` | `await client.SetAsync(k, v, SetExpiryOptions.From(TimeSpan.FromSeconds(60)))` - typed expiry option |
+| `await db.StringSetAsync(k, v, when: When.NotExists)` | `await client.SetAsync(k, v, SetCondition.NotExists)` |
+| `await db.StringGetAsync(k)` | `await client.GetAsync(k)` |
+| `await db.StringGetSetAsync(k, v)` | `await client.GetSetAsync(k, v)` |
+| `await db.StringLengthAsync(k)` | `await client.LengthAsync(k)` (in the string-commands group) |
+
+`StringSetBitAsync` / `StringGetBitAsync` / `StringBitCountAsync` keep the `String*` prefix.
+
+## Different set operations take arrays
+
+SE.Redis has both single-value and array-valued overloads. GLIDE is consistent:
+
 ```csharp
-await db.StringSetAsync("key", "value");
-await db.StringSetAsync("key", "value", TimeSpan.FromSeconds(60));
-await db.StringSetAsync("key", "value", when: When.NotExists);
-RedisValue val = await db.StringGetAsync("key");
-string str = val.ToString();
+// Single-value
+await client.SetAddAsync("set", (ValkeyValue)"a");
+await client.SetRemoveAsync("set", (ValkeyValue)"a");
+
+// Multi-value (bulk)
+await client.SetAddAsync("set", new ValkeyValue[] { "a", "b", "c" });
+await client.SetRemoveAsync("set", new ValkeyValue[] { "a", "b" });
 ```
 
-**GLIDE:**
+## Publish: argument order UNCHANGED
+
 ```csharp
-await client.Set("key", "value");
-// Expiry and conditional set use options (API may vary in preview)
-var val = await client.GetAsync("key");
+// SE.Redis:
+await sub.PublishAsync("channel", "message");
+
+// GLIDE: same order (unlike Python/Node GLIDE which reverse it)
+await client.PublishAsync("channel", "message");
 ```
 
----
+## Cluster client type
 
-## Hash Operations
+SE.Redis auto-detects cluster via `ConnectionMultiplexer.Connect`. GLIDE has two paths:
 
-**StackExchange.Redis:**
 ```csharp
-await db.HashSetAsync("hash", new HashEntry[] {
-    new HashEntry("f1", "v1"),
-    new HashEntry("f2", "v2"),
-});
-RedisValue val = await db.HashGetAsync("hash", "f1");
-HashEntry[] all = await db.HashGetAllAsync("hash");
-```
+// Facade path - auto-detects like SE.Redis:
+var mux = await ConnectionMultiplexer.ConnectAsync("n1:6379,n2:6379");
 
-**GLIDE:**
-```csharp
-// Hash commands use field-value pairs
-await client.HSet("hash", new Dictionary<string, string> {
-    { "f1", "v1" },
-    { "f2", "v2" },
-});
-var val = await client.HGet("hash", "f1");
-```
-
----
-
-## List Operations
-
-**StackExchange.Redis:**
-```csharp
-await db.ListLeftPushAsync("list", new RedisValue[] { "a", "b", "c" });
-await db.ListRightPushAsync("list", "x");
-RedisValue val = await db.ListLeftPopAsync("list");
-RedisValue[] range = await db.ListRangeAsync("list", 0, -1);
-```
-
-**GLIDE:**
-```csharp
-await client.LPush("list", new string[] { "a", "b", "c" });
-await client.RPush("list", new string[] { "x" });
-var val = await client.LPop("list");
-```
-
----
-
-## Set Operations
-
-**StackExchange.Redis:**
-```csharp
-await db.SetAddAsync("set", new RedisValue[] { "a", "b", "c" });
-await db.SetRemoveAsync("set", "a");
-RedisValue[] members = await db.SetMembersAsync("set");
-bool isMember = await db.SetContainsAsync("set", "b");
-```
-
-**GLIDE:**
-```csharp
-await client.SAdd("set", new string[] { "a", "b", "c" });
-await client.SRem("set", new string[] { "a" });
-```
-
----
-
-## Sorted Set Operations
-
-**StackExchange.Redis:**
-```csharp
-await db.SortedSetAddAsync("zset", new SortedSetEntry[] {
-    new SortedSetEntry("alice", 1.0),
-    new SortedSetEntry("bob", 2.0),
-});
-double? score = await db.SortedSetScoreAsync("zset", "alice");
-```
-
-**GLIDE:**
-```csharp
-// Sorted set commands accept member-score mappings
-await client.ZAdd("zset", new Dictionary<string, double> {
-    { "alice", 1.0 },
-    { "bob", 2.0 },
-});
-```
-
----
-
-## Delete and Exists
-
-**StackExchange.Redis:**
-```csharp
-await db.KeyDeleteAsync(new RedisKey[] { "k1", "k2", "k3" });
-bool exists = await db.KeyExistsAsync("k1");
-```
-
-**GLIDE:**
-```csharp
-await client.Del(new string[] { "k1", "k2", "k3" });
-var exists = await client.Exists(new string[] { "k1" });
-```
-
----
-
-## Cluster Mode
-
-**StackExchange.Redis:**
-```csharp
-// StackExchange.Redis auto-detects cluster mode
-var options = new ConfigurationOptions
-{
-    EndPoints = {
-        { "node1.example.com", 6379 },
-        { "node2.example.com", 6380 },
-    },
-};
-var muxer = ConnectionMultiplexer.Connect(options);
-```
-
-**GLIDE:**
-```csharp
+// Native path - explicit cluster client:
 var config = new ClusterClientConfigurationBuilder()
-    .WithAddress("node1.example.com", 6379)
-    .WithAddress("node2.example.com", 6380)
+    .WithAddress("n1", 6379)
+    .WithAddress("n2", 6379)
     .Build();
-
 await using var client = await GlideClusterClient.CreateClient(config);
 ```
 
-StackExchange.Redis auto-detects standalone vs cluster mode. GLIDE uses separate client types: `GlideClient` for standalone and `GlideClusterClient` for cluster.
+## Everything else is translation-free
+
+For 80%+ of command call-sites, the SE.Redis code compiles after:
+
+1. `using StackExchange.Redis;` -> `using Valkey.Glide;`
+2. `RedisKey` -> `ValkeyKey`, `RedisValue` -> `ValkeyValue` (global find/replace works)
+3. `ConnectionMultiplexer.Connect(...)` -> `await ConnectionMultiplexer.ConnectAsync(...)`
+4. Remove any `CommandFlags.FireAndForget` (no equivalent - use a Batch)
+5. Rewrite catch blocks: `RedisConnectionException` -> `Errors.ConnectionException`, etc.
+
+The method names just work.
