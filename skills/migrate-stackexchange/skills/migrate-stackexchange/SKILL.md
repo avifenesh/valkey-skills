@@ -1,94 +1,107 @@
 ---
 name: migrate-stackexchange
-description: "Use when migrating C#/.NET from StackExchange.Redis to Valkey GLIDE. Covers API mapping, async/await Task, no IDatabase layer, PubSub, Batch API (.NET 8.0+, preview). Not for greenfield C# apps - use valkey-glide-csharp instead."
-version: 1.0.0
+description: "Use when migrating C# / .NET from StackExchange.Redis to Valkey GLIDE. Covers two entry points (ConnectionMultiplexer facade vs GLIDE-native builder), ValkeyKey/ValkeyValue rename, method-name parity, no fire-and-forget, Errors static class hierarchy. Not for greenfield C# - use valkey-glide-csharp."
+version: 1.1.0
 argument-hint: "[API or pattern to migrate]"
 ---
 
 # Migrating from StackExchange.Redis to Valkey GLIDE (C#)
 
-Use when migrating a .NET application from StackExchange.Redis to the GLIDE client library.
+Use when moving an existing StackExchange.Redis app to GLIDE. Assumes you already know SE.Redis. GLIDE C# is GA at v1.0.0 on NuGet as `Valkey.Glide` and ships a deliberate SE.Redis-compatible surface to minimize migration effort. This skill covers the deltas; most method names already match.
 
-**Status**: The GLIDE C# client is in preview (requires .NET 8.0+). APIs may change before GA.
+## Divergences that actually matter
 
-## Routing
+| Area | StackExchange.Redis | GLIDE C# |
+|------|---------------------|---------|
+| Entry point | `ConnectionMultiplexer.Connect(connString)` | Two options: (1) `ConnectionMultiplexer.ConnectAsync(connString)` - SE.Redis-compat facade, OR (2) `GlideClient.CreateClient(config)` / `GlideClusterClient.CreateClient(config)` with fluent builder |
+| Connect | Synchronous | **Async-only** - no sync Connect |
+| Client type | Auto-detects cluster vs standalone | GLIDE-native path requires explicit `GlideClient` vs `GlideClusterClient`. Facade path auto-detects like SE.Redis |
+| Key / value types | `RedisKey`, `RedisValue` | **`ValkeyKey`, `ValkeyValue`** - drop-in equivalents with the same implicit conversions |
+| Access pattern | `IDatabase db = mux.GetDatabase()` then `db.StringSetAsync(...)` | GLIDE-native: methods on `client` directly; facade: `mux.Database` works the same |
+| `CommandFlags.FireAndForget` | Supported | **NOT supported** - all commands return `Task<T>`. Use batching for throughput |
+| Configuration | `ConfigurationOptions` or connection string | `StandaloneClientConfigurationBuilder` / `ClusterClientConfigurationBuilder` fluent builder (or connection string through the facade) |
+| `AbortOnConnectFail` | Option | No equivalent - GLIDE retries infinitely; cap backoff sequence with `RetryStrategy` |
+| Connection pool | `syncTimeout`, response pool | Multiplexer - single multiplexed connection per node |
+| Events | `OnConnectionFailed`, `OnConnectionRestored`, etc. | No EventEmitter-style events - errors surface per-Task; track state via `client.GetStatistics()` |
+| Transactions | `ITransaction tx = db.CreateTransaction(); tx.AddCondition(...)` | `Batch(isAtomic: true)` + `client.ExecAsync(batch, raiseOnError)` |
+| Pipelines | `db.Batch()` + chained awaits | `Batch(isAtomic: false)` - same class, flag-selected |
+| `RedisSubscriber` | `var sub = mux.GetSubscriber(); sub.Subscribe(ch, (ch, msg) => ...)` | Static config on builder OR dynamic `client.SubscribeAsync(ch, timeout)` (2.3+); callback OR polling |
+| `sub.Publish(channel, message)` | Channel first | `client.PublishAsync(channel, message)` - **SAME ORDER** (Python/Node GLIDE reverse it; C# matches SE.Redis) |
+| Error types | `RedisException`, `RedisConnectionException`, `RedisTimeoutException`, etc. | Nested in static `Errors` class: `Errors.GlideException` (abstract base), `Errors.RequestException`, `Errors.ValkeyServerException`, `Errors.ExecAbortException`, `Errors.TimeoutException`, `Errors.ConnectionException`, `Errors.ConfigurationError` (note inconsistent "Error" suffix on the last one) |
+| `RedisResult` | Dynamic typed result | Methods return typed `Task<ValkeyValue>`, `Task<bool>`, `Task<long>`, etc. |
+| `CommandMap` (command renaming) | Supported | Not supported |
 
-- String, hash, list, set, sorted set, delete, exists, cluster -> API Mapping
-- Transaction, Batch API, fire-and-forget -> Advanced Patterns
-- PubSub, subscribe, publish -> Advanced Patterns
-- Key types, API compatibility, ecosystem -> Advanced Patterns
+## Config translation
 
-## Key Differences
-
-| Area | StackExchange.Redis | GLIDE |
-|------|---------------------|-------|
-| Connection | `ConnectionMultiplexer.Connect()` | `GlideClient.CreateClient(config)` |
-| Operations | `IDatabase` methods | Direct client methods |
-| Async model | `async/await` with `Task<T>` | `async/await` with `Task<T>` (similar) |
-| Configuration | Connection string or `ConfigurationOptions` | `StandaloneClientConfigurationBuilder` |
-| Fire-and-forget | `CommandFlags.FireAndForget` | Not supported - all commands return results |
-| Keys/values | `RedisKey` / `RedisValue` types | Strings |
-| Transactions | `ITransaction` with conditions | `Batch` API |
-| Connection model | Multiplexed | Multiplexed (single connection per node) |
-
-Both libraries use multiplexed connections and async/await.
-
-## Quick Start - Connection Setup
-
-**StackExchange.Redis:**
 ```csharp
-var muxer = ConnectionMultiplexer.Connect("localhost:6379");
-IDatabase db = muxer.GetDatabase();
-```
+// SE.Redis:
+var mux = ConnectionMultiplexer.Connect(
+    "localhost:6379,password=pw,ssl=true,connectTimeout=5000,syncTimeout=5000");
+IDatabase db = mux.GetDatabase();
 
-**GLIDE:**
-```csharp
+// GLIDE - facade path (minimal change):
+var mux = await ConnectionMultiplexer.ConnectAsync(
+    "localhost:6379,password=pw,ssl=true");
+IDatabase db = mux.Database;
+
+// GLIDE - native builder path (more control):
 var config = new StandaloneClientConfigurationBuilder()
-    .WithAddress("localhost", 6379).Build();
+    .WithAddress("localhost", 6379)
+    .WithAuthentication("default", "pw")
+    .WithTls()
+    .WithRequestTimeout(TimeSpan.FromSeconds(5))
+    .Build();
 await using var client = await GlideClient.CreateClient(config);
 ```
 
-No `IDatabase` layer - commands are called directly on the client instance.
+## Method names - mostly the same, with a twist
 
-## Configuration Mapping
+GLIDE C# mirrors SE.Redis naming for most commands. Where it differs, the difference usually is dropping a redundant `<Type>` prefix:
 
-| StackExchange.Redis | GLIDE equivalent |
-|---------------------|------------------|
-| `EndPoints.Add(host, port)` | `.WithAddress(host, port)` |
-| `Password` | `.WithCredentials(username, password)` |
-| `DefaultDatabase` | `.WithDatabaseId(id)` |
-| `Ssl = true` | `.WithTls(true)` |
-| `ConnectTimeout` | `.WithRequestTimeout(ms)` |
-| `SyncTimeout` | Part of `WithRequestTimeout` |
-| `AllowAdmin` | Not applicable |
-| `AbortOnConnectFail` | GLIDE always retries - configure via backoff strategy |
+| SE.Redis | GLIDE C# |
+|----------|---------|
+| `db.StringSetAsync(k, v)` / `StringGetAsync(k)` | `client.SetAsync(k, v)` / `GetAsync(k)` - `String*` prefix dropped |
+| `db.StringSetBitAsync` / `StringGetBitAsync` / `StringBitCountAsync` | SAME names - `String*` prefix kept for bitmap ops |
+| `db.HashSetAsync` / `HashGetAsync` / `HashGetAllAsync` | SAME names |
+| `db.ListLeftPushAsync` / `ListRightPushAsync` / `ListLeftPopAsync` / `ListRightPopAsync` | SAME names |
+| `db.SetAddAsync` / `SetMembersAsync` / `SetIsMemberAsync` | SAME names |
+| `db.SortedSetAddAsync` / `SortedSetRangeAsync` | SAME names |
+| `db.StreamAddAsync` / `StreamReadAsync` | SAME names |
+| `db.KeyDeleteAsync` / `KeyExistsAsync` / `KeyExpireAsync` | SAME names |
+| `sub.Publish` / `Subscribe` | `PublishAsync` / `SubscribeAsync` (suffix `Async`) |
 
-## Incremental Migration Strategy
+When in doubt, the SE.Redis method name is likely correct; grep `sources/Valkey.Glide/Client/BaseClient.*Commands.cs` for exact signatures.
 
-No drop-in compatibility layer exists for C#. The GLIDE C# client intentionally mirrors StackExchange.Redis naming to reduce effort. Migration approach:
+## Migration strategy
 
-1. Add `Valkey.Glide` NuGet package alongside `StackExchange.Redis`
-2. Create a service interface abstracting your Redis operations
-3. Implement the interface with GLIDE, replacing `IDatabase` calls with direct client calls
-4. Replace `RedisKey`/`RedisValue` types with plain strings
-5. Remove `CommandFlags.FireAndForget` usage - use batching for throughput
-6. Migrate one service at a time and run integration tests
-7. Remove `StackExchange.Redis` NuGet package once all services are migrated
+Two routes:
+
+1. **Fast swap (facade path)**: replace `ConnectionMultiplexer.Connect` with `ConnectionMultiplexer.ConnectAsync`, rename `RedisKey` -> `ValkeyKey` and `RedisValue` -> `ValkeyValue` wholesale. Most call sites work unchanged. Fire-and-forget calls need rewriting to batches.
+2. **Progressive rewrite (native path)**: add a service interface; implement both SE.Redis and GLIDE-native sides; swap per service behind a flag. Most useful when you want explicit standalone-vs-cluster typing or the full GLIDE-specific builder options (IAM, AZ affinity, compression).
 
 ## Reference
 
 | Topic | File |
 |-------|------|
-| Command-by-command API mapping (strings, hashes, lists, sets, sorted sets, delete, exists, cluster) | [api-mapping](reference/api-mapping.md) |
-| Transactions, Pub/Sub, key types, fire-and-forget, API compatibility | [advanced-patterns](reference/advanced-patterns.md) |
+| Method-name mapping with the SE.Redis naming compatibility table, key types, cluster | [api-mapping](reference/api-mapping.md) |
+| Batch API (replaces `ITransaction`), Pub/Sub migration, no-fire-and-forget, ecosystem notes | [advanced-patterns](reference/advanced-patterns.md) |
 
-## Gotchas
+## Gotchas (the short list)
 
-1. **Preview status.** Not production-ready. Check [GLIDE C# releases](https://www.nuget.org/packages/Valkey.Glide) for the latest API surface.
-2. **Separate client types.** StackExchange.Redis auto-detects cluster mode. GLIDE requires `GlideClient` or `GlideClusterClient` explicitly.
-3. **No `IDatabase` layer.** Commands are on the client directly. No `GetDatabase(n)` - set database in configuration.
-4. **No `RedisKey`/`RedisValue` wrappers.** GLIDE uses plain strings.
-5. **No fire-and-forget.** All commands are awaitable. Use batching for throughput.
-6. **.NET 8.0+ required.** Earlier .NET versions are not supported.
-7. **Platform support.** Pre-built native libraries for Linux (x86_64, arm64), macOS, and Windows.
-8. **API stability.** Method signatures may change between releases. Pin the dependency version.
+1. **GA at v1.0.0** - not preview. Older docs claiming preview status are outdated.
+2. **`ConnectionMultiplexer.Connect` is async-only** - `ConnectAsync`. No synchronous version.
+3. **`ValkeyKey` / `ValkeyValue`** (not `RedisKey`/`RedisValue`). Rename, then most code still compiles.
+4. **No `CommandFlags.FireAndForget`** - all commands return `Task<T>`. Use batching for throughput.
+5. **`IDatabase` is ONLY available via the `ConnectionMultiplexer` facade.** GLIDE-native clients expose commands directly on the client.
+6. **`PublishAsync(channel, message)` - SAME ORDER** as SE.Redis. Python/Node GLIDE reverse it; C# does NOT.
+7. **Error types nested in `Errors` static class.** Use `Errors.ConnectionException`, `Errors.TimeoutException`, `Errors.ValkeyServerException` (NOT `ValkeyException`), `Errors.GlideException` (abstract base). `Errors.ConfigurationError` uses "Error" suffix.
+8. **No `IDatabase.GetDatabase(n)` multiple databases** on GLIDE-native path. Set `WithDatabaseId(n)` in config; one client = one database.
+9. **Reconnection is infinite** - no `AbortOnConnectFail` equivalent.
+10. **.NET 8.0+ required**. No .NET Framework, no .NET Standard.
+11. **No Alpine / MUSL support**. glibc 2.17+ required.
+12. **No `CommandMap` command renaming**.
+
+## Cross-references
+
+- `valkey-glide-csharp` - full C# skill for GLIDE features beyond the migration scope
+- `glide-dev` - GLIDE core internals (Rust) and P/Invoke binding mechanics

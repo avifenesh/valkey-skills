@@ -1,6 +1,6 @@
 {
   "name": "migrate-stackexchange",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Use when migrating C#/.NET from StackExchange.Redis to Valkey GLIDE. Covers API mapping, async/await Task, no IDatabase layer, PubSub, Batch API (.NET 8.0+, preview). Not for greenfield C# apps - use valkey-glide-csharp instead.",
   "author": {
     "name": "Avi Fenesh",

@@ -1,10 +1,22 @@
 # Pub/Sub (C#)
 
-Use when implementing real-time message broadcasting in C# - chat, notifications, event distribution, or live data feeds. For durable message processing with consumer groups, use Streams instead.
+Use when working with publish/subscribe. Covers what differs from StackExchange.Redis's `mux.GetSubscriber().Subscribe(channel, handler)` pattern.
 
-GLIDE C# supports all three PubSub subscription modes with full async/await, dynamic subscribe/unsubscribe, callback-based message delivery, and automatic reconnection with resubscription.
+## Divergence from StackExchange.Redis
 
-## Subscription Modes
+| StackExchange.Redis | GLIDE C# |
+|---------------------|---------|
+| `var sub = mux.GetSubscriber(); sub.Subscribe(ch, (ch, msg) => ...)` | Either static config in builder (`WithPubSubSubscriptionConfig`) OR dynamic `await client.SubscribeAsync(ch, timeout)` (GLIDE 2.3+) |
+| `sub.Publish(channel, message)` | `await client.PublishAsync(channel, message)` - **SAME ORDER** (Python/Node GLIDE reverse it; C# does NOT) |
+| `RedisChannel.Literal("ch")`, `RedisChannel.Pattern("p:*")` | Channel passed as `ValkeyKey` / string; pattern via separate `PSubscribeAsync` method |
+| `ChannelMessageQueue` async iteration | Callback on config OR poll via `GetPubSubMessageAsync` / `TryGetPubSubMessage` |
+| `ISubscriber.SubscribedEndpoint()` | `client.GetSubscriptionsAsync()` returning `PubSubState` with `Desired` / `Actual` maps |
+| Manual resubscribe on reconnect | Automatic via synchronizer |
+| Sharded pub/sub | `SSubscribeAsync` / `SPublishAsync` on `GlideClusterClient` only (Valkey 7.0+) |
+
+The subscribing client multiplexes subscriptions alongside regular commands - it does NOT enter a "special mode" (unlike raw Redis protocol clients). A dedicated client for high-volume subscribers is still recommended to avoid head-of-line effects.
+
+## Subscription modes
 
 | Mode | Methods | Description | Cluster Only |
 |------|---------|-------------|--------------|
@@ -102,7 +114,7 @@ long receivers = await client.PublishAsync("events", "Hello subscribers!");
 long receivers = await clusterClient.SPublishAsync("shard-topic", "Hello shard!");
 ```
 
-Always use a separate client for publishing - a subscribing client enters a special mode.
+A dedicated subscriber client is recommended for high-volume subscriptions but not required - GLIDE multiplexes subscriptions alongside commands on the core side.
 
 ## Subscription Introspection
 
@@ -129,7 +141,7 @@ Cluster clients also have `PubSubShardChannelsAsync()` and `PubSubShardNumSubAsy
 
 ## Important Notes
 
-1. **Separate clients for pub and sub.** A subscribing client cannot execute regular commands.
+1. **Dedicated subscriber client recommended** but not required - the subscribing client CAN still run regular commands (GLIDE multiplexes).
 2. **RESP3 required.** PubSub push notifications need RESP3 (the default protocol).
 3. **Automatic reconnection.** On disconnect, GLIDE resubscribes to all desired channels automatically.
 4. **Message loss during reconnect.** PubSub is at-most-once delivery. Use Streams for durability.
