@@ -1,7 +1,7 @@
 ---
 name: migrate-lettuce
-description: "Use when migrating Java from Lettuce to Valkey GLIDE. Covers Spring Data Valkey path, native rewrite from RedisFuture to CompletableFuture, PubSub, no reactive API or codec equivalent. Not for Jedis migration - use migrate-jedis instead."
-version: 1.0.0
+description: "Use when migrating Java from Lettuce to Valkey GLIDE. Covers Spring Data Valkey path, native rewrite from RedisFuture to CompletableFuture, REVERSED publish() args, no reactive API, no codec, no Sentinel. Not for Jedis migration - use migrate-jedis."
+version: 1.1.0
 argument-hint: "[API or pattern to migrate]"
 ---
 
@@ -87,13 +87,18 @@ For native migration, the key steps:
 | Command-by-command API mapping (strings, hashes, lists, sets, sorted sets, delete, exists, cluster) | [api-mapping](reference/api-mapping.md) |
 | Transactions, pipelines, Pub/Sub, Spring Data Valkey alternative, compatibility layer status | [advanced-patterns](reference/advanced-patterns.md) |
 
-## Gotchas
+## Gotchas (the short list)
 
-1. **No reactive API.** Lettuce offers Project Reactor support (Flux/Mono). GLIDE only provides CompletableFuture. Adapt with `Mono.fromFuture()`. Significant for Spring WebFlux - the reactive `ReactiveRedisTemplate` is only available with Lettuce in Spring Data Valkey.
-2. **No codec system.** Lettuce RedisCodec has no equivalent. Handle serialization manually.
-3. **Single-field hset.** Lettuce hset("hash", "field", "value") takes three string args. GLIDE always takes a Map.
-4. **Array args for lists.** Multi-element commands like lpush, rpush, sadd take String[] arrays instead of varargs.
-5. **No ClientResources.** Lettuce ClientResources for thread pool configuration has no equivalent. GLIDE Rust core manages its own threading.
-6. **Simpler connection lifecycle.** No separate StatefulConnection and Commands objects.
-7. **Multi-arch native library distribution.** Use `osdetector-gradle-plugin` or `os-maven-plugin`. Uber JAR available from GLIDE 2.3.
-8. **No Sentinel support.** Use cluster mode or direct connection instead.
+1. **`publish()` argument order is REVERSED.** Lettuce is `redis.async().publish(channel, message)`; GLIDE Java is `client.publish(message, channel).get()`. **Silent bug factory during migration.** Verified in `java/client/.../commands/PubSubBaseCommands.java`.
+2. **No reactive API.** Lettuce offers Project Reactor (`Flux` / `Mono`). GLIDE only provides `CompletableFuture`. Adapt with `Mono.fromFuture(client.get(key))`. Significant for Spring WebFlux - the reactive `ReactiveRedisTemplate` / `ReactiveValueOperations` is only available via Lettuce in Spring Data Valkey today.
+3. **No codec system.** Lettuce `RedisCodec<K, V>` has no equivalent. Handle serialization manually or use `GlideString` for binary-safe bytes.
+4. **`hset("hash", "field", "value")` variadic form** in Lettuce takes 3 strings; GLIDE takes a `Map<String, String>` or an array of `String[]` pairs via overloads. Always check signature.
+5. **Array args for multi-element commands** - `lpush`, `rpush`, `sadd`, `srem`, `del`, `exists` take `String[]` arrays instead of varargs.
+6. **No `ClientResources` / thread-pool configuration.** GLIDE Rust core manages its own threading.
+7. **Simpler connection lifecycle** - no separate `StatefulConnection` + `Commands` layers. Call commands directly on the client.
+8. **Multi-arch native library distribution.** Use `osdetector-gradle-plugin` or `os-maven-plugin`. **Uber JAR (GLIDE 2.3+)** bundles all platform natives - preferred for cross-platform projects.
+9. **Error hierarchy is FLAT under `GlideException`.** Lettuce's `RedisException` -> `RedisCommandExecutionException` / `RedisCommandTimeoutException` / `RedisConnectionException` subclass tree maps to GLIDE's 6 siblings: `ClosingException`, `ConnectionException`, `ConfigurationError` (note "Error" suffix), `ExecAbortException`, `RequestException`, `TimeoutException`. All come inside `ExecutionException` when unwrapping `.get()`.
+10. **GLIDE `TimeoutException` vs `java.util.concurrent.TimeoutException`** - two different classes with the same simple name; the former is the internal request timeout, the latter is what `.get(n, TimeUnit)` throws when the future doesn't resolve in time. Fully-qualify or alias.
+11. **No Sentinel support** in GLIDE. Migrate Sentinel users to cluster mode or direct primary/replica connection.
+12. **Reconnection is infinite.** No `maxRedirects` / reconnect-cap equivalent - `BackoffStrategy.numOfRetries` caps backoff sequence length only.
+13. **No Alpine / MUSL support** - glibc 2.17+ required.
