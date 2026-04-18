@@ -1,187 +1,93 @@
-# Advanced Features
+# Advanced features (Node.js)
 
-Use when configuring TLS, authentication, Lua scripting, protocol version, response decoding, or handling error types in the GLIDE Node.js client.
+Use when configuring TLS, IAM authentication, Lua scripts, Valkey Functions, the decoder, or handling error types. Covers GLIDE-specific divergence from ioredis; basic setup examples are in [features-connection](features-connection.md).
 
-## Contents
+## TLS and mTLS
 
-- TLS Configuration (line 16)
-- Authentication (line 45)
-- Lua Scripting (line 98)
-- Error Types (line 151)
-- Decoder Options (line 186)
-- Protocol Version (line 210)
-- Valkey Functions (7.0+) (line 228)
-- Client Statistics (line 282)
-
-## TLS Configuration
-
-Enable TLS with `useTLS`. The server must also be configured for TLS.
+Basic TLS is `useTLS: true` at the top of the config. Everything else (custom CA, insecure dev mode) is in `advancedConfiguration.tlsAdvancedConfiguration`:
 
 ```typescript
-const client = await GlideClient.createClient({
-    addresses: [{ host: "valkey.example.com", port: 6380 }],
-    useTLS: true,
-});
-```
-
-Custom CA certificates and insecure mode are set via `advancedConfiguration`:
-
-```typescript
-import { readFileSync } from "fs";
-
-const client = await GlideClient.createClient({
-    addresses: [{ host: "valkey.example.com", port: 6380 }],
-    useTLS: true,
-    advancedConfiguration: {
-        connectionTimeout: 5000, // ms, default 2000
-        tlsAdvancedConfiguration: {
-            rootCertificates: readFileSync("/path/to/ca.pem"), // string or Buffer, PEM format
-            // insecure: true, // skip cert verification - dev only, throws ConfigurationError without useTLS
-        },
+advancedConfiguration: {
+    connectionTimeout: 5000,
+    tlsAdvancedConfiguration: {
+        rootCertificates: readFileSync("/path/to/ca.pem"),  // string | Buffer, PEM
+        insecure: false,  // true bypasses cert verification; throws ConfigurationError without useTLS
     },
-});
+}
 ```
 
-## Authentication
+## IAM auth (AWS ElastiCache / MemoryDB)
 
-### Password-Based
-
-Pass `credentials` with `password` and optional `username`. If `username` is omitted, Valkey uses `"default"`.
+GLIDE-only, no ioredis equivalent. Password and IAM are mutually exclusive on one `credentials` object; IAM requires TLS and a username.
 
 ```typescript
-const client = await GlideClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-    credentials: { username: "myuser", password: "mypass" },
-});
-```
+import { ServiceType } from "@valkey/valkey-glide";
 
-### IAM Authentication (AWS)
-
-For ElastiCache or MemoryDB. Requires `username`, `iamConfig`, and TLS. Password and IAM are mutually exclusive.
-
-```typescript
-import { GlideClient, ServiceType } from "@valkey/valkey-glide";
-
-const client = await GlideClient.createClient({
-    addresses: [{ host: "my-cluster.amazonaws.com", port: 6379 }],
-    useTLS: true,
-    credentials: {
-        username: "myIamUser",
-        iamConfig: {
-            clusterName: "my-cluster",
-            service: ServiceType.Elasticache, // or ServiceType.MemoryDB
-            region: "us-east-1",
-            refreshIntervalSeconds: 300, // optional, default 300
-        },
+credentials: {
+    username: "iam-user",
+    iamConfig: {
+        clusterName: "my-cluster",
+        service: ServiceType.Elasticache,  // or ServiceType.MemoryDB (PascalCase!)
+        region: "us-east-1",
+        refreshIntervalSeconds: 300,  // optional; default 300
     },
-});
+}
 ```
 
-### Runtime Password Update
-
-Update the stored password without recreating the client. Not supported with IAM.
+Runtime credential updates:
 
 ```typescript
-await client.updateConnectionPassword("newpass", true); // true = re-auth immediately
+await client.updateConnectionPassword("newpass");          // stored; used on next reconnect
+await client.updateConnectionPassword("newpass", true);    // re-AUTH immediately
+await client.updateConnectionPassword(null);               // clear stored password
+await client.refreshIamToken();                            // force IAM refresh; throws ConfigurationError if IAM not configured
 ```
-
-### Manual IAM Token Refresh
-
-Force an immediate IAM token refresh outside the automatic interval. Only available when IAM authentication is configured.
-
-```typescript
-await client.refreshIamToken(); // => "OK"
-```
-
-**Signature:** `refreshIamToken() => Promise<GlideString>` - throws `ConfigurationError` if IAM is not enabled.
 
 ## Lua Scripting
 
-The `Script` class manages Lua script caching via `EVALSHA` with automatic `EVAL` fallback. Script objects are NOT garbage collected - call `release()` when done.
+Replaces ioredis's `defineCommand` pattern. The `Script` class wraps `EVALSHA` with automatic `EVAL` fallback.
+
+**Critical**: `Script` objects are NOT garbage collected - always call `.release()` when done, or you leak native memory.
 
 ```typescript
 import { Script } from "@valkey/valkey-glide";
 
 const script = new Script("return { KEYS[1], ARGV[1] }");
-const result = await client.invokeScript(script, {
-    keys: ["mykey"],
-    args: ["myvalue"],
-});
-console.log(result); // ["mykey", "myvalue"]
-script.release();
-```
-
-Server-side logic example:
-
-```typescript
-const script = new Script(`
-    redis.call('SET', KEYS[1], ARGV[1])
-    return redis.call('GET', KEYS[1])
-`);
-const result = await client.invokeScript(script, {
-    keys: ["counter"],
-    args: ["42"],
-});
-script.release();
-```
-
-In cluster mode, all keys must map to the same hash slot. For keyless scripts use `invokeScriptWithRoute` on `GlideClusterClient`:
-
-```typescript
-const result = await clusterClient.invokeScriptWithRoute(script, { args: ["bar"] });
-```
-
-| Method | Description |
-|--------|-------------|
-| `new Script(code)` | Create script, compute SHA1, store in memory |
-| `script.getHash()` | Return the SHA1 hash string |
-| `script.release()` | Decrement ref count; free memory when zero |
-
-Retrieve a cached script's source (Valkey 8.0+):
-
-```typescript
-const source = await client.scriptShow(script.getHash());
-// Returns the original Lua source code
-```
-
-**Signature:** `scriptShow(sha1, options?) => Promise<GlideString>` - throws if SHA1 not in cache.
-
-Scripts are NOT supported in batch operations. Use `customCommand(["EVAL", ...])` in batches instead.
-
-## Error Types
-
-All errors extend `ValkeyError`. Import from `@valkey/valkey-glide`.
-
-| Error | Parent | When |
-|-------|--------|------|
-| `RequestError` | `ValkeyError` | Server-side or protocol error |
-| `TimeoutError` | `RequestError` | Request exceeded `requestTimeout` (default 250ms) |
-| `ConnectionError` | `RequestError` | Connection lost; auto-reconnect in progress |
-| `ExecAbortError` | `RequestError` | Atomic batch aborted (WATCH conflict) |
-| `ConfigurationError` | `RequestError` | Invalid config (TLS mismatch, missing params) |
-| `ClosingError` | `ValkeyError` | Client closed; must create a new client |
-
-```typescript
-import {
-    ClosingError, ConnectionError, RequestError, TimeoutError,
-} from "@valkey/valkey-glide";
-
 try {
-    const value = await client.get("key");
-} catch (error) {
-    if (error instanceof TimeoutError) {
-        // Increase requestTimeout or check server load
-    } else if (error instanceof ConnectionError) {
-        // Transient - GLIDE is auto-reconnecting
-    } else if (error instanceof ClosingError) {
-        // Terminal - create a new client
-    } else if (error instanceof RequestError) {
-        // General failure
-    }
+    const result = await client.invokeScript(script, {
+        keys: ["mykey"],
+        args: ["myvalue"],
+    });
+} finally {
+    script.release();
 }
 ```
 
-Check specific subclasses before `RequestError` - `TimeoutError`, `ConnectionError`, `ExecAbortError`, and `ConfigurationError` all extend it.
+Cluster: keyed scripts require all keys in one hash slot. For keyless scripts with explicit routing:
+
+```typescript
+await clusterClient.invokeScriptWithRoute(script, { args: ["bar"], route: "randomNode" });
+```
+
+Retrieve cached source (Valkey 8.0+): `await client.scriptShow(script.getHash())`.
+
+**Scripts are NOT usable inside a Batch.** For scripts in a batch, call `batch.customCommand(["EVAL", ...])` instead.
+
+## Error hierarchy
+
+Subclass tree in `@valkey/valkey-glide`:
+
+```
+ValkeyError (abstract)           # Node's base is ValkeyError, NOT GlideError (Python uses GlideError)
+├── ClosingError                 # client closed; must create a new client
+└── RequestError                 # catches everything below too
+    ├── TimeoutError             # request exceeded requestTimeout (default 250ms)
+    ├── ExecAbortError           # atomic batch aborted (WATCH conflict, MULTI errors)
+    ├── ConnectionError          # temporary - auto-reconnect in progress
+    └── ConfigurationError       # invalid config (TLS mismatch, RESP2+PubSub, etc.)
+```
+
+**Common mistake**: catching `RequestError` also catches `TimeoutError`, `ConnectionError`, `ConfigurationError`, `ExecAbortError` - they are subclasses, not siblings. Check specific subclasses first. Use `ValkeyError` only when you also want `ClosingError`.
 
 ## Decoder Options
 
@@ -227,65 +133,33 @@ const client = await GlideClient.createClient({
 
 ## Valkey Functions (7.0+)
 
-Server-side functions loaded from libraries. Unlike Lua scripts, functions persist across restarts and support named invocation. These methods are on `GlideClient` (standalone) and `GlideClusterClient` (cluster).
+ioredis has no first-class Functions support - this is entirely new territory for migrating agents. Functions persist across restarts (unlike scripts) and support named invocation.
+
+Methods on `GlideClient` and `GlideClusterClient`:
+
+| Method | Purpose |
+|--------|---------|
+| `functionLoad(code, { replace? })` | Load a library; returns library name |
+| `functionDelete(libName)` | Delete one library |
+| `functionList({ libNamePattern?, withCode? })` | List libraries / functions |
+| `functionStats({ route? })` | Running function info + engine stats |
+| `functionFlush(mode?)` | Delete all libraries; mode `FlushMode.SYNC` / `ASYNC` |
+| `functionKill()` | Kill a running read-only function |
+| `functionDump()` → `Buffer` | Serialize all libraries |
+| `functionRestore(payload, policy?)` | Restore from dump; `FunctionRestorePolicy.APPEND`/`FLUSH`/`REPLACE` |
+| `fcall(func, keys, args, options?)` | Invoke a loaded function |
+| `fcallReadonly(func, keys, args, options?)` | Read-only variant (replica-safe) |
+
+Cluster-only variants route explicitly: `fcallWithRoute` / `fcallReadonlyWithRoute` on `GlideClusterClient`.
+
+Example library shebang: `"#!lua name=mylib\nredis.register_function('myfunc', function(keys, args) return args[1] end)"`.
+
+## Client statistics
+
+Returns internal GLIDE core telemetry (multiplexer counters, compression ratios, PubSub sync). **Synchronous** - it's a local accessor, not a server call (unlike Python which exposes the same as an async method).
 
 ```typescript
-import { GlideClient, FlushMode, FunctionRestorePolicy } from "@valkey/valkey-glide";
-
-// Load a library with a function
-const code = "#!lua name=mylib \n redis.register_function('myfunc', function(keys, args) return args[1] end)";
-const libName = await client.functionLoad(code, { replace: true });
-// "mylib"
-
-// Call the function
-const result = await client.fcall("myfunc", ["key1"], ["hello"]);
-// "hello"
-
-// Read-only variant - safe for replicas
-const roResult = await client.fcallReadonly("myfunc", ["key1"], ["hello"]);
-
-// List libraries and their functions
-const libs = await client.functionList({ libNamePattern: "mylib*", withCode: true });
-// [{ library_name: "mylib", engine: "LUA", functions: [{ name: "myfunc", ... }], library_code: "..." }]
-
-// Stats - running function info and engine stats
-const stats = await client.functionStats();
-// { "127.0.0.1:6379": { running_script: null, engines: { LUA: { libraries_count: 1, functions_count: 1 } } } }
-
-// Delete a library
-await client.functionDelete("mylib"); // "OK"
-
-// Flush all libraries
-await client.functionFlush(FlushMode.SYNC); // "OK"
-
-// Kill a running read-only function
-await client.functionKill(); // "OK"
-
-// Dump/Restore for migration
-const payload = await client.functionDump();      // Buffer
-await client.functionRestore(payload, FunctionRestorePolicy.REPLACE); // "OK"
+const stats = client.getStatistics();  // { total_connections: "1", ... } - all values stringified
 ```
 
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `functionLoad` | `(code, options?) => Promise<GlideString>` | Load library; `options.replace` overwrites |
-| `functionDelete` | `(libraryName) => Promise<"OK">` | Delete a library and its functions |
-| `functionList` | `(options?) => Promise<FunctionListResponse>` | List libraries; filter with `libNamePattern` |
-| `functionStats` | `(options?) => Promise<FunctionStatsFullResponse>` | Running function and engine info |
-| `functionFlush` | `(mode?) => Promise<"OK">` | Delete all libraries |
-| `functionKill` | `() => Promise<"OK">` | Kill running read-only function |
-| `functionDump` | `() => Promise<Buffer>` | Serialize all libraries |
-| `functionRestore` | `(payload, policy?) => Promise<"OK">` | Restore from dump; policy: APPEND, FLUSH, REPLACE |
-| `fcall` | `(func, keys, args, options?) => Promise<GlideReturnType>` | Invoke a loaded function |
-| `fcallReadonly` | `(func, keys, args, options?) => Promise<GlideReturnType>` | Invoke read-only function (replica-safe) |
-
-## Client Statistics
-
-Returns internal GLIDE core statistics. Synchronous - not a server command.
-
-```typescript
-const stats = client.getStatistics();
-console.log(stats); // { total_connections: 1, ... }
-```
-
-**Signature:** `getStatistics() => object`
+Keys: `total_connections`, `total_clients`, `total_values_compressed`, `total_values_decompressed`, `total_original_bytes`, `total_bytes_compressed`, `total_bytes_decompressed`, `compression_skipped_count`, `subscription_out_of_sync_count`, `subscription_last_sync_timestamp`.

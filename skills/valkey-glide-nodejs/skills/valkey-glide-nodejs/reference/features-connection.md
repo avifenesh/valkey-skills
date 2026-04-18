@@ -1,21 +1,18 @@
-# Connection and Configuration
+# Connection and configuration (Node.js)
 
-Use when creating a GLIDE client, choosing between standalone and cluster mode, configuring authentication, TLS, timeouts, reconnection backoff, read strategy, or closing connections.
+Use when creating clients, configuring auth, TLS, timeouts, reconnection, read strategy, or closing connections. Covers what differs from `ioredis` / `node-redis` - basic `new Redis({ host, port })` patterns are assumed knowable from training.
 
-## Contents
+## Divergence from ioredis / node-redis
 
-- GlideClient vs GlideClusterClient (line 20)
-- Creating a Standalone Client (line 33)
-- Creating a Cluster Client (line 73)
-- BaseClientConfiguration - Shared Options (line 87)
-- ServerCredentials (line 107)
-- ReadFrom Strategy (line 131)
-- Connection Backoff (line 150)
-- AdvancedBaseClientConfiguration (line 163)
-- GlideClusterClient-Specific Options (line 174)
-- Lazy Connect (line 186)
-- Protocol Version (line 199)
-- Closing Connections (line 203)
+| ioredis / node-redis | GLIDE Node |
+|---------------------|-----------|
+| `new Redis({ host, port })` constructs immediately | `await GlideClient.createClient(config)` - async static factory |
+| `new Redis.Cluster([{host, port}])` | `await GlideClusterClient.createClient({ addresses })` - distinct type, not a pool wrapper |
+| Connection pool with `maxRetriesPerRequest` | Single multiplexed connection per node - no pool knob |
+| `client.on('error', ...)` event emitter | Errors surface per-Promise via `await`; no emitter |
+| `client.disconnect()` / `client.quit()` | `client.close()` - synchronous, returns `void`, not Promise |
+| `retryStrategy: (times) => ...` function | `connectionBackoff` object with `numberOfRetries`, `factor`, `exponentBase`, `jitterPercent` |
+| `lazyConnect: true` on ioredis defers implicit connect | `lazyConnect: true` on GLIDE defers the first TCP connect to the first command |
 
 ## GlideClient vs GlideClusterClient
 

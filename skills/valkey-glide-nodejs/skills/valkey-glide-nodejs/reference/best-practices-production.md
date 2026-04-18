@@ -1,137 +1,74 @@
-# Production Deployment
+# Production deployment (Node.js)
 
-Use when deploying GLIDE Node.js to production, configuring timeouts, managing connections, or setting up observability.
+Use when deploying GLIDE Node to production. Covers GLIDE-specific defaults and pitfalls that matter for operators. For basic setup examples see [features-connection](features-connection.md).
 
-## Connection Management
+## One client per process
 
-### Single Client Per Application
+Do not pool `GlideClient` / `GlideClusterClient`. The multiplexer is the pool. Creating N clients opens N sets of TCP connections to every node and defeats the connection-state tracking the core does.
 
-GLIDE multiplexes all requests over one connection per node. Do not create client pools.
+Use `lazyConnect: true` if your app must start before Valkey is reachable - the first command pays the connection cost. Always call `client.close()` on shutdown (synchronous - returns `void`, not a Promise); pending promises get `ClosingError`.
 
-```typescript
-// Correct: one client shared across the application
-const client = await GlideClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-});
+## GLIDE defaults agents should know
 
-// Wrong: do not pool GLIDE clients
-// const clients = await Promise.all(Array(10).fill(null).map(() => GlideClient.createClient(config)));
-```
+| Knob | Default | Config |
+|------|---------|--------|
+| Request timeout | 250 ms | `requestTimeout` |
+| Connection timeout | 2000 ms | `advancedConfiguration.connectionTimeout` |
+| Inflight request cap | 1000 | `inflightRequestsLimit` |
+| Topology check interval (cluster) | default configs | `periodicChecks: { duration_in_sec: n }` for manual; note `duration_in_sec` is snake_case |
+| Backoff retries | (infinite; cap only on sequence length) | `connectionBackoff` |
+| Protocol | RESP3 | `protocol: ProtocolVersion.RESP2` to downgrade |
+| TCP_NODELAY | true | `advancedConfiguration.tcpNoDelay` |
+| Default decoder | `Decoder.String` | `defaultDecoder: Decoder.Bytes` for Buffer returns |
 
-### Lazy Connect
+Blocking-command timeout auto-extension: 0.5 s beyond the block duration. No tuning required.
 
-Defers connection until the first command. Allows startup when the server is not yet available.
+## Timeout tuning
 
-```typescript
-const client = await GlideClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-    lazyConnect: true,
-});
-// No connection yet - first command triggers it
-await client.ping();
-```
+The 250 ms default is tight. Raise per-workload, not globally:
 
-### Client Cleanup
+| Workload | Recommended |
+|----------|-------------|
+| Cache lookup (GET, HGET) | 250-500 ms |
+| Writes (SET, HSET, ZADD) | 250-500 ms |
+| Complex (SORT, SCAN, ZRANGEBYSCORE large) | 1-5 s |
+| Lua scripts | 5-30 s |
+| Blocking commands | Auto-extended - do not raise |
 
-Always close clients on shutdown. Pending promises are rejected with `ClosingError`.
+## Cluster: seed nodes and AZ affinity
 
-```typescript
-client.close();
-client.close("Shutting down gracefully"); // custom error message
-```
+Provide multiple seed addresses for redundancy. Topology is auto-discovered.
 
----
-
-## Timeout Configuration
-
-| Timeout | Default | Config Property |
-|---------|---------|----------------|
-| Request timeout | 250ms | `requestTimeout` |
-| Connection timeout | 2000ms | `advancedConfiguration.connectionTimeout` |
-
-### Tuning by Workload
-
-| Workload | Recommended Timeout |
-|----------|-------------------|
-| Cache lookups (GET, HGET) | 250-500ms |
-| Write operations (SET, HSET) | 250-500ms |
-| Complex operations (SORT, SCAN) | 1000-5000ms |
-| Lua scripts (EVALSHA) | 5000-30000ms |
-| Blocking commands (BLPOP, XREADGROUP) | Handled automatically |
-
-GLIDE extends blocking command timeouts by 500ms beyond the block duration.
-
-```typescript
-const client = await GlideClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-    requestTimeout: 1000,
-    advancedConfiguration: { connectionTimeout: 5000 },
-});
-```
-
----
-
-## Cluster Configuration
-
-Provide multiple seed nodes for redundancy. GLIDE discovers the full topology automatically.
-
-### AZ Affinity
-
-Route reads to same-AZ replicas to reduce latency and cross-AZ costs:
-
-```typescript
-const client = await GlideClusterClient.createClient({
-    addresses: [{ host: "node1.example.com", port: 6379 }],
-    readFrom: "AZAffinity",
-    clientAz: "us-east-1a",
-});
-```
+`readFrom` strategies:
 
 | Strategy | Behavior |
 |----------|----------|
 | `"primary"` | All reads to primary (default) |
-| `"preferReplica"` | Round-robin replicas, fallback to primary |
-| `"AZAffinity"` | Prefer same-AZ replicas |
-| `"AZAffinityReplicasAndPrimary"` | Same-AZ replicas, then primary, then remote |
+| `"preferReplica"` | Round-robin replicas, fall back to primary |
+| `"AZAffinity"` | Same-AZ replicas preferred, then other replicas, then primary |
+| `"AZAffinityReplicasAndPrimary"` | Same-AZ replicas, then same-AZ primary, then any replica, then primary |
 
-Requires Valkey 8.0+ with `availability-zone` configured on each server node.
-
----
+AZ-affinity strategies require `clientAz` AND the server exposing availability-zone metadata in `CLUSTER SHARDS` - otherwise falls back to primary.
 
 ## OpenTelemetry
 
-OTel is initialized globally before creating any clients:
+Initialize once, globally, before creating any clients:
 
 ```typescript
 import { OpenTelemetry } from "@valkey/valkey-glide";
 
 OpenTelemetry.init({
-    traces: {
-        endpoint: "http://otel-collector:4317",
-        samplePercentage: 1,  // 1% for production
-    },
-    metrics: {
-        endpoint: "http://otel-collector:4317",
-    },
+    traces: { endpoint: "http://otel-collector:4317", samplePercentage: 1 },
+    metrics: { endpoint: "http://otel-collector:4317" },
     flushIntervalMs: 5000,
 });
 ```
 
-| Environment | Sample Rate |
-|-------------|------------|
-| Production | 1-2% |
-| Staging | 5-10% |
-| Debugging | 50-100% |
+Rough sampling rates: 1-2% prod, 5-10% staging, 50-100% debugging.
 
----
+## Platform constraints
 
-## Connection Defaults
-
-| Parameter | Default |
-|-----------|---------|
-| Request timeout | 250ms |
-| Connection timeout | 2000ms |
-| Inflight request limit | 1000 |
-| Connections per node | 2 (data + management) |
-| Topology check | 60s |
-| Protocol | RESP3 |
+- **glibc 2.17+** required on Linux. Alpine (musl) is NOT supported out of the box - use Debian/Ubuntu-based images. Prebuilt wheels for musl exist in some distributions but are not part of the official matrix.
+- **Native binding**: `@valkey/valkey-glide` ships a platform-specific `@valkey/valkey-glide-<os>-<arch>` native package. Lockfile regeneration on different OS/arch combos can pull the wrong native binary - keep `npm ci` in CI aligned with the target platform.
+- **Proxies / connection inspectors**: GLIDE sends `CLIENT SETNAME`, `CLIENT SETINFO`, `INFO REPLICATION` during setup. Transparent proxies that strip or rewrite these will break topology detection.
+- **Protocol**: RESP3 is the default. RESP2 is accepted but static PubSub subscriptions require RESP3 and raise `ConfigurationError` otherwise.

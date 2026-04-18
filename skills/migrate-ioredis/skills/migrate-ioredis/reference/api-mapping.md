@@ -1,153 +1,97 @@
-# ioredis to GLIDE API Mapping
+# ioredis to GLIDE: where signatures diverge
 
-Use when migrating specific ioredis commands to their GLIDE equivalents, looking up argument format changes, or converting data type operations.
+Use when translating ioredis calls and the signature is NOT obvious. Where GLIDE mirrors ioredis (most commands), just replace `redis.` with `await client.` - that pattern is not listed here.
 
-## String Operations
+## Three universal changes
 
-**ioredis:**
+Apply to every command:
+
+1. **Await needed**: GLIDE returns Promises; ioredis returns ioredis-Promise-like objects that sometimes work sync-ish in pipelines. Add `await`.
+2. **Array args, not varargs**: multi-key / multi-value commands take a list, not positional args.
+3. **Default decoder returns `string`**: use `defaultDecoder: Decoder.Bytes` or per-command `{ decoder: Decoder.Bytes }` to get `Buffer` returns.
+
 ```javascript
-await redis.set("key", "value");
-await redis.set("key", "value", "EX", 60);
-await redis.set("key", "value", "NX");
-await redis.setex("key", 60, "value");
-const val = await redis.get("key");
-```
+// ioredis varargs:
+redis.del("k1", "k2", "k3");
+redis.exists("k1", "k2");
+redis.lpush("list", "a", "b", "c");
+redis.sadd("set", "a", "b", "c");
+redis.srem("set", "a", "b");
 
-**GLIDE:**
-```javascript
-import { TimeUnit } from "@valkey/valkey-glide";
-
-await client.set("key", "value");
-await client.set("key", "value", { expiry: { type: TimeUnit.Seconds, count: 60 } });
-await client.set("key", "value", { conditionalSet: "onlyIfDoesNotExist" });
-// No separate setex - use set() with expiry option
-const val = await client.get("key");
-```
-
----
-
-## Hash Operations
-
-**ioredis:**
-```javascript
-await redis.hset("hash", "f1", "v1", "f2", "v2");    // spread pairs
-await redis.hset("hash", { f1: "v1", f2: "v2" });     // also works
-const val = await redis.hget("hash", "f1");
-const all = await redis.hgetall("hash");                // {f1: "v1", f2: "v2"}
-```
-
-**GLIDE:**
-```javascript
-// Object form or HashDataType array form
-await client.hset("hash", { f1: "v1", f2: "v2" });
-await client.hset("hash", [{ field: "f1", value: "v1" }, { field: "f2", value: "v2" }]);
-const val = await client.hget("hash", "f1");
-const all = await client.hgetall("hash");               // Record<string, string>
-```
-
----
-
-## List Operations
-
-**ioredis:**
-```javascript
-await redis.lpush("list", "a", "b", "c");
-await redis.rpush("list", "x", "y");
-const val = await redis.lpop("list");
-const range = await redis.lrange("list", 0, -1);
-```
-
-**GLIDE:**
-```javascript
-await client.lpush("list", ["a", "b", "c"]);            // array arg
-await client.rpush("list", ["x", "y"]);
-const val = await client.lpop("list");
-const range = await client.lrange("list", 0, -1);
-```
-
----
-
-## Set Operations
-
-**ioredis:**
-```javascript
-await redis.sadd("set", "a", "b", "c");
-await redis.srem("set", "a", "b");
-const members = await redis.smembers("set");
-```
-
-**GLIDE:**
-```javascript
-await client.sadd("set", ["a", "b", "c"]);              // array arg
+// GLIDE: wrap the multi args in a list:
+await client.del(["k1", "k2", "k3"]);
+await client.exists(["k1", "k2"]);
+await client.lpush("list", ["a", "b", "c"]);
+await client.sadd("set", ["a", "b", "c"]);
 await client.srem("set", ["a", "b"]);
-const members = await client.smembers("set");
 ```
 
----
+## SET: typed options replace kwargs and specialized methods
 
-## Sorted Set Operations
+ioredis accepts positional kwargs (`"EX", 60`), plus specialized `setex` / `psetex` / `setnx`. GLIDE routes all of them through typed options on `set()` and drops the aliases.
 
-**ioredis:**
+| ioredis | GLIDE |
+|---------|-------|
+| `redis.set(k, v, "EX", 60)` | `await client.set(k, v, { expiry: { type: TimeUnit.Seconds, count: 60 } })` |
+| `redis.set(k, v, "PX", 500)` | `await client.set(k, v, { expiry: { type: TimeUnit.Milliseconds, count: 500 } })` |
+| `redis.set(k, v, "EXAT", ts)` | `await client.set(k, v, { expiry: { type: TimeUnit.UnixSeconds, count: ts } })` |
+| `redis.set(k, v, "PXAT", ms)` | `await client.set(k, v, { expiry: { type: TimeUnit.UnixMilliseconds, count: ms } })` |
+| `redis.set(k, v, "NX")` or `redis.setnx(k, v)` | `await client.set(k, v, { conditionalSet: "onlyIfDoesNotExist" })` |
+| `redis.set(k, v, "XX")` | `await client.set(k, v, { conditionalSet: "onlyIfExists" })` |
+| `redis.setex(k, 60, v)` | `await client.set(k, v, { expiry: { type: TimeUnit.Seconds, count: 60 } })` |
+| `redis.set(k, v, "KEEPTTL")` | `await client.set(k, v, { expiry: "keepExisting" })` |
+
+`TimeUnit` has four values: `Seconds`, `Milliseconds`, `UnixSeconds`, `UnixMilliseconds` (note the spelling - no typo, unlike Python's `UNIX_MILLSEC`). All PascalCase.
+
+`conditionalSet` for `set()` uses STRING LITERALS: `"onlyIfExists" | "onlyIfDoesNotExist" | "onlyIfEqual"`. Valkey 9.0's IFEQ needs `conditionalSet: "onlyIfEqual"` plus `comparisonValue: "..."`. Other commands (ZADD) use a separate `ConditionalChange` enum - they are NOT the same type.
+
+## HSET: takes an object, not spread pairs
+
 ```javascript
-await redis.zadd("zset", 1, "alice", 2, "bob");         // score, member pairs
-await redis.zadd("zset", "NX", 1, "alice");              // NX flag
-const score = await redis.zscore("zset", "alice");
-const range = await redis.zrange("zset", 0, -1, "WITHSCORES");
+// ioredis (either works):
+redis.hset("h", "f1", "v1", "f2", "v2");
+redis.hset("h", { f1: "v1", f2: "v2" });
+
+// GLIDE - object OR [{field, value}] array:
+await client.hset("h", { f1: "v1", f2: "v2" });
+await client.hset("h", [{ field: "f1", value: "v1" }, { field: "f2", value: "v2" }]);
 ```
 
-**GLIDE:**
+## ZADD: `{element, score}` objects, separate `zrangeWithScores`
+
 ```javascript
+// ioredis:
+redis.zadd("z", 1, "alice", 2, "bob");
+redis.zadd("z", "NX", 1, "alice");
+redis.zrange("z", 0, -1, "WITHSCORES");
+
+// GLIDE:
 import { ConditionalChange } from "@valkey/valkey-glide";
 
-// Array of {element, score} objects or Record<string, number>
-await client.zadd("zset", [
-    { element: "alice", score: 1 },
-    { element: "bob", score: 2 },
-]);
-await client.zadd("zset", { alice: 1 }, { conditionalChange: ConditionalChange.ONLY_IF_DOES_NOT_EXIST });
-const score = await client.zscore("zset", "alice");
-const range = await client.zrangeWithScores("zset", { start: 0, end: -1 });
+await client.zadd("z", [{ element: "alice", score: 1 }, { element: "bob", score: 2 }]);
+await client.zadd("z", { alice: 1 }, { conditionalChange: ConditionalChange.ONLY_IF_DOES_NOT_EXIST });
+await client.zrangeWithScores("z", { start: 0, stop: -1 });  // NOTE: `stop`, not `end`
 ```
 
----
+`ConditionalChange` is ALL_CAPS enum (GLIDE_NODE convention for this specific enum) with two values: `ONLY_IF_EXISTS`, `ONLY_IF_DOES_NOT_EXIST`. For ZADD only.
 
-## Delete and Exists
+## Cluster: `Redis.Cluster` -> `GlideClusterClient`
 
-**ioredis:**
 ```javascript
-await redis.del("k1", "k2", "k3");
-const count = await redis.exists("k1", "k2");
-```
-
-**GLIDE:**
-```javascript
-await client.del(["k1", "k2", "k3"]);                   // array arg
-const count = await client.exists(["k1", "k2"]);
-```
-
----
-
-## Cluster Mode
-
-**ioredis:**
-```javascript
+// ioredis:
 const cluster = new Redis.Cluster([
-    { host: "node1.example.com", port: 6379 },
-    { host: "node2.example.com", port: 6380 },
+    { host: "n1", port: 6379 }, { host: "n2", port: 6379 },
 ], { scaleReads: "slave" });
-```
 
-**GLIDE:**
-```javascript
-import { GlideClusterClient } from "@valkey/valkey-glide";
-
+// GLIDE:
 const client = await GlideClusterClient.createClient({
-    addresses: [
-        { host: "node1.example.com", port: 6379 },
-        { host: "node2.example.com", port: 6380 },
-    ],
+    addresses: [{ host: "n1", port: 6379 }, { host: "n2", port: 6379 }],
     readFrom: "preferReplica",
 });
 ```
 
-GLIDE auto-discovers the full topology from seed nodes. No natMap or manual slot configuration.
+Full topology auto-discovered from seed nodes. `scaleReads: "slave"` maps to `readFrom: "preferReplica"`. `natMap` / manual slot map / `skipFullCoverageCheck` have no equivalent; GLIDE handles discovery internally.
+
+## Everything else is named the same
+
+For 90% of commands (`get`, `hget`, `hgetall`, `lpop`, `lrange`, `smembers`, `sismember`, `zscore`, `exists`, `ttl`, `expire`, `keys`, `type`, `incr`/`decr`, `xadd`/`xread`/`xreadgroup`/`xack`, `publish` BUT WITH REVERSED ARGS, etc.) the only changes are the three universal ones at the top of this file. Just translate.

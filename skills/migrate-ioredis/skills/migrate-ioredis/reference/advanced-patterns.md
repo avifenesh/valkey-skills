@@ -1,33 +1,26 @@
-# ioredis to GLIDE Advanced Patterns
+# ioredis to GLIDE: migration patterns
 
-Use when migrating ioredis Lua scripting, pipelines, transactions, Pub/Sub, or handling event and TypeScript differences.
+Use when translating ioredis Lua scripts, pipelines, Pub/Sub, or handling event / TypeScript differences.
 
-## Lua Scripting
+## Lua Scripting: Script class, required `.release()`
 
-**ioredis:**
 ```javascript
-// Manual defineCommand
-redis.defineCommand("mycommand", {
-    numberOfKeys: 1,
-    lua: "return redis.call('GET', KEYS[1])",
-});
-const result = await redis.mycommand("key1");
+// ioredis - manual defineCommand or evalsha
+redis.defineCommand("mycmd", { numberOfKeys: 1, lua: "return redis.call('GET', KEYS[1])" });
+await redis.mycmd("key1");
 
-// Or evalsha manually
-const sha = await redis.script("LOAD", luaScript);
-const result2 = await redis.evalsha(sha, 1, "key1");
-```
-
-**GLIDE:**
-```javascript
+// GLIDE
 import { Script } from "@valkey/valkey-glide";
 
-// Automatic caching - SCRIPT LOAD on first call, EVALSHA on subsequent
 const script = new Script("return redis.call('GET', KEYS[1])");
-const result = await client.invokeScript(script, { keys: ["key1"] });
+try {
+    const result = await client.invokeScript(script, { keys: ["key1"] });
+} finally {
+    script.release();  // REQUIRED - not garbage collected, leaks native memory otherwise
+}
 ```
 
-GLIDE caches the script automatically and uses EVALSHA on repeat calls. No manual SHA management.
+Automatic EVALSHA-with-EVAL-fallback. No manual SHA management. For cluster keyless scripts: `clusterClient.invokeScriptWithRoute(script, { args, route })`. Scripts are NOT allowed inside a `Batch` - use `batch.customCommand(["EVAL", ...])` there.
 
 ---
 
@@ -84,7 +77,8 @@ sub.on("pmessage", (pattern, channel, message) => {
 });
 ```
 
-**GLIDE (static subscriptions - at client creation):**
+### Path A - static subscriptions (any GLIDE version)
+
 ```javascript
 import { GlideClusterClient, GlideClusterClientConfiguration } from "@valkey/valkey-glide";
 
@@ -92,44 +86,51 @@ const subscriber = await GlideClusterClient.createClient({
     addresses: [{ host: "localhost", port: 6379 }],
     pubsubSubscriptions: {
         channelsAndPatterns: {
-            [GlideClusterClientConfiguration.PubSubChannelModes.Exact]: new Set(["channel"]),
+            [GlideClusterClientConfiguration.PubSubChannelModes.Exact]:   new Set(["channel"]),
             [GlideClusterClientConfiguration.PubSubChannelModes.Pattern]: new Set(["events:*"]),
         },
         callback: (msg) => {
-            console.log(`[${msg.channel}] ${msg.message} (pattern: ${msg.pattern ?? "none"})`);
+            console.log(`[${msg.channel}] ${msg.message}`);
         },
     },
 });
 ```
 
-**GLIDE (polling - no callback):**
-```javascript
-const subscriber = await GlideClusterClient.createClient({
-    addresses,
-    pubsubSubscriptions: {
-        channelsAndPatterns: {
-            [GlideClusterClientConfiguration.PubSubChannelModes.Exact]: new Set(["channel"]),
-        },
-        // No callback - use polling
-    },
-});
+Omit `callback` and poll with `await subscriber.getPubSubMessage()` (blocking) or `subscriber.tryGetPubSubMessage()` (non-blocking). Callback and polling are mutually exclusive.
 
-const msg = await subscriber.getPubSubMessage();    // awaits until message arrives
-const next = subscriber.tryGetPubSubMessage();       // returns null if no message
+### Path B - dynamic subscriptions (GLIDE 2.3+; yes, Node has these)
+
+Node at v2.3.1 includes the full dynamic pubsub API - older docs claiming Node lacks runtime subscribe are outdated:
+
+```javascript
+await subscriber.subscribe(new Set(["channel"]), /* timeoutMs? */ 5000);
+await subscriber.subscribeLazy(new Set(["channel"]));  // non-blocking
+await subscriber.psubscribe(new Set(["events:*"]), 5000);
+await subscriber.ssubscribe(new Set(["shard-topic"]), 5000);  // cluster only
+
+await subscriber.unsubscribe(new Set(["channel"]));
+await subscriber.unsubscribeLazy();
+
+const state = await subscriber.getSubscriptions();  // desired vs actual
 ```
 
-**Publishing - argument order is reversed:**
+### Publishing
+
+**GOTCHA: argument order is REVERSED from ioredis.** ioredis is `r.publish(channel, message)`; GLIDE is `await client.publish(message, channel)`. The `publish` table row in SKILL.md's divergence list calls this out too.
+
 ```javascript
-// ioredis: channel first, message second
-await cluster.publish("events:order", JSON.stringify({ id: 1, status: "created" }));
+// ioredis:                     publish(channel, message)
+await cluster.publish("events:order", JSON.stringify({ id: 1 }));
 
 // GLIDE: message first, channel second
-await publisher.publish(JSON.stringify({ id: 1, status: "created" }), "events:order");
+await publisher.publish(JSON.stringify({ id: 1 }), "events:order");
 ```
 
-The publisher must be a separate client from the subscriber. Any `GlideClusterClient` without `pubsubSubscriptions` can publish.
+### Other pubsub differences
 
-Node.js GLIDE has no runtime `subscribe()` / `psubscribe()` methods. All subscriptions are declared at client creation time. To change subscriptions, close and recreate the client. Callback and polling are mutually exclusive. RESP3 required for PubSub.
+- GLIDE multiplexes pubsub onto the same connection - the subscribing client can still run regular commands. Dedicated client still recommended for high-throughput subscribers to avoid head-of-line effects.
+- Automatic resubscription on reconnect and cluster topology change via the synchronizer.
+- RESP3 required for static subscriptions; RESP2 raises `ConfigurationError`.
 
 ---
 

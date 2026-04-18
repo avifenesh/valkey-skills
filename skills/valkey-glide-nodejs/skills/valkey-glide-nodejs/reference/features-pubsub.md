@@ -1,23 +1,23 @@
 # Pub/Sub (Node.js)
 
-Use when you need real-time message broadcasting between clients - chat, notifications, event distribution, or live data feeds.
+Use when working with publish/subscribe. Covers what diverges from `ioredis` - the `r.subscribe()` / `r.on('message', ...)` event-emitter pattern does NOT translate. The publish/message-receive loop is similar in shape but the subscription model is different.
 
-## Contents
+## Divergence from ioredis
 
-- Key Difference from ioredis (line 16)
-- PubSubChannelModes (line 59)
-- PubSubSubscriptions Interface (line 69)
-- PubSubMsg Interface (line 87)
-- Message Delivery: Callback (line 101)
-- Message Delivery: Polling (line 124)
-- Complete Example: Publisher + Subscriber (line 161)
-- Important Notes (line 199)
+| ioredis | GLIDE |
+|---------|-------|
+| `sub = redis.duplicate(); sub.subscribe('ch')` then `sub.on('message', (ch, msg) => ...)` | Either static config in `pubsubSubscriptions`, or `await client.subscribe(new Set(['ch']))` (GLIDE 2.3+) |
+| EventEmitter (`sub.on('message', ...)`, `sub.on('pmessage', ...)`) | Callback in config OR `await client.getPubSubMessage()` / `client.tryGetPubSubMessage()` polling - cannot mix |
+| `redis.publish(channel, message)` | `await client.publish(message, channel)` - **arguments REVERSED**; top silent-bug source during migration |
+| Subscriber client can't issue other commands | GLIDE multiplexes - subscribing client CAN still run regular commands (dedicated client still recommended for high-throughput subscribers) |
+| Manual resubscribe on reconnect | Automatic via synchronizer; `getSubscriptions()` exposes desired vs actual state |
+| Sharded pub/sub via standalone client (supported in 7.0+) | `PubSubChannelModes.Sharded` requires `GlideClusterClient` |
 
-## Key Difference from ioredis
+Static subscriptions require RESP3 (the default). Setting `protocol: ProtocolVersion.RESP2` with subscriptions throws `ConfigurationError`.
 
-GLIDE PubSub differs from ioredis in two ways: (1) no event emitters - use callbacks or polling instead, (2) RESP3 protocol required.
+## Subscription approaches
 
-All subscriptions must be declared at client creation time. Node.js GLIDE does NOT have runtime `subscribe()` / `psubscribe()` methods. To change subscriptions, close the client and create a new one.
+### Static (creation-time, any GLIDE version)
 
 ```typescript
 import { GlideClusterClient, GlideClusterClientConfiguration } from "@valkey/valkey-glide";
@@ -26,188 +26,101 @@ const subscriber = await GlideClusterClient.createClient({
     addresses: [{ host: "localhost", port: 6379 }],
     pubsubSubscriptions: {
         channelsAndPatterns: {
-            [GlideClusterClientConfiguration.PubSubChannelModes.Exact]: new Set(["news", "events"]),
-            [GlideClusterClientConfiguration.PubSubChannelModes.Pattern]: new Set(["events:*"]),
+            [GlideClusterClientConfiguration.PubSubChannelModes.Exact]:   new Set(["chat"]),
+            [GlideClusterClientConfiguration.PubSubChannelModes.Pattern]: new Set(["news:*"]),
         },
-        callback: (msg) => {
-            console.log(`${msg.channel}: ${msg.message}`);
+        callback: (msg, context) => {
+            console.log(`[${msg.channel}] ${msg.message} (pattern: ${msg.pattern ?? "none"})`);
         },
+        context: { /* arbitrary */ },
     },
 });
 ```
 
-### ioredis migration pattern
+### Dynamic (GLIDE 2.3+ - Node includes full support)
+
+Node.js at v2.3.1 has the full dynamic pubsub API. Methods on the client:
 
 ```typescript
-// ioredis (old) - runtime subscribe with event emitter
-const sub = redis.duplicate();
-sub.psubscribe("events:*");
-sub.on("pmessage", (pattern, channel, message) => { ... });
+// Blocking variants wait for server ack; optional timeout (ms)
+await client.subscribe(new Set(["channel1", "channel2"]), /* timeoutMs? */ 5000);
+await client.psubscribe(new Set(["news:*"]), 5000);
+await client.ssubscribe(new Set(["shard-topic"]), 5000);  // GlideClusterClient only
 
-// GLIDE (new) - subscriptions at creation time, callback or polling
-const sub = await GlideClusterClient.createClient({
-    addresses,
-    pubsubSubscriptions: {
-        channelsAndPatterns: {
-            [GlideClusterClientConfiguration.PubSubChannelModes.Pattern]: new Set(["events:*"]),
-        },
-        callback: (msg) => { /* msg.channel, msg.message, msg.pattern */ },
-    },
-});
+// Lazy variants return immediately; reconciliation is async
+await client.subscribeLazy(new Set(["channel1"]));
+await client.psubscribeLazy(new Set(["news:*"]));
+await client.ssubscribeLazy(new Set(["shard-topic"]));
+
+await client.unsubscribe(new Set(["channel1"]));   // or unsubscribe() for all exact
+await client.unsubscribeLazy();
 ```
 
-## PubSubChannelModes
+## Receiving messages
 
-Each client type defines its own enum. The cluster client supports three modes; the standalone client supports two.
+### Callback model
 
-| Value | Name | Description | Cluster | Standalone |
-|-------|------|-------------|---------|------------|
-| 0 | `Exact` | Subscribe to specific channel names (SUBSCRIBE) | Yes | Yes |
-| 1 | `Pattern` | Subscribe using glob patterns like `news.*` (PSUBSCRIBE) | Yes | Yes |
-| 2 | `Sharded` | Slot-scoped channels, Valkey 7.0+ (SSUBSCRIBE) | Yes | No |
-
-## PubSubSubscriptions Interface
-
-Defined in both `GlideClusterClientConfiguration` and `GlideClientConfiguration` namespaces:
-
-```typescript
-interface PubSubSubscriptions {
-    channelsAndPatterns: Partial<Record<PubSubChannelModes, Set<string>>>;
-    callback?: (msg: PubSubMsg, context: any) => void;
-    context?: any;
-}
-```
-
-- `channelsAndPatterns` - map from mode to a `Set<string>` of channel names or patterns
-- `callback` - optional function invoked on each incoming message
-- `context` - arbitrary value passed as the second argument to the callback
-
-If no callback is provided, messages queue internally and must be retrieved via polling.
-
-## PubSubMsg Interface
+Pass `callback` in `pubsubSubscriptions`. Must not block. Receives `PubSubMsg`:
 
 ```typescript
 interface PubSubMsg {
     message: GlideString;
     channel: GlideString;
-    pattern?: GlideString | null;
+    pattern?: GlideString | null;  // set only for pattern subscriptions
 }
 ```
 
-- `message` - the published payload
-- `channel` - the channel the message was published to
-- `pattern` - the pattern that matched (only set for pattern subscriptions)
+### Polling model
 
-## Message Delivery: Callback
-
-Provide a `callback` in `pubsubSubscriptions`. The callback must not block.
-
-```typescript
-import { GlideClusterClient, GlideClusterClientConfiguration } from "@valkey/valkey-glide";
-
-const subscriber = await GlideClusterClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-    pubsubSubscriptions: {
-        channelsAndPatterns: {
-            [GlideClusterClientConfiguration.PubSubChannelModes.Pattern]: new Set(["user:*"]),
-            [GlideClusterClientConfiguration.PubSubChannelModes.Exact]: new Set(["system"]),
-        },
-        callback: (msg, context) => {
-            context.count++;
-            console.log(`[${msg.channel}] ${msg.message} (pattern: ${msg.pattern ?? "none"})`);
-        },
-        context: { count: 0 },
-    },
-});
-```
-
-## Message Delivery: Polling
-
-Omit the `callback` to use polling. Two methods are available on the client:
+Omit `callback` in config. Use the client's message methods:
 
 | Method | Returns | Behavior |
 |--------|---------|----------|
-| `getPubSubMessage()` | `Promise<PubSubMsg>` | Awaits until a message arrives |
-| `tryGetPubSubMessage()` | `PubSubMsg \| null` | Returns immediately, `null` if empty |
+| `await client.getPubSubMessage()` | `Promise<PubSubMsg>` | Awaits until a message arrives |
+| `client.tryGetPubSubMessage()` | `PubSubMsg \| null` | Returns immediately, `null` if queue empty |
 
-Both methods throw `ConfigurationError` if a callback is configured, or if no subscriptions exist.
+Both throw `ConfigurationError` if a callback is configured, or if the client has no subscriptions. Drain the queue regularly - it is unbounded.
 
-```typescript
-import { GlideClusterClient, GlideClusterClientConfiguration } from "@valkey/valkey-glide";
-
-const subscriber = await GlideClusterClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-    pubsubSubscriptions: {
-        channelsAndPatterns: {
-            [GlideClusterClientConfiguration.PubSubChannelModes.Exact]: new Set(["orders"]),
-        },
-        // No callback - use polling
-    },
-});
-
-// Async wait - blocks until a message arrives
-const msg = await subscriber.getPubSubMessage();
-console.log(`${msg.channel}: ${msg.message}`);
-
-// Non-blocking poll - returns null if no message queued
-const next = subscriber.tryGetPubSubMessage();
-if (next) {
-    console.log(`${next.channel}: ${next.message}`);
-}
-```
-
-Drain the queue regularly - the internal buffer is unbounded and grows if not consumed.
-
-## Complete Example: Publisher + Subscriber
+## Subscription state inspection
 
 ```typescript
-import {
-    GlideClusterClient,
-    GlideClusterClientConfiguration,
-} from "@valkey/valkey-glide";
-
-const addresses = [{ host: "localhost", port: 6379 }];
-
-// Subscriber client - subscriptions declared at creation
-const subscriber = await GlideClusterClient.createClient({
-    addresses,
-    pubsubSubscriptions: {
-        channelsAndPatterns: {
-            [GlideClusterClientConfiguration.PubSubChannelModes.Exact]: new Set(["chat"]),
-            [GlideClusterClientConfiguration.PubSubChannelModes.Sharded]: new Set(["shard-topic"]),
-        },
-        callback: (msg) => {
-            console.log(`[${msg.channel}] ${msg.message}`);
-        },
-    },
-});
-
-// Publisher client - separate instance, no subscriptions needed
-const publisher = await GlideClusterClient.createClient({ addresses });
-
-// Publish to exact channel
-await publisher.publish("Hello from GLIDE!", "chat");
-
-// Publish to sharded channel (third argument = true for sharded mode)
-await publisher.publish("Sharded hello!", "shard-topic", true);
-
-// Cleanup
-publisher.close();
-subscriber.close();
+const state = await client.getSubscriptions();
+// Standalone returns StandalonePubSubState
+// Cluster    returns ClusterPubSubState
+// Both expose desired vs actual subscriptions per channel mode
 ```
 
-## Important Notes
+Track sync health:
 
-1. **RESP3 is the default.** `protocol` defaults to `ProtocolVersion.RESP3`. PubSub works out of the box. If you explicitly set `protocol: ProtocolVersion.RESP2`, PubSub push notifications will not be delivered.
+```typescript
+const stats = await client.getStatistics();
+const outOfSync = stats["subscription_out_of_sync_count"];       // all values are strings
+const lastSyncMs = stats["subscription_last_sync_timestamp"];    // ms since epoch
+```
 
-2. **Separate clients for pub and sub.** A subscribing client is in a special mode. Use one client for publishing and a different client for subscribing.
+## `PubSubChannelModes`
 
-3. **No runtime subscribe/unsubscribe in Node.js.** Java/Python/Go have dynamic `subscribe()`/`psubscribe()` methods (GLIDE 2.3+). Node.js support is in progress. Declare all subscriptions at creation time. To change subscriptions, close and recreate the client.
+Each client type defines its own enum under the config namespace. Same numeric values in both, but `Sharded` is cluster-only:
 
-4. **Callback vs polling - pick one.** If a callback is configured, `getPubSubMessage()` and `tryGetPubSubMessage()` throw `ConfigurationError`. If no callback is configured, messages must be polled.
+| Value | Name | Cluster | Standalone | Server command |
+|-------|------|---------|------------|----------------|
+| 0 | `Exact` | Yes | Yes | SUBSCRIBE |
+| 1 | `Pattern` | Yes | Yes | PSUBSCRIBE |
+| 2 | `Sharded` | Yes | No | SSUBSCRIBE (Valkey 7.0+) |
 
-5. **Sharded PubSub requires cluster mode.** `PubSubChannelModes.Sharded` is only available on `GlideClusterClient` (not `GlideClient`). Requires Valkey 7.0+.
+## Publishing
 
-6. **publish() signature differs by client type.** `GlideClusterClient.publish(message, channel, sharded?)` accepts an optional boolean for sharded mode. `GlideClient.publish(message, channel)` does not.
+**GOTCHA: argument order is REVERSED from ioredis.** ioredis is `r.publish(channel, message)`; GLIDE is `await client.publish(message, channel)`. Silent mis-routing if you don't notice - this is the #1 `publish()` bug in migration code.
 
-7. **Automatic resubscription on reconnect.** When the connection drops, GLIDE reconnects and reissues the configured SUBSCRIBE/PSUBSCRIBE/SSUBSCRIBE commands automatically.
+```typescript
+// Standalone: publish(message, channel) -> number of receivers
+await client.publish("hello world", "chat");
+
+// Cluster: publish(message, channel, sharded?) -> number of receivers
+await client.publish("hello world", "chat");
+await client.publish("hello shard", "shard-topic", true);  // sharded mode, Valkey 7.0+
+```
+
+## Automatic resubscription
+
+On reconnect or cluster topology change, the synchronizer reissues SUBSCRIBE / PSUBSCRIBE / SSUBSCRIBE automatically. No manual handling. Tune cadence via `advancedConfiguration.pubsubReconciliationInterval` (ms).
