@@ -1,21 +1,18 @@
-# Pub/Sub
+# Pub/Sub (Go)
 
-Use when you need real-time message broadcasting between Go clients - chat, notifications, event distribution, or live data feeds. For durable message processing with consumer groups and replay, see [Streams](features-streams.md) instead.
+Use when working with publish/subscribe. Covers what differs from `go-redis`'s `rdb.Subscribe(ctx, channels...)` + `pubsub.ReceiveMessage(ctx)` pattern - the subscription model diverges significantly.
 
-GLIDE supports Valkey's publish/subscribe messaging with three subscription modes, automatic reconnection with resubscription, and a synchronizer that continuously reconciles desired vs actual subscription state. Sharded subscriptions require Valkey 7.0+. Dynamic subscribe/unsubscribe requires GLIDE 2.3+.
+## Divergence from go-redis
 
-## Contents
+| go-redis | GLIDE Go |
+|----------|---------|
+| `pubsub := rdb.Subscribe(ctx, "ch1", "ch2")` runtime | Either static config (`WithSubscriptionConfig`) OR dynamic `client.Subscribe(ctx, ...)` (GLIDE 2.3+) |
+| `msg, err := pubsub.ReceiveMessage(ctx)` loop | Callback on the subscription config OR `client.GetPubSubMessage(ctx)` / `client.TryGetPubSubMessage()` - cannot mix |
+| `rdb.Publish(ctx, channel, message)` | `client.Publish(ctx, channel, message)` - **SAME ORDER** (Go matches the Redis convention; Python/Node reverse it, Go does NOT) |
+| Manual reconnect + resubscribe in your loop | Automatic via synchronizer; `client.GetSubscriptions(ctx)` exposes desired vs actual state |
+| `ClusterClient.Subscribe` does sharded differently | Sharded subscriptions: `ShardedClusterChannelMode` in config, `SSubscribe` / `SSubscribeLazy` for runtime (`ClusterClient` only); sharded publishing: `Publish(ctx, channel, message, sharded bool)` 4th-arg flag |
 
-- Subscription Modes (line 20)
-- Configuration-Time Subscriptions (Immutable) (line 30)
-- Dynamic Subscriptions (GLIDE 2.3+) (line 80)
-- Receiving Messages (line 124)
-- PubSubMessage Type (line 181)
-- Publishing (line 191)
-- Dedicated Subscriber Client (line 202)
-- Introspection (line 206)
-- Subscription State (line 230)
-- Reconciliation and Reconnection (line 243)
+Static subscriptions require RESP3 (default). Using RESP2 causes client creation to fail with `ConfigurationError`.
 
 ## Subscription Modes
 
@@ -199,9 +196,9 @@ count, err := clusterClient.Publish(ctx, "news", "update", false)
 count, err = clusterClient.Publish(ctx, "orders", "new-order", true) // sharded
 ```
 
-## Dedicated Subscriber Client
+## Dedicated subscriber client
 
-Always use separate clients for subscribing and regular commands - PubSub clients enter a special mode where most commands are unavailable.
+Dedicated subscriber client is RECOMMENDED for high-volume subscriptions to avoid head-of-line effects with regular command traffic, but NOT required - GLIDE multiplexes pubsub alongside commands on the core side. The "enters special mode" framing from go-redis / traditional Redis clients does not strictly apply.
 
 ## Introspection
 

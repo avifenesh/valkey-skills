@@ -1,135 +1,92 @@
-# Error Handling
+# Error handling (Go)
 
-Use when implementing error handling, retry logic, or batch error semantics in the GLIDE Go client.
+Covers what differs from go-redis's `redis.Nil` sentinel + typed errors in `redis` package. GLIDE Go has a fundamentally different error model you need to understand.
 
-## Error Types
+## Divergence from go-redis
 
-Go GLIDE uses typed error structs with the standard `errors.As` pattern:
+| go-redis | GLIDE Go |
+|----------|---------|
+| `val, err := rdb.Get(ctx, key).Result()`; `errors.Is(err, redis.Nil)` for missing key | `val, err := client.Get(ctx, key)` returns `(Result[string], error)`; check `err` for transport errors first, THEN `val.IsNil()` for missing key |
+| Typed errors in `redis` package, pointer to base | FLAT error model - independent structs, no base class. `*ConnectionError`, `*TimeoutError`, `*DisconnectError`, `*ExecAbortError`, `*ClosingError`, `*ConfigurationError`, `*BatchError` - each unrelated |
+| `redis.Nil` sentinel for missing key | `Result[T].IsNil()` - separate API, no error at all |
+| `MaxRetries` caps request retries | Reconnection is INFINITE - `numOfRetries` on `BackoffStrategy` only caps backoff sequence length |
+
+## Go's flat error model - the subtle gotcha
 
 ```go
 import (
     "errors"
     glide "github.com/valkey-io/valkey-glide/go/v2"
 )
-```
 
-| Error | When It Occurs | Recovery |
-|-------|---------------|----------|
-| `*glide.ConnectionError` | Connection lost | GLIDE auto-reconnects; retry the operation |
-| `*glide.TimeoutError` | Request exceeded `WithRequestTimeout` (default 250ms) | Increase timeout or check server load |
-| `*glide.ExecAbortError` | Atomic batch aborted (WATCH key changed) | Retry the transaction |
-| `*glide.ClosingError` | Client was closed | Create a new client |
-| `*glide.ConfigurationError` | Invalid client configuration | Fix config and recreate |
-| `*glide.DisconnectError` | Connection problem between client and server | Check network; GLIDE may reconnect |
-| `*glide.BatchError` | Multiple errors in a batch response | Inspect individual errors via `.Error()` |
-
-## Basic Error Handling
-
-```go
 val, err := client.Get(ctx, "key")
 if err != nil {
     var connErr *glide.ConnectionError
+    var discErr *glide.DisconnectError
     var timeoutErr *glide.TimeoutError
-    if errors.As(err, &connErr) {
-        // Connection lost - GLIDE is already reconnecting
-        // Retry the operation after a brief delay
-    } else if errors.As(err, &timeoutErr) {
-        // Request exceeded timeout - check server load or increase timeout
-    } else {
-        // General error
-        fmt.Println("Error:", err)
+    var closingErr *glide.ClosingError
+    switch {
+    case errors.As(err, &connErr):
+        // rare - only at setup-type errors
+    case errors.As(err, &discErr):
+        // MOST "connection lost" scenarios arrive as DisconnectError, not ConnectionError
+    case errors.As(err, &timeoutErr):
+        // request exceeded requestTimeout
+    case errors.As(err, &closingErr):
+        // client is closed - create a new one
+    default:
+        // generic errors.New(msg) - the majority of operational errors
     }
     return
 }
-// Check for nil result (key not found is NOT an error)
-if val.IsNil() {
-    fmt.Println("Key does not exist")
-} else {
-    fmt.Println("Value:", val.Value())
-}
+if val.IsNil() { /* key not found - not an error */ }
 ```
 
-Go separates nil-check from error-check. A nil result (key not found) is not an error - check `val.IsNil()` after confirming `err == nil`.
+### Why this differs from Python / Node
 
----
+Only three errors are auto-typed by `GoError()` in `go/errors.go`: `ExecAbort`, `Timeout`, `Disconnect`. Everything else falls through to generic `errors.New(msg)`. So most operational errors do NOT match a typed struct. This is a bigger behavioral gap than it looks.
 
-## Batch Error Handling
+Python's `except RequestError:` / Node's `instanceof RequestError` catch the whole timeout+connection+config+exec-abort family. Go has no equivalent - you either list each `errors.As` check or resort to string matching on the message.
 
-The `raiseOnError` parameter on `client.Exec()` controls how batch errors surface:
+### Typed errors reference
 
-### raiseOnError = true
+| Type | Source |
+|------|--------|
+| `*ConnectionError` | Explicit throws in client setup |
+| `*DisconnectError` | Auto-mapped from core's `Disconnect` - actual "connection lost" signal |
+| `*TimeoutError` | Auto-mapped from core's `Timeout` |
+| `*ExecAbortError` | Auto-mapped from atomic-batch WATCH conflicts / MULTI errors |
+| `*ClosingError` | Explicit throws when client is closed |
+| `*ConfigurationError` | Explicit throws in config validation |
+| `*BatchError` | Wraps multiple prep-time batch errors (`[]error` collected during command construction) |
 
-First error in results is returned as the `error` return value.
+## Batch error handling
 
-```go
-import "github.com/valkey-io/valkey-glide/go/v2/pipeline"
-
-tx := pipeline.NewStandaloneBatch(true)
-tx.Set("key", "val")
-tx.Get("key")
-results, err := client.Exec(ctx, *tx, true)
-if err != nil {
-    fmt.Println("Batch failed:", err)
-    return
-}
-```
-
-### raiseOnError = false
-
-Errors appear inline as `error` values in the `[]any` slice. Use `glide.IsError()` to check:
+`raiseOnError=true` returns the first inline error as `err`; `raiseOnError=false` embeds errors inline in the results slice - use `glide.IsError(item)` to check:
 
 ```go
-pipe := pipeline.NewStandaloneBatch(false)
-pipe.Set("key", "value")
-pipe.LPush("key", []string{"oops"})  // WRONGTYPE error
-pipe.Get("key")
-
-results, err := client.Exec(ctx, *pipe, false)
+results, err := client.Exec(ctx, *batch, false)
 for i, item := range results {
-    if e := glide.IsError(item); e != nil {
-        fmt.Printf("Command %d failed: %v\n", i, e)
-    } else {
-        fmt.Printf("Command %d OK: %v\n", i, item)
-    }
+    if e := glide.IsError(item); e != nil { /* handle command i */ }
 }
 ```
 
-Atomic batches with WATCH return `nil, nil` (nil results, no error) if a watched key was modified. Retry the transaction in a loop.
+Atomic batches with WATCH return `nil, nil` on conflict (not an error).
 
----
-
-## Reconnection Behavior
-
-GLIDE reconnects automatically on connection loss with exponential backoff:
+## Reconnection behavior
 
 ```go
-import "github.com/valkey-io/valkey-glide/go/v2/config"
-
-strategy := config.NewBackoffStrategy(5, 100, 2)  // retries, factor(ms), exponentBase
+strategy := config.NewBackoffStrategy(5, 100, 2)  // numOfRetries, factor_ms, exponentBase
 strategy.WithJitterPercent(20)
-
-cfg := config.NewClientConfiguration().
-    WithAddress(&config.NodeAddress{Host: "localhost", Port: 6379}).
-    WithReconnectStrategy(strategy)
 ```
 
-- Delay formula: `factor * (exponentBase ^ attempt)` with optional jitter
-- After `numOfRetries`, delay stays at the ceiling indefinitely
-- PubSub channels are automatically resubscribed on reconnect
-- Permanent errors (NOAUTH, WRONGPASS) are not retried
+- Delay formula: `rand_jitter * factor * (exponentBase ^ attempt)` (conceptual; Go doesn't have an exponentiation operator - the math is done in the Rust core), clamped at a ceiling.
+- After `numOfRetries` the delay plateaus and reconnection continues infinitely until close.
+- Initial-connect permanent errors (`AuthenticationFailed`, `InvalidClientConfig`, `RESP3NotSupported`, plus `NOAUTH` / `WRONGPASS` string matches) are not retried. After initial connect, the core keeps reconnecting and surfaces `DisconnectError` / generic error per command until the server recovers.
+- PubSub channels resubscribe automatically via the synchronizer.
 
----
+## Failover and timeout
 
-## Failover and Timeout
+During cluster failover expect error bursts for 1-5 seconds while the slot map refreshes. Retry is the right response.
 
-During cluster failover, expect `ConnectionError` bursts for 1-5 seconds. GLIDE refreshes the slot map and re-routes automatically. Retry failed operations.
-
-Frequent `TimeoutError` indicates server load - verify before increasing timeout:
-
-```go
-cfg := config.NewClientConfiguration().
-    WithAddress(&config.NodeAddress{Host: "localhost", Port: 6379}).
-    WithRequestTimeout(1 * time.Second)  // default 250ms
-```
-
-GLIDE auto-extends timeouts for blocking commands (BLPOP, XREADGROUP BLOCK) by 500ms beyond the block duration.
+Frequent `*TimeoutError` usually indicates server load, not a too-tight timeout. GLIDE auto-extends the effective timeout for blocking commands (BLPOP/BRPOP/BLMOVE/BZPopMax/BZPopMin/BRPopLPush/BLMPop/BZMPop and XRead/XReadGroup with block, WAIT/WAITAOF) by 0.5 s beyond the block duration - no tuning required.

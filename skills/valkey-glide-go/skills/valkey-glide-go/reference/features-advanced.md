@@ -1,21 +1,8 @@
-# Advanced Configuration
+# Advanced features (Go)
 
-Use when tuning connection timeouts, TLS certificates, TCP_NODELAY, cluster topology refresh, request routing, custom commands, or scan iteration.
+Use for routing, custom commands, scripting, Functions, OpenTelemetry, and advanced TLS / advanced config. Covers GLIDE-specific API with no direct go-redis equivalent.
 
-Packages: `github.com/valkey-io/valkey-glide/go/v2/config`, `github.com/valkey-io/valkey-glide/go/v2/options`, `github.com/valkey-io/valkey-glide/go/v2/constants`.
-
-## Contents
-
-- AdvancedClientConfiguration (Standalone) (line 20)
-- AdvancedClusterClientConfiguration (line 45)
-- TLS Configuration (line 64)
-- Request Routing (Cluster) (line 95)
-- Custom Commands (line 121)
-- Scan Iteration (line 142)
-- Server Management (line 178)
-- Lua Scripting (EVAL/EVALSHA) (line 188)
-- Functions API (Valkey 7.0+) (line 219)
-- OpenTelemetry Integration (line 249)
+Packages: `github.com/valkey-io/valkey-glide/go/v2/config`, `.../options`, `.../constants`, `.../models`.
 
 ## AdvancedClientConfiguration (Standalone)
 

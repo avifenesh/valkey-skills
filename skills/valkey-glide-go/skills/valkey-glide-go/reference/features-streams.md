@@ -1,22 +1,53 @@
-# Valkey Streams
+# Streams (Go)
 
-Use when you need durable, ordered message processing with consumer groups, replay capability, or event sourcing in Go. For fire-and-forget broadcast messaging, see [Pub/Sub](features-pubsub.md). Stream commands can be included in [batches](features-batching.md).
+Use when working with Valkey streams. Command names match Valkey's XADD/XREAD set and are similar to go-redis - the divergence is in option builders, typed range bounds, `Result[T]` returns, and a couple of API splits.
 
-Packages: `github.com/valkey-io/valkey-glide/go/v2/options`, `github.com/valkey-io/valkey-glide/go/v2/models`.
+Packages: `github.com/valkey-io/valkey-glide/go/v2/options`, `.../models`.
 
-## Contents
+## Divergence from go-redis
 
-- Adding Entries (line 21)
-- Reading Entries (line 49)
-- Range Queries (line 73)
-- Consumer Groups (line 87)
-- Pending Entries (line 126)
-- Claiming Entries (line 143)
-- Group Management (line 172)
-- Stream Metadata (line 184)
-- Introspection (line 207)
-- Blocking Commands (line 219)
-- Cluster Mode (line 223)
+| go-redis | GLIDE Go |
+|----------|---------|
+| `rdb.XAdd(ctx, &redis.XAddArgs{Stream, ID, Values, MaxLen, Approx})` | `client.XAdd(ctx, stream, []models.FieldValue{{Field, Value}, ...})` or `client.XAddWithOptions(ctx, stream, values, *options.NewXAddOptions().SetId("1-0").SetTrimOptions(...))` |
+| `XAddArgs.MaxLen, Approx` | `options.NewXTrimOptionsWithMaxLen(n).SetNearlyExactTrimming()` / `options.NewXTrimOptionsWithMinID(id)` |
+| `start="-"`, `end="+"` string bounds | Typed boundaries via `options.NewInfiniteStreamBoundary(constants.NegativeInfinity / PositiveInfinity)`; bounded via `options.NewStreamBoundary(id, isInclusive)` |
+| `rdb.XRead(ctx, &redis.XReadArgs{Streams: [...], Block: 5*time.Second, Count: 10})` | `client.XReadWithOptions(ctx, map[string]string{...}, *options.NewXReadOptions().SetCount(10).SetBlock(5*time.Second))` |
+| `rdb.XClaim(ctx, &redis.XClaimArgs{}, justId bool)` | Separate methods: `XClaim` vs `XClaimJustId`, `XAutoClaim` vs `XAutoClaimJustId` |
+| `rdb.XPending(...)` returns overloaded struct | `XPending` for summary, `XPendingWithOptions` for detail |
+| Typed response structs from go-redis | `models.StreamResponse`, `models.XAutoClaimResponse { NextEntry, ClaimedEntries, DeletedMessages }`, `models.FieldValue` |
+| Read returns `(result, redis.Nil err)` for no entries | `XRead` / `XReadWithOptions` return `map[string]models.StreamResponse` directly (not wrapped in `Result[T]`) - check for empty map or empty entries slice |
+
+## Key typed builders
+
+| Builder | Replaces |
+|---------|----------|
+| `options.NewXAddOptions()` with `SetId`, `SetDontMakeNewStream`, `SetTrimOptions` | XAdd kwargs (id, nomkstream, maxlen, minid) |
+| `options.NewXReadOptions()` with `SetCount`, `SetBlock` | XRead kwargs |
+| `options.NewXReadGroupOptions()` with `SetCount`, `SetBlock`, `SetNoAck` | XReadGroup kwargs |
+| `options.NewXGroupCreateOptions()` with `MakeStream`, `EntriesRead` | XGroup CREATE kwargs |
+| `options.NewXTrimOptionsWithMaxLen(n)` / `options.NewXTrimOptionsWithMinID(id)` with `SetExactTrimming` / `SetNearlyExactTrimming` / `SetLimit` | MAXLEN/MINID trim args |
+| `options.NewXClaimOptions()` with `SetIdle`, `SetTime`, `SetRetryCount`, `SetForce` | XCLAIM kwargs |
+| `options.NewXPendingOptions(start, end, count)` with `SetConsumer`, `SetMinIdleTime` | XPENDING filter args |
+
+## Split xclaim / xautoclaim
+
+`XClaim` returns `(map[string][]models.FieldValue, error)`; `XClaimJustId` returns `([]string, error)`. Same split for `XAutoClaim` / `XAutoClaimJustId`. Matches Python/Node split; replaces go-redis's `justid bool` flag.
+
+`XAutoClaim*` (Valkey 6.2+) returns `models.XAutoClaimResponse` with `NextEntry`, `ClaimedEntries`, `DeletedMessages`.
+
+## Cluster: multi-stream reads must share a slot
+
+`XRead` / `XReadGroup` over multiple stream keys goes to a single node - all keys must hash to the same slot. Use hash tags:
+
+```go
+client.XAdd(ctx, "{app}.events", []models.FieldValue{{Field: "type", Value: "click"}})
+client.XAdd(ctx, "{app}.logs",   []models.FieldValue{{Field: "level", Value: "info"}})
+client.XRead(ctx, map[string]string{"{app}.events": "0", "{app}.logs": "0"})
+```
+
+## Blocking reads need a dedicated client
+
+`XReadWithOptions` / `XReadGroupWithOptions` with `SetBlock(...)` hold the multiplexed connection. Use a dedicated client so other goroutines are not stalled. Same rule as `BLPop` - see [performance](best-practices-performance.md).
 
 ## Adding Entries
 

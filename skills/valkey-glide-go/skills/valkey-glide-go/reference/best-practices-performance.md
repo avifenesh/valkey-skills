@@ -1,118 +1,65 @@
-# Performance Tuning
+# Performance tuning (Go)
 
-Use when optimizing GLIDE Go throughput and latency, tuning inflight limits, or choosing batching strategies.
+Use when optimizing GLIDE Go throughput and latency. Covers GLIDE-specific discipline; general Go concurrency (goroutines, sync.WaitGroup, channel patterns) is the same as any Go app and not covered here.
 
-## Batching Is the Top Optimization
+## Client model: one client per process, not per goroutine
 
-Batching amortizes the CGO FFI overhead across all commands - one crossing per batch instead of one per command. Batched workloads are competitive with go-redis.
+GLIDE is a multiplexer. One `*Client` / `*ClusterClient` serves every goroutine concurrently - requests are tagged with IDs and demuxed. `client.Get(ctx, ...)` is goroutine-safe; call from any number of goroutines without a mutex. Creating a client per goroutine wastes allocation and opens fresh TCP handshakes to every cluster node.
 
-### Non-Atomic Pipeline
+**Exceptions - use a dedicated client:**
+
+- Blocking commands: `BLPop`, `BRPop`, `BLMove`, `BZPopMax`, `BZPopMin`, `BRPopLPush`, `BLMPop`, `BZMPop`, plus `XRead` / `XReadGroup` with block, and `Wait` / `WaitAof`. They occupy the multiplexed connection for the block duration.
+- `Watch` / atomic batch with WATCH - connection-state command; leaks across goroutines on the shared multiplexer.
+- PubSub subscribers doing high-volume subscriptions.
+
+Large values are NOT an exception - they pipeline through the multiplexer fine.
+
+## Batching is the top optimization
+
+Batching amortizes the CGO crossing across all commands - one crossing per batch instead of one per command. This is the single biggest throughput knob.
 
 ```go
 import "github.com/valkey-io/valkey-glide/go/v2/pipeline"
 
-pipe := pipeline.NewStandaloneBatch(false)
+batch := pipeline.NewStandaloneBatch(false)
 for i := 0; i < 100; i++ {
-    pipe.Set(fmt.Sprintf("key:%d", i), fmt.Sprintf("value:%d", i))
+    batch.Set(fmt.Sprintf("k:%d", i), fmt.Sprintf("v:%d", i))
 }
-results, err := client.Exec(ctx, *pipe, true)
-// One round-trip for 100 commands
+client.Exec(ctx, *batch, true)  // one CGO crossing, one multiplexer slot
 ```
 
-### Atomic Transaction
+In cluster mode, atomic batches require all keys to share a hash slot: `batch.Set("{account}:src", ...)`.
 
-```go
-tx := pipeline.NewStandaloneBatch(true)
-tx.Set("{account}:src", "100")
-tx.Set("{account}:dst", "0")
-tx.IncrBy("{account}:dst", 50)
-tx.DecrBy("{account}:src", 50)
-results, err := client.Exec(ctx, *tx, true)
-```
+Rough batch-size guidelines:
 
-All keys must share a hash slot in cluster mode. Use `{tag}` hash tags.
+| Size | Trade-off |
+|------|-----------|
+| 10-50 | Good default; low latency, solid throughput gain |
+| 50-200 | Best throughput; slight per-batch latency increase |
+| 200-1000 | Diminishing returns, large response buffers |
+| 1000+ | Memory pressure, long parsing - avoid |
 
-### Cluster Batch
+## Inflight request limit
 
-```go
-pipe := pipeline.NewClusterBatch(false)
-pipe.Set("user:1:name", "Alice")
-pipe.Set("user:2:name", "Bob")
-pipe.Get("user:1:name")
-results, err := clusterClient.Exec(ctx, *pipe, false)
-```
+The multiplexer caps concurrent inflight requests at 1000 per client. Requests beyond the cap fail with an error - rejected, not queued.
 
-Non-atomic cluster batches auto-route each command by key slot across nodes.
+**Go-specific:** `inflightRequestsLimit` is NOT exposed via the Go client config at v2.3.1 (Python/Node expose it). The default of 1000 is baked in. If you hit it, first batch commands (one batch = one slot), then consider whether 1000 concurrent in-flight is actually the bottleneck (usually server-side). Only as a last resort create a second client - doubling clients doubles the TCP footprint and breaks the single-multiplexer invariant.
 
-### Batch Size Guidelines
+## CGO overhead
 
-| Batch Size | Trade-off |
-|------------|-----------|
-| 10-50 | Good default. Low latency, solid throughput gain |
-| 50-200 | Best throughput. Slight increase in per-batch latency |
-| 200-1000 | Diminishing returns. Risk of large response buffers |
-| 1000+ | Avoid. Memory pressure and long parsing time |
+Every client command crosses the CGO boundary. Batching amortizes this. Avoid tight per-command loops; prefer `Exec` with a populated `Batch`.
 
----
+## Compression
 
-## Goroutine Concurrency
+Transparent value compression can reduce network bytes for large string / hash values. Configure via connection config - see [features-connection](features-connection.md). Monitor effect via `GetStatistics()`: compare `total_bytes_compressed` with `total_original_bytes` and watch `compression_skipped_count`.
 
-GLIDE is safe for concurrent goroutine access. Use goroutines for parallel independent operations:
-
-```go
-var wg sync.WaitGroup
-keys := []string{"key1", "key2", "key3"}
-results := make([]glide.Result[string], len(keys))
-
-for i, key := range keys {
-    wg.Add(1)
-    go func(idx int, k string) {
-        defer wg.Done()
-        results[idx], _ = client.Get(ctx, k)
-    }(i, key)
-}
-wg.Wait()
-```
-
-For bulk loads, prefer batching over individual goroutine calls - fewer FFI crossings and network round-trips.
-
----
-
-## Inflight Request Limit
-
-GLIDE caps concurrent inflight requests at 1000 per client. Requests beyond the limit are rejected immediately.
-
-The Go client does not yet expose an `inflightRequestsLimit` configuration option. The default of 1000 applies. If hitting the limit:
-1. Batch commands - one batch counts as one inflight request
-2. Create additional client instances - each gets its own 1000-request budget
-3. Review concurrency - 1000+ concurrent requests usually means the bottleneck is server-side
-
----
-
-## Connection Model
-
-GLIDE uses two multiplexed connections per node (data + management). No connection pools to size or manage. All data requests pipeline through the data connection using Valkey's built-in pipelining.
-
-### When to Create Multiple Clients
-
-- Blocking commands (BLPOP, BRPOP, XREADGROUP with BLOCK) - tie up the connection
-- WATCH/UNWATCH - requires connection-level isolation
-- Large value transfers - prevents head-of-line blocking
-- PubSub subscribers - dedicated listener, cannot share with command traffic
-
----
-
-## Resource Cleanup
-
-Always defer `Close()` immediately after creating a client:
+## Resource cleanup
 
 ```go
 client, err := glide.NewClient(cfg)
-if err != nil {
-    panic(err)
-}
+if err != nil { return err }
 defer client.Close()
 ```
 
-`Close()` is safe to call multiple times. It drains pending requests with `ClosingError`.
+`Close()` is safe to call multiple times. Pending requests get `ClosingError`.
 
