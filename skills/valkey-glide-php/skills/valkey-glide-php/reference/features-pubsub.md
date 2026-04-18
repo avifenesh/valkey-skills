@@ -1,144 +1,121 @@
 # Pub/Sub (PHP)
 
-Use when implementing real-time message broadcasting in PHP - event distribution, notifications, or inter-process messaging. For durable message processing with consumer groups, use Streams instead.
+Use when wiring publish/subscribe in GLIDE PHP. Assumes familiarity with PHPRedis' `subscribe` / `psubscribe` callback-based model. This doc covers only what GLIDE PHP does differently.
 
-GLIDE PHP supports PubSub with blocking subscribe, callback-based message delivery, and automatic reconnection with resubscription. The API is synchronous, matching PHP's execution model.
+## Divergence from PHPRedis
 
-## Subscription Modes
+| | PHPRedis | GLIDE PHP |
+|---|---|---|
+| `subscribe` channels arg | varargs or array | **array required** |
+| `subscribe` callback | `function($r, $ch, $msg)` | same shape |
+| `psubscribe` callback | **4 args** `($r, $pat, $ch, $msg)` | **3 args** `($r, $ch, $msg)` - no pattern |
+| `unsubscribe()` with no args | all channels | all channels (same) |
+| Sharded PubSub (`ssubscribe`) | N/A | **NOT implemented in v1.0.0** |
+| Introspection | `pubsub` subcommand | same (`pubsub($cmd, $arg)`) |
 
-| Mode | Subscribe | Unsubscribe | Cluster Only |
-|------|-----------|-------------|--------------|
-| Exact | `subscribe()` | `unsubscribe()` | No |
-| Pattern | `psubscribe()` | `punsubscribe()` | No |
-
-Sharded PubSub (`ssubscribe`/`sunsubscribe`) availability depends on cluster client implementation status.
-
-## Subscribe and Receive
-
-PHP's PubSub operates as a blocking loop. When a client subscribes, it enters subscriber mode and can only execute subscribe/unsubscribe commands until it unsubscribes from all channels.
+## Subscribe and loop - canonical shape
 
 ```php
 <?php
-// Subscriber process
 $subscriber = new ValkeyGlide();
-$subscriber->connect(
-    addresses: [['host' => 'localhost', 'port' => 6379]]
-);
+$subscriber->connect(addresses: [['host' => 'localhost', 'port' => 6379]]);
 
-// Subscribe - enters subscriber mode
-$subscriber->subscribe('news', 'events');
+// Channels MUST be in an array. Callback is mandatory. Call blocks until unsubscribe.
+$subscriber->subscribe(['news', 'events'], function ($client, $channel, $message) {
+    echo "[$channel] $message\n";
 
-// In subscriber mode, messages arrive via the callback mechanism
-// The client processes messages until unsubscribed
-$subscriber->unsubscribe('news', 'events');
+    // Break the loop from inside the callback
+    if ($message === 'quit') {
+        $client->unsubscribe([$channel]);
+    }
+});
+
+// After unsubscribe from all channels, control returns here
 $subscriber->close();
 ```
 
-## Publishing
+The subscribe call is blocking. The callback fires for every message until all channels have been unsubscribed.
 
-Use a separate client for publishing:
+## Pattern subscriptions
+
+```php
+$subscriber = new ValkeyGlide();
+$subscriber->connect(addresses: [['host' => 'localhost', 'port' => 6379]]);
+
+// psubscribe callback gets 3 args - NOT 4 as in PHPRedis. Pattern is not passed.
+$subscriber->psubscribe(['news.*', 'events:*'], function ($client, $channel, $message) {
+    echo "[$channel] $message\n";
+});
+
+$subscriber->close();
+```
+
+**PHPRedis silent-bug**: PHPRedis pattern callback signature is `function($r, $pattern, $channel, $message)`. Copying that signature into GLIDE PHP means the third parameter gets `$message` instead of `$channel`, and the fourth is never invoked. Verify callback arity when migrating.
+
+## Publishing
 
 ```php
 $publisher = new ValkeyGlide();
-$publisher->connect(
-    addresses: [['host' => 'localhost', 'port' => 6379]]
-);
+$publisher->connect(addresses: [['host' => 'localhost', 'port' => 6379]]);
 
-// Returns number of subscribers that received the message
+// Standard (channel, message) order. Matches PHPRedis - NOT reversed like Python/Node/Java GLIDE.
 $count = $publisher->publish('events', 'Hello subscribers!');
-echo "Delivered to {$count} subscribers\n";
 
 $publisher->close();
 ```
 
-## Pattern Subscriptions
+Return value is the subscriber count that received the message.
+
+## Unsubscribe shapes
 
 ```php
-$subscriber = new ValkeyGlide();
-$subscriber->connect(
-    addresses: [['host' => 'localhost', 'port' => 6379]]
-);
-
-// Subscribe to patterns using glob syntax
-$subscriber->psubscribe('news.*', 'events:*');
-
-// Later, unsubscribe
-$subscriber->punsubscribe('news.*', 'events:*');
-$subscriber->close();
+$client->unsubscribe(['news']);      // specific channel
+$client->unsubscribe();              // null arg - all channels
+$client->punsubscribe(['news.*']);   // specific pattern
+$client->punsubscribe();             // null arg - all patterns
 ```
 
-## PubSub Introspection
+Signature: `unsubscribe(?array $channels = null): bool`. Inside a subscribe callback, calling `unsubscribe` from all channels returns control to the caller of `subscribe()`.
 
-Query active channels and subscriber counts without entering subscriber mode:
+## Introspection (no subscriber mode)
 
 ```php
 $client = new ValkeyGlide();
-$client->connect(
-    addresses: [['host' => 'localhost', 'port' => 6379]]
-);
+$client->connect(addresses: [['host' => 'localhost', 'port' => 6379]]);
 
-// List active channels
-$channels = $client->pubsub('channels');
-// => ["news", "events"]
+// PUBSUB CHANNELS
+$channels = $client->pubsub('channels');            // all
+$filtered = $client->pubsub('channels', 'news.*');  // by pattern
 
-// Filter by pattern
-$channels = $client->pubsub('channels', 'news.*');
+// PUBSUB NUMSUB
+$counts = $client->pubsub('numsub', ['news', 'events']);
 
-// Subscriber counts
-$counts = $client->pubsub('numsub', 'news', 'events');
-// => ["news", 5, "events", 3]
-
-// Pattern count
+// PUBSUB NUMPAT
 $patCount = $client->pubsub('numpat');
-// => 2
 ```
 
-## Message Callback Structure
+Signature: `pubsub(string $command, mixed $arg = null): mixed`.
 
-Messages arrive via a callback registered at the C extension level. Each message includes:
+## Sharded PubSub - not available
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `channel` | string | Channel the message was published to |
-| `message` | string | The published payload |
-| `pattern` | string/null | Matching pattern (pattern subscriptions only) |
-| `kind` | int | Message kind (exact, pattern, sharded) |
+The v1.0.0 stub has `ssubscribe` commented out with a TODO. `sunsubscribe` and `spublish` are also unavailable in this release. Do not design applications around sharded PubSub when using GLIDE PHP v1.0.0.
 
-## Multi-Process Pattern
+## Multi-process pattern
 
-PubSub subscribers run in a dedicated process due to PHP's synchronous execution model:
+PHP's synchronous model means a subscriber process is dedicated to PubSub for its lifetime. Run the subscriber as a long-lived worker (systemd, supervisord, or a PHP CLI loop); keep publishers in short-lived request handlers.
 
 ```php
-<?php
 // subscriber_worker.php - run as: php subscriber_worker.php
-
 $client = new ValkeyGlide();
-$client->connect(
-    addresses: [['host' => 'localhost', 'port' => 6379]]
-);
-
-$client->subscribe('tasks', 'notifications');
-
-// Process runs until killed or unsubscribed
-// Messages are delivered via the extension's callback mechanism
+$client->connect(addresses: [['host' => 'localhost', 'port' => 6379]]);
+$client->subscribe(['tasks'], function ($c, $channel, $message) {
+    // process $message
+});
 ```
 
-```php
-<?php
-// publisher.php - your web application or CLI
-$client = new ValkeyGlide();
-$client->connect(
-    addresses: [['host' => 'localhost', 'port' => 6379]]
-);
+## Important notes
 
-$client->publish('tasks', json_encode(['action' => 'process', 'id' => 42]));
-$client->close();
-```
-
-## Important Notes
-
-1. **Separate clients for pub and sub.** A subscribing client enters a special mode where regular commands are unavailable.
-2. **Blocking API.** PHP PubSub is synchronous - the subscriber process blocks while waiting for messages.
-3. **Automatic reconnection.** On disconnect, GLIDE resubscribes to all channels automatically via the Rust core.
-4. **Message loss during reconnect.** PubSub is at-most-once delivery. Use Streams for durability.
-5. **Dedicated process.** Subscribers typically run as long-lived worker processes, not within web request handlers.
+1. **Separate clients for pub and sub.** A subscribing client is in subscriber mode for the duration of the subscribe call; it cannot issue normal commands from the outer scope.
+2. **Automatic resubscribe on reconnect.** The Rust core restores subscriptions after a reconnect automatically.
+3. **At-most-once delivery.** Messages published during a reconnect gap are lost. Use Streams for durable delivery.
+4. **Callback exceptions** propagate out of `subscribe()` and leave the client in subscriber mode until you explicitly unsubscribe or close.

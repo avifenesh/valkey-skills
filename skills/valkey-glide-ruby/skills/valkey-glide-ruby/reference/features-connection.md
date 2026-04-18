@@ -1,10 +1,10 @@
 # Connection and Configuration (Ruby)
 
-Use when creating a GLIDE Ruby client, choosing between standalone and cluster mode, configuring authentication, TLS, timeouts, reconnection, read strategy, or migrating from redis-rb.
+Use when constructing a valkey-rb client, switching between standalone and cluster, configuring TLS, auth, reconnection, or mapping redis-rb config to GLIDE config.
 
-## Client Class
+## Single Valkey class
 
-The Ruby client uses a single `Valkey` class. Standalone and cluster modes are controlled by the `cluster_mode` option.
+Both standalone and cluster use the same `Valkey` class. Mode is selected by `cluster_mode: true` + `nodes:`.
 
 ```ruby
 require "valkey"
@@ -12,7 +12,7 @@ require "valkey"
 # Standalone (default)
 client = Valkey.new(host: "localhost", port: 6379)
 
-# Cluster mode
+# Cluster
 client = Valkey.new(
   nodes: [
     { host: "node1.example.com", port: 6379 },
@@ -22,109 +22,161 @@ client = Valkey.new(
 )
 ```
 
-## Standalone Connection
+Only seed addresses are needed - topology is discovered automatically.
 
-Minimal:
+## Constructor options
 
-```ruby
-client = Valkey.new
-# Defaults to localhost:6379
-```
+The `initialize` method builds an internal `redis[s]://` URI plus a JSON options hash. These kwargs are all recognized:
 
-With full configuration:
+| Option | Notes |
+|--------|-------|
+| `host:` | default `"127.0.0.1"` |
+| `port:` | default `6379` |
+| `nodes:` | array of `{host:, port:}` - required for cluster |
+| `cluster_mode:` | `true` for cluster |
+| `url:` | `redis://user:pass@host:port/db` or `rediss://...` - parsed first, explicit kwargs override |
+| `password:` | plain password (legacy AUTH) |
+| `username:` | ACL username - used with `password:` |
+| `db:` | integer DB index, must be non-negative |
+| `ssl:` | `true` to switch URI scheme to `rediss://` |
+| `ssl_params:` | Hash with `ca_file:`, `cert:`, `key:`, `ca_path:`, `root_certs:` |
+| `timeout:` | seconds, default `5.0`, maps to `request_timeout` in milliseconds |
+| `connect_timeout:` | seconds, maps to `connection_timeout` in milliseconds |
+| `protocol:` | `:resp2` (default) or `:resp3` |
+| `client_name:` | string |
+| `reconnect_attempts:` | integer, non-negative |
+| `reconnect_delay:` | seconds (positive number) |
+| `reconnect_delay_max:` | seconds; used to derive `exponent_base` internally |
+| `tracing:` | **NOT a real option.** OpenTelemetry is configured via `Valkey::OpenTelemetry.init`. |
 
-```ruby
-client = Valkey.new(
-  host: "localhost",
-  port: 6379,
-  password: "secret",
-  username: "myuser",
-  db: 0,
-  ssl: true,
-  timeout: 5.0,
-  connect_timeout: 3.0,
-  client_name: "my-app",
-  protocol: :resp2,
-)
-```
-
-## URL-Based Connection
+## URL-based connect
 
 ```ruby
 client = Valkey.new(url: "redis://user:pass@localhost:6379/0")
+client = Valkey.new(url: "rediss://secure.example.com:6380")   # TLS
 ```
 
-Supports `redis://` and `rediss://` (TLS) schemes, matching redis-rb conventions.
-
-## Cluster Connection
-
-```ruby
-client = Valkey.new(
-  nodes: [
-    { host: "node1.example.com", port: 6379 },
-    { host: "node2.example.com", port: 6380 },
-  ],
-  cluster_mode: true
-)
-```
-
-Only seed addresses are needed - GLIDE discovers full topology automatically.
+`redis://` and `rediss://` schemes only. Explicit kwargs passed alongside `url:` win over URL-parsed values.
 
 ## Authentication
 
 ```ruby
-# Password only
-client = Valkey.new(password: "secret")
+# Password only (legacy AUTH)
+Valkey.new(password: "secret")
 
-# Username + password (ACL)
-client = Valkey.new(username: "myuser", password: "secret")
+# ACL (username + password)
+Valkey.new(username: "myuser", password: "secret")
 
 # Via URL
-client = Valkey.new(url: "redis://myuser:secret@localhost:6379")
+Valkey.new(url: "redis://myuser:secret@localhost:6379")
 ```
 
-## TLS/SSL
+Passwords and usernames are URL-escaped when building the internal URI.
+
+## TLS / mTLS
 
 ```ruby
 # Basic TLS
-client = Valkey.new(
+Valkey.new(
   host: "valkey.example.com",
   port: 6380,
   ssl: true
 )
 
-# With custom certificates (mTLS)
-client = Valkey.new(
+# mTLS with client certs
+Valkey.new(
   host: "valkey.example.com",
   port: 6380,
   ssl: true,
   ssl_params: {
     ca_file: "/path/to/ca.crt",
-    cert: "/path/to/client.crt",
-    key: "/path/to/client.key",
+    cert: "/path/to/client.crt",     # or an OpenSSL::X509::Certificate
+    key: "/path/to/client.key",      # or an OpenSSL::PKey::PKey
+    ca_path: "/path/to/ca/dir",      # scans *.crt and *.pem
+    root_certs: ["<PEM string>"]     # explicit PEM blobs
   }
 )
 ```
 
+`cert:` and `key:` accept file paths (read as binary) OR objects responding to `to_pem` / `to_der`. File paths are validated at construction time - missing / unreadable files raise `ArgumentError`.
+
 ## Reconnection
 
+Three kwargs; the gem derives `exponent_base` internally:
+
 ```ruby
-client = Valkey.new(
-  reconnect_attempts: 5,
-  reconnect_delay: 0.5,        # initial delay in seconds
-  reconnect_delay_max: 5.0,    # max delay cap in seconds
+Valkey.new(
+  reconnect_attempts: 5,         # cap for the growing-delay phase
+  reconnect_delay: 0.5,          # base in seconds
+  reconnect_delay_max: 5.0       # used to compute exponent_base
 )
 ```
 
-The client retries with exponential backoff up to the configured maximum.
+Internally:
+- `base_delay * 1000` -> `factor` (milliseconds)
+- `exponent_base = max([calculated_base.round, 2])`, where `calculated_base = (max_delay / base_delay) ** (1.0 / retries)`
+- `jitter_percent = 0`
 
-## Other Options
+Setting only `reconnect_attempts:` (without `reconnect_delay:`) defaults base to 0.5 s; setting only `reconnect_delay_max:` is also accepted.
 
-- **Timeouts**: `timeout: 5.0` (general), `connect_timeout: 3.0` (connection). In seconds.
-- **Protocol**: `protocol: :resp2` or `:resp3`.
-- **Database**: `db: 2` at init, or `client.select(2)` at runtime.
-- **Closing**: `client.close` or `client.disconnect!` (redis-rb alias).
+## Timeouts
 
-## redis-rb Compatibility
+```ruby
+Valkey.new(
+  timeout: 5.0,          # request timeout in seconds (stored as ms)
+  connect_timeout: 3.0   # connection establishment timeout in seconds (stored as ms)
+)
+```
 
-Drop-in replacement: same option names, method names (`set`, `get`, `hset`, `lpush`), `pipelined { }` block syntax, `multi { }` transactions, `redis://` URL schemes, and `disconnect!` alias. Change `require "redis"` to `require "valkey"` and `Redis.new` to `Valkey.new`.
+Positive numeric required. Non-numeric or non-positive raises `ArgumentError`.
+
+## Protocol
+
+```ruby
+Valkey.new(protocol: :resp3)   # :resp2, :resp3, "resp3", or 3
+```
+
+Default is RESP2. The internal config normalizes the value to `"RESP2"` or `"RESP3"`.
+
+## Closing
+
+```ruby
+client.close
+client.disconnect!     # alias for close
+```
+
+Both idempotent. After close, the client's `@connection` pointer is nil-ed out.
+
+## Statistics (process-global)
+
+```ruby
+stats = client.statistics           # NOT `get_statistics`
+stats[:total_connections]           # flat keys
+stats[:total_clients]
+stats[:total_values_compressed]
+# see features-overview for the full key list
+```
+
+Global across all clients in the process. Not per-instance.
+
+## OpenTelemetry (separate init, NOT a constructor flag)
+
+```ruby
+Valkey::OpenTelemetry.init(
+  traces:  { endpoint: "http://otel:4318/v1/traces", sample_percentage: 10 },
+  metrics: { endpoint: "http://otel:4318/v1/metrics" },
+  flush_interval_ms: 5000
+)
+
+client = Valkey.new                  # traces/metrics flow automatically
+```
+
+Call once per process. `tracing:` / `otel:` on `Valkey.new` have no effect.
+
+## redis-rb migration notes
+
+`Redis.new` options that map 1:1: `host`, `port`, `password`, `username`, `db`, `url`, `ssl`, `ssl_params`, `timeout`, `connect_timeout`, `client_name`, `reconnect_attempts`.
+
+Options that **don't exist** in valkey-rb: `driver:`, `sentinels:`, `inherit_socket:`, `id:` (use `client_name:`), `logger:`.
+
+No Sentinel support. Applications using `Redis.new(sentinels: [...])` need to front valkey-rb with a different HA strategy (GLIDE cluster or a proxy).

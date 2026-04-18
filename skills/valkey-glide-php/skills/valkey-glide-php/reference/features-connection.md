@@ -1,40 +1,48 @@
 # Connection and Configuration (PHP)
 
-Use when creating a GLIDE client in PHP, choosing between standalone and cluster mode, configuring authentication, TLS, timeouts, reconnection backoff, read strategy, or the PHPRedis-compatible aliases.
+Use when constructing a GLIDE PHP client, switching between standalone and cluster mode, or mapping PHPRedis config to GLIDE config. Assumes PHPRedis knowledge - only divergence is documented.
 
-## Client Classes
+## Divergence from PHPRedis - construction asymmetry
 
-| Class | Mode | Description |
-|-------|------|-------------|
-| `ValkeyGlide` | Standalone | Single-node or primary+replicas |
-| `ValkeyGlideCluster` | Cluster | Valkey Cluster with auto-topology discovery |
-
-The PHP client provides a synchronous (blocking) API - all commands block until a response is received.
-
-## Standalone Connection
+| | Standalone (`ValkeyGlide`) | Cluster (`ValkeyGlideCluster`) |
+|---|---|---|
+| Constructor args | **none** | **up to 19** (PHPRedis-style 7 + GLIDE-style 12) |
+| How to configure | call `->connect(...)` after `new` | pass all config to `new ValkeyGlideCluster(...)` |
+| Can pass `addresses:` to `new`? | **No** (constructor takes zero args) | Yes |
 
 ```php
-<?php
+// Standalone - TWO STEPS
 $client = new ValkeyGlide();
-$client->connect(
-    addresses: [['host' => 'localhost', 'port' => 6379]]
+$client->connect(addresses: [['host' => 'localhost', 'port' => 6379]]);
+
+// Cluster - ONE STEP
+$cluster = new ValkeyGlideCluster(
+    addresses: [
+        ['host' => 'node1.example.com', 'port' => 6379],
+        ['host' => 'node2.example.com', 'port' => 6380],
+    ],
+    use_tls: true,
 );
-
-$client->set('key', 'value');
-$value = $client->get('key');
-
-$client->close();
 ```
 
-### PHPRedis-Style Connection
+Only seed addresses are needed for cluster - topology is discovered automatically.
+
+## PHPRedis-style connect (standalone)
+
+The standalone `->connect()` method accepts BOTH PHPRedis-style positional args AND GLIDE-style named args, but you cannot mix them:
 
 ```php
-$client = new ValkeyGlide();
-$client->connect('localhost', 6379);        // host, port
-$client->connect('localhost', 6379, 2.5);   // with timeout
+// PHPRedis-style positional
+$client->connect('localhost', 6379);
+$client->connect('localhost', 6379, 2.5);  // + timeout in seconds
+
+// GLIDE-style named (preferred for new code)
+$client->connect(addresses: [['host' => 'localhost', 'port' => 6379]]);
 ```
 
-### Full Standalone Configuration
+PHPRedis-style args (`persistent_id`, `retry_interval`, `read_timeout`) exist in the signature but are marked "not implemented" - pass them only for signature compatibility.
+
+## Full GLIDE-style standalone config
 
 ```php
 $client = new ValkeyGlide();
@@ -42,45 +50,57 @@ $client->connect(
     addresses: [['host' => 'localhost', 'port' => 6379]],
     use_tls: false,
     credentials: ['username' => 'myuser', 'password' => 'mypass'],
-    read_from: 0,               // 0=PRIMARY
-    request_timeout: 5000,      // milliseconds
+    read_from: ValkeyGlide::READ_FROM_PRIMARY,
+    request_timeout: 5000,            // milliseconds
     reconnect_strategy: [
         'num_of_retries' => 5,
-        'factor' => 2.0,
+        'factor' => 2,
         'exponent_base' => 2,
+        'jitter_percent' => 15,
     ],
     database_id: 0,
     client_name: 'my-app',
-    client_az: null,            // for AZ_AFFINITY reads
+    client_az: null,                   // set to AZ string for AZ_AFFINITY
     advanced_config: [
         'connection_timeout' => 5000,
-        'socket_timeout' => 3000,
+        'tls_config' => ['use_insecure_tls' => false],
     ],
     lazy_connect: false,
 );
 ```
 
-## Cluster Connection
+## Cluster config
+
+Cluster accepts the same GLIDE-style args plus `periodic_checks` (periodic topology refresh) and `refresh_topology_from_initial_nodes` (advanced_config key):
 
 ```php
-$client = new ValkeyGlideCluster(
-    addresses: [
-        ['host' => 'node1.example.com', 'port' => 6379],
-        ['host' => 'node2.example.com', 'port' => 6380],
-    ]
+$cluster = new ValkeyGlideCluster(
+    addresses: [['host' => 'node1', 'port' => 7001]],
+    use_tls: true,
+    credentials: ['password' => 'secret'],
+    read_from: ValkeyGlide::READ_FROM_AZ_AFFINITY,
+    client_az: 'us-east-1a',
+    periodic_checks: ValkeyGlideCluster::PERIODIC_CHECK_ENABLED_DEFAULT_CONFIGS,
+    request_timeout: 5000,
+    reconnect_strategy: [
+        'num_of_retries' => 3,
+        'factor' => 2,
+        'exponent_base' => 10,
+        'jitter_percent' => 15,
+    ],
+    advanced_config: [
+        'connection_timeout' => 5000,
+        'refresh_topology_from_initial_nodes' => false,
+    ],
+    lazy_connect: false,
 );
-
-$client->set('key', 'value');
-$client->close();
 ```
 
-Only seed addresses are needed - GLIDE discovers full topology automatically.
-
-PHPRedis-style: `new ValkeyGlideCluster(seeds: [['host' => 'localhost', 'port' => 7001]])`.
-
-Cluster-specific options: `periodic_checks` (topology refresh interval in seconds), `client_az` (for AZ affinity). All other options (`use_tls`, `credentials`, `read_from`, `request_timeout`, `reconnect_strategy`, `advanced_config`, `lazy_connect`) match standalone.
+`database_id` on cluster requires Valkey 9.0+ with `cluster-databases > 1`.
 
 ## Authentication
+
+Password / ACL:
 
 ```php
 // Username + password (ACL)
@@ -89,59 +109,73 @@ $client->connect(
     credentials: ['username' => 'myuser', 'password' => 'mypass'],
 );
 
-// Password only
+// Password only (legacy AUTH without username)
 $client->connect(
     addresses: [['host' => 'localhost', 'port' => 6379]],
     credentials: ['password' => 'mypass'],
 );
-
-// IAM authentication (AWS) - requires use_tls: true
-// credentials['iamConfig'] with keys: IAM_CONFIG_CLUSTER_NAME, IAM_CONFIG_REGION,
-// IAM_CONFIG_SERVICE (IAM_SERVICE_ELASTICACHE or IAM_SERVICE_MEMORYDB),
-// IAM_CONFIG_REFRESH_INTERVAL (default 300s). Tokens refresh automatically.
 ```
 
-## ReadFrom Strategy
-
-| Value | Strategy | Behavior |
-|-------|----------|----------|
-| `0` | PRIMARY | All reads to primary (default) |
-| `1` | PREFER_REPLICA | Round-robin replicas, fallback to primary |
-| `2` | AZ_AFFINITY | Same-AZ replicas, fallback to others |
-
-AZ affinity requires Valkey 8.0+ and `client_az` to be set.
-
-## Reconnect Strategy
-
-Delay follows `rand(0 ... factor * (exponent_base ^ N))`:
+IAM (AWS) - requires `use_tls: true` and `username` to be set:
 
 ```php
 $client->connect(
-    addresses: $addresses,
-    reconnect_strategy: [
-        'num_of_retries' => 5,    // retries before delay plateaus
-        'factor' => 2.0,          // base delay multiplier
-        'exponent_base' => 2,     // exponential growth factor
+    addresses: [['host' => 'my-cluster.cache.amazonaws.com', 'port' => 6379]],
+    use_tls: true,
+    credentials: [
+        'username' => 'iam-user',
+        'iamConfig' => [
+            ValkeyGlide::IAM_CONFIG_CLUSTER_NAME => 'my-cluster',
+            ValkeyGlide::IAM_CONFIG_REGION => 'us-east-1',
+            ValkeyGlide::IAM_CONFIG_SERVICE => ValkeyGlide::IAM_SERVICE_ELASTICACHE,
+            ValkeyGlide::IAM_CONFIG_REFRESH_INTERVAL => 300,
+        ],
     ],
 );
 ```
 
-## PHPRedis Compatibility Aliases
+Tokens refresh automatically in the Rust core.
 
-Register class aliases to use PHPRedis class names:
+## Read strategy
+
+Constants on the `ValkeyGlide` class:
+
+| Constant | Value | Behavior |
+|----------|-------|----------|
+| `READ_FROM_PRIMARY` | 0 | All reads to primary (default) |
+| `READ_FROM_PREFER_REPLICA` | 1 | Round-robin replicas, fall back to primary |
+| `READ_FROM_AZ_AFFINITY` | 2 | Same-AZ replicas first, requires `client_az` and Valkey 8.0+ |
+| `READ_FROM_AZ_AFFINITY_REPLICAS_AND_PRIMARY` | 3 | Same-AZ replicas + primary, then cross-AZ |
+
+## Reconnect strategy
+
+Delay formula: `rand(0 ... factor * (exponent_base ^ attempt))` milliseconds. After `num_of_retries` attempts the delay plateaus at the ceiling - reconnection is infinite.
+
+Keys use snake_case: `num_of_retries`, `factor`, `exponent_base`, `jitter_percent`. Not `numOfRetries` (that's Java).
+
+## PHPRedis compatibility aliases
 
 ```php
-ValkeyGlide::registerPHPRedisAliases();
+ValkeyGlide::registerPHPRedisAliases();  // returns bool
 
-// Now these work:
-$client = new Redis();          // -> ValkeyGlide
-$cluster = new RedisCluster();  // -> ValkeyGlideCluster
+// Now these resolve to GLIDE classes
+$client = new Redis();              // -> ValkeyGlide
+$cluster = new RedisCluster();      // -> ValkeyGlideCluster
 
 try {
     $client->connect('localhost', 6379);
-} catch (RedisException $e) {   // -> ValkeyGlideException
-    echo $e->getMessage();
+} catch (RedisException $e) {       // -> ValkeyGlideException
+    error_log($e->getMessage());
 }
 ```
 
-Requires PHP 8.3+ for internal class aliasing support.
+Call once at application bootstrap. Subsequent calls return `false` (aliases already registered).
+
+## Password rotation without reconnect
+
+```php
+$client->updateConnectionPassword('new-secret', immediateAuth: true);
+$client->clearConnectionPassword(immediateAuth: false);
+```
+
+`immediateAuth: true` re-authenticates now. `immediateAuth: false` defers re-auth until the next command. Works on both standalone and cluster.

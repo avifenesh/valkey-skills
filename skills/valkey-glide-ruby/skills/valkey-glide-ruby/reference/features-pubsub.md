@@ -1,140 +1,117 @@
 # Pub/Sub (Ruby)
 
-Use when implementing real-time message broadcasting in Ruby - chat, notifications, event distribution, or inter-process messaging. For durable message processing with consumer groups, use Streams instead.
+Use when wiring publish/subscribe in valkey-rb. Assumes redis-rb familiarity - only divergence is documented.
 
-GLIDE Ruby supports all three PubSub subscription modes (exact, pattern, sharded) plus introspection commands. The API follows redis-rb conventions.
+## Divergence from redis-rb
 
-## Subscription Modes
+| | redis-rb | valkey-rb |
+|---|---|---|
+| `subscribe("ch") { \|on\| on.message { } }` block form | yes | **no - block is ignored** |
+| Channel args | varargs | varargs (same) |
+| Message delivery | block via connection loop | **`pubsub_callback` module method on the FFI side** |
+| Sharded `ssubscribe` / `spublish` | not implemented | **implemented** |
+| Introspection via `pubsub(:channels)` | yes | yes, plus `pubsub_channels` / `pubsub_numsub` / `pubsub_numpat` / `pubsub_shardchannels` / `pubsub_shardnumsub` direct methods |
 
-| Mode | Subscribe | Unsubscribe | Publish | Cluster Only |
-|------|-----------|-------------|---------|--------------|
-| Exact | `subscribe` | `unsubscribe` | `publish` | No |
-| Pattern | `psubscribe` | `punsubscribe` | `publish` | No |
-| Sharded | `ssubscribe` | `sunsubscribe` | `spublish` | Yes (Valkey 7.0+) |
-
-## Subscribe and Publish
+## Canonical shape - override pubsub_callback, then subscribe
 
 ```ruby
 require "valkey"
 
-# Subscriber - dedicated client
-subscriber = Valkey.new(host: "localhost", port: 6379)
-subscriber.subscribe("news", "events")
+# Override the callback BEFORE creating the client
+class Valkey
+  module PubSubCallback
+    def pubsub_callback(_client_ptr, kind, msg_ptr, msg_len, chan_ptr, chan_len, pat_ptr, pat_len)
+      message = msg_ptr.read_string(msg_len)
+      channel = chan_ptr.read_string(chan_len)
+      pattern = pat_ptr.read_string(pat_len) if pat_len.positive?
 
-# Publisher - separate client
-publisher = Valkey.new(host: "localhost", port: 6379)
-count = publisher.publish("events", "Hello subscribers!")
-puts "Delivered to #{count} subscribers"
+      # your handling here
+      puts "[#{channel}] (#{kind}) #{message}"
+    end
+  end
+end
+
+subscriber = Valkey.new
+subscriber.subscribe("news", "events")       # varargs
 ```
 
-## Pattern Subscriptions
+The callback fires on the FFI thread. Keep it non-blocking. Heavy work should enqueue onto your own queue for a worker thread to drain.
+
+## Publish
+
+```ruby
+publisher = Valkey.new
+count = publisher.publish("events", "Hello subscribers!")   # channel, message
+```
+
+Standard `(channel, message)` order - not reversed.
+
+## Pattern subscriptions
 
 ```ruby
 subscriber = Valkey.new
-subscriber.psubscribe("news.*", "events:*")
+subscriber.psubscribe("news.*", "events:*")   # varargs
 
-# Unsubscribe from specific patterns
-subscriber.punsubscribe("news.*")
-
-# Unsubscribe from all patterns
-subscriber.punsubscribe
+subscriber.punsubscribe                        # no args = all patterns
+subscriber.punsubscribe("news.*")              # specific pattern
 ```
 
-## Sharded PubSub (Cluster Mode)
+The `pubsub_callback` you overrode receives pattern subscriptions with a non-zero `pat_len`; check it to tell pattern vs exact delivery.
 
-Sharded channels are routed by hash slot. Requires Valkey 7.0+ and cluster mode.
+## Sharded PubSub (cluster)
+
+Unlike redis-rb, valkey-rb implements sharded PubSub:
 
 ```ruby
-client = Valkey.new(
+cluster = Valkey.new(
   nodes: [{ host: "node1.example.com", port: 6379 }],
   cluster_mode: true
 )
 
-# Subscribe to sharded channels
-client.ssubscribe("shard-news", "shard-updates")
-
-# Publish to sharded channel
-client.spublish("shard-news", "Breaking news!")
-
-# Unsubscribe
-client.sunsubscribe("shard-news")
-client.sunsubscribe  # all sharded channels
+cluster.ssubscribe("shard-news", "shard-updates")
+cluster.spublish("shard-news", "hi")    # standard order
+cluster.sunsubscribe                    # all sharded channels
+cluster.sunsubscribe("shard-news")      # specific
 ```
 
-## PubSub Introspection
+Requires Valkey 7.0+ server.
 
-Query active channels and subscriber counts without entering subscriber mode:
+## Introspection
+
+Direct methods (no subscriber mode required):
 
 ```ruby
-client = Valkey.new
-
-# List active channels
-channels = client.pubsub_channels
-# => ["news", "events"]
-
-# Filter by pattern
-channels = client.pubsub_channels("news.*")
-# => ["news.sports", "news.tech"]
-
-# Subscriber counts for specific channels
-counts = client.pubsub_numsub("news", "events")
-# => ["news", 5, "events", 3]
-
-# Number of active pattern subscriptions
-pat_count = client.pubsub_numpat
-# => 2
-
-# Sharded channel introspection (cluster only)
-sharded = client.pubsub_shardchannels
-shard_counts = client.pubsub_shardnumsub("shard1", "shard2")
+valkey.pubsub_channels                   # all active
+valkey.pubsub_channels("news.*")         # filtered
+valkey.pubsub_numsub("ch1", "ch2")       # => ["ch1", 5, "ch2", 3]
+valkey.pubsub_numpat                     # pattern count
+valkey.pubsub_shardchannels              # sharded active
+valkey.pubsub_shardnumsub("s1", "s2")
 ```
 
-### Convenience Method
+Convenience dispatcher:
 
 ```ruby
-# All introspection via pubsub() helper
-client.pubsub(:channels)
-client.pubsub(:channels, "news.*")
-client.pubsub(:numsub, "ch1", "ch2")
-client.pubsub(:numpat)
-client.pubsub(:shardchannels)
-client.pubsub(:shardnumsub, "shard1")
+valkey.pubsub(:channels)                 # -> pubsub_channels
+valkey.pubsub(:numsub, "ch1", "ch2")     # -> pubsub_numsub
+valkey.pubsub(:numpat)                   # -> pubsub_numpat
 ```
 
-## PubSub Callback
-
-Messages arrive via a callback at the FFI layer. The callback receives:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `kind` | Integer | Message kind (exact, pattern, sharded) |
-| `message` | String | The published payload |
-| `channel` | String | Channel the message was published to |
-| `pattern` | String | Matching pattern (pattern subscriptions only) |
-
-## redis-rb Migration
-
-The PubSub API follows redis-rb conventions:
+## Unsubscribe shapes
 
 ```ruby
-# redis-rb
-redis = Redis.new
-redis.subscribe("channel") do |on|
-  on.message { |ch, msg| puts "#{ch}: #{msg}" }
-end
-
-# valkey-rb
-valkey = Valkey.new
-valkey.subscribe("channel")
-# Messages delivered via callback mechanism
+valkey.unsubscribe                       # all exact channels
+valkey.unsubscribe("news", "events")     # specific (varargs)
+valkey.punsubscribe                      # all patterns
+valkey.punsubscribe("news.*")            # specific pattern
+valkey.sunsubscribe                      # all sharded
+valkey.sunsubscribe("shard-news")
 ```
 
-The subscribe/unsubscribe method signatures are identical. Message delivery mechanism differs - valkey-rb uses FFI callbacks through the Rust core rather than redis-rb's Ruby-level event loop.
+## Important notes
 
-## Important Notes
-
-1. **Separate clients for pub and sub.** A subscribing client enters a special mode where regular commands are unavailable.
-2. **Synchronous API.** Subscribe calls block the current thread in subscriber mode.
-3. **Automatic reconnection.** On disconnect, GLIDE resubscribes to all channels automatically via the Rust core.
-4. **Message loss during reconnect.** PubSub is at-most-once delivery. Use Streams for durability.
-5. **Full sharded PubSub.** Unlike redis-rb, valkey-rb supports sharded subscribe/publish out of the box.
+1. **Separate clients for pub and sub.** A subscribing client is in subscriber mode and cannot issue non-pubsub commands from the outer thread.
+2. **Automatic resubscribe on reconnect.** Rust core restores subscriptions.
+3. **At-most-once delivery.** Messages during a reconnect gap are lost. Use Streams for durability.
+4. **`pubsub_callback` runs on an FFI-managed thread.** Treat it like a signal handler - minimal, non-blocking.
+5. **Raw pointer parameters.** `msg_ptr`, `chan_ptr`, `pat_ptr` are `FFI::Pointer`. Call `read_string(len)` to materialize.

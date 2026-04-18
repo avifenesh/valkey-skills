@@ -1,7 +1,7 @@
 {
   "name": "valkey-glide-php",
-  "version": "2.0.0",
-  "description": "Use when building PHP apps with Valkey GLIDE - synchronous C extension API (PHP 8.1+), PIE/Composer/PECL install, GlideClient, batching, phpredis compat, PubSub, TLS. Not for other languages - see valkey-glide router.",
+  "version": "2.1.0",
+  "description": "Use when building PHP apps with Valkey GLIDE - native C extension (PHP 8.2/8.3), synchronous blocking API, ValkeyGlide + ValkeyGlideCluster, callback-based subscribe/psubscribe, PHPRedis compatibility aliases, PIE/Composer/PECL install. Assumes PHPRedis knowledge; only GLIDE divergence is documented.",
   "author": {
     "name": "Avi Fenesh",
     "url": "https://github.com/avifenesh"
