@@ -10,7 +10,7 @@ Use when working with publish/subscribe. Covers what differs from `go-redis`'s `
 | `msg, err := pubsub.ReceiveMessage(ctx)` loop | Callback on the subscription config OR `client.GetPubSubMessage(ctx)` / `client.TryGetPubSubMessage()` - cannot mix |
 | `rdb.Publish(ctx, channel, message)` | `client.Publish(ctx, channel, message)` - **SAME ORDER** (Go matches the Redis convention; Python/Node reverse it, Go does NOT) |
 | Manual reconnect + resubscribe in your loop | Automatic via synchronizer; `client.GetSubscriptions(ctx)` exposes desired vs actual state |
-| `ClusterClient.Subscribe` does sharded differently | `ClusterClient` with `ShardedClusterChannelMode` + `Publish(ctx, ch, msg, sharded bool)` 4th-arg flag |
+| `ClusterClient.Subscribe` does sharded differently | Sharded subscriptions: `ShardedClusterChannelMode` in config, `SSubscribe` / `SSubscribeLazy` for runtime (`ClusterClient` only); sharded publishing: `Publish(ctx, channel, message, sharded bool)` 4th-arg flag |
 
 Static subscriptions require RESP3 (default). Using RESP2 causes client creation to fail with `ConfigurationError`.
 

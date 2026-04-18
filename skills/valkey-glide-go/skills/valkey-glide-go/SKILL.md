@@ -44,7 +44,7 @@ Large values are NOT an exception - they pipeline through the multiplexer fine.
 6. **`ResetConnectionPassword(ctx)` is a separate method**, unlike Python's `update_connection_password(None)`. The `UpdateConnectionPassword(ctx, pw, immediateAuth)` method does not accept an empty string to clear.
 7. **CGO is mandatory.** Requires glibc 2.17+ and a C toolchain. No pure-Go build. Alpine needs `musl-gcc` or use Debian base.
 8. **`context.Context` is the first arg to every command method.** Unlike go-redis's `rdb.Get(ctx, key)` (same pattern) but unlike Python/Node (no ctx).
-9. **`AzAffinityReplicaAndPrimary`** - singular `Replica` in the enum name (`go/config/config.go:169`). Matches the protobuf name `AZAffinityReplicasAndPrimary` internally despite the user-facing enum being singular.
+9. **`AzAffinityReplicaAndPrimary`** - singular `Replica` in the Go-side user-facing enum (in `go/config`). Matches the protobuf name `AZAffinityReplicasAndPrimary` internally despite the Go constant being singular.
 10. **Configure deadlines via `context.WithTimeout`**, not just `WithRequestTimeout`. Both work; context takes precedence and is Go-idiomatic.
 
 ## Cross-references

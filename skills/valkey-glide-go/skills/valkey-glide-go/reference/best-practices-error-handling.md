@@ -80,7 +80,7 @@ strategy := config.NewBackoffStrategy(5, 100, 2)  // numOfRetries, factor_ms, ex
 strategy.WithJitterPercent(20)
 ```
 
-- Delay formula: `rand_jitter * factor * (exponentBase ** attempt)`, clamped at a ceiling.
+- Delay formula: `rand_jitter * factor * (exponentBase ^ attempt)` (conceptual; Go doesn't have an exponentiation operator - the math is done in the Rust core), clamped at a ceiling.
 - After `numOfRetries` the delay plateaus and reconnection continues infinitely until close.
 - Initial-connect permanent errors (`AuthenticationFailed`, `InvalidClientConfig`, `RESP3NotSupported`, plus `NOAUTH` / `WRONGPASS` string matches) are not retried. After initial connect, the core keeps reconnecting and surfaces `DisconnectError` / generic error per command until the server recovers.
 - PubSub channels resubscribe automatically via the synchronizer.

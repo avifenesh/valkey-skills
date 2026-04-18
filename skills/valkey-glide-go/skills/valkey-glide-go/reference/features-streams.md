@@ -10,12 +10,12 @@ Packages: `github.com/valkey-io/valkey-glide/go/v2/options`, `.../models`.
 |----------|---------|
 | `rdb.XAdd(ctx, &redis.XAddArgs{Stream, ID, Values, MaxLen, Approx})` | `client.XAdd(ctx, stream, []models.FieldValue{{Field, Value}, ...})` or `client.XAddWithOptions(ctx, stream, values, *options.NewXAddOptions().SetId("1-0").SetTrimOptions(...))` |
 | `XAddArgs.MaxLen, Approx` | `options.NewXTrimOptionsWithMaxLen(n).SetNearlyExactTrimming()` / `options.NewXTrimOptionsWithMinID(id)` |
-| `start="-"`, `end="+"` string bounds | Typed boundaries via `options.InfBound...` constants |
+| `start="-"`, `end="+"` string bounds | Typed boundaries via `options.NewInfiniteStreamBoundary(constants.NegativeInfinity / PositiveInfinity)`; bounded via `options.NewStreamBoundary(id, isInclusive)` |
 | `rdb.XRead(ctx, &redis.XReadArgs{Streams: [...], Block: 5*time.Second, Count: 10})` | `client.XReadWithOptions(ctx, map[string]string{...}, *options.NewXReadOptions().SetCount(10).SetBlock(5*time.Second))` |
 | `rdb.XClaim(ctx, &redis.XClaimArgs{}, justId bool)` | Separate methods: `XClaim` vs `XClaimJustId`, `XAutoClaim` vs `XAutoClaimJustId` |
 | `rdb.XPending(...)` returns overloaded struct | `XPending` for summary, `XPendingWithOptions` for detail |
 | Typed response structs from go-redis | `models.StreamResponse`, `models.XAutoClaimResponse { NextEntry, ClaimedEntries, DeletedMessages }`, `models.FieldValue` |
-| Read returns `(result, redis.Nil err)` for no entries | `XReadWithOptions` returns `map[string]models.StreamResponse`; check for empty map or `Result[T].IsNil()` on fields |
+| Read returns `(result, redis.Nil err)` for no entries | `XRead` / `XReadWithOptions` return `map[string]models.StreamResponse` directly (not wrapped in `Result[T]`) - check for empty map or empty entries slice |
 
 ## Key typed builders
 

@@ -50,7 +50,7 @@ if val.IsNil() { /* missing */ }
 else           { /* val.Value() is the value */ }
 ```
 
-Importantly, GLIDE's error model is FLAT - you can't catch "all request errors" with one type check. See [error-handling reference](../../valkey-glide-go/skills/valkey-glide-go/reference/best-practices-error-handling.md) (or the greenfield skill) for the full picture.
+Importantly, GLIDE's error model is FLAT - you can't catch "all request errors" with one type check. See the `valkey-glide-go` skill's error-handling reference for the full picture.
 
 ## Config translation
 
@@ -99,7 +99,7 @@ No compatibility layer. Migrate incrementally:
 2. **Flat error model.** `ConnectionError`, `TimeoutError`, `DisconnectError`, `ExecAbortError`, etc. are independent structs with no base class; `errors.As(err, &connErr)` catches ONLY that specific type. Most runtime errors fall through to `errors.New(msg)`.
 3. **Most "connection lost" errors arrive as `*DisconnectError`, not `*ConnectionError`.** Subtle. `ConnectionError` is mostly setup-time.
 4. **Slice args for multi-key** - `Del(ctx, []string{"k1","k2"})`, not varargs.
-5. **`SetWithOptions` for expiry** - the simple `Set` has no duration parameter; use `options.NewSetOptions().SetExpiry(options.NewExpiryIn(d))` (`In` for duration, `At` for timestamp, `KeepExisting` for KEEPTTL).
+5. **`SetWithOptions` for expiry** - the simple `Set` has no duration parameter; use `*options.NewSetOptions().SetExpiry(options.NewExpiryIn(d))` (note the `*` dereference - `SetWithOptions` takes the value, builder returns pointer). `NewExpiryIn` for duration, `NewExpiryAt` for timestamp, `NewExpiryKeepExisting` for KEEPTTL.
 6. **`Publish(ctx, channel, message)` order is UNCHANGED from go-redis.** Python/Node GLIDE reverse this; Go does not.
 7. **No pool tuning.** Delete `PoolSize`, `MinIdleConns`, `PoolTimeout` etc. Blocking commands (`BLPop`, `BRPop`, `BLMove`, `BZPopMax`/`Min`, `BRPopLPush`, `BLMPop`, `BZMPop`, `XRead`/`XReadGroup` with block, WATCH) need a dedicated client instead.
 8. **Reconnection is infinite** - no `MaxRetries` equivalent.
