@@ -1,6 +1,6 @@
 {
   "name": "valkey-search-dev",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Use when contributing to valkey-io/valkey-search - C++ internals, HNSW/FLAT vector indexes, full-text/numeric/tag indexes, query engine, cluster coordinator, build. Not for FT.SEARCH in apps (valkey) or Valkey server internals (valkey-dev).",
   "author": {
     "name": "Avi Fenesh",

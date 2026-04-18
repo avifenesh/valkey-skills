@@ -2,7 +2,7 @@
 
 AI skills for the [Valkey](https://valkey.io) ecosystem. Teaches coding assistants what they don't know from training data - Valkey 9.x commands, GLIDE client APIs, operational defaults, and server internals.
 
-24 skills, 281 files, source-verified against actual Valkey/GLIDE source code. Works with Claude Code, Cursor, Codex, Copilot, Gemini CLI, OpenCode, Kiro, and any tool supporting the [Agent Skills standard](https://agentskills.io).
+24 skills, 195 reference files, source-verified against actual Valkey/GLIDE source code. Works with Claude Code, Cursor, Codex, Copilot, Gemini CLI, OpenCode, Kiro, and any tool supporting the [Agent Skills standard](https://agentskills.io).
 
 ## Why
 
@@ -76,12 +76,13 @@ Clone and copy to your tool's skills directory:
 
 | Skill | Language | Files |
 |-------|----------|-------|
+| **valkey-glide** | Router - directs to the right language skill | 1 |
 | **valkey-glide-python** | Python (async + sync) | 9 |
 | **valkey-glide-java** | Java (CompletableFuture) | 9 |
 | **valkey-glide-nodejs** | Node.js / TypeScript | 9 |
 | **valkey-glide-go** | Go (synchronous, CGO) | 9 |
 | **valkey-glide-csharp** | C# (.NET 8.0+) | 4 |
-| **valkey-glide-php** | PHP 8.1+ | 4 |
+| **valkey-glide-php** | PHP 8.2/8.3 | 4 |
 | **valkey-glide-ruby** | Ruby | 4 |
 
 ### Migration
@@ -100,13 +101,13 @@ Clone and copy to your tool's skills directory:
 
 | Skill | Audience | Files |
 |-------|----------|-------|
-| **valkey-ops** | Self-hosted operators - K8s, Helm, monitoring, security, config migration | 61 |
+| **valkey-ops** | Self-hosted operators - K8s, Helm, monitoring, security, config migration | 14 |
 
 ### Server and Module Development
 
 | Skill | Audience | Files |
 |-------|----------|-------|
-| **valkey-dev** | Server contributors - C internals, data structures, threading, cluster, replication | 65 |
+| **valkey-dev** | Server contributors - C internals, data structures, threading, cluster, replication | 12 |
 | **valkey-search-dev** | valkey-search contributors - C++, vector/text indexes, query engine | 21 |
 | **valkey-bloom-dev** | valkey-bloom contributors - Rust, scalable bloom filters | 13 |
 | **glide-dev** | GLIDE core contributors - Rust core, FFI bindings, build system | 7 |
@@ -115,7 +116,9 @@ Clone and copy to your tool's skills directory:
 
 | Skill | Purpose | Files |
 |-------|---------|-------|
-| **glide-mq** | Queues, workers, schedulers, workflows on Valkey | 3 |
+| **glide-mq** | Queues, workers, schedulers, workflows on Valkey | 11 |
+| **glide-mq-migrate-bullmq** | BullMQ to glide-mq migration | 3 |
+| **glide-mq-migrate-bee** | Bee-Queue to glide-mq migration | 3 |
 
 ## How It Works
 
@@ -131,7 +134,7 @@ skills/valkey/
     ...
 ```
 
-37K lines available. ~250 loaded per subject.
+Thousands of lines of reference material indexed across skills. Only the SKILL.md router and the specific reference file needed get loaded.
 
 ## Quality
 

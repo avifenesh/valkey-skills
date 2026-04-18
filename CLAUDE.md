@@ -9,22 +9,23 @@
 | Directory | Skill | Audience | Files |
 |-----------|-------|----------|-------|
 | `skills/valkey/` | valkey | Application developers - Valkey-specific features, patterns, best practices | 41 |
-| `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 65 |
-| `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 61 |
+| `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 12 |
+| `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 14 |
 | `skills/glide-dev/` | glide-dev | GLIDE client library contributors - Rust core, language bindings, build system | 7 |
 | `skills/valkey-search-dev/` | valkey-search-dev | valkey-search module contributors - C++ architecture, index types, query engine, build | 21 |
 | `skills/valkey-bloom-dev/` | valkey-bloom-dev | valkey-bloom module contributors - Rust scalable bloom filters, build, replication | 13 |
 
-### GLIDE Per-Language (7 skills)
+### GLIDE Per-Language (7 skills + 1 router)
 
 | Directory | Skill | Content |
 |-----------|-------|---------|
+| `skills/valkey-glide/` | valkey-glide | Router - directs language-specific GLIDE questions to the right skill |
 | `skills/valkey-glide-python/` | valkey-glide-python | Async/sync API, all data types, OTel, TLS, batching, PubSub, streams |
 | `skills/valkey-glide-java/` | valkey-glide-java | CompletableFuture API, configuration builders, batching, streams, server modules |
 | `skills/valkey-glide-nodejs/` | valkey-glide-nodejs | Promise API, TypeScript, ESM/CJS, batching, PubSub, streams |
 | `skills/valkey-glide-go/` | valkey-glide-go | Synchronous API, CGO, Result[T], batching, error handling |
 | `skills/valkey-glide-csharp/` | valkey-glide-csharp | Async/await API, .NET 8.0+ (preview), configuration builders |
-| `skills/valkey-glide-php/` | valkey-glide-php | C extension (PHP 8.1+), PIE/Composer/PECL |
+| `skills/valkey-glide-php/` | valkey-glide-php | C extension (PHP 8.2/8.3), PIE/Composer/PECL |
 | `skills/valkey-glide-ruby/` | valkey-glide-ruby | valkey-rb gem (GA), redis-rb drop-in replacement |
 
 ### Migration Skills (6 standalone + 1 framework)
@@ -50,7 +51,7 @@ Each skill is a self-contained installable plugin under `skills/<name>/`:
 - `skills/<name>/SKILL.md` - concise router (<250 lines) with trigger phrases and reference tables
 - `skills/<name>/reference/` - deep RAG library of focused docs (each under 300 lines)
 
-Per-language GLIDE skills (Python, Java, Node.js, Go have 9 files; C#, PHP, Ruby have 4 files) are fully language-specific - each contains its own complete API reference, patterns, and examples with no shared reference files. Migration skills each have 2 reference files (api-mapping and advanced-patterns).
+Per-language GLIDE skills (Python, Java, Node.js, Go have 9 files; C#, PHP, Ruby have 4 files) are fully language-specific - each contains its own complete API reference, patterns, and examples with no shared reference files. Migration skills each have 3 md files (SKILL.md plus 2 reference files: api-mapping and advanced-patterns).
 
 The AI loads SKILL.md into context, scans the tables, and reads only the specific reference file needed. No context bloat.
 
@@ -91,7 +92,7 @@ Skills were written and verified against these versions. Update when new release
 | Valkey GLIDE (source) | 2.3.1 | glide-dev |
 | Spring Data Valkey | 1.0 | spring-data-valkey |
 
-Last full review: 2026-04-11
+Last full review: 2026-04-18 (20-skill validation pass shipped through PR #19 including php + ruby).
 
 ## Ground rules
 
