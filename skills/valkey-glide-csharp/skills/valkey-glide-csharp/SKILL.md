@@ -18,7 +18,7 @@ Package: `dotnet add package Valkey.Glide`.
 | Question | Reference |
 |----------|-----------|
 | `GlideClient` vs `GlideClusterClient`, TLS, auth, IAM, lazy connect, AZ affinity, `ConnectionMultiplexer` facade | [connection](reference/features-connection.md) |
-| PubSub: static config vs dynamic `SubscribeAsync` (2.3+), `PublishAsync` arg order (NOT reversed), sharded | [pubsub](reference/features-pubsub.md) |
+| PubSub: static config vs dynamic `SubscribeAsync`, `PublishAsync` arg order (NOT reversed), sharded | [pubsub](reference/features-pubsub.md) |
 | Command groups, platform support, `ValkeyKey`/`ValkeyValue`, error hierarchy, GA status | [overview](reference/features-overview.md) |
 
 ## Multiplexer rule (the #1 agent mistake)

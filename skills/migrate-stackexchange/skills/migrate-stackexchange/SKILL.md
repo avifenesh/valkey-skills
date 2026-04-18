@@ -14,10 +14,10 @@ Use when moving an existing StackExchange.Redis app to GLIDE. Assumes you alread
 | Area | StackExchange.Redis | GLIDE C# |
 |------|---------------------|---------|
 | Entry point | `ConnectionMultiplexer.Connect(connString)` | Two options: (1) `ConnectionMultiplexer.ConnectAsync(connString)` - SE.Redis-compat facade, OR (2) `GlideClient.CreateClient(config)` / `GlideClusterClient.CreateClient(config)` with fluent builder |
-| Connect | Synchronous | **Async-only** - no sync Connect |
+| Connect | `Connect(connString)` or `ConnectAsync(...)` | Facade has both `Connect(connString)` and `ConnectAsync(...)`; GLIDE-native `CreateClient(config)` is async-only |
 | Client type | Auto-detects cluster vs standalone | GLIDE-native path requires explicit `GlideClient` vs `GlideClusterClient`. Facade path auto-detects like SE.Redis |
 | Key / value types | `RedisKey`, `RedisValue` | **`ValkeyKey`, `ValkeyValue`** - drop-in equivalents with the same implicit conversions |
-| Access pattern | `IDatabase db = mux.GetDatabase()` then `db.StringSetAsync(...)` | GLIDE-native: methods on `client` directly; facade: `mux.Database` works the same |
+| Access pattern | `IDatabase db = mux.GetDatabase()` then `db.StringSetAsync(...)` | GLIDE-native: methods on `client` directly; facade: `mux.GetDatabase()` works the same |
 | `CommandFlags.FireAndForget` | Supported | **NOT supported** - all commands return `Task<T>`. Use batching for throughput |
 | Configuration | `ConfigurationOptions` or connection string | `StandaloneClientConfigurationBuilder` / `ClusterClientConfigurationBuilder` fluent builder (or connection string through the facade) |
 | `AbortOnConnectFail` | Option | No equivalent - GLIDE retries infinitely; cap backoff sequence with `RetryStrategy` |
@@ -25,7 +25,7 @@ Use when moving an existing StackExchange.Redis app to GLIDE. Assumes you alread
 | Events | `OnConnectionFailed`, `OnConnectionRestored`, etc. | No EventEmitter-style events - errors surface per-Task; track state via `client.GetStatistics()` |
 | Transactions | `ITransaction tx = db.CreateTransaction(); tx.AddCondition(...)` | `Batch(isAtomic: true)` + `client.ExecAsync(batch, raiseOnError)` |
 | Pipelines | `db.Batch()` + chained awaits | `Batch(isAtomic: false)` - same class, flag-selected |
-| `RedisSubscriber` | `var sub = mux.GetSubscriber(); sub.Subscribe(ch, (ch, msg) => ...)` | Static config on builder OR dynamic `client.SubscribeAsync(ch, timeout)` (2.3+); callback OR polling |
+| `RedisSubscriber` | `var sub = mux.GetSubscriber(); sub.Subscribe(ch, (ch, msg) => ...)` | Static config on builder OR dynamic `client.SubscribeAsync(ch, timeout)`; callback OR polling |
 | `sub.Publish(channel, message)` | Channel first | `client.PublishAsync(channel, message)` - **SAME ORDER** (Python/Node GLIDE reverse it; C# matches SE.Redis) |
 | Error types | `RedisException`, `RedisConnectionException`, `RedisTimeoutException`, etc. | Nested in static `Errors` class: `Errors.GlideException` (abstract base), `Errors.RequestException`, `Errors.ValkeyServerException`, `Errors.ExecAbortException`, `Errors.TimeoutException`, `Errors.ConnectionException`, `Errors.ConfigurationError` (note inconsistent "Error" suffix on the last one) |
 | `RedisResult` | Dynamic typed result | Methods return typed `Task<ValkeyValue>`, `Task<bool>`, `Task<long>`, etc. |
@@ -42,7 +42,7 @@ IDatabase db = mux.GetDatabase();
 // GLIDE - facade path (minimal change):
 var mux = await ConnectionMultiplexer.ConnectAsync(
     "localhost:6379,password=pw,ssl=true");
-IDatabase db = mux.Database;
+IDatabase db = mux.GetDatabase();  // standard IConnectionMultiplexer method
 
 // GLIDE - native builder path (more control):
 var config = new StandaloneClientConfigurationBuilder()
@@ -89,7 +89,7 @@ Two routes:
 ## Gotchas (the short list)
 
 1. **GA at v1.0.0** - not preview. Older docs claiming preview status are outdated.
-2. **`ConnectionMultiplexer.Connect` is async-only** - `ConnectAsync`. No synchronous version.
+2. **`ConnectionMultiplexer` facade has both** `Connect(connString)` and `ConnectAsync(...)` - same as SE.Redis. GLIDE-native `GlideClient.CreateClient(config)` is async-only.
 3. **`ValkeyKey` / `ValkeyValue`** (not `RedisKey`/`RedisValue`). Rename, then most code still compiles.
 4. **No `CommandFlags.FireAndForget`** - all commands return `Task<T>`. Use batching for throughput.
 5. **`IDatabase` is ONLY available via the `ConnectionMultiplexer` facade.** GLIDE-native clients expose commands directly on the client.

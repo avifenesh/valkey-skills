@@ -15,10 +15,10 @@ Both sit on the same underlying multiplexer. All clients implement `IAsyncDispos
 
 | SE.Redis | GLIDE C# |
 |----------|---------|
-| `ConnectionMultiplexer.Connect(connString)` - sync | `GlideClient.CreateClient(config)` async static OR `ConnectionMultiplexer.ConnectAsync(connString)` |
+| `ConnectionMultiplexer.Connect(connString)` - sync or `ConnectAsync(...)` | Facade has both `Connect` and `ConnectAsync`; GLIDE-native `GlideClient.CreateClient(config)` is async-only |
 | Connection pool with `syncTimeout` / `responseTimeout` | Multiplexer - single multiplexed connection per node; no pool knobs |
 | `RedisKey` / `RedisValue` primitive wrappers | `ValkeyKey` / `ValkeyValue` - same idea, rebranded |
-| `IDatabase db = mux.GetDatabase()` | Call commands directly on `client` (or `mux.Database` through the facade) |
+| `IDatabase db = mux.GetDatabase()` | Call commands directly on `client` (or `mux.GetDatabase()` through the facade) |
 | `db.StringSetAsync(key, value)` | `client.SetAsync(key, value)` - SE.Redis-compatible method names but `String*` prefix dropped where redundant |
 | `db.ListLeftPushAsync` / `ListRightPushAsync` | Same names (SE.Redis-compatible) |
 | `ConnectionMultiplexer.GetServer()` / `GetServers()` | Not exposed; server commands on the client |
@@ -85,7 +85,7 @@ Only seed addresses are needed - GLIDE discovers full topology automatically.
 using Valkey.Glide;
 
 var mux = await ConnectionMultiplexer.ConnectAsync("localhost:6379");
-var db = mux.Database;
+var db = mux.GetDatabase();
 await db.StringSetAsync("key", "value");
 ```
 

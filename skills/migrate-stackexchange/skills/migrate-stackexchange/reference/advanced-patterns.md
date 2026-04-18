@@ -62,7 +62,7 @@ var config = new StandaloneClientConfigurationBuilder()
     .Build();
 await using var subscriber = await GlideClient.CreateClient(config);
 
-// GLIDE - dynamic subscribe (2.3+):
+// GLIDE - dynamic subscribe:
 await subscriber.SubscribeAsync("channel", TimeSpan.FromSeconds(5));
 await subscriber.PSubscribeAsync("events:*", TimeSpan.FromSeconds(5));
 await subscriber.SubscribeLazyAsync("updates");          // non-blocking

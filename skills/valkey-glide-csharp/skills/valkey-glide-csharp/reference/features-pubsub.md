@@ -6,7 +6,7 @@ Use when working with publish/subscribe. Covers what differs from StackExchange.
 
 | StackExchange.Redis | GLIDE C# |
 |---------------------|---------|
-| `var sub = mux.GetSubscriber(); sub.Subscribe(ch, (ch, msg) => ...)` | Either static config in builder (`WithPubSubSubscriptionConfig`) OR dynamic `await client.SubscribeAsync(ch, timeout)` (GLIDE 2.3+) |
+| `var sub = mux.GetSubscriber(); sub.Subscribe(ch, (ch, msg) => ...)` | Either static config in builder (`WithPubSubSubscriptionConfig`) OR dynamic `await client.SubscribeAsync(ch, timeout)`  |
 | `sub.Publish(channel, message)` | `await client.PublishAsync(channel, message)` - **SAME ORDER** (Python/Node GLIDE reverse it; C# does NOT) |
 | `RedisChannel.Literal("ch")`, `RedisChannel.Pattern("p:*")` | Channel passed as `ValkeyKey` / string; pattern via separate `PSubscribeAsync` method |
 | `ChannelMessageQueue` async iteration | Callback on config OR poll via `GetPubSubMessageAsync` / `TryGetPubSubMessage` |

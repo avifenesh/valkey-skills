@@ -86,7 +86,7 @@ catch (GlideException ex)        { /* catch-all */ }
 | Standalone + Cluster | Both via `GlideClient` / `GlideClusterClient` or `ConnectionMultiplexer` facade |
 | TLS / mTLS | Builder `.WithTls()` + optional `.WithRootCertificate(bytes)`; or `ssl=true` in connection string |
 | Password / ACL / IAM auth | All supported. IAM config requires TLS. |
-| PubSub | Static (in config) + dynamic (2.3+); sharded cluster-only |
+| PubSub | Static (in config) + dynamic; sharded cluster-only |
 | Batching | `Batch` / `ClusterBatch` with atomic (MULTI/EXEC) and non-atomic (pipeline) modes |
 | OpenTelemetry | Traces + metrics via `OpenTelemetry.Init(...)` before creating clients |
 | AZ Affinity | `ReadFromStrategy.AzAffinity` + `WithReadFrom(new ReadFrom(strategy, "us-east-1a"))` |
