@@ -1,7 +1,7 @@
 ---
 name: migrate-jedis
-description: "Use when migrating Java from Jedis to Valkey GLIDE. Covers zero-code-change compatibility layer, native CompletableFuture rewrite, PubSub, Batch API, cluster mode. Not for greenfield Java apps - use valkey-glide-java instead."
-version: 1.0.0
+description: "Use when migrating Java from Jedis to Valkey GLIDE. Covers zero-code-change compat layer (2.1+), native CompletableFuture rewrite, REVERSED publish() args, Batch API replaces Transaction/Pipeline, no Sentinel, FLAT error hierarchy. Not for greenfield Java - use valkey-glide-java."
+version: 1.1.0
 argument-hint: "[API or pattern to migrate]"
 ---
 
@@ -94,13 +94,18 @@ For the zero-code-change path using the Jedis compatibility layer, see the Migra
 | Command-by-command API mapping (strings, hashes, lists, sets, sorted sets, delete, exists, cluster, errors) | [api-mapping](reference/api-mapping.md) |
 | Transactions, pipelines, Pub/Sub, Spring Data Valkey alternative | [advanced-patterns](reference/advanced-patterns.md) |
 
-## Gotchas
+## Gotchas (the short list)
 
-1. **Every command returns CompletableFuture.** Call .get() for synchronous behavior.
-2. **Array args, not varargs.** Multi-key commands take String[] arrays, not varargs.
-3. **No connection pool management.** Drop JedisPool and JedisPoolConfig entirely.
-4. **Builder pattern everywhere.** Configuration, set options, and batch options all use the builder pattern.
-5. **Batch replaces Transaction and Pipeline.** Use new Batch(true) for atomic and new Batch(false) for non-atomic.
-6. **Classifier required in Maven/Gradle.** Use os-maven-plugin or osdetector-gradle-plugin. An uber JAR (GLIDE 2.3+) bundles all native libraries.
-7. **Compatibility layer gotchas.** After calling `multi()`, use the returned `Transaction` object. `HashSet<byte[]>` operations degrade to O(n) because `byte[].hashCode()` returns identity hash.
-8. **No Sentinel support.** GLIDE does not support Redis Sentinel - use cluster mode or direct connection.
+1. **`publish()` argument order is REVERSED.** Jedis is `jedis.publish(channel, message)`; GLIDE Java is `client.publish(message, channel).get()`. **Silent bug factory during migration** - code compiles and runs but publishes to the wrong channel. Verified in `java/client/.../commands/PubSubBaseCommands.java:54`.
+2. **Every command returns `CompletableFuture<T>`.** Call `.get(timeout, TimeUnit)` for synchronous behavior - never bare `.get()` (can block indefinitely on a bad connection).
+3. **Array args, not varargs.** Multi-key commands take `String[]` arrays. `jedis.del("k1", "k2")` -> `client.del(new String[]{"k1", "k2"}).get()`.
+4. **No connection pool management.** Drop `JedisPool` and `JedisPoolConfig` entirely. Multiplexer is the pool. Blocking commands (`blpop`, `brpop`, `blmove`, `bzpopmax`/`min`, `brpoplpush`, `blmpop`, `bzmpop`, `xread`/`xreadgroup` with block) and WATCH/MULTI/EXEC need a dedicated client.
+5. **Builder pattern everywhere.** Lombok `@Builder` on config, set options, batch options. `GlideClientConfiguration.builder()...build()`.
+6. **Batch replaces both Transaction and Pipeline.** `new Batch(true)` for atomic (replaces `jedis.multi()`), `new Batch(false)` for pipeline. Same class, `isAtomic` flag.
+7. **Classifier required in Maven / Gradle.** Use `os-maven-plugin` (Maven) or `osdetector-gradle-plugin` (Gradle) to pick the right native library. **Uber JAR (GLIDE 2.3+)** bundles all platform natives - preferred for projects that ship cross-platform.
+8. **Jedis compatibility layer has edge cases.** After calling `.multi()` on the compat-wrapped client, use the returned `Transaction` object (not the underlying client). `HashSet<byte[]>` operations degrade to O(n) because `byte[].hashCode()` uses identity hash - prefer `GlideString` or the native Batch API for byte-key workloads.
+9. **No Sentinel support** in GLIDE. Migrate Sentinel users to cluster mode or direct primary/replica connection.
+10. **Error hierarchy is FLAT under `GlideException`.** Jedis's `JedisException` tree maps to GLIDE's 6 siblings: `ClosingException`, `ConnectionException`, `ConfigurationError` (Error suffix, inconsistent), `ExecAbortException`, `RequestException`, `TimeoutException`. All inside `ExecutionException` when unwrapping `.get()`.
+11. **GLIDE `TimeoutException` vs `java.util.concurrent.TimeoutException`** - two different classes with the same simple name. Fully-qualify or alias on import.
+12. **Reconnection is infinite.** No `MaxRetries` equivalent; `BackoffStrategy.numOfRetries` caps backoff sequence length only. Commands fail with `ConnectionException` while reconnecting.
+13. **No Alpine / MUSL support** - glibc 2.17+ required. Use Debian-based images.

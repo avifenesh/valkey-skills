@@ -1,6 +1,6 @@
 {
   "name": "migrate-jedis",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Use when migrating Java from Jedis to Valkey GLIDE. Covers zero-code-change compatibility layer, native CompletableFuture rewrite, PubSub, Batch API, cluster mode. Not for greenfield Java apps - use valkey-glide-java instead.",
   "author": {
     "name": "Avi Fenesh",

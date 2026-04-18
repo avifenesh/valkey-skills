@@ -1,24 +1,21 @@
 # Pub/Sub (Java)
 
-Use when implementing Pub/Sub messaging with GLIDE Java - subscribing to channels, receiving messages, publishing, or using sharded pub/sub in cluster mode.
+Use when working with publish/subscribe in GLIDE Java. Covers the divergence from Jedis's `jedis.subscribe(listener, channels)` blocking-thread pattern and Lettuce's `RedisPubSubCommands` / `RedisPubSubAsyncCommands`.
 
-## Contents
+## Divergence from Jedis / Lettuce
 
-- Two Subscription Models (line 19)
-- Creation-Time Subscriptions (Standalone) (line 23)
-- Creation-Time Subscriptions (Cluster) (line 53)
-- Runtime Subscribe/Unsubscribe (line 74)
-- Runtime Sharded Subscribe/Unsubscribe (Cluster Only) (line 100)
-- Receiving Messages - Callback vs Polling (line 113)
-- PubSubMessage Fields (line 143)
-- Publishing (line 152)
-- Introspection (line 162)
-- Subscription State (line 179)
-- Reconciliation (line 193)
+| Jedis / Lettuce | GLIDE Java |
+|-----------------|-----------|
+| Jedis: `jedis.subscribe(new JedisPubSub() {...}, "channel")` blocks the calling thread | Either static config on the builder OR runtime `client.subscribe(Set.of("channel"))` / `subscribe(Set.of(...), timeoutMs)` - neither blocks the calling thread |
+| Lettuce: `RedisPubSubCommands pubsub = redis.connectPubSub().sync(); pubsub.subscribe("ch")` | `client.subscribe(Set.of("ch")).get()` on the same client |
+| Jedis: `jedis.publish(channel, message)` | `client.publish(message, channel).get()` - **arguments REVERSED** compared to Jedis/Lettuce/everything else |
+| Lettuce: `redis.async().publish(channel, message)` | Same reversed order on GLIDE: message first, channel second |
+| Callback-only (Jedis) or async iterable (Lettuce reactive) | Callback configured up front on the subscription config, OR pull-model via `getPubSubMessage()` / `tryGetPubSubMessage()` |
+| Manual resubscribe on reconnect | Automatic via synchronizer; `client.getSubscriptions()` returns `PubSubState` with `getDesiredSubscriptions()` / `getActualSubscriptions()` |
+| Cluster sharded pub/sub not in Jedis base; Lettuce via `RedisClusterPubSubCommands` | `ssubscribe` / `sunsubscribe` / cluster `publish(msg, ch, true)` on `GlideClusterClient` (Valkey 7.0+) |
+| Subscribing client enters a "special mode" unable to send regular commands (Jedis/Lettuce) | GLIDE multiplexes subscriptions alongside commands - subscribing client CAN still run regular commands (dedicated client still recommended for high-throughput subscribers) |
 
-## Two Subscription Models
-
-GLIDE Java supports both creation-time subscriptions (configured in the builder) and runtime subscriptions (subscribe/unsubscribe after client creation).
+Static PubSub subscriptions require RESP3 (default). Using RESP2 raises `ConfigurationError`.
 
 ## Creation-Time Subscriptions (Standalone)
 
@@ -151,13 +148,20 @@ Optional<GlideString> pattern = msg.getPattern(); // pattern that matched (if pa
 
 ## Publishing
 
+**GOTCHA: argument order is REVERSED from Jedis / Lettuce.** Jedis is `publish(channel, message)`; Lettuce is `publish(channel, message)`; GLIDE Java is `publish(message, channel)` - message first, channel second. **Silent mis-routing during migration if you don't notice.**
+
+Source: `java/client/src/main/java/glide/api/commands/PubSubBaseCommands.java:54` -
+`CompletableFuture<String> publish(String message, String channel);`
+
 ```java
-// Standalone and cluster
+// GLIDE: message FIRST, channel SECOND
 client.publish("Hello!", "announcements").get();
 
-// Cluster sharded publish (Valkey 7.0+)
+// Cluster sharded publish (Valkey 7.0+) - message FIRST, channel SECOND, sharded flag THIRD
 clusterClient.publish("Hello!", "shard-channel", true).get();
 ```
+
+Call out the same reversed-order gotcha in any migration from Jedis, Lettuce, or Spring Data Redis.
 
 ## Introspection
 

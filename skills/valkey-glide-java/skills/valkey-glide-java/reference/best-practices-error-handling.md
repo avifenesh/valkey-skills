@@ -1,18 +1,37 @@
-# Error Handling
+# Error Handling (Java)
 
-Use when implementing error handling, retry logic, or batch error semantics in the GLIDE Java client.
+Use for retry logic and batch error semantics. Covers GLIDE-specific divergence from Jedis (`JedisException` hierarchy) and Lettuce (`RedisException` / `RedisCommandExecutionException`).
 
-## Error Types
+## Hierarchy - FLAT under GlideException
 
-Java GLIDE operations return `CompletableFuture`. Errors are wrapped in `ExecutionException` - always unwrap with `getCause()`.
+All errors extend `GlideException extends RuntimeException` directly. No multi-level subclass tree (unlike Python's `ValkeyError -> RequestError -> TimeoutError/etc.`).
 
-| Error | When It Occurs | Recovery |
-|-------|---------------|----------|
-| `RequestException` | Server/protocol errors | Check message for details |
-| `TimeoutException` | Request exceeded `requestTimeout` (default 250ms) | Increase timeout or check server load |
-| `ConnectionException` | Connection lost | GLIDE auto-reconnects; retry the operation |
-| `ExecAbortException` | Atomic batch aborted (WATCH key changed) | Retry the transaction |
-| `ClosingException` | Client was closed while requests pending | Create a new client |
+```
+GlideException extends RuntimeException         # concrete base; catch-all
+├── ClosingException             # client closed while requests pending
+├── ConnectionException          # network / connection issue (temporary - auto-reconnecting)
+├── ConfigurationError           # invalid config (note "Error" suffix - inconsistent with others)
+├── ExecAbortException           # atomic batch aborted (WATCH conflict)
+├── RequestException             # server-side / protocol error (WRONGTYPE, OOM, etc.)
+└── TimeoutException             # GLIDE request timeout
+```
+
+All 6 direct children are siblings at the same level. `catch (GlideException e)` catches all of them. Subclass checks are independent `instanceof` tests.
+
+**Gotcha**: `java.util.concurrent.TimeoutException` vs GLIDE's `TimeoutException` - two different classes with the same simple name. `.get(n, TimeUnit.MILLISECONDS)` throws the former if the future doesn't complete within `n` ms; GLIDE's internal request timeout surfaces as the latter wrapped in `ExecutionException`. Always fully-qualify or import with aliases.
+
+## Unwrap pattern
+
+Every command returns `CompletableFuture<T>`. Errors from the server come back inside `ExecutionException` when you call `.get()`:
+
+| Error kind | When it occurs |
+|-----------|----------------|
+| `RequestException` | Server / protocol errors - WRONGTYPE, OOM, NOAUTH, etc. |
+| `TimeoutException` (GLIDE) | Request exceeded `requestTimeout` (default 250 ms) |
+| `ConnectionException` | Connection lost. Auto-reconnect in progress. |
+| `ExecAbortException` | Atomic batch aborted (WATCH key changed) |
+| `ClosingException` | Client was closed while requests pending - create a new client |
+| `ConfigurationError` | Invalid config (TLS mismatch, RESP2+PubSub) |
 
 ## Basic Error Handling
 
