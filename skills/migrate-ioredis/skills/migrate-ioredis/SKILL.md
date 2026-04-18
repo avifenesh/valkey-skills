@@ -16,7 +16,7 @@ Use when moving an existing ioredis app to GLIDE. Assumes you already know iored
 | Construction | `new Redis({ host, port })` - sync | `await GlideClient.createClient(config)` - async factory |
 | Hash args | `hset(key, "f1", "v1", "f2", "v2")` (spread pairs) | `hset(key, { f1: "v1", f2: "v2" })` (object) |
 | Sorted set args | `zadd(key, 1, "a", 2, "b")` (interleaved) | `zadd(key, [{ element: "a", score: 1 }, { element: "b", score: 2 }])` |
-| SET expiry / conditional | `setex`, `psetex`, `setnx` / kwargs `EX`, `PX`, `NX`, `XX` | `client.set(k, v, { expiry: { type: "sec", count: 60 }, conditionalSet: "onlyIfDoesNotExist" })` |
+| SET expiry / conditional | `setex`, `psetex`, `setnx` / kwargs `EX`, `PX`, `NX`, `XX` | `await client.set(k, v, { expiry: { type: TimeUnit.Seconds, count: 60 }, conditionalSet: "onlyIfDoesNotExist" })` |
 | Multi-arg commands | Varargs: `del("k1", "k2")` | Array: `del(["k1", "k2"])` - same rule for `exists`, `lpush`, `sadd`, `srem` etc. |
 | Connection pool | `new Redis({ ... })` per connection, or cluster with N connections | Multiplexer - one client per process; blocking commands need a dedicated client |
 | Cluster | `new Redis.Cluster([{host, port}], { ... })` | `await GlideClusterClient.createClient({ addresses })` |
