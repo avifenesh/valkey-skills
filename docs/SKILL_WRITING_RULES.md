@@ -43,8 +43,8 @@ The content that belongs in per-language glides (`valkey-glide-python`, `-java`,
    - `FT.` and other Valkey module commands through GLIDE
 
 3. **Cross-cutting behaviors maintainers keep correcting.** These recur because agents pattern-match from the legacy client:
-   - Multiplexer rule: one GLIDE client is shared across all async code in a process, concurrency is cheap. BUT blocking commands (BLPOP, BRPOP, BLMOVE, BZPOPMAX, etc.) occupy the multiplexed connection - they need a separate client.
-   - WATCH / MULTI / EXEC optimistic locking needs an isolated client (same occupancy reason).
+   - Multiplexer rule: one GLIDE client is shared across all async code in a process, concurrency is cheap. BUT blocking commands (BLPOP, BRPOP, BLMOVE, BZPOPMAX, BZPOPMIN, BRPOPLPUSH, BLMPOP, BZMPOP, XREAD/XREADGROUP with BLOCK, WAIT, WAITAOF) occupy the multiplexed connection - they need a separate client.
+   - WATCH / MULTI / EXEC optimistic locking needs an isolated client - connection-state leakage on a shared multiplexer, not occupancy.
    - Connection-state preservation across reconnect (DB ID, credentials, CLIENT SETNAME, protocol version).
    - HA/reliability and performance are both non-negotiable - never ship a change that regresses either.
    - Platform constraints: glibc 2.17+ (no Alpine), protobuf pin for Python, JVM version floors, Node.js ABI.

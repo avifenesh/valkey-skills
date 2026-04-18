@@ -18,7 +18,7 @@ Use when moving an existing redis-py application to GLIDE. Assumes you already k
 | Multi-arg commands | Varargs: `r.delete("k1", "k2")` | List args: `await client.delete(["k1", "k2"])` |
 | SET expiry/conditional | Kwargs `ex=60`, `nx=True` | Typed `ExpirySet(ExpiryType.SEC, 60)`, `ConditionalChange.ONLY_IF_DOES_NOT_EXIST` |
 | ZRANGE variants | `withscores=True` kwarg | Separate method `zrange_withscores`; typed `RangeByIndex` / `RangeByScore` / `RangeByLex` |
-| Pipeline | `pipe = r.pipeline(); pipe.execute()` | `Batch(is_atomic=False)` run via the client's batch method |
+| Pipeline | `pipe = r.pipeline(); pipe.execute()` | `batch = Batch(is_atomic=False); await client.exec(batch, raise_on_error=...)` - verb is a client method, not the batch |
 | Transaction | `r.pipeline(transaction=True)` | `Batch(is_atomic=True)` - same class, flag-selected |
 | Connection pool | `max_connections=N` | Multiplexer - no pool knob; one client per process |
 | Blocking commands | Share the pool | Occupy the single connection - use a dedicated client |

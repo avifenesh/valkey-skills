@@ -66,7 +66,7 @@ Same two concepts, one class, different verb on execution:
 |----------|-------|
 | `pipe = r.pipeline(transaction=False)` | `pipe = Batch(is_atomic=False)` |
 | `tx = r.pipeline(transaction=True)` | `tx = Batch(is_atomic=True)` |
-| `pipe.execute()` | `await client .exec(pipe, raise_on_error=...)` - verb is a client method |
+| `pipe.execute()` | `await client.exec(pipe, raise_on_error=...)` - verb is a client method |
 | Error behavior implicit per-command | Explicit `raise_on_error=True` raises on first error; `False` puts `RequestError` inline in the result list |
 | Cluster: you split by slot manually | `ClusterBatch(is_atomic=False)` splits per-slot automatically |
 | WATCH before `pipe.multi()` | WATCH needs a dedicated client (multiplexer leakage); atomic execution returns `None` on WATCH conflict |

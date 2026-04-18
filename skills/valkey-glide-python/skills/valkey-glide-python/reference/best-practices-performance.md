@@ -24,7 +24,7 @@ from glide import Batch
 batch = Batch(is_atomic=False)
 for i in range(100):
     batch.set(f"key:{i}", f"value:{i}")
-await client .exec (batch, raise_on_error=True)  # one round-trip, one multiplexer slot
+await client.exec(batch, raise_on_error=True)  # one round-trip, one multiplexer slot
 ```
 
 In cluster mode, atomic batches require all keys to share a hash slot: `batch.set("{account}:src", ...)`, `batch.set("{account}:dst", ...)`.

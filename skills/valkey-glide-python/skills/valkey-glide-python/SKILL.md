@@ -41,7 +41,7 @@ Large values are NOT an exception - they pipeline through the multiplexer fine.
 3. **`TimeoutError` and `ConnectionError` shadow Python built-ins** - always import them with `as GlideTimeoutError` / `as GlideConnectionError`.
 4. **Reconnection is infinite.** `BackoffStrategy.num_of_retries` caps the backoff SEQUENCE length; the client keeps retrying until close.
 5. **`get_statistics()` values are strings, not int.** The dict values are `str` (stringified counters / timestamps).
-6. **Batches are executed by the client, not the batch.** Call `await client .exec(batch, ...)` - the verb is a client method. Not `batch.execute()`.
+6. **Batches are executed by the client, not the batch.** Call `await client.exec(batch, ...)` - the verb is a client method. Not `batch.execute()`.
 7. **`is_atomic=True` for transactions, `False` for pipelines.** One class (`Batch` / `ClusterBatch`), two modes.
 8. **Sync is `glide_sync` (not `glide`).** The sync wrapper (GLIDE 2.1+) imports from `glide_sync`, with the same class names.
 9. **Static PubSub subscriptions require RESP3.** Using RESP2 raises `ConfigurationError`.
