@@ -1,132 +1,51 @@
-# Error Handling
+# Error Handling (Node.js)
 
-Use when implementing error handling, retry logic, or batch error semantics in the GLIDE Node.js client.
+Use for retry logic and batch error semantics. Covers GLIDE-specific divergence from ioredis (which throws `redis.ReplyError`, `MaxRetriesPerRequestError`, etc. or emits via EventEmitter).
 
-## Error Types
+## Hierarchy
 
-GLIDE exports typed error classes from `@valkey/valkey-glide`:
+Subclass tree from `@valkey/valkey-glide`:
 
-```typescript
-import {
-    RequestError,
-    TimeoutError,
-    ConnectionError,
-    ClosingError,
-} from "@valkey/valkey-glide";
+```
+ValkeyError (abstract)           # Node's base is ValkeyError (NOT GlideError like Python)
+├── ClosingError                 # client closed; create a new client
+└── RequestError                 # catches everything below too
+    ├── TimeoutError             # request exceeded requestTimeout (default 250ms)
+    ├── ExecAbortError           # atomic batch aborted (WATCH conflict, MULTI errors)
+    ├── ConnectionError          # temporary; GLIDE is auto-reconnecting
+    └── ConfigurationError       # invalid config (TLS mismatch, RESP2+PubSub)
 ```
 
-| Error | When It Occurs | Recovery |
-|-------|---------------|----------|
-| `RequestError` | Base class for server/protocol errors | Check message for details |
-| `TimeoutError` | Request exceeded `requestTimeout` (default 250ms) | Increase timeout or check server load |
-| `ConnectionError` | Connection lost | GLIDE auto-reconnects; retry the operation |
-| `ClosingError` | Client was closed while requests were pending | Create a new client |
+**Gotcha**: `instanceof RequestError` matches `TimeoutError`, `ConnectionError`, `ConfigurationError`, `ExecAbortError`. Order your `instanceof` checks specifics-first. Use `ValkeyError` only when you also want `ClosingError`.
 
-## Basic Error Handling
+## Divergence from ioredis
+
+| ioredis | GLIDE Node |
+|---------|-----------|
+| `client.on('error', err => ...)` EventEmitter | No event emitter - errors surface per-promise, `await` catches them |
+| `redis.ReplyError` for server errors | `RequestError` and subclasses |
+| Connection errors swallowed + auto-recovered silently | `ConnectionError` surfaces on the command; GLIDE is reconnecting in the background |
+| `MaxRetriesPerRequestError` after N retries | Reconnection is **infinite** - `BackoffStrategy.numberOfRetries` only caps the backoff curve length; client keeps retrying until close |
+| `client.status` property exposes connection state | No public status property - observe via command success/failure or `getStatistics()` counters |
+
+## Reconnection behavior
 
 ```typescript
-import { GlideClient, TimeoutError, ConnectionError, RequestError } from "@valkey/valkey-glide";
-
-try {
-    const value = await client.get("key");
-} catch (error) {
-    if (error instanceof TimeoutError) {
-        // Request exceeded requestTimeout - check server load or increase timeout
-    } else if (error instanceof ConnectionError) {
-        // Connection lost - GLIDE is already reconnecting
-        // Retry the operation after a brief delay
-    } else if (error instanceof RequestError) {
-        // General request failure (WRONGTYPE, auth errors, etc.)
-        console.error(`Request failed: ${error.message}`);
-    }
+connectionBackoff: {
+    numberOfRetries: 5,       // caps the BACKOFF sequence length, not total retries
+    factor: 100,              // ms base
+    exponentBase: 2,
+    jitterPercent: 20,        // optional
 }
 ```
 
-`RequestError` is the base class - catch it last as a catch-all.
+- Delay formula: `rand_jitter * factor * (exponentBase ** attempt)`, clamped at a ceiling.
+- After `numberOfRetries` the delay plateaus and reconnection continues infinitely until close.
+- Initial-connect permanent errors (`AuthenticationFailed`, `InvalidClientConfig`, `RESP3NotSupported`, plus string matches on `NOAUTH` / `WRONGPASS`) are not retried. After initial connect, the core keeps trying to reconnect regardless and surfaces `ConnectionError` per command until the server recovers or the client is closed.
+- PubSub channels resubscribe automatically via the synchronizer.
 
----
+## Failover and timeout
 
-## Batch Error Handling
+During cluster failover expect `ConnectionError` bursts for 1-5 seconds while the slot map refreshes. Retry is the right response.
 
-The `raiseOnError` parameter on `client.exec()` controls how batch errors surface:
-
-### raiseOnError = true
-
-Throws `RequestError` on the first error. Use when all commands must succeed.
-
-```typescript
-import { Batch, RequestError } from "@valkey/valkey-glide";
-
-const batch = new Batch(true).set("key", "val").get("key");
-try {
-    const results = await client.exec(batch, true);
-} catch (error) {
-    if (error instanceof RequestError) {
-        console.error(`Batch failed: ${error.message}`);
-    }
-}
-```
-
-### raiseOnError = false
-
-Errors appear inline in the results array. Use for partial-success workloads.
-
-```typescript
-import { Batch, RequestError } from "@valkey/valkey-glide";
-
-const batch = new Batch(false)
-    .set("key", "value")
-    .lpush("key", ["oops"])  // WRONGTYPE error
-    .get("key");
-
-const results = await client.exec(batch, false);
-for (const item of results!) {
-    if (item instanceof RequestError) {
-        console.log(`Failed: ${item.message}`);
-    } else {
-        console.log(`OK: ${item}`);
-    }
-}
-```
-
-Atomic batches with WATCH return `null` from `exec()` if a watched key was modified.
-
----
-
-## Reconnection Behavior
-
-GLIDE reconnects automatically on connection loss with exponential backoff:
-
-```typescript
-const client = await GlideClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-    connectionBackoff: {
-        numberOfRetries: 5,
-        factor: 100,
-        exponentBase: 2,
-        jitterPercent: 20,
-    },
-});
-```
-
-- Delay formula: `rand(0 ... factor * (exponentBase ^ attempt))`
-- After `numberOfRetries`, delay stays at the ceiling indefinitely
-- PubSub channels are automatically resubscribed on reconnect
-- Permanent errors (NOAUTH, WRONGPASS) are not retried
-
----
-
-## Failover and Timeout
-
-During cluster failover, expect `ConnectionError` bursts for 1-5 seconds. GLIDE refreshes the slot map and re-routes automatically. Retry failed operations.
-
-Frequent `TimeoutError` indicates server load - verify before increasing timeout:
-
-```typescript
-const client = await GlideClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-    requestTimeout: 1000, // ms, default 250
-});
-```
-
-GLIDE auto-extends timeouts for blocking commands (BLPOP, XREADGROUP BLOCK) by 500ms beyond the block duration.
+Frequent `TimeoutError` usually indicates server load, not a too-tight timeout. GLIDE auto-extends the effective timeout for blocking commands (BLPOP/BRPOP/BLMOVE/BZPOPMAX/BZPOPMIN/BRPOPLPUSH/BLMPOP/BZMPOP and XREAD/XREADGROUP with BLOCK) by 0.5 s beyond the block duration - no tuning required.

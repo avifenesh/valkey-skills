@@ -1,87 +1,53 @@
-# Performance Tuning
+# Performance tuning (Node.js)
 
-Use when optimizing GLIDE Node.js throughput and latency, tuning inflight limits, or choosing batching strategies.
+Use when optimizing GLIDE Node throughput and latency. Covers GLIDE-specific discipline - general Node async patterns (`Promise.all`, don't `await` in tight loops) are the same as any Node app and not covered here.
 
-## Batching Is the Top Optimization
+## Client model: one client per process, not per request
 
-Batching amortizes the napi-rs FFI overhead across all commands - one crossing per batch instead of one per command. Batched workloads are competitive with native Node.js clients (ioredis, node-redis).
+GLIDE is a multiplexer. One `GlideClient` / `GlideClusterClient` instance serves every pending Promise in the process concurrently - requests are tagged with IDs and demuxed. Creating a client per request or per worker thread is wasted allocation and a fresh TCP handshake to every cluster node.
 
-### Non-Atomic Pipeline
+**Exceptions - use a dedicated client:**
+
+- Blocking commands: `BLPOP`, `BRPOP`, `BLMOVE`, `BZPOPMAX`, `BZPOPMIN`, `BRPOPLPUSH`, `BLMPOP`, `BZMPOP`, plus `XREAD` / `XREADGROUP` with `BLOCK`. They occupy the multiplexed connection for the block duration.
+- WATCH / MULTI / EXEC - connection-state commands; leak across callers on the shared multiplexer.
+- Long polling `getPubSubMessage()` - holds the Promise indefinitely.
+
+Large values are NOT an exception - they pipeline through the multiplexer fine.
+
+## Batching is the top optimization
+
+Batching amortizes the napi-rs FFI + UDS crossing across all commands - one crossing per batch instead of one per command. This is the single biggest throughput knob.
 
 ```typescript
 import { Batch } from "@valkey/valkey-glide";
 
 const batch = new Batch(false);
-for (let i = 0; i < 100; i++) {
-    batch.set(`key:${i}`, `value:${i}`);
-}
-const results = await client.exec(batch, true);
-// One round-trip for 100 commands
+for (let i = 0; i < 100; i++) batch.set(`k:${i}`, `v:${i}`);
+await client.exec(batch, true);  // one round-trip, one multiplexer slot
 ```
 
-### Atomic Transaction
+In cluster mode, atomic batches require all keys to share a hash slot: `batch.set("{account}:src", ...)`, `batch.set("{account}:dst", ...)`.
 
-```typescript
-const tx = new Batch(true)
-    .set("{account}:src", "100")
-    .set("{account}:dst", "0")
-    .incrBy("{account}:dst", 50)
-    .decrBy("{account}:src", 50);
-const results = await client.exec(tx, true);
-```
+Rough batch-size guidelines:
 
-All keys must share a hash slot in cluster mode. Use `{tag}` hash tags.
+| Size | Trade-off |
+|------|-----------|
+| 10-50 | Good default; low latency, solid throughput gain |
+| 50-200 | Best throughput; slight per-batch latency increase |
+| 200-1000 | Diminishing returns, large response buffers |
+| 1000+ | Memory pressure, long parsing - avoid |
 
-### Batch Size Guidelines
+## Inflight request limit
 
-| Batch Size | Trade-off |
-|------------|-----------|
-| 10-50 | Good default. Low latency, solid throughput gain |
-| 50-200 | Best throughput. Slight increase in per-batch latency |
-| 200-1000 | Diminishing returns. Risk of large response buffers |
-| 1000+ | Avoid. Memory pressure and long parsing time |
+The multiplexer caps concurrent inflight requests at `inflightRequestsLimit: 1000` per client by default. Beyond the cap, requests fail with `RequestError("Reached maximum inflight requests")` - rejected, not queued.
 
----
+If you hit it: first batch commands (one batch = one slot), then consider whether 1000 concurrent in-flight is actually the bottleneck (usually it's server-side). Only as a last resort create a second client - doubling clients doubles the TCP footprint and breaks the single-multiplexer invariant.
 
-## Inflight Request Limit
+## TCP_NODELAY
 
-GLIDE caps concurrent inflight requests at 1000 per client. Requests beyond the limit are rejected immediately.
+Default `true` - commands sent immediately rather than Nagle-buffered. Almost always the right choice for request/response traffic. Disable (`advancedConfiguration: { tcpNoDelay: false }`) only if benchmarks show TCP-level batching helps your workload.
 
-```typescript
-const client = await GlideClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-    inflightRequestsLimit: 500, // lower for constrained servers
-});
-```
+## Compression
 
-If hitting the limit:
-1. Batch commands - one batch counts as one inflight request
-2. Create additional client instances - each gets its own 1000-request budget
-3. Review concurrency - 1000+ concurrent requests usually means the bottleneck is server-side
-
----
-
-## Connection Model
-
-GLIDE uses a single multiplexed connection per node. No connection pools to size or manage. All requests pipeline through one connection using Valkey's built-in pipelining.
-
-### When to Create Multiple Clients
-
-- Blocking commands (BLPOP, BRPOP, XREADGROUP with BLOCK) - tie up the connection
-- WATCH/UNWATCH - requires connection-level isolation
-- Large value transfers - prevents head-of-line blocking
-- PubSub subscribers - dedicated listener, cannot share with command traffic
-
----
-
-## TCP Tuning
-
-GLIDE enables TCP_NODELAY by default (Nagle's algorithm disabled). Commands are sent immediately rather than buffered. Only disable after benchmarking confirms TCP-level batching improves throughput for your workload.
-
-```typescript
-const client = await GlideClient.createClient({
-    addresses: [{ host: "localhost", port: 6379 }],
-    advancedConfiguration: { tcpNoDelay: true }, // default
-});
-```
+GLIDE offers transparent value compression on the core side, configured via the connection config - see [features-connection](features-connection.md). Monitor effect via `client.getStatistics()` keys `total_bytes_compressed` vs `total_original_bytes` vs `compression_skipped_count`.
 
