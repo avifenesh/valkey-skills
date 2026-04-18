@@ -2,18 +2,62 @@
 
 Rules learned while validating valkey, valkey-dev, valkey-ops, valkey-bloom-dev, valkey-search-dev, and glide-dev against source. Apply to every skill edit in this repo.
 
-## Audience: agents already trained on the ecosystem baseline
+## Audience: agents already trained on the ecosystem AND standard client libraries
 
-A trained LLM already knows standard Redis/Valkey structures, stock RESP, stock cmake, `processCommand -> call -> cmd->proc`, jemalloc defaults. Same for Rust/Cargo basics, PyO3/NAPI/JNI mechanics, standard Tokio runtime patterns. Restating these burns context.
+A trained LLM already knows standard Redis/Valkey server structures (stock RESP, `processCommand -> call -> cmd->proc`, jemalloc defaults, Rust/Cargo basics, PyO3/NAPI/JNI mechanics, Tokio patterns). It also already knows how to write basic redis-py, jedis, ioredis, go-redis, StackExchange.Redis, phpredis, redis-rb from training alone - get/set/hget/zadd/subscribe signatures, connection-pool builders, standard TLS config. Restating any of this burns context for zero value.
 
 Only write:
 
-1. **Divergence** - where this component behaves differently from the baseline an agent already knows.
-2. **Novel subsystems** - net-new files, ABIs, or mechanisms that don't exist in the baseline.
-3. **Non-obvious invariants / gotchas** - ownership rules, aliasing, hidden state, pausepoint discipline.
+1. **Divergence** - where GLIDE or Valkey behaves differently from the baseline an agent already knows.
+2. **Novel subsystems or features** - net-new files, ABIs, mechanisms, or client features that don't exist in the baseline.
+3. **Non-obvious invariants / gotchas** - ownership rules, aliasing, hidden state, pausepoint discipline, maintainer-flagged recurring mistakes.
 4. **Non-standard pieces** - JSON-generated code, TCL-plus-sanitizer test frameworks, vendored forks.
 
 POC test before writing any line: "would a trained agent know this if asked?" If yes, cut.
+
+## Per-language glide and migration skills: the API overlap is not the content
+
+**Maintainer rule (Avi, 2026-04-18):** "Where the API is the same, that's not interesting. Models know to write redis-py without docs. Question is where they differ - this is where models are wrong - and what GLIDE specifically needs you to know that is not in compare."
+
+The content that belongs in per-language glides (`valkey-glide-python`, `-java`, `-nodejs`, `-go`, `-csharp`, `-php`, `-ruby`) and migration skills (`migrate-redis-py`, `migrate-jedis`, `migrate-lettuce`, `migrate-ioredis`, `migrate-go-redis`, `migrate-stackexchange`, `spring-data-valkey`):
+
+### Keep
+
+1. **Divergence from the baseline client.** Where GLIDE differs from the redis-py / jedis / ioredis / go-redis / StackExchange.Redis the agent already knows. Examples:
+   - Bytes always returned (no `decode_responses` or equivalent)
+   - List args vs varargs for multi-key commands
+   - Timeout unit change (seconds -> milliseconds)
+   - Async-first primary API
+   - No connection-pool tuning (GLIDE is a multiplexer)
+   - Cluster topology auto-managed
+
+2. **GLIDE-only features with no baseline analogue.** These cannot be derived from training:
+   - IAM token refresh for ElastiCache / MemoryDB
+   - AZ affinity routing (`AZAffinity`, `AZAffinityReplicasAndPrimary`)
+   - OpenTelemetry integration and span wiring
+   - Built-in Zstd / LZ4 compression
+   - Lazy-connect semantics (`LazyClient` until first command)
+   - Read-only mode (`read_only`, skips primary discovery)
+   - Batch API retry strategies (`retry_server_error`, `retry_connection_error`)
+   - Cluster SCAN iterator with cursor lifecycle
+   - `FT.` and other Valkey module commands through GLIDE
+
+3. **Cross-cutting behaviors maintainers keep correcting.** These recur because agents pattern-match from the legacy client:
+   - Multiplexer rule: one GLIDE client is shared across all async code in a process, concurrency is cheap. BUT blocking commands (BLPOP, BRPOP, BLMOVE, BZPOPMAX, BZPOPMIN, BRPOPLPUSH, BLMPOP, BZMPOP, XREAD/XREADGROUP with BLOCK, WAIT, WAITAOF) occupy the multiplexed connection - they need a separate client.
+   - WATCH / MULTI / EXEC optimistic locking needs an isolated client - connection-state leakage on a shared multiplexer, not occupancy.
+   - Connection-state preservation across reconnect (DB ID, credentials, CLIENT SETNAME, protocol version).
+   - HA/reliability and performance are both non-negotiable - never ship a change that regresses either.
+   - Platform constraints: glibc 2.17+ (no Alpine), protobuf pin for Python, JVM version floors, Node.js ABI.
+
+### Cut aggressively
+
+- Command-by-command tables that mirror the baseline API 1:1 (MGET -> mget, HGET -> hget) except where GLIDE's signature actually differs
+- Generic "here's how to create a client" examples the agent can write from training
+- Language-idiomatic explanations (what `asyncio.gather` is, what `CompletableFuture` is)
+- "Run the tests" boilerplate
+- Library-version changelogs in reference files (decay fast)
+
+Goal: a contributor or migrating user reading the skill learns things they cannot derive from training on the baseline client alone.
 
 ## Cut without regret
 

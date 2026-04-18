@@ -1,125 +1,66 @@
-# Performance Tuning
+# Performance tuning
 
-Use when optimizing GLIDE Python throughput and latency, tuning inflight limits, or choosing batching strategies.
+Use when optimizing GLIDE Python throughput and latency. Covers GLIDE-specific points - general async discipline (use `asyncio.gather` for independent ops, avoid `await` in tight loops) is the same as any async Python and is not covered here.
 
-## Batching Is the Top Optimization
+## Client model: one client per process, not per task
 
-Batching amortizes the PyO3 FFI overhead across all commands - one crossing per batch instead of one per command. Batched workloads are competitive with redis-py.
+GLIDE is a multiplexer. One `GlideClient` / `GlideClusterClient` instance serves every coroutine in the process concurrently - requests are tagged with IDs and demuxed. Creating a client per asyncio task is wasted allocation and a fresh TCP handshake to every cluster node.
 
-### Non-Atomic Pipeline
+**Exceptions - use a dedicated client:**
+
+- Blocking commands: `BLPOP`, `BRPOP`, `BLMOVE`, `BZPOPMAX`, `BZPOPMIN`, `BRPOPLPUSH`, `BLMPOP`, `BZMPOP`, plus `XREAD` / `XREADGROUP` with `BLOCK` (full list matches the blocking-timeout table in `glide-core/src/client/mod.rs`). These occupy the multiplexed connection for the block duration.
+- WATCH / MULTI / EXEC - connection-state commands; leak across callers on the shared multiplexer.
+- Long polling of `get_pubsub_message()` - blocks an asyncio task indefinitely.
+
+Large values do NOT require a dedicated client - they pipeline through the multiplexed connection; they just take longer to transfer.
+
+## Batching is the top optimization
+
+Batching amortizes the PyO3 / UDS crossing across all commands - one crossing per batch instead of one per command. This is the single biggest throughput knob.
 
 ```python
 from glide import Batch
 
-pipeline = Batch(is_atomic=False)
+batch = Batch(is_atomic=False)
 for i in range(100):
-    pipeline.set(f"key:{i}", f"value:{i}")
-result = await client.exec(pipeline, raise_on_error=True)
-# One round-trip for 100 commands
+    batch.set(f"key:{i}", f"value:{i}")
+await client.exec(batch, raise_on_error=True)  # one round-trip, one multiplexer slot
 ```
 
-### Atomic Transaction
+In cluster mode, atomic batches require all keys to share a hash slot: `batch.set("{account}:src", ...)`, `batch.set("{account}:dst", ...)`.
+
+Rough batch-size guidelines:
+
+| Size | Trade-off |
+|------|-----------|
+| 10-50 | Good default; low latency, solid throughput gain |
+| 50-200 | Best throughput; slight per-batch latency increase |
+| 200-1000 | Diminishing returns, large response buffers |
+| 1000+ | Memory pressure, long parsing - avoid |
+
+## Inflight request limit
+
+The multiplexer caps concurrent inflight requests at `DEFAULT_MAX_INFLIGHT_REQUESTS = 1000` per client. Beyond the cap, requests fail with `RequestError("Reached maximum inflight requests")` - rejected, not queued.
 
 ```python
-tx = Batch(is_atomic=True)
-tx.set("{account}:src", "100")
-tx.set("{account}:dst", "0")
-tx.incrby("{account}:dst", 50)
-tx.decrby("{account}:src", 50)
-result = await client.exec(tx, raise_on_error=True)
+GlideClientConfiguration(addresses=[...], inflight_requests_limit=500)
 ```
 
-All keys must share a hash slot in cluster mode. Use `{tag}` hash tags.
-
-### Batch Size Guidelines
-
-| Batch Size | Trade-off |
-|------------|-----------|
-| 10-50 | Good default. Low latency, solid throughput gain |
-| 50-200 | Best throughput. Slight increase in per-batch latency |
-| 200-1000 | Diminishing returns. Risk of large response buffers |
-| 1000+ | Avoid. Memory pressure and long parsing time |
-
----
-
-## Async Best Practices
-
-Use `asyncio.gather()` for concurrent independent operations:
-
-```python
-import asyncio
-
-results = await asyncio.gather(
-    client.get("key1"),
-    client.get("key2"),
-    client.get("key3"),
-)
-```
-
-For bulk loads, prefer batching over individual awaits:
-
-```python
-# Slow: 1000 round-trips
-for i in range(1000):
-    await client.set(f"key:{i}", f"value:{i}")
-
-# Fast: 10 round-trips (100 per batch)
-for chunk_start in range(0, 1000, 100):
-    batch = Batch(is_atomic=False)
-    for i in range(chunk_start, min(chunk_start + 100, 1000)):
-        batch.set(f"key:{i}", f"value:{i}")
-    await client.exec(batch, raise_on_error=True)
-```
-
----
-
-## Inflight Request Limit
-
-GLIDE caps concurrent inflight requests at 1000 per client. Requests beyond the limit are rejected immediately.
-
-```python
-from glide import GlideClientConfiguration, NodeAddress
-
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("localhost", 6379)],
-    inflight_requests_limit=500,  # lower for constrained servers
-)
-```
-
-If hitting the limit:
-1. Batch commands - one batch counts as one inflight request
-2. Create additional client instances - each gets its own 1000-request budget
-3. Review concurrency - 1000+ concurrent requests usually means the bottleneck is server-side
-
----
-
-## Connection Model
-
-GLIDE uses a single multiplexed connection per node. No connection pools to size or manage. All requests pipeline through one connection using Valkey's built-in pipelining.
-
-### When to Create Multiple Clients
-
-- Blocking commands (BLPOP, BRPOP, XREADGROUP with BLOCK) - tie up the connection
-- WATCH/UNWATCH - requires connection-level isolation
-- Large value transfers - prevents head-of-line blocking
-- PubSub subscribers - dedicated listener, cannot share with command traffic
-
----
+If you hit it: first batch commands (one batch = one slot), then consider whether 1000 concurrent in-flight is actually the bottleneck (usually it's server-side). Only as a last resort create a second client - doubling clients doubles the TCP footprint and breaks the single-multiplexer invariant.
 
 ## Compression
 
-Enable transparent compression for large values:
+Transparent value compression can reduce network bytes for large string/hash values; decompression happens automatically on read:
 
 ```python
 from glide import CompressionConfiguration, CompressionBackend
 
-config = GlideClientConfiguration(
-    addresses=[NodeAddress("localhost", 6379)],
-    compression=CompressionConfiguration(
-        enabled=True,
-        backend=CompressionBackend.LZ4,
-        min_compression_size=64,  # bytes
-    ),
+CompressionConfiguration(
+    enabled=True,
+    backend=CompressionBackend.LZ4,  # or ZSTD (default)
+    min_compression_size=64,          # bytes; below this, no compression
 )
 ```
+
+Monitor effect via `get_statistics()`: `total_bytes_compressed` vs `total_original_bytes` vs `compression_skipped_count`.
 

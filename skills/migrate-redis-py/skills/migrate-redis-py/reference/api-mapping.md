@@ -1,150 +1,77 @@
-# redis-py to GLIDE API Mapping
+# redis-py to GLIDE: where signatures diverge
 
-Use when migrating specific redis-py commands to their GLIDE equivalents, looking up return type differences, or converting data type operations.
+Use when translating redis-py calls and the signature is NOT obvious. Where GLIDE mirrors redis-py 1:1 (most commands), just replace `r.` with `await client.` - that pattern is not listed here.
 
-## String Operations
+## Three universal changes
 
-**redis-py:**
+Apply to every command:
+
+1. **Bytes not str**: all string returns are `bytes`. `.decode()` at each read site.
+2. **Awaitable not blocking** (async API): prefix `await`, use `glide`. For sync use `glide_sync` with no `await`.
+3. **List args not varargs**: multi-key / multi-value commands take a list, not positional args.
+
 ```python
-r.set("key", "value")
-r.set("key", "value", ex=60)          # expire in 60s
-r.set("key", "value", nx=True)        # only if not exists
-r.setnx("key", "value")               # same as nx=True
-r.setex("key", 60, "value")           # set + expire
-val = r.get("key")                     # returns str
-```
-
-**GLIDE:**
-```python
-from glide import ExpirySet, ExpiryType, ConditionalChange
-
-await client.set("key", "value")
-await client.set("key", "value", expiry=ExpirySet(ExpiryType.SEC, 60))
-await client.set("key", "value", conditional_set=ConditionalChange.ONLY_IF_DOES_NOT_EXIST)
-# No separate setnx/setex - use set() with options
-val = await client.get("key")          # returns bytes
-val.decode()                           # "value"
-```
-
----
-
-## Hash Operations
-
-**redis-py:**
-```python
-r.hset("hash", "field1", "value1")
-r.hset("hash", mapping={"f1": "v1", "f2": "v2"})
-val = r.hget("hash", "field1")
-all_vals = r.hgetall("hash")           # {"f1": "v1", "f2": "v2"}
-```
-
-**GLIDE:**
-```python
-await client.hset("hash", {"field1": "value1"})
-await client.hset("hash", {"f1": "v1", "f2": "v2"})
-val = await client.hget("hash", "field1")       # bytes
-all_vals = await client.hgetall("hash")          # {b"f1": b"v1", b"f2": b"v2"}
-```
-
----
-
-## List Operations
-
-**redis-py:**
-```python
+# redis-py varargs:
+r.delete("k1", "k2", "k3")
+r.exists("k1", "k2")
 r.lpush("list", "a", "b", "c")
-r.rpush("list", "x", "y")
-val = r.lpop("list")
-vals = r.lrange("list", 0, -1)
-```
-
-**GLIDE:**
-```python
-await client.lpush("list", ["a", "b", "c"])     # list arg, not varargs
-await client.rpush("list", ["x", "y"])
-val = await client.lpop("list")                  # bytes
-vals = await client.lrange("list", 0, -1)        # list of bytes
-```
-
----
-
-## Set Operations
-
-**redis-py:**
-```python
 r.sadd("set", "a", "b", "c")
-r.srem("set", "a")
-members = r.smembers("set")
-r.sismember("set", "b")
+r.srem("set", "a", "b")
+
+# GLIDE: wrap the extra args in a list:
+await client.delete(["k1", "k2", "k3"])
+await client.exists(["k1", "k2"])
+await client.lpush("list", ["a", "b", "c"])
+await client.sadd("set", ["a", "b", "c"])
+await client.srem("set", ["a", "b"])
 ```
 
-**GLIDE:**
+## SET: typed options replace kwargs
+
+redis-py combines everything on `set()` / has specialized `setnx` / `setex`. GLIDE routes them through typed options and drops the aliases.
+
+| redis-py | GLIDE |
+|----------|-------|
+| `r.set(k, v, ex=60)` | `await client.set(k, v, expiry=ExpirySet(ExpiryType.SEC, 60))` |
+| `r.set(k, v, px=500)` | `await client.set(k, v, expiry=ExpirySet(ExpiryType.MILLSEC, 500))` |
+| `r.set(k, v, exat=ts)` | `await client.set(k, v, expiry=ExpirySet(ExpiryType.UNIX_SEC, ts))` |
+| `r.set(k, v, pxat=ms_ts)` | `await client.set(k, v, expiry=ExpirySet(ExpiryType.UNIX_MILLSEC, ms_ts))` |
+| `r.set(k, v, nx=True)` or `r.setnx(k, v)` | `await client.set(k, v, conditional_set=ConditionalChange.ONLY_IF_DOES_NOT_EXIST)` |
+| `r.set(k, v, xx=True)` | `await client.set(k, v, conditional_set=ConditionalChange.ONLY_IF_EXISTS)` |
+| `r.setex(k, 60, v)` | `await client.set(k, v, expiry=ExpirySet(ExpiryType.SEC, 60))` |
+| `r.set(k, v, keepttl=True)` | `await client.set(k, v, expiry=ExpirySet(ExpiryType.KEEP_TTL))` |
+
+`ExpiryType` has five values: `SEC`, `MILLSEC`, `UNIX_SEC`, `UNIX_MILLSEC`, `KEEP_TTL`. **Note the upstream typo - `MILLSEC` is missing the `I`. Grep for `MILLSEC`, not `MILLISEC`.**
+
+`ConditionalChange` has exactly two values: `ONLY_IF_EXISTS` and `ONLY_IF_DOES_NOT_EXIST`. Valkey 9.0's `IFEQ` is a separate `OnlyIfEqual(comparison_value=...)` dataclass (not part of the `ConditionalChange` enum).
+
+Imports: `from glide import ExpirySet, ExpiryType, ConditionalChange, OnlyIfEqual`.
+
+## HSET: mapping is positional
+
+redis-py accepts `hset(k, "f", "v")` and `hset(k, mapping={...})`. GLIDE drops the two-string form - always pass a dict:
+
 ```python
-await client.sadd("set", ["a", "b", "c"])       # list arg
-await client.srem("set", ["a"])                  # list arg
-members = await client.smembers("set")           # set of bytes
-await client.sismember("set", "b")               # bool
+await client.hset("hash", {"f1": "v1", "f2": "v2"})
 ```
 
----
+## ZRANGE variants: separate methods, not flags
 
-## Sorted Set Operations
+redis-py uses kwargs on one method; GLIDE has separate methods for the withscores variant, and takes typed range objects instead of raw indexes/scores:
 
-**redis-py:**
-```python
-r.zadd("zset", {"alice": 1.0, "bob": 2.0})
-r.zrange("zset", 0, -1, withscores=True)
-r.zscore("zset", "alice")
-```
+| redis-py | GLIDE |
+|----------|-------|
+| `r.zrange(k, 0, -1)` | `await client.zrange(k, RangeByIndex(0, -1))` |
+| `r.zrange(k, 0, -1, withscores=True)` | `await client.zrange_withscores(k, RangeByIndex(0, -1))` |
+| `r.zrange(k, 1.0, 2.0, byscore=True)` | `await client.zrange(k, RangeByScore(ScoreBoundary(1.0), ScoreBoundary(2.0)))` |
+| `r.zrevrange(k, 0, -1)` | `await client.zrange(k, RangeByIndex(0, -1, reverse=True))` |
 
-**GLIDE:**
-```python
-await client.zadd("zset", {"alice": 1.0, "bob": 2.0})
-await client.zrange_withscores("zset", RangeByIndex(0, -1))
-await client.zscore("zset", "alice")
-```
+`RangeByLex` exists too for BYLEX queries.
 
----
+## Cluster: `RedisCluster` -> `GlideClusterClient`
 
-## Delete and Exists
+`redis.RedisCluster(host=, port=, skip_full_coverage_check=True)` has no direct translation. GLIDE's `GlideClusterClient` does full-topology auto-discovery from any seed nodes; `skip_full_coverage_check` has no equivalent (GLIDE always discovers the full shard set). `read_from` replaces redis-py's read replica routing behavior.
 
-**redis-py:**
-```python
-r.delete("k1", "k2", "k3")           # varargs
-r.exists("k1", "k2")                  # returns count
-```
+## Everything else is named the same
 
-**GLIDE:**
-```python
-await client.delete(["k1", "k2", "k3"])         # list arg
-await client.exists(["k1", "k2"])                # returns count
-```
-
----
-
-## Cluster Mode
-
-**redis-py:**
-```python
-rc = redis.RedisCluster(
-    host="node1.example.com",
-    port=6379,
-    skip_full_coverage_check=True,
-)
-```
-
-**GLIDE:**
-```python
-from glide import GlideClusterClient, GlideClusterClientConfiguration, ReadFrom
-
-config = GlideClusterClientConfiguration(
-    addresses=[
-        NodeAddress("node1.example.com", 6379),
-        NodeAddress("node2.example.com", 6380),
-    ],
-    read_from=ReadFrom.PREFER_REPLICA,
-)
-client = await GlideClusterClient.create(config)
-```
-
-GLIDE discovers the full cluster topology from seed nodes automatically.
+For 95% of commands (`get`, `hget`, `hgetall`, `lpop`, `lrange`, `smembers`, `sismember`, `zadd`, `zscore`, `exists`, `ttl`, `expire`, `keys`, `type`, `incr`/`decr` and friends, `xadd`/`xread`/`xreadgroup`/`xack`, `publish`, etc.) the only changes are the three universal ones at the top of this file (bytes, await, list args). Just translate.

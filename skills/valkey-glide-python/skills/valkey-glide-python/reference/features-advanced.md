@@ -84,23 +84,7 @@ Always use the returned cursor for the next iteration - reusing a cursor produce
 
 ### Standalone SCAN
 
-```python
-from glide import ObjectType
-
-cursor = "0"
-all_keys = []
-
-while True:
-    result = await client.scan(cursor, match="session:*", count=100)
-    cursor = result[0]       # next cursor (bytes)
-    keys = result[1]         # list of keys (List[bytes])
-    all_keys.extend(keys)
-    if cursor == b"0":
-        break
-
-# Filter by type
-result = await client.scan("0", match="*", count=50, type=ObjectType.HASH)
-```
+Same shape as `redis-py.scan()`: pass cursor `"0"`, loop until the returned cursor is `b"0"` (bytes, not str). Filter by `type=ObjectType.STRING | HASH | LIST | SET | ZSET | STREAM` (GLIDE's typed enum, not a string).
 
 ## Routing and Custom Commands (Cluster)
 
@@ -177,14 +161,17 @@ except Exception as e:
 
 Log levels: `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE`, `OFF`.
 
-## Error Types
+## Error types
 
-| Exception | When |
-|-----------|------|
-| `GlideError` | Base class for all GLIDE errors |
-| `ClosingError` | Client is closed or connection lost |
-| `ConfigurationError` | Invalid configuration (TLS, PubSub, compression) |
-| `ConnectionError` | Network or connection issues |
-| `RequestError` | Command execution failure |
-| `TimeoutError` | Request or subscription timeout |
-| `ExecAbortError` | Transaction aborted (e.g., type mismatch) |
+Hierarchy in `glide_shared.exceptions` - important because `except RequestError:` also catches timeouts, config errors, and connection errors (they are subclasses, not siblings):
+
+```
+GlideError                       # base
+├── ClosingError                 # client closed / unusable
+├── LoggerError                  # logger init failure
+└── RequestError                 # command execution failure
+    ├── TimeoutError             # request or subscription timeout
+    ├── ExecAbortError           # transaction aborted (type mismatch, etc.)
+    ├── ConnectionError          # network disconnect; temporary - client will reconnect
+    └── ConfigurationError       # invalid config (TLS, PubSub/RESP2, compression)
+```
