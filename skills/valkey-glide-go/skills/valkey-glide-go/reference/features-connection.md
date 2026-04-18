@@ -1,22 +1,21 @@
-# Connection Management
+# Connection and configuration (Go)
 
-Use when creating, configuring, or managing Valkey GLIDE Go client connections - standalone or cluster, TLS, authentication, reconnection, password rotation, lazy connect, or database selection.
+Use when creating clients, configuring auth, TLS, timeouts, reconnection, read strategy, or closing connections. Covers what differs from `go-redis` - basic `redis.NewClient(&redis.Options{...})` patterns are assumed knowable from training.
 
-## Contents
+## Divergence from go-redis
 
-- Client Types (line 21)
-- Standalone Connection (line 30)
-- Cluster Connection (line 56)
-- Configuration Methods (line 73)
-- Authentication (line 95)
-- Password Rotation (line 115)
-- Reconnection Strategy (line 135)
-- ReadFrom Strategies (line 151)
-- Lazy Connect (line 162)
-- Database Selection (line 174)
-- Connection Info Commands (line 187)
-- Error Types (line 198)
-- Statistics and Close (line 219)
+| go-redis | GLIDE Go |
+|----------|---------|
+| `redis.NewClient(&redis.Options{Addr: "host:6379"})` - single call, sync | `glide.NewClient(cfg)` returning `(*Client, error)` - sync but error-returning |
+| `redis.NewClusterClient(&redis.ClusterOptions{})` | `glide.NewClusterClient(cfg)` - distinct type |
+| Connection pool with `PoolSize: 10` | Multiplexer - single multiplexed connection per node, no pool knob |
+| `rdb.Get(ctx, key).Result() -> (string, error)` with `redis.Nil` sentinel | `client.Get(ctx, key) -> (Result[string], error)`; check `.IsNil()` then `.Value()` - no sentinel error |
+| `rdb.OnConnect` hook, retries via `MaxRetries` | `WithReconnectStrategy(NewBackoffStrategy(...))`; retries are INFINITE, `numOfRetries` caps backoff sequence length only |
+| `rdb.Close() error` | `client.Close()` - returns nothing; safe to call multiple times |
+| IAM auth is not supported | GLIDE-only via `config.NewIamAuthConfig(clusterName, ElastiCache, region)` + `NewServerCredentialsWithIam` |
+| Password via `Options.Password` string | `config.NewServerCredentials(user, pw)` or `NewServerCredentialsWithDefaultUsername(pw)` struct |
+| `DialTimeout`, `ReadTimeout`, `WriteTimeout` separate | Single `WithRequestTimeout` + `WithConnectionTimeout` via advanced config |
+| `ClusterOptions.RouteByLatency` / `RouteRandomly` | `WithReadFrom(config.PreferReplica / AzAffinity / ...)` |
 
 ## Client Types
 
@@ -195,27 +194,24 @@ info, err := client.Info(ctx)                 // server info string
 count, err := client.DBSize(ctx)              // key count in current DB
 ```
 
-## Error Types
+## Error types (quick reference - see [error-handling](best-practices-error-handling.md) for the gotchas)
+
+Go's error model is FLAT - independent structs, no base class. Unlike Python's `except RequestError:` or Node's `ValkeyError` subclass tree, each error is its own type:
 
 | Error | When |
 |-------|------|
-| `*ConnectionError` | Connection lost (auto-reconnects) |
-| `*TimeoutError` | Request exceeded timeout |
+| `*ConnectionError` | Connection issue at setup time |
+| `*TimeoutError` | Auto-mapped from core |
+| `*DisconnectError` | **Most "connection lost" errors surface as this, not `ConnectionError`** - auto-mapped from core's `Disconnect` |
+| `*ExecAbortError` | Transaction aborted (WATCH key changed, EXEC error) - auto-mapped |
 | `*ClosingError` | Client closed, no longer usable |
 | `*ConfigurationError` | Invalid client configuration |
-| `*DisconnectError` | Connection problem between client and server |
-| `*ExecAbortError` | Transaction aborted (WATCH key changed) |
+| `*BatchError` | Wrapper for multiple errors returned from a Batch |
 
-```go
-var connErr *glide.ConnectionError
-var timeoutErr *glide.TimeoutError
-if errors.As(err, &connErr) {
-    // Client is reconnecting automatically
-} else if errors.As(err, &timeoutErr) {
-    // Increase WithRequestTimeout or investigate server
-}
-```
+Only `ExecAbort`, `Timeout`, and `Disconnect` are auto-typed by `GoError()` in `go/errors.go`. Most other errors from the Rust core come through as generic `errors.New(msg)` - not typed. So `errors.As(err, &connErr)` will miss most operational errors.
 
 ## Statistics and Close
 
-`client.GetStatistics()` returns `map[string]uint64` with keys: `total_connections`, `total_clients`, `subscription_out_of_sync_count`, `subscription_last_sync_timestamp`, plus compression counters. `Close()` is safe to call multiple times - it drains pending requests with `ClosingError`.
+`client.GetStatistics() map[string]uint64` - typed uint64 values (Python/Node return stringified values). Keys: `total_connections`, `total_clients`, `total_values_compressed`, `total_values_decompressed`, `total_original_bytes`, `total_bytes_compressed`, `total_bytes_decompressed`, `compression_skipped_count`, `subscription_out_of_sync_count`, `subscription_last_sync_timestamp`.
+
+`Close()` returns nothing. Safe to call multiple times. Pending requests get `ClosingError`.

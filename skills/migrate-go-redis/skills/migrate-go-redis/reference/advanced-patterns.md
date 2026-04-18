@@ -75,29 +75,36 @@ subscriber, err := glide.NewClient(cfg)
 ```
 
 **GLIDE (dynamic subscriptions - GLIDE 2.3+):**
-```go
-// Non-blocking subscribe (lazy)
-err := client.Subscribe(ctx, []string{"channel"})
-err = client.PSubscribe(ctx, []string{"events:*"})
 
-// Blocking subscribe - waits for server confirmation
-err = client.SubscribeBlocking(ctx, []string{"channel"}, 5000)
-err = client.PSubscribeBlocking(ctx, []string{"events:*"}, 5000)
+Go uses a single method name with a `timeoutMs` parameter for blocking, and `*Lazy` variants for non-blocking. There is no separate `SubscribeBlocking` for exact channels; the blocking variant is just `Subscribe(ctx, channels, timeoutMs)`:
+
+```go
+// Blocking - waits for server confirmation; timeoutMs=0 blocks indefinitely
+err := client.Subscribe(ctx, []string{"channel"}, 5000)
+err = client.PSubscribe(ctx, []string{"events:*"}, 5000)
+err = clusterClient.SSubscribe(ctx, []string{"shard-topic"}, 5000)  // cluster only
+
+// Non-blocking - returns immediately; reconciliation happens async
+err = client.SubscribeLazy(ctx, []string{"channel"})
+err = client.PSubscribeLazy(ctx, []string{"events:*"})
+err = clusterClient.SSubscribeLazy(ctx, []string{"shard-topic"})
+
+// Unsubscribe variants mirror the same pattern
+err = client.Unsubscribe(ctx, []string{"channel"}, 5000)          // nil = unsubscribe all
+err = client.UnsubscribeLazy(ctx, []string{"channel"})
+err = client.PUnsubscribe(ctx, []string{"events:*"}, 5000)
+err = client.PUnsubscribeLazy(ctx, nil)                            // all patterns
 
 // Receive via queue (when no callback configured)
 queue, err := client.GetQueue()
 msg := queue.Pop()                    // non-blocking, returns nil if empty
-msgCh := queue.WaitForMessage()       // blocking, returns a channel
+msgCh := queue.WaitForMessage()       // blocking - returns receive-only channel
 msg = <-msgCh
-
-// Unsubscribe
-err = client.Unsubscribe(ctx, []string{"channel"})
-err = client.PUnsubscribe(ctx, []string{"events:*"})
-err = client.UnsubscribeAll(ctx)      // all exact channels
-err = client.PUnsubscribeAll(ctx)     // all patterns
 ```
 
-go-redis uses a Go channel-based approach (`pubsub.Channel()`). GLIDE uses callbacks (set at creation time) or queue-based polling (`GetQueue` + `Pop` / `WaitForMessage`). Use a dedicated client for subscriptions. GLIDE automatically resubscribes on reconnection.
+go-redis uses a Go channel-based approach (`pubsub.Channel()`). GLIDE uses callbacks (set at creation time via `WithCallback`) OR queue-based polling (`GetQueue` + `Pop` / `WaitForMessage`). They are mutually exclusive on one client.
+
+GLIDE multiplexes subscriptions alongside commands - a dedicated subscriber client is recommended for high-volume subscriptions but not strictly required. Auto-resubscribe on reconnect + topology change is handled by the synchronizer.
 
 ---
 

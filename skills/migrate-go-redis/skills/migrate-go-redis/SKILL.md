@@ -1,116 +1,114 @@
 ---
 name: migrate-go-redis
-description: "Use when migrating Go from go-redis to Valkey GLIDE. Covers Result[T] nil handling, CGO dependency, PubSub, SetWithOptions, Alpine/MUSL gotchas. Not for greenfield Go apps - use valkey-glide-go instead."
-version: 1.0.0
+description: "Use when migrating Go from go-redis to Valkey GLIDE. Covers Result[T] nil handling (no redis.Nil), slice args, typed SET/ZADD options, flat error model, CGO requirement. Publish arg order is UNCHANGED. Not for greenfield Go apps - use valkey-glide-go."
+version: 1.1.0
 argument-hint: "[API or pattern to migrate]"
 ---
 
 # Migrating from go-redis to Valkey GLIDE (Go)
 
-Use when migrating a Go application from `go-redis/redis` to the GLIDE client library.
+Use when moving an existing `go-redis/redis` app to GLIDE. Assumes you already know go-redis. Covers what breaks or changes shape; commands that translate literally (same method names, `ctx` first arg) are not listed here.
 
-## Routing
+## Divergences that actually matter
 
-- String, hash, list, set, sorted set, delete, exists, cluster -> API Mapping
-- Pipeline, transaction, Batch API, TxPipelined -> Advanced Patterns
-- PubSub, subscribe, publish, queue-based polling -> Advanced Patterns
+| Area | go-redis | GLIDE Go |
+|------|----------|---------|
+| Construction | `redis.NewClient(&redis.Options{Addr: "host:6379"})` | `glide.NewClient(cfg)` returning `(*Client, error)` |
+| Cluster | `redis.NewClusterClient(&redis.ClusterOptions{...})` | `glide.NewClusterClient(cfg)` |
+| Config style | Struct literal | Builder chain: `config.NewClientConfiguration().WithAddress(...).With...()` |
+| Return types | `*StatusCmd`, `*StringCmd`, etc.; call `.Result()` | Direct `(Result[T], error)` from command; `.IsNil()` + `.Value()` on the Result |
+| Nil handling | `if err == redis.Nil` sentinel for missing key | `err` is only real errors; `val.IsNil()` for missing key - two orthogonal checks |
+| Error types | `redis.Error` types in one package with `errors.Is` | FLAT model - `*ConnectionError`, `*TimeoutError`, `*DisconnectError`, `*ExecAbortError`, `*ClosingError`, `*ConfigurationError`, `*BatchError` - independent structs. Most operational errors fall through to generic `errors.New(msg)`. |
+| Multi-arg commands | Varargs: `Del(ctx, "k1", "k2")` | Slice: `Del(ctx, []string{"k1", "k2"})` - same for `Exists`, `LPush`, `SAdd`, `SRem` |
+| SET expiry | Duration arg: `Set(ctx, k, v, 60*time.Second)` | `SetWithOptions(ctx, k, v, *options.NewSetOptions().SetExpiry(options.NewExpiryIn(60*time.Second)))` - `NewExpiryIn` for duration, `NewExpiryAt` for absolute `time.Time`, `NewExpiryKeepExisting()` for KEEPTTL |
+| ZADD | `ZAdd(ctx, key, redis.Z{Score, Member})` varargs | `ZAdd(ctx, key, map[string]float64{"alice": 1.0})` or with `options.NewZAddOptions().SetConditionalChange(...)` |
+| Pipeline | `rdb.Pipeline()` + `.Set(...)` + `.Exec(ctx)` chain | `pipeline.NewStandaloneBatch(false)` + `batch.Set(...)` + `client.Exec(ctx, *batch, raiseOnError)` |
+| Transaction | `rdb.TxPipelined(ctx, func(pipe Pipeliner) error { ... })` closure | `pipeline.NewStandaloneBatch(true)` + `client.Exec(ctx, *batch, raiseOnError)` - same class, `isAtomic` flag |
+| Pipeline results | `[]redis.Cmder` - iterate `.Err()` and `.Val()` | `[]any` - iterate with `glide.IsError(item)` check |
+| `Publish` | `rdb.Publish(ctx, channel, message)` | `client.Publish(ctx, channel, message)` - **SAME ORDER** (unlike Python/Node GLIDE which reverses) |
+| PubSub | `pubsub := rdb.Subscribe(ctx, ch); pubsub.ReceiveMessage(ctx)` | Static config OR dynamic `Subscribe(ctx, ...)` (GLIDE 2.3+); callback in config OR polling |
+| Connection pool | `Options.PoolSize`, `MinIdleConns`, `PoolTimeout` | Multiplexer - no pool knobs; blocking commands need a dedicated client |
+| Retries | `Options.MaxRetries`, `MinRetryBackoff` | Reconnection is INFINITE; `config.NewBackoffStrategy(n, factor, base)` caps backoff sequence length only |
+| TLS | `Options.TLSConfig *tls.Config` | `WithUseTLS(true)` + `config.NewTlsConfiguration().WithRootCertificates(...)` in advanced config |
+| IAM (not in go-redis) | N/A | `config.NewIamAuthConfig("cluster", config.ElastiCache, "us-east-1")` + `NewServerCredentialsWithIam` |
+| `redis.Nil`-style empty returns | Sentinel error | N/A - use `IsNil()` or check for empty map/slice |
+| Cluster topology | `ClusterOptions.Addrs`, `RouteByLatency`, `RouteRandomly` | `WithAddress(...)` (multiple OK; seeds), `WithReadFrom(config.PreferReplica / AzAffinity / ...)` |
 
-## Key Differences
+## Error handling - THE biggest change
 
-| Area | go-redis | GLIDE |
-|------|----------|-------|
-| Return types | `*StatusCmd`, `*StringCmd` with `.Result()` | `models.Result[T]` with `.Value()` and `.IsNil()` |
-| Nil handling | `redis.Nil` sentinel error | `val.IsNil()` method |
-| Configuration | `redis.Options{}` struct | `config.NewClientConfiguration()` builder chain |
-| Multi-arg commands | Varargs: `Del(ctx, "k1", "k2")` | Slice args: `Del(ctx, []string{"k1", "k2"})` |
-| Expiry | Duration arg: `Set(ctx, "k", "v", 60*time.Second)` | `SetWithOptions` + `options.SetOptions` |
-| Transactions | `TxPipelined()` closure | `pipeline.NewStandaloneBatch(true)` + `client.Exec()` |
-| Pipelines | `Pipelined()` closure | `pipeline.NewStandaloneBatch(false)` + `client.Exec()` |
-| Connection model | Pool with configurable size | Single multiplexed connection per node |
-| API style | Synchronous with goroutine safety | Synchronous with goroutine safety (via CGO bridge) |
-
-## Error Handling - The Biggest Change
-
-**go-redis:**
 ```go
+// go-redis: Nil is a sentinel error
 val, err := rdb.Get(ctx, "key").Result()
-if err == redis.Nil {
-    fmt.Println("key does not exist")
-} else if err != nil {
-    fmt.Println("error:", err)
-} else {
-    fmt.Println("value:", val)
-}
-```
+if err == redis.Nil { /* missing */ }
+else if err != nil  { /* real error */ }
+else                { /* val is the value */ }
 
-**GLIDE:**
-```go
+// GLIDE: Nil is not an error
 val, err := client.Get(ctx, "key")
-if err != nil {
-    fmt.Println("error:", err)
-    return
-}
-if val.IsNil() {
-    fmt.Println("key does not exist")
-} else {
-    fmt.Println("value:", val.Value())
-}
+if err != nil { /* real error - typed or generic errors.New */ ; return }
+if val.IsNil() { /* missing */ }
+else           { /* val.Value() is the value */ }
 ```
 
-go-redis uses `redis.Nil` as an error sentinel for missing keys. GLIDE separates nil from errors - `err` is only for actual errors, `val.IsNil()` checks for key absence.
+Importantly, GLIDE's error model is FLAT - you can't catch "all request errors" with one type check. See [error-handling reference](../../valkey-glide-go/skills/valkey-glide-go/reference/best-practices-error-handling.md) (or the greenfield skill) for the full picture.
 
-## Quick Start - Connection Setup
+## Config translation
 
-**go-redis:**
 ```go
-rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379", Password: "", DB: 0})
-```
+// go-redis:
+rdb := redis.NewClient(&redis.Options{
+    Addr: "h:6379", Password: "pw", DB: 0,
+    DialTimeout: 5 * time.Second, TLSConfig: &tls.Config{},
+    PoolSize: 10, MaxRetries: 3,
+})
 
-**GLIDE:**
-```go
+// GLIDE:
 cfg := config.NewClientConfiguration().
-    WithAddress(&config.NodeAddress{Host: "localhost", Port: 6379})
+    WithAddress(&config.NodeAddress{Host: "h", Port: 6379}).
+    WithCredentials(config.NewServerCredentialsWithDefaultUsername("pw")).
+    WithDatabaseId(0).
+    WithRequestTimeout(5 * time.Second).
+    WithUseTLS(true).
+    WithReconnectStrategy(config.NewBackoffStrategy(5, 100, 2))
 client, err := glide.NewClient(cfg)
-defer client.Close()
 ```
 
-## Configuration Mapping
+Drop `PoolSize`, `MinIdleConns`, `PoolTimeout`, `IdleTimeout`, `MaxConnAge` - GLIDE has no pool.
 
-| go-redis field | GLIDE equivalent |
-|----------------|------------------|
-| `Addr: "host:port"` | `WithAddress(&config.NodeAddress{Host, Port})` |
-| `Password` | `WithCredentials(&config.ServerCredentials{Password: "..."})` |
-| `DB` | `WithDatabaseId(0)` |
-| `DialTimeout` | `WithRequestTimeout(ms)` |
-| `TLSConfig` | `WithUseTLS(true)` |
-| `PoolSize` | Not needed - single multiplexed connection |
-| `MaxRetries` | Built-in reconnection via `WithReconnectStrategy` |
+## Migration strategy
 
-## Incremental Migration Strategy
+No compatibility layer. Migrate incrementally:
 
-No drop-in compatibility layer exists for Go. Migration approach:
-
-1. Add `github.com/valkey-io/valkey-glide/go/v2` to your `go.mod` alongside `go-redis`
-2. Define a repository or store interface that abstracts the Redis client
-3. Create a GLIDE implementation alongside the go-redis one
-4. Replace `redis.Nil` error checks with `Result[T].IsNil()` at each call site
-5. Run tests after each package migration to catch nil-handling regressions
-6. Remove `go-redis` from `go.mod` once all implementations are migrated
+1. Add `github.com/valkey-io/valkey-glide/go/v2` alongside `go-redis` in `go.mod`.
+2. Define a repository interface that abstracts the Redis client. Implement both sides.
+3. Swap implementations behind a build tag or config flag per package.
+4. **Rewrite nil-handling at every call site** - `redis.Nil` checks become `Result[T].IsNil()` checks. This is the biggest chunk of mechanical work.
+5. Run tests after each package - nil handling regressions are the most common failure.
+6. Remove `go-redis` from `go.mod` when all implementations are migrated.
 
 ## Reference
 
 | Topic | File |
 |-------|------|
-| Command-by-command API mapping (strings, hashes, lists, sets, sorted sets, delete, exists, cluster) | [api-mapping](reference/api-mapping.md) |
-| Transactions, pipelines, Pub/Sub, Go API maturity timeline | [advanced-patterns](reference/advanced-patterns.md) |
+| Slice args, SET typed options, ZADD map form, cluster, per-command divergences | [api-mapping](reference/api-mapping.md) |
+| Pipeline/transaction mapping, PubSub (static + dynamic 2.3+), platform / CGO / Alpine notes | [advanced-patterns](reference/advanced-patterns.md) |
 
-## Gotchas
+## Gotchas (the short list)
 
-1. **`Result[T]` instead of `redis.Nil`.** Check `IsNil()` before calling `Value()`.
-2. **Slice args, not varargs.** Multi-key commands take `[]string` slices.
-3. **Separate `Set` and `SetWithOptions`.** go-redis combines expiry into `Set()`. GLIDE has separate methods.
-4. **CGO dependency.** GLIDE for Go uses CGO to call the Rust core. Cross-compilation requires Docker-based builds or platform-native compilation.
-5. **Alpine Linux / MUSL.** Requires the `musl` build tag: `export GOFLAGS=-tags=musl`.
-6. **No connection pool tuning.** Drop all `PoolSize`, `MinIdleConns` configuration.
-7. **Import path.** Module is `github.com/valkey-io/valkey-glide/go/v2` with subpackages `config`, `options`, `pipeline`, `models`, `constants`.
-8. **`go mod vendor` support.** Added in GLIDE 2.2 - earlier versions did not work with vendor mode.
+1. **`Result[T].IsNil()` not `redis.Nil`.** Two orthogonal checks: `err` for transport, `IsNil()` for missing key.
+2. **Flat error model.** `ConnectionError`, `TimeoutError`, `DisconnectError`, `ExecAbortError`, etc. are independent structs with no base class; `errors.As(err, &connErr)` catches ONLY that specific type. Most runtime errors fall through to `errors.New(msg)`.
+3. **Most "connection lost" errors arrive as `*DisconnectError`, not `*ConnectionError`.** Subtle. `ConnectionError` is mostly setup-time.
+4. **Slice args for multi-key** - `Del(ctx, []string{"k1","k2"})`, not varargs.
+5. **`SetWithOptions` for expiry** - the simple `Set` has no duration parameter; use `options.NewSetOptions().SetExpiry(options.NewExpiryIn(d))` (`In` for duration, `At` for timestamp, `KeepExisting` for KEEPTTL).
+6. **`Publish(ctx, channel, message)` order is UNCHANGED from go-redis.** Python/Node GLIDE reverse this; Go does not.
+7. **No pool tuning.** Delete `PoolSize`, `MinIdleConns`, `PoolTimeout` etc. Blocking commands (`BLPop`, `BRPop`, `BLMove`, `BZPopMax`/`Min`, `BRPopLPush`, `BLMPop`, `BZMPop`, `XRead`/`XReadGroup` with block, WATCH) need a dedicated client instead.
+8. **Reconnection is infinite** - no `MaxRetries` equivalent.
+9. **CGO is mandatory.** Requires a C toolchain and glibc 2.17+. Alpine needs `musl-gcc` / `CGO_ENABLED=1`.
+10. **`inflightRequestsLimit` is NOT exposed** in Go at v2.3.1 (Python/Node expose it). Core cap of 1000 applies.
+11. **`go mod vendor`** works from GLIDE 2.2+. Older versions had vendor-mode issues.
+12. **Import root** - `github.com/valkey-io/valkey-glide/go/v2` with subpackages `config`, `options`, `pipeline`, `models`, `constants`.
+
+## Cross-references
+
+- `valkey-glide-go` - full Go skill for GLIDE features beyond the migration scope
+- `glide-dev` - GLIDE core internals (Rust + CGO bridge) if you need to debug binding-level issues

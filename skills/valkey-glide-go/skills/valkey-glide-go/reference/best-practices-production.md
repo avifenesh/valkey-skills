@@ -1,149 +1,74 @@
-# Production Deployment
+# Production deployment (Go)
 
-Use when deploying GLIDE Go to production, configuring timeouts, managing connections, or setting up observability.
+Use when deploying GLIDE Go to production. Covers GLIDE-specific defaults and pitfalls that matter for operators. For basic setup examples see [features-connection](features-connection.md).
 
-## Connection Management
+## One client per process
 
-### Single Client Per Application
+Do not pool `*Client` / `*ClusterClient`. The multiplexer is the pool. Creating N clients opens N sets of TCP connections to every node. `defer client.Close()` immediately after creation.
 
-GLIDE multiplexes all requests over one connection per node. Do not create client pools.
+Use `WithLazyConnect(true)` if your app must start before Valkey is reachable - the first command pays the TCP connect cost.
 
-```go
-import (
-    glide "github.com/valkey-io/valkey-glide/go/v2"
-    "github.com/valkey-io/valkey-glide/go/v2/config"
-)
+## GLIDE Go defaults agents should know
 
-// Correct: one client shared across the application
-cfg := config.NewClientConfiguration().
-    WithAddress(&config.NodeAddress{Host: "localhost", Port: 6379})
-client, err := glide.NewClient(cfg)
-if err != nil {
-    panic(err)
-}
-defer client.Close()
+| Knob | Default | Config |
+|------|---------|--------|
+| Request timeout | 250 ms | `WithRequestTimeout(d time.Duration)` |
+| Connection timeout | 2000 ms | Advanced: `WithConnectionTimeout(d)` |
+| Inflight request cap | 1000 (NOT configurable in Go at v2.3.1) | - |
+| Topology check interval (cluster) | default | `WithPeriodicChecks` / `WithPeriodicChecksManualInterval` |
+| Backoff retries | (infinite; cap only on sequence length) | `WithReconnectStrategy(NewBackoffStrategy(...))` |
+| Protocol | RESP3 | via `protocol` enum in advanced config |
+| TCP_NODELAY | true | advanced config `WithTcpNoDelay` |
 
-// Wrong: do not pool GLIDE clients
-```
+Blocking-command timeout auto-extension: 0.5 s beyond the block duration. No tuning required.
 
-### Lazy Connect
+## Timeout tuning
 
-Defers connection until the first command. Allows startup when the server is not yet available.
+The 250 ms default is tight. Raise per-workload, not globally:
 
-```go
-cfg := config.NewClientConfiguration().
-    WithAddress(&config.NodeAddress{Host: "localhost", Port: 6379}).
-    WithLazyConnect(true)
+| Workload | Recommended |
+|----------|-------------|
+| Cache lookup (GET, HGET) | 250-500 ms |
+| Writes (SET, HSET, ZADD) | 250-500 ms |
+| Complex (SORT, SCAN, ZRANGEBYSCORE large) | 1-5 s |
+| Lua scripts | 5-30 s |
+| Blocking commands | Auto-extended - do not raise |
 
-client, err := glide.NewClient(cfg) // Returns immediately
-// Connection established on first command
-```
+Go-idiomatic alternative: use `context.WithTimeout(ctx, d)` per-call. Context deadline takes precedence and is the standard Go pattern.
 
-### Client Cleanup
+## Cluster: seed nodes and AZ affinity
 
-Always defer `Close()` after client creation. It drains pending requests with `ClosingError` and is safe to call multiple times.
+Provide multiple seed addresses. Topology is auto-discovered.
 
-```go
-defer client.Close()
-```
+`config.ReadFrom` values:
 
----
-
-## Timeout Configuration
-
-| Timeout | Default | Config Method |
-|---------|---------|--------------|
-| Request timeout | 250ms | `WithRequestTimeout(d time.Duration)` |
-| Connection timeout | 2000ms | Advanced config: `WithConnectionTimeout(d time.Duration)` |
-
-### Tuning by Workload
-
-| Workload | Recommended Timeout |
-|----------|-------------------|
-| Cache lookups (GET, HGET) | 250-500ms |
-| Write operations (SET, HSET) | 250-500ms |
-| Complex operations (SORT, SCAN) | 1-5s |
-| Lua scripts (EVALSHA) | 5-30s |
-| Blocking commands (BLPOP, XREADGROUP) | Handled automatically |
-
-GLIDE extends blocking command timeouts by 500ms beyond the block duration.
-
-```go
-advanced := config.NewAdvancedClientConfiguration().
-    WithConnectionTimeout(5 * time.Second)
-
-cfg := config.NewClientConfiguration().
-    WithAddress(&config.NodeAddress{Host: "localhost", Port: 6379}).
-    WithRequestTimeout(1 * time.Second).
-    WithAdvancedConfiguration(advanced)
-```
-
----
-
-## Cluster Configuration
-
-### Seed Nodes
-
-Provide multiple seed nodes for redundancy. GLIDE discovers the full topology automatically.
-
-```go
-cfg := config.NewClusterClientConfiguration().
-    WithAddress(&config.NodeAddress{Host: "node1.example.com", Port: 6379}).
-    WithAddress(&config.NodeAddress{Host: "node2.example.com", Port: 6379}).
-    WithAddress(&config.NodeAddress{Host: "node3.example.com", Port: 6379})
-
-client, err := glide.NewClusterClient(cfg)
-```
-
-### AZ Affinity
-
-Route reads to same-AZ replicas to reduce latency and cross-AZ costs.
-
-```go
-cfg := config.NewClusterClientConfiguration().
-    WithAddress(&config.NodeAddress{Host: "node1.example.com", Port: 6379}).
-    WithReadFrom(config.AzAffinity).
-    WithClientAZ("us-east-1a")
-```
-
-| Strategy | Behavior |
+| Constant | Behavior |
 |----------|----------|
 | `config.Primary` | All reads to primary (default) |
-| `config.PreferReplica` | Round-robin replicas, fallback to primary |
-| `config.AzAffinity` | Prefer same-AZ replicas |
-| `config.AzAffinityReplicaAndPrimary` | Same-AZ replicas, then primary, then remote |
+| `config.PreferReplica` | Round-robin replicas, fall back to primary |
+| `config.AzAffinity` | Same-AZ replicas preferred, then other replicas, then primary |
+| `config.AzAffinityReplicaAndPrimary` | Same-AZ replicas, then same-AZ primary, then any replica, then primary - note `Replica` is singular in the user-facing constant |
 
-Requires Valkey 8.0+ with `availability-zone` configured on each server node.
+AZ-affinity requires `WithClientAZ("<zone>")` AND the server exposing availability-zone metadata in `CLUSTER SHARDS` - otherwise falls back to primary.
 
----
+## Batch options in production
 
-## Batch Options in Production
-
-Use `ExecWithOptions` to set timeouts and retry strategies for batches:
+Timeouts and retry strategies via `ExecWithOptions`:
 
 ```go
-import "github.com/valkey-io/valkey-glide/go/v2/pipeline"
-
 opts := pipeline.NewClusterBatchOptions().
     WithTimeout(5 * time.Second).
     WithRetryStrategy(*pipeline.NewClusterBatchRetryStrategy().
         WithRetryServerError(true).
         WithRetryConnectionError(true))
-
-results, err := clusterClient.ExecWithOptions(ctx, *pipe, false, *opts)
+results, err := clusterClient.ExecWithOptions(ctx, *batch, false, *opts)
 ```
 
-Retry strategies are only supported for non-atomic batches.
+Retry strategies supported on non-atomic batches only. See [features-batching](features-batching.md) for hazards.
 
----
+## Platform constraints
 
-## Connection Defaults
-
-| Parameter | Default |
-|-----------|---------|
-| Request timeout | 250ms |
-| Connection timeout | 2000ms |
-| Inflight request limit | 1000 |
-| Connections per node | 2 (data + management) |
-| Topology check | 60s |
-| Protocol | RESP3 |
+- **CGO required.** Needs a C toolchain and glibc 2.17+. Alpine needs `musl-gcc` or `CGO_ENABLED=1` with the right toolchain.
+- **No static binary.** Go + GLIDE produces a dynamically linked executable.
+- **Cross-compilation** needs a matching C toolchain for the target (`CC=x86_64-linux-gnu-gcc` etc.).
+- **Proxies / connection inspectors**: GLIDE sends `CLIENT SETNAME`, `CLIENT SETINFO`, `INFO REPLICATION` during setup. Transparent proxies that strip these break topology detection.
