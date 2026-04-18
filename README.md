@@ -2,7 +2,7 @@
 
 AI skills for the [Valkey](https://valkey.io) ecosystem. Teaches coding assistants what they don't know from training data - Valkey 9.x commands, GLIDE client APIs, operational defaults, and server internals.
 
-24 skills, 195 reference files, source-verified against actual Valkey/GLIDE source code. Works with Claude Code, Cursor, Codex, Copilot, Gemini CLI, OpenCode, Kiro, and any tool supporting the [Agent Skills standard](https://agentskills.io).
+24 skills, 190 reference files, source-verified against actual Valkey/GLIDE source code. Works with Claude Code, Cursor, Codex, Copilot, Gemini CLI, OpenCode, Kiro, and any tool supporting the [Agent Skills standard](https://agentskills.io).
 
 ## Why
 
@@ -70,7 +70,7 @@ Clone and copy to your tool's skills directory:
 
 | Skill | Audience | Files |
 |-------|----------|-------|
-| **valkey** | App developers - Valkey 9.x features, patterns, best practices | 41 |
+| **valkey** | App developers - Valkey 9.x features, patterns, best practices | 36 |
 
 ### GLIDE Per-Language
 

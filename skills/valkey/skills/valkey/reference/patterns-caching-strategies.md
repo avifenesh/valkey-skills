@@ -1,6 +1,6 @@
 # Caching Strategies
 
-Use when implementing a caching layer with Valkey - choosing between cache-aside, write-through, and write-behind patterns, or setting up client-side caching for hot data.
+Use when implementing a caching layer with Valkey - choosing between cache-aside, write-through, and write-behind patterns, setting up client-side caching for hot data, or configuring invalidation and eviction policies.
 
 ## Contents
 
@@ -8,6 +8,7 @@ Use when implementing a caching layer with Valkey - choosing between cache-aside
 - Write-Through
 - Write-Behind (Write-Back)
 - Client-Side Caching (CLIENT TRACKING)
+- Invalidation, Eviction Policies, and TTL Patterns
 
 ---
 
@@ -248,3 +249,24 @@ CLIENT TRACKING ON NOLOOP
 | valkey-py / redis-py | No |
 
 ---
+
+## Invalidation, Eviction Policies, and TTL Patterns
+
+### CLIENT TRACKING (server-assisted invalidation)
+
+Covered above. Short recap: `CLIENT TRACKING ON BCAST PREFIX cache:` broadcasts invalidation messages for all keys matching the PREFIX pattern - no per-key server state, good for shared caches across many clients.
+
+### Eviction policies
+
+Set via `maxmemory-policy`. Valkey defaults match Redis 7:
+
+- `allkeys-lru` - general caching default
+- `allkeys-lfu` - stable hot set; tune `lfu-log-factor` (default 10)
+- `volatile-lru` - mixed persistent + cache data
+- `noeviction` - reject writes when full (use for non-cache data)
+
+With `allkeys-lru`, you do not need to set TTLs to make keys evictable. Skipping the per-TTL entry in the `expires` table saves memory compared to a `volatile-lru` deployment where every cache key carries a TTL.
+
+### TTL patterns
+
+Add random jitter to prevent stampedes: `base_ttl + random(0, jitter)`. Use `UNLINK` on explicit invalidation (see `best-practices-performance-throughput.md`). Keyspace notifications (`notify-keyspace-events Exg`) are fire-and-forget - not reliable as a sole invalidation mechanism.

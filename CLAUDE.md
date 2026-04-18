@@ -8,7 +8,7 @@
 
 | Directory | Skill | Audience | Files |
 |-----------|-------|----------|-------|
-| `skills/valkey/` | valkey | Application developers - Valkey-specific features, patterns, best practices | 41 |
+| `skills/valkey/` | valkey | Application developers - Valkey-specific features, patterns, best practices | 36 |
 | `skills/valkey-dev/` | valkey-dev | Valkey server contributors | 12 |
 | `skills/valkey-ops/` | valkey-ops | Self-hosted Valkey operators | 14 |
 | `skills/glide-dev/` | glide-dev | GLIDE client library contributors - Rust core, language bindings, build system | 7 |
@@ -101,3 +101,18 @@ Always write plain text - no emojis, no ASCII art. Always verify reference docs 
 ## Skill-writing rules
 
 Detailed rules for editing skills (audience framing, cut lists, grep hazards, 2-pass validation, GLIDE correctness) live in [docs/SKILL_WRITING_RULES.md](docs/SKILL_WRITING_RULES.md). Read that doc before editing any SKILL.md or reference file.
+
+## Validation invariants
+
+Rules accumulated during the 20-skill validation series. Violating any of these produced real bugs caught during review - keep them in mind when editing any GLIDE-related skill.
+
+- **`publish` argument order reverses in 3 of 7 GLIDE languages.** Python / Node / Java reverse to `publish(message, channel)`. Go / C# / PHP / Ruby keep the standard `publish(channel, message)`. Silent-bug source during migration - always verify for the language you are in.
+- **Error models diverge per language binding.** Python and Node use nested hierarchies under `GlideError` / `ValkeyError`. Go and Java are flat (no subclass tree). C# nests classes inside a static `Errors` container. PHP has a single `ValkeyGlideException` with no subclasses. Ruby nests under `Valkey::BaseError < StandardError`. Do not copy one language's hierarchy to another.
+- **UDS is in-process IPC for Python-async and Node.js ONLY.** Every other binding (Python-sync, Java via JNI, Go, C#, PHP, Ruby) uses direct FFI through the C ABI. Never describe Java, Go, or any other binding as UDS-backed.
+- **No cross-skill relative markdown links.** `../../other-skill/reference/foo.md` breaks the check-links CI job. Use prose references ("see the valkey-glide-python skill") instead.
+- **Two-pass validation is mandatory when editing any skill against real source.** Pass 1 is general source verification; pass 2 is a narrow correctness grep against the same source. Pass 2 consistently catches 2-8 bugs pass 1 missed.
+- **Source locations for GLIDE verification:**
+  - Main GLIDE monorepo (Python, Node, Java, Go, Rust core, FFI): `C:/Users/avife/agent-sh/valkey-glide-src/` at tag `v2.3.1`
+  - C# separate repo: `valkey-io/valkey-glide-csharp` at tag `v1.0.0`
+  - PHP separate repo: `valkey-io/valkey-glide-php` at tag `v1.0.0`
+  - Ruby separate repo: `valkey-io/valkey-glide-ruby` (gem `valkey-rb` v1.0.0)

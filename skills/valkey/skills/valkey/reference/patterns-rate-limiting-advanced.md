@@ -1,6 +1,16 @@
-# Rate Limiting: Token Bucket and Advanced Patterns
+# Rate Limiting: Windows, Token Bucket, and Advanced Patterns
 
-Use when implementing token bucket rate limiting, per-field rate limits with Valkey 9.0+, or choosing between rate limiting algorithms for production APIs.
+Use when implementing rate limiting on Valkey: choosing between window-based and token-bucket algorithms, using per-field TTL on hashes for per-endpoint limits, or comparing algorithm tradeoffs for production APIs.
+
+## Window-Based Orientation
+
+Three standard window-based patterns, all using generic Redis/Valkey commands. A model already trained on Redis knows the implementation shape - listed here so you can pick the right one before reading the production details below.
+
+- **Fixed window** - `INCR` + `EXPIRE` on a per-window key. Simple, O(1), but allows 2x burst at window boundaries.
+- **Sliding window counter** - two window keys weighted by elapsed ratio. Approximates a true sliding window with O(1) ops and low memory.
+- **Sliding window log** - sorted set of timestamps per user. Exact, but O(N) memory and higher CPU at scale.
+
+For production, prefer token bucket (burst allowance + sustained refill) or per-endpoint rate limits via Valkey 9.0+ hash-field TTL - both documented below.
 
 ## Token Bucket (Lua Script)
 

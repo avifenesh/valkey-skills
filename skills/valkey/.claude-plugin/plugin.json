@@ -1,6 +1,6 @@
 {
   "name": "valkey",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Use when building apps with Valkey - caching, sessions, queues, locks, rate-limiting, leaderboards, counters, pub-sub, streams, scripting. Covers IFEQ/DELIFEQ, hash field TTL, COMMANDLOG. Not for server internals (valkey-dev) or ops (valkey-ops).",
   "author": {
     "name": "Avi Fenesh",

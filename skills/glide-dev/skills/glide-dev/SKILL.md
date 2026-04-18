@@ -9,15 +9,14 @@ argument-hint: "[language binding or core component]"
 
 ## Routing
 
-- Rust core, connection management, protocol -> Core Architecture
-- Python bindings, PyO3, CFFI -> Language Bindings
-- Java bindings, JNI -> Language Bindings
-- Node.js bindings, NAPI -> Language Bindings
-- Go bindings, CGO, FFI -> Language Bindings
-- PubSub synchronizer, subscription management -> PubSub Internals
-- Cluster topology, slot mapping, failover -> Cluster Internals
-- Adding a new command -> Adding Commands
-- Build environment, prerequisites, testing, test utils, cluster setup -> Build & Test
+| Question | Section below |
+|----------|---------------|
+| Rust core, connection management, protocol | Core Architecture |
+| Python / Java / Node / Go / PHP / C# / Ruby bindings and their FFI mechanism | Language Bindings |
+| PubSub synchronizer, subscription management | Core Architecture (pubsub-internals reference) |
+| Cluster topology, slot mapping, failover | Core Architecture (cluster-internals reference) |
+| Adding a new command across protobuf + Rust + wrappers | Language Bindings (adding-commands reference) |
+| Build environment, prerequisites, testing, test utils, cluster setup | Language Bindings (build-and-test reference) |
 
 ## Repository Structure
 

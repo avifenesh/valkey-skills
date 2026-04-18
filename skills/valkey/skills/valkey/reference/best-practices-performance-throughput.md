@@ -1,13 +1,32 @@
-# Performance: Throughput Optimization
+# Performance: Throughput and Command Selection
 
-Use when optimizing Valkey throughput with pipelining, connection pooling, I/O threading, or reviewing performance anti-patterns before production deployment.
+Use when optimizing Valkey throughput with pipelining, connection pooling, and I/O threading, choosing between command variants (UNLINK vs DEL, SCAN vs KEYS), or reviewing performance anti-patterns before production deployment.
 
 ## Contents
 
+- Command Selection: UNLINK vs DEL, SCAN vs KEYS
 - Pipeline Batching
 - Connection Pooling
 - I/O Threading (User Perspective)
 - Quick Reference: Performance Anti-Patterns
+
+---
+
+## Command Selection
+
+### UNLINK vs DEL
+
+`DEL` frees memory synchronously on the main thread - large keys block all clients. `UNLINK` reclaims memory on a background thread.
+
+**Valkey 8.0+ change**: `lazyfree-lazy-user-del` defaults to `yes`, making `DEL` behave like `UNLINK` by default. This is a behavioral change from Redis, where the default was `no`. Other lazyfree defaults flipped in the same release: `lazyfree-lazy-eviction`, `lazyfree-lazy-expire`, `lazyfree-lazy-server-del`, and `lazyfree-lazy-user-flush` all default to `yes`.
+
+Still prefer explicit `UNLINK` in code - it communicates intent and remains non-blocking if someone sets `lazyfree-lazy-user-del no`.
+
+### SCAN vs KEYS
+
+`KEYS pattern` blocks the server. Use `SCAN cursor MATCH pattern COUNT hint` instead. Iterate until cursor returns `0`. Deduplicate results - SCAN may return the same key twice across iterations. `COUNT` is a hint, not a hard limit.
+
+Type-specific variants: `HSCAN`, `SSCAN`, `ZSCAN` for iterating inside a single key.
 
 ---
 
