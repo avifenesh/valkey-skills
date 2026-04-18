@@ -46,6 +46,7 @@ Large values are NOT an exception - they pipeline through the multiplexer fine.
 8. **Sync is `glide_sync` (not `glide`).** The sync wrapper (GLIDE 2.1+) imports from `glide_sync`, with the same class names.
 9. **Static PubSub subscriptions require RESP3.** Using RESP2 raises `ConfigurationError`.
 10. **No Alpine support.** GLIDE requires glibc 2.17+.
+11. **`publish()` argument order is REVERSED from redis-py.** `await client.publish(message, channel)` - message first, channel second. redis-py is `r.publish(channel, message)`. Silent bug factory during migration.
 
 ## Cross-references
 

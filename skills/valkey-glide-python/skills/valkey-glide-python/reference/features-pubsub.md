@@ -191,15 +191,15 @@ last_sync = stats["subscription_last_sync_timestamp"]  # ms since epoch
 
 ## Publishing
 
-Publishing is a regular command, not tied to subscriptions:
+**GOTCHA: argument order is REVERSED from redis-py.** redis-py is `r.publish(channel, message)`; GLIDE is `await client.publish(message, channel)`. Silent mis-routing if you don't notice - this is the #1 `publish()` bug in migration code.
 
 ```python
-# Standalone client: publish(message, channel) -> int
+# Standalone:  publish(message, channel) -> int
 num_receivers = await client.publish("hello world", "alerts")
 
-# Cluster client: publish(message, channel, sharded=False) -> int
+# Cluster:     publish(message, channel, sharded=False) -> int
 num_receivers = await client.publish("hello world", "alerts")
 
-# Cluster client: sharded publish (Valkey 7.0+)
+# Cluster sharded (Valkey 7.0+):
 num_receivers = await client.publish("hello shard", "shard-events", sharded=True)
 ```

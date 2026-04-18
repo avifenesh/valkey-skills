@@ -24,6 +24,7 @@ Use when moving an existing redis-py application to GLIDE. Assumes you already k
 | Blocking commands | Share the pool | Occupy the single connection - use a dedicated client |
 | Cluster | `redis.RedisCluster(skip_full_coverage_check=...)` | `GlideClusterClient` with auto-topology discovery |
 | PubSub | `p = r.pubsub(); p.subscribe(...)`; `p.listen()` | Static config OR dynamic `subscribe()` (2.3+); callback OR polling |
+| `publish` | `r.publish(channel, message)` | `await client.publish(message, channel)` - **arguments REVERSED**; top silent-bug source in migration |
 | `decode_responses` | Kwarg | No equivalent - handle bytes at boundary |
 | `socket_timeout` | Seconds float | `request_timeout` milliseconds int |
 | `retry_on_timeout` | Bool | `reconnect_strategy=BackoffStrategy(...)` |
@@ -85,6 +86,7 @@ Big-bang migration trips on bytes-vs-str, blocking-command semantics, WATCH, and
 8. **PubSub static subscriptions require RESP3** - `ConfigurationError` otherwise.
 9. **`TimeoutError` / `ConnectionError` shadow Python built-ins** - import with aliases.
 10. **Reconnection is infinite** - `BackoffStrategy.num_of_retries` only caps the backoff sequence length.
+11. **`publish()` argument order is REVERSED** - GLIDE is `publish(message, channel)`, redis-py is `publish(channel, message)`. Silent bug during migration.
 
 ## Cross-references
 
