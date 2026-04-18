@@ -54,7 +54,7 @@ Namespace is `Valkey`, not `ValkeyGlide`. `require "valkey"` gives you everythin
 | HyperLogLogCommands | `pfadd`, `pfcount`, `pfmerge` |
 | JsonCommands | Valkey JSON module |
 | VectorSearchCommands | Valkey Search module (`FT.SEARCH`, `FT.AGGREGATE`) |
-| ClusterCommands | `cluster_info`, `cluster_nodes`, `cluster_slots`, `cluster_addslots`, etc. |
+| ClusterCommands | `cluster_info`, `cluster_nodes`, `cluster_slots`, `cluster_addslots`, `cluster_bumpepoch`, `cluster_countkeysinslot`, `cluster_forget`, `cluster_meet`, `cluster_reset`, `cluster_failover`, `asking` |
 | ConnectionCommands | `ping`, `echo`, `select`, `auth`, `hello`, `client_*`, `quit` |
 | ServerCommands | `info`, `dbsize`, `flushdb`, `config_*`, `acl_*`, `slowlog_*` |
 | FunctionCommands | `function_load`, `fcall`, `fcall_ro` |

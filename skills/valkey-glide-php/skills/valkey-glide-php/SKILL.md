@@ -19,6 +19,18 @@ Agent-facing skill for GLIDE PHP. Assumes the reader can already write PHPRedis 
 | Array-and-callback `subscribe(array, callable)` / `psubscribe(array, callable)` - REVERSED shape from PHPRedis varargs; `ssubscribe` NOT implemented in v1.0.0; `unsubscribe(?array)`; introspection via `pubsub()` | [pubsub](reference/features-pubsub.md) |
 | Install via PIE/PECL/Composer, PHP 8.2/8.3 only, supported platforms, command groups, batching (MULTI/EXEC + pipeline), error model (`ValkeyGlideException`), password rotation | [overview](reference/features-overview.md) |
 
+## Multiplexer rule
+
+One `ValkeyGlide` / `ValkeyGlideCluster` instance is the shared multiplexer for a PHP process (long-running CLI, daemon, or FPM worker). Do not create per-request clients inside the same process. Do not pool multiple instances against the same node. The Rust core pipelines concurrent calls across the multiplexed connection.
+
+**Exceptions that need a dedicated client instance:**
+
+- PubSub subscribers (`subscribe` / `psubscribe` hold the connection in subscriber mode - occupancy).
+- Blocking commands (`blPop`, `brPop`, `bzPopMin`, `bzPopMax`, `blmpop`, `bzmpop`, `wait`) - occupancy, they hold the multiplexed connection for the block duration.
+- Transactional `watch` / `multi` / `exec` flows - connection-state leakage on a shared multiplexer, not occupancy.
+
+Large values are NOT an exception - they pipeline through the multiplexer fine.
+
 ## The #1 agent mistake: subscribe signature
 
 PHPRedis accepts `$r->subscribe(['ch1','ch2'], $callback)` but also legacy forms. GLIDE PHP is strict: **`subscribe(array $channels, callable $cb): bool`** - the array of channels is REQUIRED, the callback is REQUIRED, and there are NO varargs-style overloads. Same for `psubscribe`. See the features-pubsub reference for callback signature.
@@ -33,7 +45,7 @@ PHPRedis accepts `$r->subscribe(['ch1','ch2'], $callback)` but also legacy forms
 6. **Cluster construction is one-step: `new ValkeyGlideCluster(addresses: [...], use_tls: true, ...)`.** Cluster has a parameterized constructor with 19 positions (7 PHPRedis-style + 12 GLIDE-style). Mixing PHPRedis-style and GLIDE-style positional args throws.
 7. **PHP support is 8.2 and 8.3 ONLY.** Not 8.1, not 8.4. The v1.0.0 binaries are built for these two minor versions.
 8. **No Windows, no Alpine/MUSL.** Pre-built binaries cover Ubuntu 20+ (x86_64/arm64) and macOS 14.7+ (Apple Silicon).
-9. **All errors throw `ValkeyGlideException`.** Single exception class, no hierarchy. Inspect `$e->getMessage()` for text classification (WRONGTYPE, timeout, connection, etc.). Aliased as `RedisException` after `ValkeyGlide::registerPHPRedisAliases()`.
+9. **All errors throw `ValkeyGlideException`.** Single exception class, no hierarchy. Inspect `$e->getMessage()` for text classification (WRONGTYPE, OOM, NOAUTH, WRONGPASS, MOVED, ASK, CROSSSLOT, NOSCRIPT, READONLY, timeout, connection closed). Aliased as `RedisException` after `ValkeyGlide::registerPHPRedisAliases()`.
 10. **`registerPHPRedisAliases()` is static, returns `bool`.** Creates `Redis -> ValkeyGlide`, `RedisCluster -> ValkeyGlideCluster`, `RedisException -> ValkeyGlideException` aliases. Call once at bootstrap; returns `false` if already registered.
 11. **`$client->close()` is mandatory** for deterministic shutdown. The destructor closes automatically but releasing early is preferred for long-running CLI/daemons.
 12. **`reconnect_strategy` keys:** `num_of_retries`, `factor`, `exponent_base`, `jitter_percent`. Not `numOfRetries` / `retries` / `backoff`.

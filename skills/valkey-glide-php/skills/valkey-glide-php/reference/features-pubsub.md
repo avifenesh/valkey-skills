@@ -115,7 +115,7 @@ $client->subscribe(['tasks'], function ($c, $channel, $message) {
 
 ## Important notes
 
-1. **Separate clients for pub and sub.** A subscribing client is in subscriber mode for the duration of the subscribe call; it cannot issue normal commands from the outer scope.
+1. **Separate clients for pub and sub (occupancy).** A subscribing client is in subscriber mode for the duration of the subscribe call; it cannot issue normal commands from the outer scope. This is occupancy - the same reason blocking commands need dedicated clients - not connection-state leakage like WATCH/MULTI/EXEC.
 2. **Automatic resubscribe on reconnect.** The Rust core restores subscriptions after a reconnect automatically.
 3. **At-most-once delivery.** Messages published during a reconnect gap are lost. Use Streams for durable delivery.
 4. **Callback exceptions** propagate out of `subscribe()` and leave the client in subscriber mode until you explicitly unsubscribe or close.

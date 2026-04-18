@@ -108,7 +108,7 @@ try {
     $value = $client->get('key');
 } catch (ValkeyGlideException $e) {
     // Single exception class - no subtype hierarchy.
-    // Inspect $e->getMessage() to classify (WRONGTYPE, timeout, connection, NOAUTH, etc.).
+    // Inspect $e->getMessage() to classify (WRONGTYPE, OOM, NOAUTH, WRONGPASS, MOVED, ASK, NOSCRIPT, READONLY, timeout, connection closed).
     error_log($e->getMessage());
 }
 ```

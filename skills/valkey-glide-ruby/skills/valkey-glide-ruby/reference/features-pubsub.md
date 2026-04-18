@@ -110,7 +110,7 @@ valkey.sunsubscribe("shard-news")
 
 ## Important notes
 
-1. **Separate clients for pub and sub.** A subscribing client is in subscriber mode and cannot issue non-pubsub commands from the outer thread.
+1. **Separate clients for pub and sub (occupancy).** A subscribing client is in subscriber mode and cannot issue non-pubsub commands from the outer thread. This is occupancy - the same reason blocking commands need dedicated clients - not connection-state leakage like WATCH/MULTI/EXEC.
 2. **Automatic resubscribe on reconnect.** Rust core restores subscriptions.
 3. **At-most-once delivery.** Messages during a reconnect gap are lost. Use Streams for durability.
 4. **`pubsub_callback` runs on an FFI-managed thread.** Treat it like a signal handler - minimal, non-blocking.

@@ -19,6 +19,18 @@ Agent-facing skill for valkey-rb (GLIDE Ruby). Assumes the reader can already wr
 | Varargs `subscribe(*channels)` / `psubscribe(*patterns)` - NOT arrays; no `on.message` block form; override `pubsub_callback` module method; sharded `ssubscribe` / `spublish` implemented; introspection via `pubsub_*` helpers | [pubsub](reference/features-pubsub.md) |
 | `gem install valkey-rb`, Ruby 2.6+, nested error hierarchy, `pipelined { }` / `multi { }` blocks, **MULTI/EXEC batching falls back to sequential** (FFI stability), `statistics` (NOT `get_statistics`), `Valkey::OpenTelemetry.init` | [overview](reference/features-overview.md) |
 
+## Multiplexer rule
+
+One `Valkey` instance is the shared multiplexer for a Ruby process (Puma worker, Sidekiq worker, Rails app, long-running CLI). Do not create per-request clients. Do not pool multiple instances against the same node. The Rust core pipelines concurrent Ruby threads' commands across the multiplexed connection.
+
+**Exceptions that need a dedicated client instance:**
+
+- PubSub subscribers (`subscribe` / `psubscribe` / `ssubscribe` hold the connection in subscriber mode - occupancy).
+- Blocking commands (`blpop`, `brpop`, `blmove`, `bzpopmin`, `bzpopmax`, `blmpop`, `bzmpop`, `xread` / `xreadgroup` with `block`, `wait`) - occupancy, they hold the multiplexed connection for the block duration.
+- `watch` / `multi` / `exec` optimistic-locking flows - connection-state leakage on a shared multiplexer, not occupancy.
+
+Large values are NOT an exception - they pipeline through the multiplexer fine.
+
 ## The #1 agent mistake: statistics method
 
 Models often invent `client.get_statistics` with a nested `stats[:connection_stats][:active_connections]` shape. Neither exists. The real API is:
