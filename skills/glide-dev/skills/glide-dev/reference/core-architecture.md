@@ -2,18 +2,6 @@
 
 Use when understanding the Rust core design, three-layer architecture, FFI mechanisms per language, the module structure, command flow, runtime model, or debugging connection/protocol issues.
 
-## Contents
-
-- Three-Layer Design (line 17)
-- Request Pipeline (line 37)
-- Module Structure (line 73)
-- Key Structs and Types (line 92)
-- FFI Mechanisms by Language (line 139)
-- Runtime Model (line 183)
-- Command Flow (line 199)
-- Dependencies (line 213)
-- Version History (line 220)
-
 ## Three-Layer Design
 
 ```
@@ -54,13 +42,16 @@ Key types: `CommandRequest`, `Response`, `ClosingReason`, `RotatingBuffer`
 
 ### Client (`glide-core/src/client/mod.rs`)
 
-The client manages connections and command execution:
-- **Standalone**: single connection or primary+replicas
-- **Cluster**: connection pool per node, slot-based routing
+The client manages connections and command execution. Two distinct implementations, not a pool hierarchy:
+
+- **Standalone** (`StandaloneClient` in `client/standalone_client.rs`): GLIDE's own code. Single multiplexed connection, or primary + replicas.
+- **Cluster** (`ClusterConnection` from vendored `redis::cluster_async`): separate implementation with slot-based routing, maintained as a vendored fork in `glide-core/redis-rs/`.
+
+`ClientWrapper` is an enum - `Standalone(StandaloneClient)` and `Cluster { client: ClusterConnection }` are two different animals. Cluster is not a pool of standalones.
 
 Key components:
-- `ClientWrapper` - holds the underlying redis-rs client
-- `reconnecting_connection` - auto-reconnect with backoff
+- `ClientWrapper` - enum dispatching to standalone or cluster
+- `reconnecting_connection` - GLIDE-owned auto-reconnect state machine with backoff
 - `value_conversion` - converts redis-rs `Value` to protobuf `Response`
 
 ### Protobuf IPC (`glide-core/src/protobuf/`)
@@ -143,14 +134,16 @@ Two distinct communication paths:
 ### Socket IPC Path (Python async, Node.js)
 
 ```
-Wrapper  -->  Unix Domain Socket  -->  socket_listener  -->  glide-core
+Wrapper (same process)  <--UDS-->  socket_listener  -->  glide-core
 ```
 
-The `socket_listener.rs` creates a Unix socket at `/tmp/glide-socket-{uuid}`. Requests are Protobuf-encoded `CommandRequest` messages framed by varint length prefixes. The `RotatingBuffer` (initial size 65,536 bytes) handles efficient message framing.
+**UDS here is in-process IPC, not a network connection.** The wrapper and the Rust core run in the same process - the Unix socket is just a message-passing channel between the language layer and the Rust Tokio runtime. The core is not a separate process.
 
-Key constants:
-- `SOCKET_FILE_NAME`: `"glide-socket"`
-- `MAX_REQUEST_ARGS_LENGTH`: 4096 (2^12) - threshold for inline vs pointer arg pass
+`socket_listener.rs` builds the socket path as `{UNIX_SOCKER_DIR}/{SOCKET_FILE_NAME}-{pid}-{uuid}.sock` (yes, `UNIX_SOCKER_DIR` is the verbatim constant name in upstream source - typo preserved; its value is `"/tmp"`). The PID is included so the name stays unique in Docker containers where PIDs can be reused. Requests are protobuf-encoded `CommandRequest` messages framed by varint length prefixes. `RotatingBuffer::new(65_536)` handles framing.
+
+Key constants (verified in `socket_listener.rs`):
+- `SOCKET_FILE_NAME = "glide-socket"`
+- `MAX_REQUEST_ARGS_LENGTH = 2_i32.pow(12) = 4096` (source has TODO "find the right number")
 
 ### Direct FFI Path (Java, Go, Python sync, PHP, C#)
 
@@ -176,7 +169,7 @@ No socket involved - direct function calls through the language's FFI.
 
 **Node.js** - `node/rust-client/src/lib.rs` uses `#[napi]` macro, socket listener path. Exports constants: `DEFAULT_REQUEST_TIMEOUT_IN_MILLISECONDS`, `DEFAULT_CONNECTION_TIMEOUT_IN_MILLISECONDS`, `DEFAULT_INFLIGHT_REQUESTS_LIMIT`.
 
-**Java** - `java/src/lib.rs` uses JNI. Migrated from UDS+Protobuf to direct JNI in GLIDE 2.2 (Windows support). Includes own `process_command_for_compression` outside socket listener path.
+**Java** - `java/src/lib.rs` uses JNI. Migrated from UDS+Protobuf to direct JNI for Windows support. Entry points are `Java_glide_ffi_resolvers_*` + `Java_glide_internal_GlideNativeBridge_createClient`; protobuf is still used for command encoding across the JNI boundary (see `java/src/protobuf_bridge.rs`). Compression runs through the shared `process_command_for_compression` path in `glide-core/src/socket_listener.rs` - Java does NOT have its own copy.
 
 **Go and Python Sync** - `ffi/src/lib.rs` provides C-compatible API with `extern "C"` functions. Go uses CGO with cbindgen headers, Python sync uses CFFI. `#[repr(C)]` structs for cross-language compatibility.
 
@@ -212,18 +205,7 @@ pub struct GlideRt {
 
 ## Dependencies
 
-- `redis` crate (vendored/forked) - low-level RESP protocol, cluster routing
-- `tokio` - async runtime
-- `protobuf` - IPC serialization
-- `telemetrylib` - OpenTelemetry integration
-
-## Version History
-
-| Version | Date | Key Architectural Changes |
-|---------|------|---------------------------|
-| 1.2 | Dec 2024 | AZ-aware routing, Vector Search + JSON module support |
-| 1.3 | Feb 2025 | Go client preview |
-| 2.0 | Jun 2025 | Go GA, OpenTelemetry, Batch API (replacing Transaction), Lazy Connection |
-| 2.1 | Sep 2025 | Valkey 9 support, Python Sync API, Jedis compatibility layer |
-| 2.2 | Nov 2025 | Java JNI migration (Windows support), IAM auth, Seed-based topology refresh |
-| 2.3 | Mar 2026 | Dynamic PubSub, mTLS, Java 8 compat, uber JAR, read-only mode |
+- `redis` - vendored fork at `glide-core/redis-rs/`. Low-level RESP, cluster routing, slot map, `MultiplexedConnection`, `ClusterConnection`. Inheritance: not every function reachable from the tree is actually wired by GLIDE - trace callers from `glide-core/src/**` before claiming behavior.
+- `tokio` - single-threaded runtime on a dedicated OS thread (`"glide-runtime-thread"`).
+- `protobuf` - IPC serialization for the UDS path; also used inside JNI on Java.
+- `telemetrylib` - OpenTelemetry integration (exports `GlideOpenTelemetry` + builder types from `lib.rs`).

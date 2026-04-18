@@ -93,9 +93,10 @@ Skills were written and verified against these versions. Update when new release
 
 Last full review: 2026-04-11
 
-## Critical Rules
+## Ground rules
 
-1. **Plain text output** - No emojis, no ASCII art.
-2. **Source-verified** - Reference docs must be verified against actual source code, not just web research.
-3. **No unnecessary files** - Don't create summary files, plan files, audit files, or temp docs.
-4. **Use single dash for em-dashes** - In prose, use ` - ` (single dash with spaces), never ` -- `.
+Always write plain text - no emojis, no ASCII art. Always verify reference docs against actual source code rather than relying on web research. Keep the repo tidy: avoid summary files, plan files, audit files, and temp docs. For em-dashes in prose, use a single dash with spaces ` - ` rather than ` -- `.
+
+## Skill-writing rules
+
+Detailed rules for editing skills (audience framing, cut lists, grep hazards, 2-pass validation, GLIDE correctness) live in [docs/SKILL_WRITING_RULES.md](docs/SKILL_WRITING_RULES.md). Read that doc before editing any SKILL.md or reference file.

@@ -91,10 +91,14 @@ A single multiplexed connection cannot isolate state. Separate clients needed fo
 
 ## Batch Retry Strategies (Cluster Non-Atomic)
 
-- **retryServerError** - retry commands failing with retriable errors (e.g., TRYAGAIN). May cause out-of-order execution.
-- **retryConnectionError** - retry entire batch on connection failure. May cause duplicate executions.
+Core struct: `redis::cluster_async::PipelineRetryStrategy` (vendored, `glide-core/redis-rs/redis/src/cluster_async/mod.rs`).
 
-MOVED/ASK redirections always handled automatically regardless of retry config.
+- **`retry_server_error`** - retry commands failing with retriable errors (e.g., TRYAGAIN). May cause out-of-order execution.
+- **`retry_connection_error`** - retry the entire batch on connection failure. May cause duplicate executions.
+
+Wrapper APIs surface these under language-native names (`retryServerError` in Node/Java, `retry_server_error` in Python/Rust, `RetryServerError` in Go).
+
+MOVED/ASK redirections are always handled automatically regardless of retry config.
 
 ## Read-Only Mode (GLIDE 2.3)
 
