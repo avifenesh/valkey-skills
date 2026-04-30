@@ -7,23 +7,25 @@ argument-hint: "[subsystem or source path]"
 
 # Valkey Contributor Reference
 
+**This skill does not replace reasoning and exploring the relevant code. It is a tool to find the nuance faster and sharper.**
+
 Organized by what you're working on. Each file covers a coherent work area; Redis-baseline behavior is assumed and not repeated. All files target `unstable`.
 
 ## Route by work area
 
 | Working on... | File | Grep-friendly topics inside |
 |---------------|------|-----------------------------|
-| Client bytes, RESP parsing, command dispatch, client struct, I/O offload, reply buffers, transports, RDMA | `reference/networking.md` | `## RDMA transport`, `## Transport layer`, `## Command table`, `## -REDIRECT`, `## Shared query buffer`, `## Key prefetching` |
-| Event loop hooks, I/O threads, BIO workers, Ignition/Cooldown, batch prefetching, `poll_mutex`, `custompoll` | `reference/event-loop.md` | `## I/O threads`, `## BIO`, `## Batch key prefetching`, `## beforeSleep / afterSleep` |
-| `hashtable`, `kvstore`, `robj`, encoding transitions, listpack/quicklist/skiplist/rax/sds, `vset`, multi-DB, `keys_with_volatile_items` | `reference/data-structures.md` | `## kvstore`, `## Hashtable`, `## Object lifecycle`, `## Encoding transitions`, `## vset`, `## Skiplist`, `## Dict (legacy)` |
-| Cluster slot migration (traditional OR atomic), cluster failover, Sentinel coordinated failover, MOVED/ASK, `cluster_migrateslots.c` | `reference/ha.md` | `## Cluster shape`, `## Cluster failover`, `## Slot migration`, `### Atomic slot migration`, `## Sentinel` |
-| RDB format, RDB types, AOF, replication, dual-channel, `VALKEY080` magic, `RDB_TYPE_HASH_2` | `reference/data-durability.md` | `## RDB`, `## AOF`, `## Replication`, `## Dual-channel replication` |
-| EVAL, FUNCTION, scripting-engine ABI, module API, `ValkeyModule_*`, custom data types, Rust SDK | `reference/scripting-and-modules.md` | `## Scripting engine ABI`, `## Module lifecycle`, `## Custom data types`, `## Rust SDK` |
-| MULTI/EXEC, blocking commands (BLPOP etc.), pub/sub, keyspace notifications, `hexpired`, `__redis__:invalidate` | `reference/client-commands.md` | `## MULTI / EXEC`, `## Blocking`, `## Pub/Sub`, `## Keyspace Notifications` |
-| Allocator (zmalloc/valkey_malloc), eviction, lazy-free defaults, active defrag, expiry cycle, per-field TTL reclaim | `reference/memory.md` | `## Active defragmentation`, `## Lazy free`, `## Eviction`, `## Expiry`, `## zmalloc` |
+| Client bytes, RESP parsing, command dispatch, client struct, I/O offload, reply buffers, transports, RDMA, reply-ordering rules, shared query buffer aliasing | `reference/networking.md` | `## Client fields for I/O-thread offload`, `## Shared query buffer`, `## I/O-thread dispatch`, `## Command table uses hashtable`, `## -REDIRECT during coordinated failover`, `## Command dispatch invariants`, `## I/O-thread offload invariants`, `## Key prefetching`, `## Transport layer invariants`, `## RDMA transport` |
+| Event loop hooks, I/O threads, BIO workers, Ignition/Cooldown, batch prefetching, `poll_mutex`, `custompoll`, atomics & thread ownership, main/IO boundary ownership table | `reference/event-loop.md` | `## ae reactor additions`, `## beforeSleep / afterSleep integration with I/O threads`, `## Main/IO ownership invariants`, `## Atomic usage and memory ordering`, `## Lazyfree and BIO job ordering`, `## Shutdown, teardown, signal handlers`, `## Batch key prefetching`, `## Event-loop / client-state invariants` |
+| `hashtable`, `kvstore`, `robj`, encoding transitions, listpack/quicklist/skiplist/rax/sds, `vset`, multi-DB, `keys_with_volatile_items`, rehash cursor, iterator safety, two-phase insert, 5-window iterator taxonomy | `reference/data-structures.md` | `## Iterator-invariant taxonomy`, `## Keyspace: kvstore per DB`, `## kvstore`, `## Hashtable`, `## Object lifecycle`, `## Encoding transitions`, `## Skiplist`, `## vset`, `## Hash field entry` |
+| Cluster slot migration (traditional OR atomic), cluster failover, Sentinel coordinated failover, MOVED/ASK, cluster bus wire format, gossip rules, CLUSTERSCAN fingerprint | `reference/ha.md` | `## Cluster shape`, `## Cluster bus`, `## Failover`, `## Slot migration`, `## Gossip`, `## SCAN cross-node`, `## CLUSTER SLOT-STATS`, `## Sentinel` |
+| RDB format, RDB types, AOF, replication, dual-channel, `VALKEY080` magic, `RDB_TYPE_HASH_2`, TTL absolute-timestamp propagation, replicate-as-DEL contract, write-path classification flowchart | `reference/data-durability.md` | `## RDB`, `## AOF`, `## Replication`, `## Dual-channel replication`, `## Fork machinery` |
+| EVAL, FUNCTION, scripting-engine ABI, module API, `ValkeyModule_*`, custom data types, Rust SDK, ABI versioning, `current_client` vs `executing_client` | `reference/scripting-and-modules.md` | `## Scripting dispatch`, `## Scripting engine ABI`, `## Module lifecycle`, `## Custom data types`, `## Key API, blocking, and threading`, `## Lua engine`, `## Rust SDK` |
+| MULTI/EXEC, blocking commands (BLPOP etc.), pub/sub, keyspace notifications, `hexpired`, `__redis__:invalidate`, notify-before-addReply ordering | `reference/client-commands.md` | `## MULTI / EXEC`, `## Blocking operations`, `## Pub/Sub`, `## Keyspace Notifications` |
+| Allocator (zmalloc/valkey_malloc), eviction, lazy-free defaults, active defrag, expiry cycle, per-field TTL reclaim, read-path-doesn't-reclaim rule, write-path volatile-items untrack | `reference/memory.md` | `## zmalloc`, `## Eviction`, `## Lazy free`, `## Active defragmentation`, `## Expiry`, `### Read-path discipline`, `### Write-path propagation`, `### Events, RDB, role transitions` |
 | CommandLog, SLOWLOG, Latency monitor, CLIENT TRACKING, DEBUG | `reference/monitoring.md` | `## Commandlog`, `## Latency Monitor`, `## Client Tracking` |
 | ACL (db selectors, `%R~`/`%W~`), TLS auto-reload, `tls-auth-clients-user` | `reference/security.md` | `## ACL`, `## TLS` |
-| Build (`make`, `cmake`, `BUILD_TLS`, `BUILD_RDMA`), sanitizers, TCL tests, gtest unit tests, CI, CONFIG registration, renamed configs, DCO/clang-format/governance | `reference/devex.md` | `## Build`, `## Sanitizer builds`, `## TCL Test Framework`, `## C++ Unit Tests`, `## CI`, `## Config system`, `## Contribution workflow` |
+| Build (`make`, `cmake`, `BUILD_TLS`, `BUILD_RDMA`), sanitizers, TCL tests, gtest unit tests, CI, CONFIG registration, renamed configs, DCO/clang-format | `reference/devex.md` | `## Critical correctness rules`, `## Code rules`, `## Test rules`, `## Sanitizer builds`, `## Config system` |
 
 ## Quick start
 

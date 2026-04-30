@@ -1,125 +1,76 @@
 # High Availability (Cluster + Sentinel)
 
-Topology, failover, slot migration. Base algorithms (16,384-slot hash cluster, gossip, MOVED/ASK, bus port = port+10000, PFAIL → FAIL quorum, Raft-like leader election for Sentinel, SDOWN/ODOWN/TILT) are all unchanged from Redis. Everything below is divergence.
+Topology, failover, slot migration. Base algorithms (16,384-slot hash cluster, gossip, MOVED/ASK, bus port = port+10000, PFAIL -> FAIL quorum, Raft-like leader election for Sentinel, SDOWN/ODOWN/TILT) are unchanged from Redis. Everything below is divergence.
 
 ## Cluster shape
 
-- **Multi-database cluster**: cluster mode is **not** limited to DB 0. `getKVStoreIndexForKey()` routes by slot; `selectDb()` works in cluster mode. Migrations transfer all DBs.
-- **Shard dictionary**: `clusterState.shards` maps `shard_id -> list(clusterNode)` for shard-level operations.
-- **Atomic slot migration jobs**: `clusterState.slot_migration_jobs` alongside the legacy `migrating_slots_to` / `importing_slots_from`.
-- **Availability zone per node**: `availability-zone` config is a free-form SDS propagated via gossip and surfaced in `CLUSTER SHARDS` / `CLUSTER SLOTS` replies. Node field: `clusterNode.availability_zone`. Used by clients for AZ-aware replica selection.
-- **`cluster-config-save-behavior`**: enum config controlling when `nodes.conf` is persisted. Default `sync` (save immediately on change). Alternatives reduce I/O at the cost of recovery precision after crash.
+- Cluster mode is not limited to DB 0. `getKVStoreIndexForKey()` routes by slot; `selectDb()` works in cluster mode; migrations transfer all DBs.
+- `clusterState.shards` maps `shard_id -> list(clusterNode)` for shard-level operations.
+- `clusterState.slot_migration_jobs` lives alongside legacy `migrating_slots_to` / `importing_slots_from`. Topology queries must consult both.
+- `availability-zone` is a free-form SDS propagated via gossip and surfaced in `CLUSTER SHARDS` / `CLUSTER SLOTS`. Node field: `clusterNode.availability_zone`.
+- `cluster-config-save-behavior` (default `sync`) controls when `nodes.conf` is persisted; alternatives trade I/O for recovery precision after crash.
 
-INFO / CLUSTER INFO bus metrics (always populated): `cluster_stats_bytes_{sent,received}`, plus per-category splits `cluster_stats_pubsub_bytes_{sent,received}` and `cluster_stats_module_bytes_{sent,received}`. Accounted in `clusterBusAddNetworkBytesByType` - add a call there when introducing new cluster-bus message types.
+## Cluster bus
 
-Files: `src/cluster.c`, `src/cluster_legacy.c`, `src/cluster_migrateslots.c`, `src/cluster_slot_stats.c`.
+- `clusterMsg` vs `clusterMsgLight` have `data` at different byte offsets. Receive-side casts must pick the right type before dereferencing.
+- All numeric wire fields are network byte order. New gossip/ext/aux scalars require htons/ntohs before memcpy.
+- Ports gossiped: TCP + TLS only. RDMA requires `rdma-port == port` (config contract, unenforced in code). MOVED/ASK/CLUSTER SLOTS return ports based on the originating client's connection type.
+- Cluster bus byte counters are per-category (admin gossip / PUBLISH+PUBLISHSHARD / MODULE) and incremented only after validation. Adding a new cluster-bus message type requires a `clusterBusAddNetworkBytesByType` call at send and receive.
+- Extension-support tracking lives on `clusterLink`, not `clusterNode`. During handshake the sender-node lookup returns NULL until the node is added, so bit-on-node loses the capability.
+- Light-header support is per-peer. 8.0 and 9.0 use the same bit for LIGHT_PUBLISH and LIGHT_HDR_MODULE respectively - any new LIGHT_HDR_* bit must be checked for collision against the 8.x assignment before it ships.
+- Module sender_id is fixed 40 bytes: NOT null-terminated pre-8.1, null-terminated from 8.1+. Cross-version module ABI hazard.
+- INFO / CLUSTER INFO bus metrics are always populated: `cluster_stats_bytes_{sent,received}` plus per-category splits `cluster_stats_pubsub_bytes_{sent,received}` and `cluster_stats_module_bytes_{sent,received}`, all via `clusterBusAddNetworkBytesByType`.
 
-## Cluster failover (replica election)
+## Failover
 
-- **Coordinated immediate start**: when all replicas in the shard agree the primary is down AND the best-ranked replica has a rank-0 primary, election starts with zero delay (rather than standard jittered wait).
-- **Failed-primary rank in election delay**: `clusterGetFailedPrimaryRank()` contributes to the election start delay so concurrent elections across multiple failing shards don't collide.
-- **Configurable manual-failover timeout**: `server.cluster_mf_timeout` (config `cluster-manual-failover-timeout`, default 5000 ms). In Redis this is a hardcoded constant.
+- Coordinated failover (via the `FAILOVER` command, used by Sentinel's coordinated branch) is primary-driven: primary pauses writes, waits for replica catch-up, swaps roles atomically. See `sentinelFailoverSendFailover` (coordinated) vs `sentinelFailoverSendReplicaOfNoOne` (classic) in `src/sentinel.c`.
+- `failover_auth_time` must reset to 0 on abort/restart of a replica election. A stale timer leaves the replica stuck waiting for votes.
+- Rank-convergence delay (500 ms + random) exists for offset broadcasting, not FAIL-propagation. Shrinking to 0 reproduces split-vote failures. `shouldRepeatReadFromPrimary` must precede `beforeNextClient` to avoid UAF ordering.
+- Primary sends full ~4 KB UPDATE back to the replica on failover-auth denial; the replica otherwise cannot recover.
+- `CLUSTER REPLICATE NO ONE` vs `REPLICAOF NO ONE` diverge by design. Cluster variant must `emptyData` and move the node into a fresh shard (the detached node remains a cluster member); standalone variant keeps data.
+- Slot-bitmap comparisons in auth paths are endian-sensitive. `clusterSendFailoverAuthIfNeeded` tests must include a non-64-bit-aligned slot boundary (e.g. slot 12287); a test using only slots 0-1023 passes on both endians and hides the bug.
+- Cluster-aware lazyfree re-inits `slotToKeyInit` after async flush - `slotToKeyFlush` alone is not enough, because `emptyDbAsync` allocates a fresh `db->dict` and `clusterDictMetadata`.
+- `clusterSetNodeAsPrimary` + `replicationUnsetPrimary` are paired atomically. Separating them opens a window where `server.cluster->myself->flags` and `server.replication_state` disagree.
+- "Multi-primary claiming one slot" assert is not fatal during a legitimate replica-role broadcast - must not abort the process.
+- Once in FAIL state, `clusterNodeAddFailureReport` short-circuits and returns 0. `CLUSTER COUNT-FAILURE-REPORTS` decays; tests asserting a growing count after FAIL are flaky by design.
+- `cluster-manual-failover-timeout`: 1 to INT_MAX range; `now + timeout*PAUSE_MULT` overflows at large timeouts. Write-pause is capped at `CLUSTER_MF_TIMEOUT = 500 ms` regardless.
+- Gossip shard_id propagation: replica adopts primary's shard_id, not the reverse. Opportunistic, eventually consistent.
+- Coordinated immediate start: when all replicas in the shard agree the primary is down AND the best-ranked replica has a rank-0 primary, election starts with zero delay.
+- `clusterGetFailedPrimaryRank()` contributes to election start delay so concurrent elections across multiple failing shards don't collide.
+- `server.cluster_mf_timeout` (config `cluster-manual-failover-timeout`, default 5000 ms) is configurable; in Redis it is a hardcoded constant.
 
 All in `src/cluster_legacy.c`.
 
-## Slot migration - two mechanisms coexist
+## Slot migration
 
-### Traditional `CLUSTER SETSLOT` + `MIGRATE` (Redis baseline)
+Two mechanisms coexist: traditional `CLUSTER SETSLOT` + per-key `MIGRATE`, and atomic server-driven `CLUSTER MIGRATESLOTS` (new in Valkey, `src/cluster_migrateslots.c`).
 
-`MIGRATING`/`IMPORTING`/`STABLE`/`NODE` subcommand loop + key-by-key `MIGRATE` + `ASK`/`MOVED`/`TRYAGAIN` redirects. Valkey-specific wrinkle:
-
-- **`CLUSTER SETSLOT` replicates before executing**: primary blocks the client, replicates the command, waits for eligible replicas (version > 7.2) to ACK, then executes locally. Prevents topology loss on primary crash between execute and gossip. `clusterCommandSetSlot` in `cluster_legacy.c` has the version check (`replica_version > 0x702ff`).
+- `CLUSTER SETSLOT` replicates via the replication stream before executing, to prevent topology loss on primary crash between execute and gossip. Version-gated on `replica_version > 0x702ff` in `clusterCommandSetSlot`.
+- `delKeysInSlot` on the source during slot migration needs a version flag: DEL for pre-9.0 replicas, FLUSHSLOT for 9.0+. Mixed-version clusters otherwise reject the propagated FLUSHSLOT.
+- Slot-migration connections use `tls-replication` config, not `tls-cluster`. They connect to the peer's data-plane port, not the cluster-bus port.
+- Atomic slot migration child type is `CHILD_TYPE_SLOT_MIGRATION`; mutually exclusive with RDB `bgsave` (like any forked child). `killSlotMigrationChild` is the teardown symmetric to `killRDBChild`.
+- Atomic slot migration target persists in-flight import state as an RDB aux/opcode; replicas that full-sync mid-import inherit the state. Module `IMPORT_STARTED` event fires before imported keys load.
+- Module-replicated cross-slot commands must abort during atomic slot migration - the target applies against a single slot's staging kvstore, so multi-slot writes corrupt ownership.
+- Importing keys are excluded from Fenwick counts and from fair-random-slot selection. `kvstore` exposes `HASHTABLE_ITER_INCLUDE_IMPORTING` as an opt-in iterator flag. `DBSIZE` differs from `COUNTKEYSINSLOT` during migration by design - do not cross-check the two.
+- Cutover write-loss window is a known hardening concern, not a correctness guarantee. Between "source grants failover" and "source sees target's ownership gossip", the source is paused; target crash in this window leaves the source eventually timeout-unpaused to accept writes the target won't see. Logged as *"Write loss risk!"*. Extending the pause is almost always the wrong fix - tighten the gossip-learn-loop on the source instead.
+- `CLUSTERSCAN` cursor carries a seed fingerprint because primary/replica have independent hash seeds; rerouting a cursor mid-iteration without the fingerprint silently skips or double-visits. `scan.seed` derives deterministically from the `hash-seed` config via SHA-256.
 
 `getNodeByQuery()` in `src/cluster.c` is the single source of truth for redirect decisions.
 
-### Atomic slot migration (`src/cluster_migrateslots.c`)
+## Gossip
 
-Server-driven, fork-based transfer of entire slot ranges. No external orchestrator. Added in Valkey - not present in Redis.
+- 80% sampling of known nodes per ping with HANDSHAKE-state nodes excluded. Strict equality tests are flaky by design - expect +2 for self and link.
+- `clusterNodeCleanupFailureReports` runs per PING/PONG with a millisecond-bucketed RAX key `(bucketed_second, clusterNode*)`. CPU scaled from 100% to 32% at 450 concurrent failovers - do not regress the bucketing.
+- Stale PING/PONG after primary quiesce is a real hazard. Cross-check `nodeEpoch(sender_claimed_primary) > sender_claimed_config_epoch` before latching a new role.
 
-#### Command
+## SCAN cross-node
 
-```
-CLUSTER MIGRATESLOTS SLOTSRANGE <start> <end> [<start> <end> ...] NODE <target-id>
-                    [SLOTSRANGE <start> <end> ... NODE <target-id> ...]
-```
+- Cluster SCAN is primary-only. Per-node hash seeds mean results are not comparable across primary/replica of the same shard, and RDB dump-then-load does not preserve SCAN order.
 
-Multiple ranges to multiple targets in one command. All ranges must currently be owned by the executing node.
+## CLUSTER SLOT-STATS
 
-#### Flow
+Valkey-only per-slot observability (`src/cluster_slot_stats.c`). Accounting hooks (network in/out, CPU, key count) live in `cluster_slot_stats.c` - add one call per metric in any new code path that attributes cost to a slot. Gated on `cluster-slot-stats-enabled` (default off) for everything except `KEY_COUNT`.
 
-1. **Establish**: source connects to target, optionally AUTH, sends `CLUSTER SYNCSLOTS ESTABLISH`.
-2. **Snapshot**: source waits for no active child process, then forks. Child writes RDB-format snapshot of migrating slots' keys to the target's socket. Parent keeps serving (COW).
-3. **Stream**: writes touching migrating slots stream to the target (replication-style).
-4. **Pause**: target requests pause; source drains output and installs `PAUSE_DURING_SLOT_MIGRATION` on writes.
-5. **Cutover**: target bumps `configEpoch`, claims ownership; source detects via gossip, unpauses.
-6. **Cleanup**: SUCCESS or FAILED; on success the source deletes any remaining keys in transferred slots.
+## Sentinel
 
-#### State machines
-
-Source (export): `CONNECTING → SEND_AUTH → READ_AUTH_RESPONSE → SEND_ESTABLISH → READ_ESTABLISH_RESPONSE → WAITING_TO_SNAPSHOT → SNAPSHOTTING → STREAMING → WAITING_TO_PAUSE → FAILOVER_PAUSED → FAILOVER_GRANTED → SUCCESS|FAILED`.
-
-Target (import): `WAIT_ACK → RECEIVE_SNAPSHOT → WAITING_FOR_PAUSED → FAILOVER_REQUESTED → FAILOVER_GRANTED → SUCCESS`. Replicas tracking a primary's import sit in `OCCURRING_ON_PRIMARY`.
-
-#### Key functions (all in `cluster_migrateslots.c`)
-
-| Function | Purpose |
-|----------|---------|
-| `clusterCommandMigrateSlots` | Entry point for `CLUSTER MIGRATESLOTS` |
-| `proceedWithSlotMigration` | Drives the export state machine |
-| `clusterSlotMigrationCron` | Periodic job maintenance |
-| `clusterCommandSyncSlots` | Handles `CLUSTER SYNCSLOTS` subcommands (`ESTABLISH`, `FINISH`, etc.) |
-| `clusterCommandCancelSlotMigrations` | `CLUSTER CANCELSLOTMIGRATIONS` |
-| `backgroundSlotMigrationDoneHandler` | Child-process completion callback |
-| `performSlotImportJobFailover` | Target-side ownership takeover |
-| `finishSlotMigrationJob` | Transitions job to SUCCESS/FAILED + cleanup |
-
-#### Gotchas
-
-- **Write-loss window at cutover**: between "source grants failover" and "source sees target's topology update", the source is paused. If the target crashes in this window, the source eventually timeout-unpauses and accepts writes the target won't see. Logged as *"Write loss risk! During slot migration, new owner did not broadcast ownership before we unpaused ourselves."*
-- **Failures**: connection loss, ACK timeout (`repl-timeout`), OOM during snapshot, concurrent slot-ownership change, `FLUSHDB`, replica demotion, or user cancel. On failure, both sides auto-clean; operator restarts.
-- **Replicas learn about in-progress migrations** via replicated `SYNCSLOTS ESTABLISH`, the `cluster-slot-states` RDB aux field during full sync, and `SYNCSLOTS FINISH` messages.
-- **Monitoring**: `CLUSTER GETSLOTMIGRATIONS` (jobs + human-readable state), `CLUSTER CANCELSLOTMIGRATIONS` (cancel all in-progress exports).
-
-#### Why pick atomic over traditional
-
-Traditional blocks the event loop on each `MIGRATE` call (bad for large keys), needs an external resharding tool, causes redirect storms. Atomic is fork-based (non-blocking), handles all DBs in cluster mode, bounded cutover latency.
-
-## CLUSTER SLOT-STATS (`src/cluster_slot_stats.c`)
-
-Valkey-only. Per-slot observability command. Four metrics tracked in `server.cluster->slot_stats[slot]`: `KEY_COUNT`, `CPU_USEC`, `NETWORK_BYTES_IN`, `NETWORK_BYTES_OUT`.
-
-Gate: `cluster-slot-stats-enabled` (bool, default off). `KEY_COUNT` is always available; the other three require the flag (they need in-line accounting on every command). When the flag is off, `CLUSTER SLOT-STATS` only returns `key_count`.
-
-Syntax:
-
-```
-CLUSTER SLOT-STATS SLOTSRANGE <start> <end>                          -- range
-CLUSTER SLOT-STATS ORDERBY <metric> [LIMIT N] [ASC|DESC]             -- top-K
-```
-
-`metric` = `key-count | cpu-usec | network-bytes-in | network-bytes-out`. Accounting hooks live in `cluster_slot_stats.c` (network in/out, CPU) - add one call per metric in any new code path that attributes cost to a slot.
-
-## Sentinel (`src/sentinel.c`)
-
-Monitoring (SDOWN/ODOWN/TILT, PING/INFO/`__sentinel__:hello` discovery) and classic failover (`SENTINEL FAILOVER <name>`, Raft-like leader election, pub/sub events, script hooks) match Redis. Activation: `--sentinel` flag, or binary named `valkey-sentinel` (accepts `redis-sentinel`).
-
-### Coordinated failover
-
-Command: `SENTINEL FAILOVER <name> COORDINATED`. Sets `SRI_COORD_FAILOVER` on the master record.
-
-Instead of sending `REPLICAOF NO ONE` to the replica, Sentinel drives failover through the **primary**:
-
-```
-MULTI
-CLIENT PAUSE WRITE <ms>
-FAILOVER TO <replica-host> <replica-port> TIMEOUT <ms>
-EXEC
-```
-
-The primary pauses writes, waits for the replica to catch up, swaps roles atomically. Avoids data loss from promoting a still-catching-up replica.
-
-Where to look:
-
-- `sentinelFailoverSendFailover()` (coordinated branch) vs `sentinelFailoverSendReplicaOfNoOne()` (classic) in `src/sentinel.c`.
-- `master_failover_state` in the primary's INFO reply - Sentinel checks this before choosing the coordinated path.
-- State machine (unchanged): `NONE → WAIT_START → SELECT_REPLICA → SEND_REPLICAOF_NOONE → WAIT_PROMOTION → RECONF_REPLICAS → UPDATE_CONFIG`. Coordinated path branches inside `SEND_REPLICAOF_NOONE`.
+Monitoring (SDOWN/ODOWN/TILT, PING/INFO/`__sentinel__:hello` discovery) and classic failover match Redis. Activation: `--sentinel` flag, or binary named `valkey-sentinel` (also accepts `redis-sentinel`). Coordinated failover (`SENTINEL FAILOVER <name> COORDINATED`, sets `SRI_COORD_FAILOVER`) is primary-driven and atomic - see the failover invariant above and `sentinelFailoverSendFailover` in `src/sentinel.c`.
