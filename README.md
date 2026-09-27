@@ -65,7 +65,7 @@ Clone the repo and copy `skills/valkey/` into the agent's skills directory.
 
 ## Contributing
 
-Authoring rules and ground rules for the repo live in [CLAUDE.md](CLAUDE.md) (which `AGENTS.md` symlinks to). Key points:
+Authoring rules and ground rules for the repo live in [AGENTS.md](AGENTS.md). Key points:
 
 - Plain text, single-dash em-dashes.
 - Verify skill content against the actual Valkey source at the declared baseline version; do not rely on web search.

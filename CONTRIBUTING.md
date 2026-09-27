@@ -85,7 +85,7 @@ Drop:
 * Per-language client-library code samples unless the snippet encodes a non-obvious invariant
 * Narrative prose
 
-Ground rules (also in [CLAUDE.md](CLAUDE.md), which `AGENTS.md` symlinks to):
+Ground rules (also in [AGENTS.md](AGENTS.md)):
 
 1. Plain text. No emojis. No ASCII art.
 2. Em-dashes in prose: single dash with spaces ` - `, not ` -- `.
